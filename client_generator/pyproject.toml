@@ -1,0 +1,66 @@
+
+ #
+ # Copyright (c) 2023 Project CHIP Authors
+ #
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+ # You may obtain a copy of the License at
+ #
+ # http://www.apache.org/licenses/LICENSE-2.0
+ #
+ # Unless required by applicable law or agreed to in writing, software
+ # distributed under the License is distributed on an "AS IS" BASIS,
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+[tool.poetry]
+name = "example"
+version = "0.3.0"
+description = ""
+authors = ["David Montague"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+fastapi = "*"
+pydantic = "*"
+httpx = "*"
+typing_extensions = "*"
+
+[tool.poetry.dev-dependencies]
+starlette = "*"
+
+pytest = "*"
+pytest-cov = "*"
+coverage = "*"
+black = { version = "*", allow-prereleases = true }
+flake8 = "*"
+isort = "*"
+mypy = "*"
+
+python-multipart = "*"
+uvicorn = "*"
+
+[tool.black]
+line-length = 120
+target_version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+    \.git
+    | \.mypy_cache
+    | \.pytest_cache
+    | htmlcov
+    | build
+    | pybind11
+  )/
+)
+'''
+
+[tool.isort]
+line_length = 120
+known_first_party = ["client"]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+combine_as_imports = true
