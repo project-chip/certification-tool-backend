@@ -15,6 +15,12 @@
  * limitations under the License.
 -->
 
+# Instructions
+
+Please refer to the main repository for how to use these tools [here](https://github.com/project-chip/certification-tool-frontend)
+
+https://github.com/project-chip/certification-tool-frontend
+
 # CSA Certification Tool - CLI
 
 CLI tool for using the CSA Test Harness
