@@ -18,3 +18,9 @@
 # CSA Certification Tool - Backend
 
 Backend tooling for the CSA Test Harness
+
+# Instructions
+
+Please refer to the main repository for how to use these tools [here](https://github.com/project-chip/certification-tool-frontend)
+
+https://github.com/project-chip/certification-tool-frontend
