@@ -99,7 +99,6 @@ then
     git sparse-checkout init
     git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_EXAMPLE_PLACEHOLDER_PATH $SDK_EXAMPLE_CHIP_TOOL_PATH $SDK_DATA_MODEL_PATH
     git checkout -q $SDK_SHA
-    git apply $ROOT_DIR/sdk_patch/TestHarnessSDKChanges.patch
     SDK_PATH="$TMP_SDK_PATH"
 fi
 

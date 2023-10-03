@@ -65,6 +65,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
             # Disable sending "-PICS" option when running chip-tool
             self.chip_tool.reset_pics_state()
 
+        self.__dut_commissioned_successfully = False
         if self.test_type == ChipToolTestType.CHIP_TOOL:
             logger.info("Commission DUT")
             await self.__commission_dut_allowing_retries()
@@ -79,8 +80,6 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
         Raises:
             SuiteSetupError: Commissioning failed and user chose not to retry
         """
-        self.__dut_commissioned_successfully = False
-
         while not self.__dut_commissioned_successfully:
             try:
                 await self.__pair_with_dut()
@@ -153,18 +152,16 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
         return border_router
 
     async def cleanup(self) -> None:
-        # Unpair is not applicable for simulated apps case
         # Only unpair if commissioning was successfull during setup
-        if (
-            self.test_type == ChipToolTestType.CHIP_TOOL
-            and self.__dut_commissioned_successfully
-        ):
-            logger.info("Unpairing chip_tool from device")
-            await self.chip_tool.unpair()
-        # Need a better way to trigger unpair for chip-app.
-        elif self.test_type == ChipToolTestType.CHIP_APP:
-            logger.info("Prompt user to perform decommissioning")
-            await self.__prompt_user_to_perform_decommission()
+        if self.__dut_commissioned_successfully:
+            # Unpair is not applicable for simulated apps case
+            if self.test_type == ChipToolTestType.CHIP_TOOL:
+                logger.info("Unpairing chip_tool from device")
+                await self.chip_tool.unpair()
+            # Need a better way to trigger unpair for chip-app.
+            elif self.test_type == ChipToolTestType.CHIP_APP:
+                logger.info("Prompt user to perform decommissioning")
+                await self.__prompt_user_to_perform_decommission()
 
         logger.info("Stopping chip-tool container")
         self.chip_tool.destroy_device()
@@ -243,6 +240,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
                 raise ValueError("User stated commissioning step FAILED.")
 
             case PromptOption.PASS:
+                self.__dut_commissioned_successfully = True
                 logger.info("User stated commissioning step PASSED.")
 
             case _:
