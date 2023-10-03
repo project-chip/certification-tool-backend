@@ -17,9 +17,9 @@
 
 # Instructions
 
-Please refer to the main repository for how to use these tools [here](https://github.com/project-chip/certification-tool-frontend)
+Please refer to the main repository for how to use these tools [here](https://github.com/project-chip/certification-tool)
 
-https://github.com/project-chip/certification-tool-frontend
+https://github.com/project-chip/certification-tool
 
 # CSA Certification Tool - CLI
 
