@@ -255,14 +255,9 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
             TestError: Response is unexpected
         """
 
-        options = {
-            "PASS": PromptOption.PASS,
-            "FAIL": PromptOption.FAIL,
-            "NOT APPLICABLE": PromptOption.NOT_APPLICABLE,
-        }
         prompt = f"Please do the following action on the Controller: {action}"
         prompt_request = OptionsSelectPromptRequest(
-            prompt=prompt, options=options, timeout=60
+            prompt=prompt, options={}, timeout=60
         )
         await self.send_prompt_request(prompt_request)
 
