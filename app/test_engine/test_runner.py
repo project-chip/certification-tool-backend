@@ -168,6 +168,7 @@ class TestRunner(object, metaclass=Singleton):
         # Init new observers
         ui_observer = TestUIObserver()
         db_observer = TestDBObserver(self.__db_generator)
+
         self.test_run.subscribe([ui_observer, db_observer])
 
         await self.test_run.run()
@@ -176,6 +177,9 @@ class TestRunner(object, metaclass=Singleton):
         await log_handler.finish()
 
         self.test_run.unsubscribe([ui_observer, db_observer])
+
+        # Flush all pending DB updates
+        db_observer.apply_updates()
 
         # Ensure all state updates are sent to the frontend
         await ui_observer.complete_tasks()

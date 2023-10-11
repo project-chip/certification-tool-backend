@@ -93,6 +93,10 @@ DOCKER_LOGS_PATH = "/logs"
 LOCAL_PAA_CERTS_PATH = Path("/var/paa-root-certs")
 DOCKER_PAA_CERTS_PATH = "/paa-root-certs"
 
+# Credentials Development mount
+LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
+DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
+
 # Websocket runner
 BACKEND_ROOT = Path(__file__).parents[2]
 YAML_TESTS_PATH_BASE = BACKEND_ROOT / Path("test_collections/yaml_tests/")
@@ -155,6 +159,10 @@ class ChipTool(metaclass=Singleton):
             },
             LOCAL_PAA_CERTS_PATH: {
                 "bind": DOCKER_PAA_CERTS_PATH,
+                "mode": "ro",
+            },
+            LOCAL_CREDENTIALS_DEVELOPMENT_PATH: {
+                "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
                 "mode": "ro",
             },
         },
