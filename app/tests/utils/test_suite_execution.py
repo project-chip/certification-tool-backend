@@ -24,13 +24,14 @@ from app.models import TestSuiteExecution
 from app.models.test_enums import TestStateEnum
 from app.tests.utils.test_run_execution import create_random_test_run_execution
 from app.tests.utils.test_suite_metadata import create_random_test_suite_metadata
-from app.tests.utils.utils import random_test_public_id
+from app.tests.utils.utils import random_lower_string, random_test_public_id
 
 fake = Faker()
 
 
 def random_test_suite_execution_dict(
     public_id: Optional[str] = None,
+    collection_id: Optional[str] = None,
     state: Optional[TestStateEnum] = None,
     started_at: Optional[datetime] = None,
     completed_at: Optional[datetime] = None,
@@ -43,6 +44,11 @@ def random_test_suite_execution_dict(
     if public_id is None:
         public_id = random_test_public_id()
     output["public_id"] = public_id
+
+    # Collection id is not optional
+    if collection_id is None:
+        collection_id = random_lower_string()
+    output["collection_id"] = collection_id
 
     # State is optional, include if present
     if state is not None:
