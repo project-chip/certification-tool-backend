@@ -153,7 +153,10 @@ class ManualLogUploadStep(TestStep, UserPromptSupport):
         logger.info("---- Start of Manual Log ----")
         with file.file as f:
             for line in f:
-                logger.info(line.decode("utf-8").strip())
+                if file.content_type == "application/octet-stream":
+                    logger.info(line.decode("utf-8").strip())
+                else:
+                    logger.info(line.strip())
         logger.info("---- End of Manual Log ----")
 
 
