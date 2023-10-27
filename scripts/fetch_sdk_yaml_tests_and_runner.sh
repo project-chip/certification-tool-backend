@@ -36,17 +36,18 @@ SDK_DATA_MODEL_PATH="src/app/zap-templates/zcl/data-model/chip"
 ENV_FILE="$ROOT_DIR/.env"
 
 TEST_COLLECTIONS_PATH="$ROOT_DIR/test_collections"
-TEST_COLLECTIONS_SDK_TESTS_PATH="$TEST_COLLECTIONS_PATH/sdk_tests"
+TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$TEST_COLLECTIONS_PATH/sdk_tests/sdk_checkout"
+
 
 # YAML Files
-YAML_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_SDK_TESTS_PATH/sdk_checkout/yaml_tests"
+YAML_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/yaml_tests"
 YAML_DIR_YAML_TEST_COLLECTION_PATH="$YAML_TEST_COLLECTION_PATH/yaml"
 SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH="$YAML_DIR_YAML_TEST_COLLECTION_PATH/sdk"
 
-CURRENT_SDK_CHECKOUT_VERSION="$TEST_COLLECTIONS_SDK_TESTS_PATH/sdk_checkout/.version"
+CURRENT_SDK_CHECKOUT_VERSION="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/.version"
 
 install_matter_wheels () {
-  pip install ${TEST_COLLECTIONS_SDK_TESTS_PATH}/support/sdk_runner/*.whl --force-reinstall
+  pip install ${TEST_COLLECTIONS_SDK_CHECKOUT_PATH}/sdk_runner/*.whl --force-reinstall
 }
 
 for arg in "$@"
@@ -131,7 +132,7 @@ rm -Rf "$TEST_COLLECTIONS_PATH/app1_tests"
 ###
 # Extract sdk runner and dependencies
 ###
-EXTRACTION_ROOT="$TEST_COLLECTIONS_SDK_TESTS_PATH/support/sdk_runner"
+EXTRACTION_ROOT="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/sdk_runner"
 
 # Remove existing extraction
 rm -rf ${EXTRACTION_ROOT}

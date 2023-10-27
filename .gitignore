@@ -12,5 +12,4 @@ test_environment.config
 SerialTests.lock
 test_db_creation.lock
 .sha_information
-test_collections/sdk_tests/support
-test_collections/sdk_tests/sdk_checkout/yaml_tests/yaml/
+test_collections/sdk_tests/sdk_checkout

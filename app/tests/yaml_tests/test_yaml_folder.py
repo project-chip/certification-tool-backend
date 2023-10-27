@@ -16,7 +16,7 @@
 from pathlib import Path
 from unittest import mock
 
-from test_collections.sdk_tests.sdk_checkout.yaml_tests.models.yaml_test_folder import (
+from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_folder import (
     YamlTestFolder,
 )
 
@@ -29,7 +29,7 @@ def test_yaml_folder_version() -> None:
     # We mock open to read version_file_content and Path exists to ignore that we're
     # testing with a fake path
     with mock.patch(
-        "test_collections.sdk_tests.sdk_checkout.yaml_tests.models.yaml_test_folder.open",
+        "test_collections.sdk_tests.support.yaml_tests.models.yaml_test_folder.open",
         new=mock.mock_open(read_data=version_file_content),
     ), mock.patch.object(
         target=Path, attribute="exists", return_value=True

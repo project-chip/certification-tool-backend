@@ -102,7 +102,7 @@
         "*.dockerfile",
         "*.pyc",
         ".vscode/*",
-        "test_collections/sdk_tests/support/sdk_runner",
+        "test_collections/sdk_tests/sdk_checkout/sdk_runner",
         "test_collections/sdk_tests/sdk_checkout/yaml_tests/yaml/sdk",
         "sdk_patch"
     ],
