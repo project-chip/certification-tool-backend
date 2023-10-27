@@ -102,8 +102,8 @@
         "*.dockerfile",
         "*.pyc",
         ".vscode/*",
-        "test_collections/yaml_tests/sdk_runner",
-        "test_collections/yaml_tests/yaml/sdk",
+        "test_collections/sdk_tests/support/sdk_runner",
+        "test_collections/sdk_tests/sdk_checkout/yaml_tests/yaml/sdk",
         "sdk_patch"
     ],
     "enableFiletypes": [
