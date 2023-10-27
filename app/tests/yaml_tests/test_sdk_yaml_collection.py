@@ -17,13 +17,19 @@ from pathlib import Path
 
 import pytest
 
-from test_collections.yaml_tests.models.test_declarations import (
+from test_collections.sdk_tests.sdk_checkout.yaml_tests.models.test_declarations import (
     YamlCaseDeclaration,
     YamlCollectionDeclaration,
 )
-from test_collections.yaml_tests.models.yaml_test_folder import YamlTestFolder
-from test_collections.yaml_tests.models.yaml_test_models import YamlTestType
-from test_collections.yaml_tests.sdk_yaml_tests import sdk_yaml_test_collection
+from test_collections.sdk_tests.sdk_checkout.yaml_tests.models.yaml_test_folder import (
+    YamlTestFolder,
+)
+from test_collections.sdk_tests.sdk_checkout.yaml_tests.models.yaml_test_models import (
+    YamlTestType,
+)
+from test_collections.sdk_tests.sdk_checkout.yaml_tests.sdk_yaml_tests import (
+    sdk_yaml_test_collection,
+)
 
 
 @pytest.fixture

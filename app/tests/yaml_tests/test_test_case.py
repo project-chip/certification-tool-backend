@@ -24,14 +24,14 @@ from app.chip_tool.test_case import TestError
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
 from app.test_engine.models.manual_test_case import ManualVerificationTestStep
-from test_collections.yaml_tests.models import YamlTestCase
-from test_collections.yaml_tests.models.test_case import (
+from test_collections.sdk_tests.sdk_checkout.yaml_tests.models import YamlTestCase
+from test_collections.sdk_tests.sdk_checkout.yaml_tests.models.test_case import (
     YamlChipToolTestCase,
     YamlManualTestCase,
     YamlSemiAutomatedChipToolTestCase,
     YamlSimulatedTestCase,
 )
-from test_collections.yaml_tests.models.yaml_test_models import (
+from test_collections.sdk_tests.sdk_checkout.yaml_tests.models.yaml_test_models import (
     YamlTest,
     YamlTestStep,
     YamlTestType,
