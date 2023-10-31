@@ -17,7 +17,7 @@ from pathlib import Path
 
 UNKNOWN_version = "Unknown"
 VERSION_FILE_FILENAME = ".version"
-
+VERSION_FILE_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/")
 
 class YamlTestFolder:
     """Representing a folder with Test YAML files.
@@ -31,8 +31,9 @@ class YamlTestFolder:
         self.version = self.__version()
 
     def __version(self) -> str:
-        """Read version string from .version file in same folder as yaml files."""
-        version_file_path = self.path / VERSION_FILE_FILENAME
+        """Read version string from .version file in 
+        /app/backend/test_collections/sdk_tests/sdk_checkout path."""
+        version_file_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
 
         if not version_file_path.exists():
             return UNKNOWN_version
