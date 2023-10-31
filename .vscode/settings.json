@@ -38,6 +38,6 @@
         "--no-cov"
     ],
     "python.linting.ignorePatterns": [
-        "test_collections/sdk_tests/sdk_checkout/yaml_tests/yaml/**/*.py"
+        "test_collections/sdk_tests/sdk_checkout/**/*.py"
     ]
 }
