@@ -17,7 +17,7 @@ from typing import Optional, Tuple, Type
 
 from sqlalchemy.orm import Session
 
-from app.schemas import TestSelection
+from app.schemas import SelectedTests
 from app.schemas.test_runner_status import TestRunnerState
 from app.test_engine.models import TestCase, TestRun, TestSuite
 from app.test_engine.test_runner import TestRunner
@@ -50,7 +50,7 @@ def get_test_suite_for_public_id(
     )
 
 
-def load_test_run_for_test_cases(db: Session, test_cases: TestSelection) -> TestRunner:
+def load_test_run_for_test_cases(db: Session, test_cases: SelectedTests) -> TestRunner:
     test_run_execution = create_random_test_run_execution(
         db=db, selected_tests=test_cases
     )

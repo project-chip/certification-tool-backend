@@ -26,9 +26,9 @@ from app.models import (
     TestSuiteMetadata,
 )
 from app.schemas.test_selection import (
-    TestCaseSelection,
-    TestSelection,
-    TestSuiteSelection,
+    SelectedTestCase,
+    SelectedTests,
+    SelectedTestSuite,
 )
 from app.singleton import Singleton
 from app.test_engine.models.test_run import TestRun
@@ -74,7 +74,7 @@ class TestScriptManager(object, metaclass=Singleton):
         self.test_collections = discover_test_collections()
 
     def pending_test_suite_executions_for_selected_tests(
-        self, selected_tests: TestSelection
+        self, selected_tests: SelectedTests
     ) -> List[TestSuiteExecution]:
         """
         This will create and associate pending test suites and test cases, based on the
@@ -83,13 +83,15 @@ class TestScriptManager(object, metaclass=Singleton):
         result = []
 
         # Create models within each selected Test Collection
-        for test_collection_name in selected_tests.keys():
+        for test_collection in selected_tests.collections:
             # Lookup selected test collection:
-            test_collection = self.test_collections[test_collection_name]
+            test_collection_declaration = self.test_collections[
+                test_collection.collection_name
+            ]
 
             test_suites = self.__pending_test_suites_for_test_collection(
-                test_collection=test_collection,
-                selected_test_suites=selected_tests[test_collection_name],
+                test_collection=test_collection_declaration,
+                selected_test_suites=test_collection.test_suites,
             )
             result.extend(test_suites)
 
@@ -98,28 +100,30 @@ class TestScriptManager(object, metaclass=Singleton):
     def __pending_test_suites_for_test_collection(
         self,
         test_collection: TestCollectionDeclaration,
-        selected_test_suites: Dict[str, dict],
+        selected_test_suites: list[SelectedTestSuite],
     ) -> List[TestSuiteExecution]:
         # Return Value
         test_suites = []
 
         # Unwrap the Selected Test Suites (and create models for each)
-        for test_suite_id in selected_test_suites.keys():
+        for test_suite in selected_test_suites:
             # Lookup selected test suite
-            if test_suite_id not in test_collection.test_suites.keys():
-                raise TestSuiteNotFound(f"Could not find test suite: {test_suite_id}")
+            if test_suite.public_id not in test_collection.test_suites.keys():
+                raise TestSuiteNotFound(
+                    f"Could not find test suite: {test_suite.public_id}"
+                )
 
-            test_suite = test_collection.test_suites[test_suite_id]
+            test_suite_declaration = test_collection.test_suites[test_suite.public_id]
 
             # Create pending test suite
             test_suite_execution = self.__pending_test_suite_execution(
-                test_suite, test_collection
+                test_suite_declaration, test_collection
             )
 
             # Create pending test cases
             test_cases = self.___pending_test_cases_for_test_suite(
-                test_suite=test_suite,
-                selected_test_cases=selected_test_suites[test_suite_id],
+                test_suite=test_suite_declaration,
+                selected_test_cases=test_suite.test_cases,
             )
 
             # Add test cases to test suite
@@ -131,7 +135,7 @@ class TestScriptManager(object, metaclass=Singleton):
 
     def __pending_test_suite_execution(
         self,
-        test_suite: TestSuiteDeclaration,
+        test_suite_declaration: TestSuiteDeclaration,
         test_collection: TestCollectionDeclaration,
     ) -> TestSuiteExecution:
         """
@@ -139,7 +143,9 @@ class TestScriptManager(object, metaclass=Singleton):
         """
 
         # Existing test suite not found creating a new one.
-        metadata = self.__find_or_create_test_suite_metadata(test_suite=test_suite)
+        metadata = self.__find_or_create_test_suite_metadata(
+            test_suite_declaration=test_suite_declaration
+        )
 
         test_suite_execution = TestSuiteExecution(
             public_id=metadata.public_id,
@@ -151,31 +157,36 @@ class TestScriptManager(object, metaclass=Singleton):
     def ___pending_test_cases_for_test_suite(
         self,
         test_suite: TestSuiteDeclaration,
-        selected_test_cases: Dict[str, int],
+        selected_test_cases: list[SelectedTestCase],
     ) -> List[TestCaseExecution]:
         # Return Value
         suite_test_cases = []
 
-        for test_case_id, iterations in selected_test_cases.items():
+        for selected_test_case in selected_test_cases:
             # Create pending test cases for each iteration
             test_case_declaration = self.__test_case_declaration(
-                public_id=test_case_id, test_suite_declaration=test_suite
+                public_id=selected_test_case.public_id,
+                test_suite_declaration=test_suite,
             )
             test_cases = self.__pending_test_cases_for_iterations(
-                test_case=test_case_declaration, iterations=iterations
+                test_case_declaration=test_case_declaration,
+                iterations=selected_test_case.iterations,
             )
             suite_test_cases.extend(test_cases)
 
         return suite_test_cases
 
     def __pending_test_cases_for_iterations(
-        self, test_case: TestCaseDeclaration, iterations: int
+        self, test_case_declaration: TestCaseDeclaration, iterations: int
     ) -> List[TestCaseExecution]:
         """
         This will create and associate pending test case executions, based on the number
         of iterations.
         """
-        metadata = self.__find_or_create_test_case_metadata(test_case=test_case)
+        metadata = self.__find_or_create_test_case_metadata(
+            test_case=test_case_declaration
+        )
+
         test_cases = []
         for _ in range(0, iterations):
             test_case_execution = TestCaseExecution(
@@ -187,7 +198,7 @@ class TestScriptManager(object, metaclass=Singleton):
         return test_cases
 
     def __find_or_create_test_suite_metadata(
-        self, test_suite: TestSuiteDeclaration
+        self, test_suite_declaration: TestSuiteDeclaration
     ) -> TestSuiteMetadata:
         """
         Based on test suite class reference, return a TestSuiteMetadata record.
@@ -199,7 +210,9 @@ class TestScriptManager(object, metaclass=Singleton):
         source_hash = "de7f3c1390cd283f91f74a334aaf0ec3"
 
         # TODO: check if metadata exists before creating
-        return TestSuiteMetadata(**test_suite.metadata, source_hash=source_hash)
+        return TestSuiteMetadata(
+            **test_suite_declaration.metadata, source_hash=source_hash
+        )
 
     def __find_or_create_test_case_metadata(
         self, test_case: TestCaseDeclaration
@@ -304,47 +317,51 @@ class TestScriptManager(object, metaclass=Singleton):
     def available_test_suites(self) -> dict:
         return self.test_collections
 
-    def validate_test_selection(self, selection: TestSelection) -> None:
-        for selected_collection_name in selection.keys():
+    def validate_test_selection(self, selection: SelectedTests) -> None:
+        for selected_collection in selection.collections:
+            collection_name = selected_collection.collection_name
+
             # Check collection is in test_collections
-            if selected_collection_name not in self.test_collections.keys():
+            if collection_name not in self.test_collections.keys():
                 raise TestCollectionNotFound(
                     "Could not find selected test collection with name: "
-                    + selected_collection_name
+                    + collection_name
                 )
 
             self.__validate_test_suite_selection_in_collection(
-                selection=selection[selected_collection_name],
-                collection=self.test_collections[selected_collection_name],
+                selection=selected_collection.test_suites,
+                collection=self.test_collections[collection_name],
             )
 
     def __validate_test_suite_selection_in_collection(
         self,
-        selection: TestSuiteSelection,
+        selection: list[SelectedTestSuite],
         collection: TestCollectionDeclaration,
     ) -> None:
-        for selected_test_suite_id in selection.keys():
-            if selected_test_suite_id not in collection.test_suites.keys():
+        for selected_test_suite in selection:
+            suite_id = selected_test_suite.public_id
+
+            if suite_id not in collection.test_suites.keys():
                 raise TestSuiteNotFound(
                     "Could not find selected test suite with public id: "
-                    + str(selected_test_suite_id)
+                    + str(suite_id)
                 )
 
             self.__validate_test_case_selection_in_collection(
-                selection=selection[selected_test_suite_id],
-                collection=collection.test_suites[selected_test_suite_id],
+                selection=selected_test_suite.test_cases,
+                collection=collection.test_suites[suite_id],
             )
 
     def __validate_test_case_selection_in_collection(
         self,
-        selection: TestCaseSelection,
+        selection: list[SelectedTestCase],
         collection: TestSuiteDeclaration,
     ) -> None:
-        for selected_test_case_id in selection.keys():
-            if selected_test_case_id not in collection.test_cases.keys():
+        for selected_test_case in selection:
+            if selected_test_case.public_id not in collection.test_cases.keys():
                 raise TestCaseNotFound(
                     "Could not find selected test case with public id: "
-                    + str(selected_test_case_id)
+                    + str(selected_test_case.public_id)
                 )
 
 

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from app import crud, models
 from app.models import TestRunExecution
 from app.models.test_enums import TestStateEnum
-from app.schemas import TestSelection
+from app.schemas import SelectedTests
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.tests.utils.project import create_random_project
 
@@ -80,7 +80,7 @@ def create_random_test_run_execution_archived(
 
 
 def create_random_test_run_execution(
-    db: Session, selected_tests: Optional[TestSelection] = {}, **kwargs: Any
+    db: Session, selected_tests: SelectedTests, **kwargs: Any
 ) -> models.TestRunExecution:
     test_run_execution_dict = random_test_run_execution_dict(**kwargs)
 
