@@ -99,9 +99,10 @@ DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
 # Websocket runner
 BACKEND_ROOT = Path(__file__).parents[2]
-YAML_TESTS_PATH_BASE = BACKEND_ROOT / Path("test_collections/yaml_tests/")
+TEST_COLLECTION_SDK_CHECKOUT_PATH = BACKEND_ROOT / Path("test_collections/sdk_tests/sdk_checkout/")
+YAML_TESTS_PATH_BASE = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path("yaml_tests/")
 YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
-XML_SPEC_DEFINITION_PATH = YAML_TESTS_PATH_BASE / Path(
+XML_SPEC_DEFINITION_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
     "sdk_runner/specifications/chip/"
 )
 

@@ -38,9 +38,8 @@ from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 #        - Manual
 ###
 
-SDK_YAML_PATH = Path(__file__).parent / "yaml" / "sdk"
+SDK_YAML_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/yaml_tests/yaml/sdk")
 SDK_YAML_TEST_FOLDER = YamlTestFolder(path=SDK_YAML_PATH, filename_pattern="Test_TC*")
-
 
 def _init_test_suites(yaml_version: str) -> dict[SuiteType, YamlSuiteDeclaration]:
     return {

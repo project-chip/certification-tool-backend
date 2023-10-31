@@ -153,7 +153,11 @@ class ManualLogUploadStep(TestStep, UserPromptSupport):
         logger.info("---- Start of Manual Log ----")
         with file.file as f:
             for line in f:
-                logger.info(line.decode("utf-8").strip())
+                try:
+                    logger.info(line.decode("utf-8").strip())
+                except UnicodeDecodeError:
+                    logger.warning("WARNING: The following line contained invalid UTF-8. Some content was replaced with: �")
+                    logger.info(line.decode("utf-8", errors='replace').strip())
         logger.info("---- End of Manual Log ----")
 
 
