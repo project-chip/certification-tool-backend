@@ -16,13 +16,13 @@ set -e
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-# Usage: ./scripts/fetch_sdk_yaml_tests.sh [sdk path]
+# Usage: ./test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh [sdk path]
 # 
 # When an SDK path is supplied, the SDK_SHA from .env is ignored.
 # Otherwise a temporary checkout of matter sdk will be made.
 
 # Paths
-ROOT_DIR=$(realpath $(dirname "$0")/..)
+ROOT_DIR=$(realpath $(dirname "$0")/../..)
 TEST_YAML_LOCK_PATH="$ROOT_DIR/.lock-test-yaml"
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"

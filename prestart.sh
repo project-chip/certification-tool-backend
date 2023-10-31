@@ -25,4 +25,4 @@ alembic upgrade head
 python ./app/initial_data.py
 
 # Update SDK Tests (YAML and Python Tests)
-./scripts/fetch_sdk_tests_and_runner.sh
+./test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh
