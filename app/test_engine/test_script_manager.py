@@ -86,7 +86,7 @@ class TestScriptManager(object, metaclass=Singleton):
         for test_collection in selected_tests.collections:
             # Lookup selected test collection:
             test_collection_declaration = self.test_collections[
-                test_collection.collection_name
+                test_collection.public_id
             ]
 
             test_suites = self.__pending_test_suites_for_test_collection(
@@ -319,7 +319,7 @@ class TestScriptManager(object, metaclass=Singleton):
 
     def validate_test_selection(self, selection: SelectedTests) -> None:
         for selected_collection in selection.collections:
-            collection_name = selected_collection.collection_name
+            collection_name = selected_collection.public_id
 
             # Check collection is in test_collections
             if collection_name not in self.test_collections.keys():

@@ -36,7 +36,7 @@ class SelectedTestSuite(BaseModel):
 
 
 class SelectedCollection(BaseModel):
-    collection_name: str
+    public_id: str
     test_suites: list[SelectedTestSuite] = []
 
 
