@@ -44,6 +44,7 @@ SDK_YAML_TEST_FOLDER = YamlTestFolder(path=SDK_YAML_PATH, filename_pattern="Test
 CUSTOM_YAML_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/yaml_tests/yaml/custom")
 CUSTOM_YAML_TEST_FOLDER = YamlTestFolder(path=CUSTOM_YAML_PATH, filename_pattern="Test_TC*")
 
+
 def _init_test_suites(yaml_version: str) -> dict[SuiteType, YamlSuiteDeclaration]:
     return {
         SuiteType.MANUAL: YamlSuiteDeclaration(
