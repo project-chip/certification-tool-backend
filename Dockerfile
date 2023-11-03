@@ -51,7 +51,9 @@ RUN pip install psycopg2_binary==2.9.1
 RUN pip install build lark stringcase
 
 # Install Poetry
-RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python - && \
+ENV POETRY_VERSION=1.6.1
+ENV POETRY_HOME=/opt/poetry 
+RUN curl -sSL https://install.python-poetry.org | python3 - && \
     cd /usr/local/bin && \
     ln -s /opt/poetry/bin/poetry && \
     poetry config virtualenvs.create false
@@ -69,8 +71,11 @@ RUN npm install -g cspell@latest
 # Copy poetry dependecy files and install dependencies
 # We copy install dependencies before copying all app source to reuse the dependency install step in docker.
 COPY ./pyproject.toml ./poetry.lock* /app/
-ARG INSTALL_DEV=false
+# ARG INSTALL_DEV=false
 RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --no-dev ; fi"
+
+# # Copy Source files
+COPY ./app /app
 
 # Run the start script, it will check for an /app/prestart.sh script (e.g. for migrations)
 # And then will start Gunicorn with Uvicorn
