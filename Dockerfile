@@ -75,7 +75,7 @@ COPY ./pyproject.toml ./poetry.lock* /app/
 RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --no-dev ; fi"
 
 # # Copy Source files
-COPY ./app /app
+COPY . /app
 
 # Run the start script, it will check for an /app/prestart.sh script (e.g. for migrations)
 # And then will start Gunicorn with Uvicorn
