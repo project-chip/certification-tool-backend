@@ -77,6 +77,11 @@ RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; els
 # # Copy Source files
 COPY . /app
 
+# Record git SHA
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
+RUN echo $GIT_SHA > .sha_information
+
 # Run the start script, it will check for an /app/prestart.sh script (e.g. for migrations)
 # And then will start Gunicorn with Uvicorn
 CMD ["/start.sh"]

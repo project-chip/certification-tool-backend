@@ -18,25 +18,34 @@
 
 ME=$(basename "$0")
 ROOT_DIR=$(realpath $(dirname "$0")/..)
-
 cd $ROOT_DIR
+
+DEFAULT_IMAGE=csa-certification-tool-backend
 
 
 GHCR_ORG="ghcr.io"
 ORG=${DOCKER_BUILD_ORG:-project-chip}
 
-# directory name is
-IMAGE=${DOCKER_BUILD_IMAGE:-csa-certification-tool-backend}
+# Latest commit hash
+GIT_SHA=$(git rev-parse --short HEAD)
+
+# If working copy has changes, append `-local` to hash
+GIT_DIFF=$(git diff -s --exit-code || echo "-local")
+if [[ $GIT_DIFF ]]; then
+  echo "  🔴 Git repo has changes. Please commit all changes before publishing."
+fi
+GIT_REV=$GIT_SHA$GIT_DIFF
+echo "$GIT_REV"
+
+
+IMAGE=${DOCKER_BUILD_IMAGE:-$DEFAULT_IMAGE}
 
 # version
-VERSION=${DOCKER_BUILD_VERSION:-$(git rev-parse --short HEAD)}
+VERSION=${DOCKER_BUILD_VERSION:-$GIT_REV}
 
 # verify that repo is clean
 DIRTY=`git status --porcelain --untracked-files=no`
-if [[ $DIRTY ]]; then
-  echo "  🔴 Git repo dirty. Please commit all changes before publishing."
-  VERSION=$VERSION-DIRTY
-fi
+
 
 # help
 [[ ${*/--help//} != "${*}" ]] && {
@@ -73,7 +82,7 @@ fi
 
 # Don't run `docker build` and `docker image prune` when `--skip-build` in arguments
 [[ ${*/--skip-build//} != "${*}" ]] || {
-    docker build "${BUILD_ARGS[@]}" --build-arg TARGETPLATFORM="$TARGET_PLATFORM_TYPE" --build-arg VERSION="$VERSION" -t "$GHCR_ORG/$ORG/$IMAGE:$VERSION" .
+    docker build "${BUILD_ARGS[@]}" --build-arg TARGETPLATFORM="$TARGET_PLATFORM_TYPE"  --build-arg GIT_SHA="$GIT_REV" --build-arg VERSION="$VERSION" -t "$GHCR_ORG/$ORG/$IMAGE:$VERSION" .
     docker image prune --force
 }
 
@@ -87,9 +96,9 @@ fi
 }
 
 [[ ${*/--push//} != "${*}" ]] && {
-    [[ $DIRTY ]] && {
-        die "Don't push image for with local changes"
-    }
+    if [[ $GIT_DIFF ]]; then
+        die "Don't push image with local changes"
+    fi
     docker push "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION"
     [[ ${*/--latest//} != "${*}" ]] && {
         docker push "$GHCR_ORG"/"$ORG"/"$IMAGE":latest
