@@ -93,11 +93,16 @@ DOCKER_LOGS_PATH = "/logs"
 LOCAL_PAA_CERTS_PATH = Path("/var/paa-root-certs")
 DOCKER_PAA_CERTS_PATH = "/paa-root-certs"
 
+# Credentials Development mount
+LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
+DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
+
 # Websocket runner
 BACKEND_ROOT = Path(__file__).parents[2]
-YAML_TESTS_PATH_BASE = BACKEND_ROOT / Path("test_collections/yaml_tests/")
+TEST_COLLECTION_SDK_CHECKOUT_PATH = BACKEND_ROOT / Path("test_collections/sdk_tests/sdk_checkout/")
+YAML_TESTS_PATH_BASE = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path("yaml_tests/")
 YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
-XML_SPEC_DEFINITION_PATH = YAML_TESTS_PATH_BASE / Path(
+XML_SPEC_DEFINITION_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
     "sdk_runner/specifications/chip/"
 )
 
@@ -155,6 +160,10 @@ class ChipTool(metaclass=Singleton):
             },
             LOCAL_PAA_CERTS_PATH: {
                 "bind": DOCKER_PAA_CERTS_PATH,
+                "mode": "ro",
+            },
+            LOCAL_CREDENTIALS_DEVELOPMENT_PATH: {
+                "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
                 "mode": "ro",
             },
         },
@@ -385,6 +394,12 @@ class ChipTool(metaclass=Singleton):
         if self.__chip_tool_container is not None:
             container_manager.destroy(self.__chip_tool_container)
         self.__chip_tool_container = None
+
+    async def start_runner(self) -> None:
+        await self.__test_harness_runner.start()
+
+    async def stop_runner(self) -> None:
+        await self.__test_harness_runner.stop()
 
     def send_command(
         self,

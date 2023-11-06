@@ -178,7 +178,7 @@ class CRUDTestRunExecution(
 
         test_run_execution = super().create(db=db, obj_in=obj_in)
 
-        # https://github.com/chip-csg/chip-certification-tool-backend/issues/103
+        # https://github.com/project-chip/certification-tool/issues/14
         # TODO: while we change the API. selected tests can come from two places:
         # 1. Pass in directly
         # 2. from the optional test_run_config

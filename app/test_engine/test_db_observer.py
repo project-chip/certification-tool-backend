@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from datetime import datetime
+from queue import Empty, Queue
 from typing import Callable, Generator, Union
 
 from loguru import logger
@@ -37,6 +38,15 @@ class TestDBObserver(Observer):
         self, db_generator: Callable[[], Generator[Session, None, None]] = get_db
     ) -> None:
         self.__db_generator = db_generator
+        self.data_queue: Queue = Queue()
+
+    def apply_updates(self) -> None:
+        while not self.data_queue.empty():
+            try:
+                data = self.data_queue.get(timeout=0.1)
+                self.__save(data)
+            except Empty:
+                pass
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -64,7 +74,7 @@ class TestDBObserver(Observer):
         if self.isCompleted(observable.state):
             test_run_execution.completed_at = datetime.now()
 
-        self.__save(test_run_execution)
+        self.data_queue.put(test_run_execution)
 
     def __onTestSuiteUpdate(self, observable: "TestSuite") -> None:
         logger.debug("Test Suite Observer received", observable)
@@ -79,7 +89,7 @@ class TestDBObserver(Observer):
             if self.isCompleted(observable.state):
                 observable.test_suite_execution.completed_at = datetime.now()
 
-            self.__save(observable.test_suite_execution)
+            self.data_queue.put(observable.test_suite_execution)
 
     def __onTestCaseUpdate(self, observable: "TestCase") -> None:
         logger.debug("Test Case Observer received", observable)
@@ -94,7 +104,7 @@ class TestDBObserver(Observer):
             if self.isCompleted(observable.state):
                 observable.test_case_execution.completed_at = datetime.now()
 
-            self.__save(observable.test_case_execution)
+            self.data_queue.put(observable.test_case_execution)
 
     def __onTestStepUpdate(self, observable: "TestStep") -> None:
         logger.debug("Test Step Observer received", observable)
@@ -111,7 +121,7 @@ class TestDBObserver(Observer):
             if self.isCompleted(observable.state):
                 observable.test_step_execution.completed_at = datetime.now()
 
-            self.__save(observable.test_step_execution)
+            self.data_queue.put(observable.test_step_execution)
 
     def __save(
         self,

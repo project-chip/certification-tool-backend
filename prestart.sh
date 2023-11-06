@@ -24,5 +24,5 @@ alembic upgrade head
 # Create initial data in DB
 python ./app/initial_data.py
 
-# Update SDK YAML tests
-./scripts/fetch_sdk_yaml_tests_and_runner.sh
+# Update SDK Tests (YAML and Python Tests)
+./test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh

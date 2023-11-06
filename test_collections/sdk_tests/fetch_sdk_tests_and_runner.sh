@@ -16,18 +16,19 @@ set -e
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-# Usage: ./scripts/fetch_sdk_yaml_tests.sh [sdk path]
+# Usage: ./test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh [sdk path]
 # 
 # When an SDK path is supplied, the SDK_SHA from .env is ignored.
 # Otherwise a temporary checkout of matter sdk will be made.
 
 # Paths
-ROOT_DIR=$(realpath $(dirname "$0")/..)
+ROOT_DIR=$(realpath $(dirname "$0")/../..)
 TEST_YAML_LOCK_PATH="$ROOT_DIR/.lock-test-yaml"
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
 
 SDK_YAML_PATH="src/app/tests/suites/certification"
+SDK_PYTHON_SCRIPT_PATH="src/python_testing"
 SDK_SCRIPTS_PATH="scripts/"
 SDK_EXAMPLE_CHIP_TOOL_PATH="examples/chip-tool"
 SDK_EXAMPLE_PLACEHOLDER_PATH="examples/placeholder"
@@ -36,13 +37,22 @@ SDK_DATA_MODEL_PATH="src/app/zap-templates/zcl/data-model/chip"
 ENV_FILE="$ROOT_DIR/.env"
 
 TEST_COLLECTIONS_PATH="$ROOT_DIR/test_collections"
-YAML_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_PATH/yaml_tests"
+TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$TEST_COLLECTIONS_PATH/sdk_tests/sdk_checkout"
+
+
+# YAML Files
+YAML_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/yaml_tests"
 YAML_DIR_YAML_TEST_COLLECTION_PATH="$YAML_TEST_COLLECTION_PATH/yaml"
 SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH="$YAML_DIR_YAML_TEST_COLLECTION_PATH/sdk"
-SDK_YAML_VERSION="$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH/.version"
+
+# Python Testing Files
+PYTHON_TESTING_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/python_testing"
+PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH="$PYTHON_TESTING_TEST_COLLECTION_PATH/scripts/sdk"
+
+CURRENT_SDK_CHECKOUT_VERSION="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/.version"
 
 install_matter_wheels () {
-  pip install ${YAML_TEST_COLLECTION_PATH}/sdk_runner/*.whl --force-reinstall
+  pip install ${TEST_COLLECTIONS_SDK_CHECKOUT_PATH}/sdk_runner/*.whl --force-reinstall
 }
 
 for arg in "$@"
@@ -66,21 +76,21 @@ done
 if [[ -v SDK_PATH ]]
 then
     echo "Using custom SDK path: ${SDK_PATH}. Update required"
-    YAML_VERSION="custom-sdk"
+    SDK_CHECKOUT_VERSION="custom-sdk"
 else
     # Get configured SDK_SHA (will default to value in app/core/config.py)
     SDK_SHA=`LOGGING_LEVEL=critical python3 -c "from app.core.config import settings; print(settings.SDK_SHA)"`
     if [[ $FORCE_UPDATE -eq 1 ]]
     then 
         echo "Update is forced."
-        YAML_VERSION=$SDK_SHA
+        SDK_CHECKOUT_VERSION=$SDK_SHA
     elif [ -f "$TEST_YAML_LOCK_PATH" ]
     then 
         echo "Test yaml are locked by '.lock-test-yaml', remove file to update."
         exit 0
-    elif [ ! -f "$SDK_YAML_VERSION" ] || [[ $(< "$SDK_YAML_VERSION") != "$SDK_SHA" ]]
+    elif [ ! -f "$CURRENT_SDK_CHECKOUT_VERSION" ] || [[ $(< "$CURRENT_SDK_CHECKOUT_VERSION") != "$SDK_SHA" ]]
     then    echo "Current version of test yaml needs to be updated to SDK: $SDK_SHA"
-        YAML_VERSION=$SDK_SHA
+        SDK_CHECKOUT_VERSION=$SDK_SHA
     else
         echo "Current version of test yaml are up to date with SDK: $SDK_SHA"
         # Need to install wheels after docker restart.
@@ -97,7 +107,7 @@ then
     git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $TMP_SDK_FOLDER
     cd $TMP_SDK_FOLDER
     git sparse-checkout init
-    git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_EXAMPLE_PLACEHOLDER_PATH $SDK_EXAMPLE_CHIP_TOOL_PATH $SDK_DATA_MODEL_PATH
+    git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_EXAMPLE_PLACEHOLDER_PATH $SDK_EXAMPLE_CHIP_TOOL_PATH $SDK_DATA_MODEL_PATH $SDK_PYTHON_SCRIPT_PATH
     git checkout -q $SDK_SHA
     SDK_PATH="$TMP_SDK_PATH"
 fi
@@ -112,12 +122,20 @@ fi
 if [ -d "$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH" ]; then rm -Rf $SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH; fi
 mkdir -p $SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH
 
+# Clear old Python Testing folder
+if [ -d "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH" ]; then rm -Rf $PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH; fi
+mkdir -p $PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH
+
 # Records SDK Version
-echo "$YAML_VERSION" > "$SDK_YAML_VERSION"
+echo "$SDK_CHECKOUT_VERSION" > "$CURRENT_SDK_CHECKOUT_VERSION"
 
 # Copy SDK YAMLs and other (including default pics)
 cd "$SDK_PATH/$SDK_YAML_PATH"
 cp * "$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH/"
+
+# Copy SDK Python Testing folder
+cd "$SDK_PATH/$SDK_PYTHON_SCRIPT_PATH"
+cp -R * "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH/"
 
 # Delete deprecated codegenerated python wrappers for yaml 
 rm -Rf "$TEST_COLLECTIONS_PATH/manual_tests"
@@ -127,7 +145,7 @@ rm -Rf "$TEST_COLLECTIONS_PATH/app1_tests"
 ###
 # Extract sdk runner and dependencies
 ###
-EXTRACTION_ROOT="$YAML_TEST_COLLECTION_PATH/sdk_runner"
+EXTRACTION_ROOT="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/sdk_runner"
 
 # Remove existing extraction
 rm -rf ${EXTRACTION_ROOT}
