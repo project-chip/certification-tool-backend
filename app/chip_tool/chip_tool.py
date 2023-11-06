@@ -99,7 +99,9 @@ DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
 # Websocket runner
 BACKEND_ROOT = Path(__file__).parents[2]
-TEST_COLLECTION_SDK_CHECKOUT_PATH = BACKEND_ROOT / Path("test_collections/sdk_tests/sdk_checkout/")
+TEST_COLLECTION_SDK_CHECKOUT_PATH = BACKEND_ROOT / Path(
+    "test_collections/sdk_tests/sdk_checkout/"
+)
 YAML_TESTS_PATH_BASE = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path("yaml_tests/")
 YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
 XML_SPEC_DEFINITION_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
@@ -130,6 +132,7 @@ class ChipToolUnknownTestType(Exception):
 class ChipToolTestType(str, Enum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
+    PTYHON_TEST = "python-test"
 
 
 class ChipTool(metaclass=Singleton):
@@ -263,6 +266,8 @@ class ChipTool(metaclass=Singleton):
         elif test_type == ChipToolTestType.CHIP_APP:
             prefix = CHIP_APP_EXE
             command = ["--interactive", "--port 9002"]
+        elif test_type == ChipToolTestType.PTYHON_TEST:
+            pass
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")
 
@@ -578,7 +583,7 @@ class ChipTool(metaclass=Singleton):
 
         if test_type == ChipToolTestType.CHIP_TOOL:
             test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
-        else:
+        elif test_type == ChipToolTestType.CHIP_APP:
             test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
 
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)
@@ -590,6 +595,9 @@ class ChipTool(metaclass=Singleton):
             adapter = ChipToolAdapter.Adapter(parser_config.definitions)
         elif test_type == ChipToolTestType.CHIP_APP:
             adapter = ChipAppAdapter.Adapter(parser_config.definitions)
+        elif test_type == ChipToolTestType.PTYHON_TEST:
+            # TODO - run_test for python_test must be updated
+            pass
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")
 

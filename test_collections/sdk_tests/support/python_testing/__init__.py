@@ -13,5 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .support.yaml_tests import sdk_collection
-from .support.python_testing import sdk_python_collection
+from app.test_engine.models.test_declarations import TestCollectionDeclaration
+
+from .sdk_python_test_tests import sdk_python_test_collection
+
+# Test engine will auto load TestCollectionDeclarations declared inside the package
+# initializer
+sdk_python_collection: TestCollectionDeclaration = sdk_python_test_collection()
