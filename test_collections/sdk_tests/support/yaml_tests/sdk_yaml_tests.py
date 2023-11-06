@@ -124,7 +124,7 @@ def sdk_yaml_test_collection(
 def custom_yaml_test_collection(
     yaml_test_folder: YamlTestFolder = CUSTOM_YAML_TEST_FOLDER,
 ) -> YamlCollectionDeclaration:
-    """Declare a new collection of test suites with the 3 test suites."""
+    """Declare a new collection of test suites."""
     collection = YamlCollectionDeclaration(
         name="Custom YAML Tests", folder=yaml_test_folder
     )
@@ -132,15 +132,13 @@ def custom_yaml_test_collection(
     files = yaml_test_folder.yaml_file_paths()
     suites = _parse_all_yaml(yaml_files=files, yaml_version=None)
 
-    has_valid_test_case = False
     for suite in suites:
         if not suite.test_cases:
             continue
-        has_valid_test_case = True
         suite.sort_test_cases()
         collection.add_test_suite(suite)
 
-    if not has_valid_test_case:
+    if not collection.test_suites:
         return None
 
     return collection
