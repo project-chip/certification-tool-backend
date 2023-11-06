@@ -87,13 +87,17 @@ fi
     docker image prune --force
 }
 
-[[ ${*/--latest//} != "${*}" ]] && {
-    docker tag "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION" "$GHCR_ORG"/"$ORG"/"$IMAGE":latest
-}
-
 [[ ${*/--squash//} != "${*}" ]] && {
     command -v docker-squash >/dev/null &&
-        docker-squash "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION" -t "$GHCR_ORG"/"$ORG"/"$IMAGE":latest
+        docker-squash "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION" -t "$GHCR_ORG"/"$ORG"/"$IMAGE":squashed
+}
+
+[[ ${*/--latest//} != "${*}" ]] && {
+    if [[ ${*/--squash//} != "${*}" ]]; then
+        docker tag "$GHCR_ORG"/"$ORG"/"$IMAGE":squashed "$GHCR_ORG"/"$ORG"/"$IMAGE":latest
+    else
+        docker tag "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION" "$GHCR_ORG"/"$ORG"/"$IMAGE":latest
+    fi
 }
 
 [[ ${*/--push//} != "${*}" ]] && {
@@ -110,6 +114,9 @@ fi
     docker rmi -f "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION"
     [[ ${*/--latest//} != "${*}" ]] && {
         docker rmi -f "$GHCR_ORG"/"$ORG"/"$IMAGE":latest
+    }
+    [[ ${*/--squash//} != "${*}" ]] && {
+        docker rmi -f "$GHCR_ORG"/"$ORG"/"$IMAGE":squashed
     }
 }
 
