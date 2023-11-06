@@ -17,7 +17,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from .test_selection import TestSelection
+from .test_selection import SelectedTests
 
 
 # Shared properties
@@ -25,7 +25,7 @@ class TestRunConfigBase(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
     name: str
     dut_name: str
-    selected_tests: TestSelection = {}
+    selected_tests: SelectedTests = SelectedTests()
 
 
 # Properties additional fields on  creation

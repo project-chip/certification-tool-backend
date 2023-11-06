@@ -13,16 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Dict
-
 from pydantic import BaseModel
-
-# {<TestCase.public_id>:iterations}
-TestCaseSelection = Dict[str, int]
-# {<TestSuite.public_id>:selected_test_cases}
-TestSuiteSelection = Dict[str, TestCaseSelection]
-# {<TestCollection.name>:selected_test_suites}
-TestSelection = Dict[str, TestSuiteSelection]
 
 
 class SelectedTestCase(BaseModel):
