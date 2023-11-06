@@ -83,7 +83,7 @@ fi
 
 # Don't run `docker build` and `docker image prune` when `--skip-build` in arguments
 [[ ${*/--skip-build//} != "${*}" ]] || {
-    docker build "${BUILD_ARGS[@]}" --build-arg TARGETPLATFORM="$TARGET_PLATFORM_TYPE"  --build-arg GIT_SHA="$GIT_REV" --build-arg VERSION="$VERSION" -t "$GHCR_ORG/$ORG/$IMAGE:$VERSION" .
+    docker build "${BUILD_ARGS[@]}" --build-arg TARGETPLATFORM="$TARGET_PLATFORM_TYPE"  --build-arg GIT_SHA="$GIT_REV" --build-arg VERSION="$VERSION" -t "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION" .
     docker image prune --force
 }
 
