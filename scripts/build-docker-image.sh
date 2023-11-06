@@ -57,10 +57,11 @@ DIRTY=`git status --porcelain --untracked-files=no`
   Options:
    --no-cache   passed as a docker build argument
    --latest     update latest to the current built version (\"$VERSION\")
-   --push       push image(s) to ghcr.io (requires docker login for \"$ORG\")
+   --push       push image(s) to $GHCR_ORG (requires docker login for \"$ORG\")
    --skip-build skip the build/prune step
    --help       get this message
-   --squash     squash docker layers before push them to docker.io (requires docker-squash python module)
+   --squash     squash docker layers before push them to $GHCR_ORG (requires docker-squash python module)
+   --clear      remove images after after publishing them
 
 "
     exit 0
