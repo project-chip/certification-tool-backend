@@ -3,10 +3,8 @@
 // If you want to run as a non-root user in the container, see .devcontainer/docker-compose.yml.
 {
 	"name": "Backend: CHIP Test Harness",
-	"initializeCommand": "bash .devcontainer/initializeCommands.sh", // required to get the environment variables set for the sub-folder backend
+	// "initializeCommand": "bash .devcontainer/initializeCommands.sh", // required to get the environment variables set for the sub-folder backend
 	"dockerComposeFile": [
-		"../docker-compose.yml",
-		"../docker-compose.override.yml",
 		"docker-compose.yml"
 	],
 	// The 'service' property is the name of the service for the container that VS Code should
