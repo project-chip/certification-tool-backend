@@ -31,9 +31,7 @@ def test_yaml_folder_version() -> None:
     with mock.patch(
         "test_collections.sdk_tests.support.yaml_tests.models.yaml_test_folder.open",
         new=mock.mock_open(read_data=version_file_content),
-    ), mock.patch.object(
-        target=Path, attribute="exists", return_value=True
-    ) as _:
+    ), mock.patch.object(target=Path, attribute="exists", return_value=True) as _:
         yaml_folder = YamlTestFolder(test_yaml_path)
 
         assert yaml_folder.version == version_file_content
@@ -41,9 +39,7 @@ def test_yaml_folder_version() -> None:
 
 def test_yaml_folder_version_missing() -> None:
     expected_version = "Unknown"
-    with mock.patch.object(
-        target=Path, attribute="exists", return_value=False
-    ) as _:
+    with mock.patch.object(target=Path, attribute="exists", return_value=False) as _:
         yaml_folder = YamlTestFolder(test_yaml_path)
         assert yaml_folder.version == expected_version
 
