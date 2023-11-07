@@ -4,10 +4,12 @@ on:
   pull_request:
     branches:
       - develop
+      - main
       - "release/**"
   push:
     branches:
       - develop
+      - main
       - "release/**"
 
 jobs:
@@ -40,9 +42,8 @@ jobs:
           types-pyyaml==6.0.12.10
           types-retry==0.9.9.4
       - name: Run linters
-        uses: wearerequired/lint-action@v1
+        uses: wearerequired/lint-action@v2
         with:
-          github_token: ${{ secrets.github_token }}
           # Enable linters
           black: true
           flake8: true
