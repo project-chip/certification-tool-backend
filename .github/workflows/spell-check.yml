@@ -1,11 +1,11 @@
 name: "Check spelling"
 on: # rebuild any PRs and main branch changes
-  pull_request:
-    branches:
-      - develop
+  pull_request_target:
+    types: [opened, synchronize, reopened]
   push:
     branches:
       - develop
+      - main
 jobs:
   spellcheck: # run the action
     runs-on: ubuntu-latest

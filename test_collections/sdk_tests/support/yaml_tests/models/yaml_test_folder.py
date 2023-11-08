@@ -21,6 +21,7 @@ UNKNOWN_version = "Unknown"
 VERSION_FILE_FILENAME = ".version"
 
 
+
 class YamlTestFolder:
     """Representing a folder with Test YAML files.
 
