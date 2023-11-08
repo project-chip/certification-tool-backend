@@ -34,6 +34,7 @@ from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
 VERSION_FILE_FILENAME = ".version"
 VERSION_FILE_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/")
 
+
 @pytest.fixture
 def yaml_collection() -> YamlCollectionDeclaration:
     test_sdk_yaml_path = Path(__file__).parent / "test_yamls"
