@@ -99,11 +99,12 @@
         "*.ini",
         "*.toml",
         "docker-compose*",
-        "*.dockerfile",
+        "Dockerfile",
         "*.pyc",
         ".vscode/*",
         "test_collections/sdk_tests/sdk_checkout",
-        "sdk_patch"
+        "sdk_patch",
+        ".devcontainer"
     ],
     "enableFiletypes": [
         "shellscript"

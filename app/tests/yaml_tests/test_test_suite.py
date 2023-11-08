@@ -127,9 +127,11 @@ async def test_manual_suite_setup_cleanup() -> None:
     with mock.patch.object(
         target=test_engine_logger, attribute="info"
     ) as logger_info, mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models.test_suite.YamlTestSuite.setup"
+        "test_collections.sdk_tests.support.yaml_tests.models."
+        "test_suite.YamlTestSuite.setup"
     ) as _, mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models.test_suite.YamlTestSuite.cleanup"
+        "test_collections.sdk_tests.support.yaml_tests.models."
+        "test_suite.YamlTestSuite.cleanup"
     ) as _:
         await suite_instance.setup()
         logger_info.assert_called_once()
@@ -154,7 +156,8 @@ async def test_chip_tool_suite_setup() -> None:
         suite_instance = suite_class(TestSuiteExecution())
 
         with mock.patch(
-            "test_collections.sdk_tests.support.yaml_tests.models.test_suite.YamlTestSuite.setup"
+            "test_collections.sdk_tests.support.yaml_tests.models."
+            "test_suite.YamlTestSuite.setup"
         ) as yaml_suite_setup, mock.patch(
             "app.chip_tool.test_suite.ChipToolSuite.setup"
         ) as chip_tool_suite_setup:

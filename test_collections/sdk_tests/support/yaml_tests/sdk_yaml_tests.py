@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from pathlib import Path
+from typing import Optional
 
 from loguru import logger
 
@@ -128,14 +129,14 @@ def sdk_yaml_test_collection(
 
 def custom_yaml_test_collection(
     yaml_test_folder: YamlTestFolder = CUSTOM_YAML_TEST_FOLDER,
-) -> YamlCollectionDeclaration:
+) -> Optional[YamlCollectionDeclaration]:
     """Declare a new collection of test suites."""
     collection = YamlCollectionDeclaration(
         name="Custom YAML Tests", folder=yaml_test_folder
     )
 
     files = yaml_test_folder.yaml_file_paths()
-    suites = _parse_all_yaml(yaml_files=files, yaml_version=None)
+    suites = _parse_all_yaml(yaml_files=files, yaml_version="custom")
 
     for suite in suites:
         if not suite.test_cases:
