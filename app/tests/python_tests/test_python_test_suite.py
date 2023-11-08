@@ -23,8 +23,8 @@ from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
     ChipToolPythonTestSuite,
-    SuiteType,
     PythonTestSuite,
+    SuiteType,
 )
 
 
@@ -48,7 +48,9 @@ def test_python_test_suite_python_version() -> None:
     python_test_version = "best_version"
     # Create a subclass of PythonTestSuite
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=SuiteType.AUTOMATED, name="SomeSuite", python_test_version=python_test_version
+        suite_type=SuiteType.AUTOMATED,
+        name="SomeSuite",
+        python_test_version=python_test_version,
     )
 
     assert suite_class.python_test_version == python_test_version
@@ -96,7 +98,9 @@ async def test_chip_tool_suite_setup() -> None:
     both PythonTestSuite and ChipToolSuite."""
 
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=SuiteType.AUTOMATED, name="SomeSuite", python_test_version="Some version"
+        suite_type=SuiteType.AUTOMATED,
+        name="SomeSuite",
+        python_test_version="Some version",
     )
 
     suite_instance = suite_class(TestSuiteExecution())

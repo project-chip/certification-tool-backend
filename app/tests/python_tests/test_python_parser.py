@@ -69,7 +69,9 @@ def test_python_file_parser_throws_pythonparserexception() -> None:
         try:
             parse_python_test(file_path)
         except PythonParserException as e:
-            assert "Test Case file does not have methods desc_file or steps_file" == str(e)
+            assert (
+                "Test Case file does not have methods desc_file or steps_file" == str(e)
+            )
 
 
 def test_python_file_parser() -> None:

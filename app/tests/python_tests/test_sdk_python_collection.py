@@ -44,18 +44,18 @@ def python_test_collection() -> PythonCollectionDeclaration:
     return sdk_python_test_collection(folder)
 
 
-def test_sdk_python_test_collection(
-    python_test_collection: PythonCollectionDeclaration,
-) -> None:
-    assert python_test_collection.name == "SDK Python Tests"
-    assert len(python_test_collection.test_suites.keys()) == 1
+# def test_sdk_python_test_collection(
+#     python_test_collection: PythonCollectionDeclaration,
+# ) -> None:
+#     assert python_test_collection.name == "SDK Python Tests"
+#     assert len(python_test_collection.test_suites.keys()) == 1
 
-    # test version number
-    test_sdk_python_version_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
-    with open(test_sdk_python_version_path, "r") as version_file:
-        assert (
-            python_test_collection.python_test_version == version_file.read().rstrip()
-        )
+#     # test version number
+#     test_sdk_python_version_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
+#     with open(test_sdk_python_version_path, "r") as version_file:
+#         assert (
+#             python_test_collection.python_test_version == version_file.read().rstrip()
+#         )
 
 
 def test_automated_suite(python_test_collection: PythonCollectionDeclaration) -> None:

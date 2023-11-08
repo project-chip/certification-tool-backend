@@ -15,13 +15,15 @@
 #
 from unittest import mock
 
+from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
+    PythonTest,
+)
 from test_collections.sdk_tests.support.python_testing.models.test_declarations import (
     PythonCaseDeclaration,
     PythonSuiteDeclaration,
 )
-from test_collections.sdk_tests.support.python_testing.models.test_suite import SuiteType
-from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
-    PythonTest,
+from test_collections.sdk_tests.support.python_testing.models.test_suite import (
+    SuiteType,
 )
 
 

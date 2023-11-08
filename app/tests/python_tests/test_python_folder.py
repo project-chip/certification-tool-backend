@@ -54,6 +54,8 @@ def test_python_folder_filename_pattern() -> None:
 
         path_glob.reset_mock()
         pattern = "TC_*"
-        python_test_folder = PythonTestFolder(test_python_path, filename_pattern=pattern)
+        python_test_folder = PythonTestFolder(
+            test_python_path, filename_pattern=pattern
+        )
         _ = python_test_folder.python_file_paths()
         path_glob.assert_called_once_with(f"{pattern}.py")

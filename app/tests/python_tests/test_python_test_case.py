@@ -24,13 +24,13 @@ from app.chip_tool.test_case import TestError
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
 from test_collections.sdk_tests.support.python_testing.models import PythonTestCase
-from test_collections.sdk_tests.support.python_testing.models.test_case import (
-    PythonChipToolTestCase,
-)
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     PythonTest,
     PythonTestStep,
     PythonTestType,
+)
+from test_collections.sdk_tests.support.python_testing.models.test_case import (
+    PythonChipToolTestCase,
 )
 
 
@@ -48,7 +48,7 @@ def python_test_instance(
     return PythonTest(
         name=name,
         PICS=PICS,
-        config=config, 
+        config=config,
         steps=steps,
         type=type,
         path=path,
@@ -245,7 +245,9 @@ def test_multiple_steps_for_non_manual() -> None:
 
         # Assert all steps from python test are added
         assert len(instance.test_steps) >= no_steps
-        steps_from_python = [s for s in instance.test_steps if s.name == test_step.label]
+        steps_from_python = [
+            s for s in instance.test_steps if s.name == test_step.label
+        ]
         assert len(steps_from_python) == no_steps
 
 

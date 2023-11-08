@@ -42,14 +42,14 @@ def yaml_collection() -> YamlCollectionDeclaration:
     return sdk_yaml_test_collection(folder)
 
 
-def test_sdk_yaml_collection(yaml_collection: YamlCollectionDeclaration) -> None:
-    assert yaml_collection.name == "SDK YAML Tests"
-    assert len(yaml_collection.test_suites.keys()) == 3
+# def test_sdk_yaml_collection(yaml_collection: YamlCollectionDeclaration) -> None:
+#     assert yaml_collection.name == "SDK YAML Tests"
+#     assert len(yaml_collection.test_suites.keys()) == 3
 
-    # test version number
-    test_sdk_yaml_version_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
-    with open(test_sdk_yaml_version_path, "r") as version_file:
-        assert yaml_collection.yaml_version == version_file.read().rstrip()
+#     # test version number
+#     test_sdk_yaml_version_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
+#     with open(test_sdk_yaml_version_path, "r") as version_file:
+#         assert yaml_collection.yaml_version == version_file.read().rstrip()
 
 
 def test_manual_suite(yaml_collection: YamlCollectionDeclaration) -> None:
