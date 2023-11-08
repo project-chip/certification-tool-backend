@@ -13,45 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from pathlib import Path
-from typing import List
+# type: ignore
+# Ignore mypy type check for this file
 import ast
-from loguru import logger
-from pydantic import ValidationError
+from pathlib import Path
+from typing import List, Tuple
 
-from .python_test_models import PythonTest, PythonTestType, PythonTestStep
+from .python_test_models import PythonTest, PythonTestStep, PythonTestType
+
+ARG_STEP_DESCRIPTION_INDEX = 1
+KEYWORD_IS_COMISSIONING_INDEX = 0
 
 
 class PythonParserException(Exception):
     """Raised when an error occurs during the parser of python file."""
-
-
-def _test_type(test: PythonTest) -> PythonTestType:
-    """Determine the type of a test based on the parsed python.
-
-    This is mainly determined by the number of disabled test steps.
-
-    Args:
-        test (PythonTest): parsed python test
-
-    Returns:
-        TestType:
-            - Manual: All steps disabled
-            - Semi-Automated: some steps are disabled
-            - Automated: no disabled steps
-            - Simulated: Tests where file name have "Simulated"
-    """
-    if test.path is not None and "Simulated" in str(test.path):
-        return PythonTestType.SIMULATED
-
-    steps = test.steps
-
-    # if any step has a UserPrompt, categorize as semi-automated
-    if any(s.command == "UserPrompt" for s in steps):
-        return PythonTestType.SEMI_AUTOMATED
-
-    # Otherwise Automated
-    return PythonTestType.AUTOMATED
 
 
 def parse_python_test(path: Path) -> PythonTest:
@@ -60,92 +35,60 @@ def parse_python_test(path: Path) -> PythonTest:
     This will also annotate parsed python test with it's path and test type.
     """
     python_steps: list[PythonTestStep] = []
-    tc_pics = []
-    tc_config = {}
+    # Currently PICS and config is not configured in Python Testing
+    tc_pics: list = []
+    tc_config: dict = {}
+
+    tc_desc, python_steps = __extract_tcs_info(path)
+
+    if not tc_desc or not python_steps:
+        # The file name from path
+        tc_name = path.name.split(".")[0]
+        raise PythonParserException(
+            f"Test Case {tc_name} does not have methods desc_{tc_name} or steps_{tc_name}"
+        )
+
+    test = PythonTest(name=tc_desc, tests=python_steps, config=tc_config, PICS=tc_pics)
+    test.path = path
+    test.type = PythonTestType.AUTOMATED
+
+    return test
 
 
-    if "ACE_1_3" in str(path): 
-        python_steps = tc_steps(path)
-        tc_desc = tc_description(path)
-        # with open(str(path)) as python_file:
-        #     parsed = ast.parse(python_file.read())
+def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
+    with open(path, "r") as python_file:
+        parsed_python_file = ast.parse(python_file.read())
+        classes = [c for c in parsed_python_file.body if isinstance(c, ast.ClassDef)]
 
-        #     functions = [n for n in parsed.body if isinstance(n, ast.FunctionDef)]
-        #     classes = [n for n in parsed.body if isinstance(n, ast.ClassDef)]
-
-        # print(functions)
-        # print(classes)
-
-    # for function in functions:
-    #     result.append(show_info(function))
-
-        # for step in steps: 
-    # python_steps = tc_steps(path)
-    # tc_desc = tc_description(path)
-
-
-    return PythonTest(
-        name=tc_desc, tests=python_steps, config=tc_config, PICS=tc_pics
-    )
-
-def tc_description(path: Path) -> str:
-    with open(str(path)) as python_file:
-        parsed = ast.parse(python_file.read())
-
-        # functions = [n for n in parsed.body if isinstance(n, ast.FunctionDef)]
-        classes = [n for n in parsed.body if isinstance(n, ast.ClassDef)]
-
-        # for function in functions:
-        #     print(function)
-            # result.append(show_info(function))
-
-        tc_desc = "'"
-        python_steps:List[PythonTestStep] = []
+        tc_desc: str = ""
+        python_steps: List[PythonTestStep] = []
 
         for class_ in classes:
-            methods = [n for n in class_.body if isinstance(n, ast.FunctionDef)]
+            methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
             for method in methods:
                 if "desc_" in method.name:
                     tc_desc = method.body[0].value.value
                 elif "steps_" in method.name:
-                    python_steps = retrieve_steps(method)
-                # desc_TC_ACE_1_3 -> method.body[0].value.value
-                # method.name
-                # print(method)
-                # result.append((class_.name + "." + show_info(method)))
-                # # desc_*
-                # method.body[0].value.value
-                # # steps_*
-                # method.body[0].value.elts[4].args[1].value
+                    python_steps = __retrieve_steps(method)
 
-                # method.body[0].value.elts[0].keywords[0].arg
-                # method.body[0].value.elts[0].keywords[0].value.value
+    return tc_desc, python_steps
 
-    # print(", ".join(result))
-    
-    return ""
 
-def retrieve_steps(method: ast.FunctionDef)-> List[PythonTestStep]:
-    python_steps:List[PythonTestStep] = []
+def __retrieve_steps(method: ast.FunctionDef) -> List[PythonTestStep]:
+    python_steps: List[PythonTestStep] = []
     for step in method.body[0].value.elts:
-        step_name = step.args[1].value
-        step_is_commissioning = False
-        if step.keywords and 'is_commissioning' in step.keywords[0].arg:
-            is_commissioning = step.keywords[0].value.value
+        step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
+        arg_is_commissioning = False
+        if (
+            step.keywords
+            and "is_commissioning" in step.keywords[KEYWORD_IS_COMISSIONING_INDEX].arg
+        ):
+            arg_is_commissioning = step.keywords[
+                KEYWORD_IS_COMISSIONING_INDEX
+            ].value.value
 
         python_steps.append(
-            PythonTestStep(
-                label=step_name, is_commissioning=step_is_commissioning
-            )
+            PythonTestStep(label=step_name, is_commissioning=arg_is_commissioning)
         )
-        
-    return python_steps
 
-# def tc_steps(path: Path) -> List[PythonTestStep]:
-#     python_steps:List[PythonTestStep] = []
-#     python_steps.append(
-#     PythonTestStep(
-#         label="step.description", is_commissioning=False # step.is_commissioning
-#     )
-#     )
-#     return python_steps
+    return python_steps

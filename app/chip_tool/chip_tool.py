@@ -132,7 +132,7 @@ class ChipToolUnknownTestType(Exception):
 class ChipToolTestType(str, Enum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
-    PTYHON_TEST = "python-test"
+    PYTHON_TEST = "python-test"
 
 
 class ChipTool(metaclass=Singleton):
@@ -266,7 +266,7 @@ class ChipTool(metaclass=Singleton):
         elif test_type == ChipToolTestType.CHIP_APP:
             prefix = CHIP_APP_EXE
             command = ["--interactive", "--port 9002"]
-        elif test_type == ChipToolTestType.PTYHON_TEST:
+        elif test_type == ChipToolTestType.PYTHON_TEST:
             pass
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")
@@ -595,8 +595,8 @@ class ChipTool(metaclass=Singleton):
             adapter = ChipToolAdapter.Adapter(parser_config.definitions)
         elif test_type == ChipToolTestType.CHIP_APP:
             adapter = ChipAppAdapter.Adapter(parser_config.definitions)
-        elif test_type == ChipToolTestType.PTYHON_TEST:
-            # TODO - run_test for python_test must be updated
+        elif test_type == ChipToolTestType.PYTHON_TEST:
+            # TODO - run_test() for python_test to be implemented
             pass
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")

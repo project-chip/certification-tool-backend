@@ -75,22 +75,18 @@ class PythonTestCase(TestCase):
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """Dynamically declares a subclass based on the type of Python test."""
-        case_class: Type[PythonTestCase]
-        if test.type == PythonTestType.SEMI_AUTOMATED:
-            case_class = PythonSemiAutomatedChipToolTestCase
-        elif test.type == PythonTestType.SIMULATED:
-            case_class = PythonSimulatedTestCase
-        else:  # Automated
-            case_class = PythonChipToolTestCase
+        case_class: Type[PythonTestCase] = PythonChipToolTestCase
 
-        return case_class.__class_factory(test=test, python_test_version=python_test_version)
+        return case_class.__class_factory(
+            test=test, python_test_version=python_test_version
+        )
 
     @classmethod
     def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """Common class factory method for all subclasses of PythonTestCase."""
         identifier = cls.__test_identifier(test.name)
         class_name = cls.__class_name(identifier)
-        title = cls.__title(identifier=identifier, test_python=test)
+        title = identifier
 
         return type(
             class_name,
@@ -124,31 +120,6 @@ class PythonTestCase(TestCase):
         """Replace all non-alphanumeric characters with _ to make valid class name."""
         return re.sub("[^0-9a-zA-Z]+", "_", identifier)
 
-    @staticmethod
-    def __has_steps_disabled(test_python: PythonTest) -> bool:
-        """If some but not all steps are disabled, return true. False otherwise."""
-        len_disabled_steps = len([s for s in test_python.steps if not s.disabled])
-
-        if len_disabled_steps == 0:
-            return False
-        else:
-            return len_disabled_steps < len(test_python.steps)
-
-    @classmethod
-    def __title(cls, identifier: str, test_python: PythonTest) -> str:
-        """Annotate Title with Semi-automated and Steps Disabled tests in the test
-        title.
-        """
-        title = identifier
-
-        if test_python.type == PythonTestType.SEMI_AUTOMATED:
-            title += " (Semi-automated)"
-
-        if cls.__has_steps_disabled(test_python):
-            title += " (Steps Disabled)"
-
-        return title
-
     def _append_automated_test_step(self, python_test_step: PythonTestStep) -> None:
         """
         Disabled steps are ignored.
@@ -173,28 +144,11 @@ class PythonTestCase(TestCase):
 
 
 class PythonChipToolTestCase(PythonTestCase, ChipToolTest):
-    """Automated test cases using chip-tool."""
+    """Automated Python test cases."""
 
-    test_type = ChipToolTestType.CHIP_TOOL
-
-    def create_test_steps(self) -> None:
-        self.test_steps = [TestStep("Start chip-tool test")]
-        for step in self.python_test.steps:
-            self._append_automated_test_step(step)
-
-
-class PythonSemiAutomatedChipToolTestCase(PythonChipToolTestCase, ChipToolManualPromptTest):
-    """Semi-Automated test cases, need special step for users to attach logs
-    for manual steps, so inheriting from ChipToolManualPromptTest.
-    """
-
-
-class PythonSimulatedTestCase(PythonTestCase, ChipToolTest):
-    """Simulated test cases using chip-app"""
-
-    test_type = ChipToolTestType.CHIP_APP
+    test_type = ChipToolTestType.PYTHON_TEST
 
     def create_test_steps(self) -> None:
-        self.test_steps = [TestStep("Start chip-app test")]
+        self.test_steps = [TestStep("Start Python test")]
         for step in self.python_test.steps:
             self._append_automated_test_step(step)

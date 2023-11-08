@@ -17,15 +17,14 @@ from pathlib import Path
 
 from loguru import logger
 
+from .models.python_test_folder import PythonTestFolder
+from .models.python_test_parser import PythonParserException, parse_python_test
 from .models.test_declarations import (
     PythonCaseDeclaration,
     PythonCollectionDeclaration,
     PythonSuiteDeclaration,
 )
 from .models.test_suite import SuiteType
-from .models.python_test_folder import PythonTestFolder
-from .models.python_test_models import PythonTestType
-from .models.python_test_parser import PythonParserException, parse_python_test
 
 ###
 # This file hosts logic load and parse Python test-cases, located in
@@ -37,10 +36,17 @@ from .models.python_test_parser import PythonParserException, parse_python_test
 #        - Simulated using Chip-App1
 ###
 
-SDK_PYTHON_TEST_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/python_testing/scripts/sdk")
-SDK_PYTHON_TEST_FOLDER = PythonTestFolder(path=SDK_PYTHON_TEST_PATH, filename_pattern="TC*")
+SDK_PYTHON_TEST_PATH = Path(
+    "/app/backend/test_collections/sdk_tests/sdk_checkout/python_testing/scripts/sdk"
+)
+SDK_PYTHON_TEST_FOLDER = PythonTestFolder(
+    path=SDK_PYTHON_TEST_PATH, filename_pattern="TC*"
+)
 
-def _init_test_suites(python_test_version: str) -> dict[SuiteType, PythonSuiteDeclaration]:
+
+def _init_test_suites(
+    python_test_version: str,
+) -> dict[SuiteType, PythonSuiteDeclaration]:
     return {
         SuiteType.AUTOMATED: PythonSuiteDeclaration(
             name="Python Testing Suite",
@@ -54,7 +60,9 @@ def _parse_python_test_to_test_case_declaration(
     python_test_path: Path, python_test_version: str
 ) -> PythonCaseDeclaration:
     python_test = parse_python_test(python_test_path)
-    return PythonCaseDeclaration(test=python_test, python_test_version=python_test_version)
+    return PythonCaseDeclaration(
+        test=python_test, python_test_version=python_test_version
+    )
 
 
 def _parse_all_sdk_python_tests(
@@ -70,17 +78,17 @@ def _parse_all_sdk_python_tests(
     for python_test_file in python_test_files:
         try:
             test_case = _parse_python_test_to_test_case_declaration(
-                python_test_path=python_test_file, python_test_version=python_test_version
+                python_test_path=python_test_file,
+                python_test_version=python_test_version,
             )
 
-            if test_case.test_type == PythonTestType.SIMULATED:
-                suites[SuiteType.SIMULATED].add_test_case(test_case)
-            else:
-                suites[SuiteType.AUTOMATED].add_test_case(test_case)
-        except PythonParserException:
+            suites[SuiteType.AUTOMATED].add_test_case(test_case)
+        except PythonParserException as e:
             # If an exception was raised during parse process, the python file will be
             # ignored and the loop will continue with the next python file
-            logger.error(f"Error while parsing Python File: {python_test_file}")
+            logger.error(
+                f"Error while parsing Python File: {python_test_file} \nError:{e}"
+            )
 
     return list(suites.values())
 
@@ -95,7 +103,9 @@ def sdk_python_test_collection(
 
     files = python_test_folder.python_file_paths()
     version = python_test_folder.version
-    suites = _parse_all_sdk_python_tests(python_test_files=files, python_test_version=version)
+    suites = _parse_all_sdk_python_tests(
+        python_test_files=files, python_test_version=version
+    )
 
     for suite in suites:
         suite.sort_test_cases()

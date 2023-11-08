@@ -19,6 +19,7 @@ UNKNOWN_version = "Unknown"
 VERSION_FILE_FILENAME = ".version"
 VERSION_FILE_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/")
 
+
 class PythonTestFolder:
     """Representing a folder with Test Python files.
 
@@ -31,7 +32,7 @@ class PythonTestFolder:
         self.version = self.__version()
 
     def __version(self) -> str:
-        """Read version string from .version file in 
+        """Read version string from .version file in
         /app/backend/test_collections/sdk_tests/sdk_checkout path."""
         version_file_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
 

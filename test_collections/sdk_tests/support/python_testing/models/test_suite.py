@@ -27,8 +27,7 @@ class PythonTestSuiteFactoryError(Exception):
 
 
 class SuiteType(Enum):
-    SIMULATED = 1
-    AUTOMATED = 2
+    AUTOMATED = 1
 
 
 # Custom Type variable used to annotate the factory methods of classmethod.
@@ -56,12 +55,12 @@ class PythonTestSuite(TestSuite):
         """Dynamically declares a subclass based on the type of test suite."""
         suite_class = PythonTestSuite
 
-        if suite_type == SuiteType.SIMULATED:
-            suite_class = SimulatedPythonTestSuite
-        elif suite_type == SuiteType.AUTOMATED:
+        if suite_type == SuiteType.AUTOMATED:
             suite_class = ChipToolPythonTestSuite
 
-        return suite_class.__class_factory(name=name, python_test_version=python_test_version)
+        return suite_class.__class_factory(
+            name=name, python_test_version=python_test_version
+        )
 
     @classmethod
     def __class_factory(cls, name: str, python_test_version: str) -> Type[T]:
@@ -84,13 +83,9 @@ class PythonTestSuite(TestSuite):
 
 
 class ChipToolPythonTestSuite(PythonTestSuite, ChipToolSuite):
-    test_type = ChipToolTestType.CHIP_TOOL
+    test_type = ChipToolTestType.PYTHON_TEST
 
     async def setup(self) -> None:
         """Due top multi inheritance, we need to call setup on both super classes."""
         await PythonTestSuite.setup(self)
         await ChipToolSuite.setup(self)
-
-
-class SimulatedPythonTestSuite(ChipToolPythonTestSuite):
-    test_type = ChipToolTestType.CHIP_APP

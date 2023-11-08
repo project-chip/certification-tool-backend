@@ -26,8 +26,6 @@ from pydantic import BaseModel, Field
 
 class PythonTestType(Enum):
     AUTOMATED = 0
-    SEMI_AUTOMATED = 1
-    SIMULATED = 2
 
 
 class PythonTestStep(BaseModel):

@@ -21,10 +21,10 @@ from app.test_engine.models.test_declarations import (
     TestSuiteDeclaration,
 )
 
-from .test_case import PythonTestCase
-from .test_suite import SuiteType, PythonTestSuite
 from .python_test_folder import PythonTestFolder
 from .python_test_models import PythonTest, PythonTestType
+from .test_case import PythonTestCase
+from .test_suite import PythonTestSuite, SuiteType
 
 
 class PythonCollectionDeclaration(TestCollectionDeclaration):
@@ -55,7 +55,9 @@ class PythonCaseDeclaration(TestCaseDeclaration):
 
     def __init__(self, test: PythonTest, python_test_version: str) -> None:
         super().__init__(
-            PythonTestCase.class_factory(test=test, python_test_version=python_test_version)
+            PythonTestCase.class_factory(
+                test=test, python_test_version=python_test_version
+            )
         )
 
     @property
