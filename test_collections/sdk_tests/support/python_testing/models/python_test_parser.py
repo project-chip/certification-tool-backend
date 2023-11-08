@@ -34,21 +34,21 @@ def parse_python_test(path: Path) -> PythonTest:
 
     This will also annotate parsed python test with it's path and test type.
     """
-    python_steps: list[PythonTestStep] = []
+    tc_steps: list[PythonTestStep] = []
     # Currently PICS and config is not configured in Python Testing
     tc_pics: list = []
     tc_config: dict = {}
 
-    tc_desc, python_steps = __extract_tcs_info(path)
+    tc_desc, tc_steps = __extract_tcs_info(path)
 
-    if not tc_desc or not python_steps:
+    if not tc_desc or not tc_steps:
         # The file name from path
         tc_name = path.name.split(".")[0]
         raise PythonParserException(
             f"Test Case {tc_name} does not have methods desc_{tc_name} or steps_{tc_name}"
         )
 
-    test = PythonTest(name=tc_desc, tests=python_steps, config=tc_config, PICS=tc_pics)
+    test = PythonTest(name=tc_desc, steps=tc_steps, config=tc_config, PICS=tc_pics)
     test.path = path
     test.type = PythonTestType.AUTOMATED
 
@@ -60,8 +60,9 @@ def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
         parsed_python_file = ast.parse(python_file.read())
         classes = [c for c in parsed_python_file.body if isinstance(c, ast.ClassDef)]
 
+        # Get TC description and TC steps from python test file
         tc_desc: str = ""
-        python_steps: List[PythonTestStep] = []
+        tc_steps: List[PythonTestStep] = []
 
         for class_ in classes:
             methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
@@ -69,9 +70,9 @@ def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
                 if "desc_" in method.name:
                     tc_desc = method.body[0].value.value
                 elif "steps_" in method.name:
-                    python_steps = __retrieve_steps(method)
+                    tc_steps = __retrieve_steps(method)
 
-    return tc_desc, python_steps
+    return tc_desc, tc_steps
 
 
 def __retrieve_steps(method: ast.FunctionDef) -> List[PythonTestStep]:

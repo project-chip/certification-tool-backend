@@ -28,12 +28,12 @@ from .models.test_suite import SuiteType
 
 ###
 # This file hosts logic load and parse Python test-cases, located in
-# `test_collections/sdk_tests/sdk_checkout/python_testing/scripts/sdk`. The `sdk` sub-folder here is automatically
-# maintained using the `test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh` script.
+# `test_collections/sdk_tests/sdk_checkout/python_testing/scripts/sdk`.
+# The `sdk` sub-folder here is automatically maintained using the
+# `test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh` script.
 #
-# The Python Tests are organized into 2 Test Suites:
-#        - Automated and Semi-Automated using Chip-Tool
-#        - Simulated using Chip-App1
+# The Python Tests are organized into 1 Test Suite:
+#        - Automated
 ###
 
 SDK_PYTHON_TEST_PATH = Path(
@@ -68,11 +68,7 @@ def _parse_python_test_to_test_case_declaration(
 def _parse_all_sdk_python_tests(
     python_test_files: list[Path], python_test_version: str
 ) -> list[PythonSuiteDeclaration]:
-    """Parse all python test files and organize them in the 3 test suites:
-    - Automated and Semi-Automated using Chip-Tool
-    - Simulated using Chip-App1
-    - Manual
-    """
+    """Parse all python test files and add them into Automated Suite"""
     suites = _init_test_suites(python_test_version)
 
     for python_test_file in python_test_files:
@@ -85,7 +81,7 @@ def _parse_all_sdk_python_tests(
             suites[SuiteType.AUTOMATED].add_test_case(test_case)
         except PythonParserException as e:
             # If an exception was raised during parse process, the python file will be
-            # ignored and the loop will continue with the next python file
+            # ignored and the loop will continue with the next file
             logger.error(
                 f"Error while parsing Python File: {python_test_file} \nError:{e}"
             )
@@ -96,7 +92,7 @@ def _parse_all_sdk_python_tests(
 def sdk_python_test_collection(
     python_test_folder: PythonTestFolder = SDK_PYTHON_TEST_FOLDER,
 ) -> PythonCollectionDeclaration:
-    """Declare a new collection of test suites with the 3 test suites."""
+    """Declare a new collection of test suites."""
     collection = PythonCollectionDeclaration(
         name="SDK Python Tests", folder=python_test_folder
     )

@@ -41,6 +41,6 @@ class PythonTest(BaseModel):
     name: str
     PICS: set[str] = set()
     config: dict[str, Any]
-    steps: list[PythonTestStep] = Field(alias="tests")
+    steps: list[PythonTestStep]
     type: PythonTestType = PythonTestType.AUTOMATED
     path: Optional[Path]

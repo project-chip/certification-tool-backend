@@ -53,10 +53,7 @@ class PythonTestSuite(TestSuite):
         cls, suite_type: SuiteType, name: str, python_test_version: str
     ) -> Type[T]:
         """Dynamically declares a subclass based on the type of test suite."""
-        suite_class = PythonTestSuite
-
-        if suite_type == SuiteType.AUTOMATED:
-            suite_class = ChipToolPythonTestSuite
+        suite_class = ChipToolPythonTestSuite
 
         return suite_class.__class_factory(
             name=name, python_test_version=python_test_version

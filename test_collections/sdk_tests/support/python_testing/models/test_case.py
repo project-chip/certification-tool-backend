@@ -17,16 +17,11 @@ import re
 from typing import Any, Type, TypeVar
 
 from app.chip_tool.chip_tool import ChipToolTestType
-from app.chip_tool.test_case import ChipToolManualPromptTest, ChipToolTest
+from app.chip_tool.test_case import ChipToolTest
 from app.test_engine.logger import test_engine_logger
-from app.test_engine.models import (
-    ManualTestCase,
-    ManualVerificationTestStep,
-    TestCase,
-    TestStep,
-)
+from app.test_engine.models import TestCase, TestStep
 
-from .python_test_models import PythonTest, PythonTestStep, PythonTestType
+from .python_test_models import PythonTest
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -120,17 +115,6 @@ class PythonTestCase(TestCase):
         """Replace all non-alphanumeric characters with _ to make valid class name."""
         return re.sub("[^0-9a-zA-Z]+", "_", identifier)
 
-    def _append_automated_test_step(self, python_test_step: PythonTestStep) -> None:
-        """
-        Disabled steps are ignored.
-        (Such tests will be marked as 'Steps Disabled' elsewhere)
-
-        UserPrompt are special cases that will prompt test operator for input.
-        """
-
-        step = TestStep(python_test_step.label)
-        self.test_steps.append(step)
-
 
 class PythonChipToolTestCase(PythonTestCase, ChipToolTest):
     """Automated Python test cases."""
@@ -140,4 +124,5 @@ class PythonChipToolTestCase(PythonTestCase, ChipToolTest):
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start Python test")]
         for step in self.python_test.steps:
-            self._append_automated_test_step(step)
+            python_test_step = TestStep(step.label)
+            self.test_steps.append(python_test_step)
