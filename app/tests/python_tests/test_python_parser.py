@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# flake8: noqa
+# Ignore flake8 check for this file
 from pathlib import Path
 from unittest import mock
 
@@ -63,7 +65,8 @@ def test_python_file_parser_throws_pythonparserexception() -> None:
     file_path = Path("/test/file.py")
 
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser.open",
+        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
+        "open",
         new=mock.mock_open(read_data=sample_invalid_python_file_content),
     ):
         try:
@@ -80,7 +83,8 @@ def test_python_file_parser() -> None:
     # We mock builtin `open` method to read sample python file content,
     # to avoid having to load a real file.
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser.open",
+        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
+        "open",
         new=mock.mock_open(read_data=sample_python_file_content),
     ) as file_open:
         test = parse_python_test(file_path)

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# flake8: noqa
+# Ignore flake8 check for this file
 from pathlib import Path
 from unittest import mock
 
@@ -29,7 +31,8 @@ def test_python_folder_version() -> None:
     # We mock open to read version_file_content and Path exists to ignore that we're
     # testing with a fake path
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_folder.open",
+        "test_collections.sdk_tests.support.python_testing.models."
+        "python_test_folder.open",
         new=mock.mock_open(read_data=version_file_content),
     ), mock.patch.object(target=Path, attribute="exists", return_value=True) as _:
         python_test_folder = PythonTestFolder(test_python_path)

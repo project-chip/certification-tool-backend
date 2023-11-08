@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# type: ignore
-# Ignore mypy type check for this file
 import ast
 from pathlib import Path
 from typing import List, Tuple
@@ -46,7 +44,8 @@ def parse_python_test(path: Path) -> PythonTest:
         # The file name from path
         tc_name = path.name.split(".")[0]
         raise PythonParserException(
-            f"Test Case {tc_name} does not have methods desc_{tc_name} or steps_{tc_name}"
+            f"Test Case {tc_name} does not have methods desc_{tc_name} "
+            f"or steps_{tc_name}"
         )
 
     test = PythonTest(name=tc_desc, steps=tc_steps, config=tc_config, PICS=tc_pics)
@@ -69,7 +68,7 @@ def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
             methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
             for method in methods:
                 if "desc_" in method.name:
-                    tc_desc = method.body[BODY_INDEX].value.value
+                    tc_desc = method.body[BODY_INDEX].value.value # type: ignore
                 elif "steps_" in method.name:
                     tc_steps = __retrieve_steps(method)
 
@@ -78,7 +77,7 @@ def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
 
 def __retrieve_steps(method: ast.FunctionDef) -> List[PythonTestStep]:
     python_steps: List[PythonTestStep] = []
-    for step in method.body[BODY_INDEX].value.elts:
+    for step in method.body[BODY_INDEX].value.elts: # type: ignore
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
         arg_is_commissioning = False
         if (

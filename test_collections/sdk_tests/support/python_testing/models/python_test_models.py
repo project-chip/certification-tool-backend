@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 ###
 # This file declares Python test models that are used to parse the Python Test Cases.

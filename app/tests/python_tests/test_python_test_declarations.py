@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# flake8: noqa
+# Ignore flake8 check for this file
 from unittest import mock
 
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
