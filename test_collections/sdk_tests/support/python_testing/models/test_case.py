@@ -127,19 +127,8 @@ class PythonTestCase(TestCase):
 
         UserPrompt are special cases that will prompt test operator for input.
         """
-        if python_test_step.disabled:
-            test_engine_logger.info(
-                f"{self.public_id()}: skipping disabled step: {python_test_step.label}"
-            )
-            return
 
         step = TestStep(python_test_step.label)
-        if python_test_step.command == "UserPrompt":
-            step = ManualVerificationTestStep(
-                name=python_test_step.label,
-                verification=python_test_step.verification,
-            )
-
         self.test_steps.append(step)
 
 

@@ -14,3 +14,4 @@
 # limitations under the License.
 #
 from .support.yaml_tests import sdk_collection, custom_collection
+from .support.python_testing import sdk_python_collection
