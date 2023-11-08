@@ -13,12 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from app.test_engine.models.test_declarations import TestCollectionDeclaration
 
-from .sdk_yaml_tests import sdk_yaml_test_collection, custom_yaml_test_collection
+from pathlib import Path
 
-# Test engine will auto load TestCollectionDeclarations declared inside the package
-# initializer
-sdk_collection: TestCollectionDeclaration = sdk_yaml_test_collection()
-
-custom_collection: TestCollectionDeclaration = custom_yaml_test_collection()
+SUPPORT_PATH = Path(__file__).parent
+SDK_TESTS_ROOT = SUPPORT_PATH.parent
+SDK_CHECKOUT_PATH = SDK_TESTS_ROOT / "sdk_checkout"

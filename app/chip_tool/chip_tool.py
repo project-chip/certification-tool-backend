@@ -400,6 +400,12 @@ class ChipTool(metaclass=Singleton):
             container_manager.destroy(self.__chip_tool_container)
         self.__chip_tool_container = None
 
+    async def start_runner(self) -> None:
+        await self.__test_harness_runner.start()
+
+    async def stop_runner(self) -> None:
+        await self.__test_harness_runner.stop()
+
     def send_command(
         self,
         command: Union[str, list],
