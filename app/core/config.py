@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     # Logging
     LOGGING_PATH: str = "./logs"
     LOGGING_FILENAME: str = "{time:YYYY-MM-DD}.log"
-    LOGGING_LEVEL: str = "info"
+    LOGGING_LEVEL: str = "debug"
     LOGGING_ROTATION: str = "20 days"
     LOGGING_RETENTION: str = "1 months"
     LOGGING_FORMAT: str = (

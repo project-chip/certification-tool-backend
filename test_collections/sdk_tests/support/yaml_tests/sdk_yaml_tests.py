@@ -31,9 +31,8 @@ from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
 ###
 # This file hosts logic load and parse YAML test-cases, located in
-# `test_collections/sdk_tests/sdk_checkout/yaml_tests/yaml/sdk`. 
-# The `sdk` sub-folder here is automatically maintained using the 
-# `test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh` script.
+# `test_collections/yaml_tests/yaml/sdk`. The `sdk` sub-folder here is automatically
+# maintained using the `scripts/fetch_sdk_yaml_tests_and_runner.sh` script.
 #
 # The YAML Tests are organized into 3 Test Suites:
 #        - Automated and Semi-Automated using Chip-Tool
