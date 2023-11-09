@@ -16,6 +16,7 @@
 # flake8: noqa
 # Ignore flake8 check for this file
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -33,31 +34,34 @@ from test_collections.sdk_tests.support.python_testing.sdk_python_test_tests imp
     sdk_python_test_collection,
 )
 
-VERSION_FILE_FILENAME = ".version"
-VERSION_FILE_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/")
-
 
 @pytest.fixture
 def python_test_collection() -> PythonCollectionDeclaration:
     test_sdk_python_path = Path(__file__).parent / "test_python_script"
-    folder = PythonTestFolder(
-        path=test_sdk_python_path, filename_pattern="UnitTest_TC_*"
+    with mock.patch.object(Path, "exists", return_value=True), mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.python_test_folder.open",
+        new=mock.mock_open(read_data="unit-test-python-version"),
+    ):
+        folder = PythonTestFolder(
+            path=test_sdk_python_path, filename_pattern="UnitTest_TC_*"
+        )
+        return sdk_python_test_collection(folder)
+
+
+def test_sdk_python_test_collection(
+    python_test_collection: PythonCollectionDeclaration,
+) -> None:
+    assert python_test_collection.name == "SDK Python Tests"
+    assert len(python_test_collection.test_suites.keys()) == 1
+
+    # test version number
+    test_sdk_python_version_path = (
+        "/app/backend/app/tests/python_tests/test_python_script/.version"
     )
-    return sdk_python_test_collection(folder)
-
-
-# def test_sdk_python_test_collection(
-#     python_test_collection: PythonCollectionDeclaration,
-# ) -> None:
-#     assert python_test_collection.name == "SDK Python Tests"
-#     assert len(python_test_collection.test_suites.keys()) == 1
-
-#     # test version number
-#     test_sdk_python_version_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
-#     with open(test_sdk_python_version_path, "r") as version_file:
-#         assert (
-#             python_test_collection.python_test_version == version_file.read().rstrip()
-#         )
+    with open(test_sdk_python_version_path, "r") as version_file:
+        assert (
+            python_test_collection.python_test_version == version_file.read().rstrip()
+        )
 
 
 def test_automated_suite(python_test_collection: PythonCollectionDeclaration) -> None:

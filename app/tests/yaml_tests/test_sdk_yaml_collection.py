@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -31,25 +32,30 @@ from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
     sdk_yaml_test_collection,
 )
 
-VERSION_FILE_FILENAME = ".version"
-VERSION_FILE_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/")
-
 
 @pytest.fixture
 def yaml_collection() -> YamlCollectionDeclaration:
     test_sdk_yaml_path = Path(__file__).parent / "test_yamls"
-    folder = YamlTestFolder(path=test_sdk_yaml_path, filename_pattern="UnitTest_TC_*")
-    return sdk_yaml_test_collection(folder)
+    with mock.patch.object(Path, "exists", return_value=True), mock.patch(
+        "test_collections.sdk_tests.support.yaml_tests.models.yaml_test_folder.open",
+        new=mock.mock_open(read_data="unit-test-yaml-version"),
+    ):
+        folder = YamlTestFolder(
+            path=test_sdk_yaml_path, filename_pattern="UnitTest_TC_*"
+        )
+        return sdk_yaml_test_collection(folder)
 
 
-# def test_sdk_yaml_collection(yaml_collection: YamlCollectionDeclaration) -> None:
-#     assert yaml_collection.name == "SDK YAML Tests"
-#     assert len(yaml_collection.test_suites.keys()) == 3
+def test_sdk_yaml_collection(
+    yaml_collection: YamlCollectionDeclaration,
+) -> None:
+    assert yaml_collection.name == "SDK YAML Tests"
+    assert len(yaml_collection.test_suites.keys()) == 3
 
-#     # test version number
-#     test_sdk_yaml_version_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
-#     with open(test_sdk_yaml_version_path, "r") as version_file:
-#         assert yaml_collection.yaml_version == version_file.read().rstrip()
+    # test version number
+    test_sdk_yaml_path = "/app/backend/app/tests/yaml_tests/test_yamls/.version"
+    with open(test_sdk_yaml_path, "r") as version_file:
+        assert yaml_collection.yaml_version == version_file.read().rstrip()
 
 
 def test_manual_suite(yaml_collection: YamlCollectionDeclaration) -> None:
