@@ -22,7 +22,7 @@ set -e
 # Otherwise a temporary checkout of matter sdk will be made.
 
 # Paths
-ROOT_DIR=$(realpath $(dirname "$0")/../..)
+ROOT_DIR=$(realpath $(dirname "$0")/../../..)
 TEST_YAML_LOCK_PATH="$ROOT_DIR/.lock-test-yaml"
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
