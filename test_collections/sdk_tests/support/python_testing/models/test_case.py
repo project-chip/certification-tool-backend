@@ -33,7 +33,7 @@ class PythonTestCase(TestCase):
     This class provides a class factory that will dynamically declare a new sub-class
     based on the test-type the Python test is expressing.
 
-    The PythonTest will be stored as a class property that will be used at run-time 
+    The PythonTest will be stored as a class property that will be used at run-time
     in all instances of such subclass.
     """
 
@@ -47,7 +47,7 @@ class PythonTestCase(TestCase):
 
     @classmethod
     def default_test_parameters(cls) -> dict[str, Any]:
-        """Python test config dict, sometimes have a nested dict with type 
+        """Python test config dict, sometimes have a nested dict with type
         and default value.
         Only defaultValue is used in this case.
         """

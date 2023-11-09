@@ -68,7 +68,7 @@ def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
             methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
             for method in methods:
                 if "desc_" in method.name:
-                    tc_desc = method.body[BODY_INDEX].value.value # type: ignore
+                    tc_desc = method.body[BODY_INDEX].value.value  # type: ignore
                 elif "steps_" in method.name:
                     tc_steps = __retrieve_steps(method)
 
@@ -77,7 +77,7 @@ def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
 
 def __retrieve_steps(method: ast.FunctionDef) -> List[PythonTestStep]:
     python_steps: List[PythonTestStep] = []
-    for step in method.body[BODY_INDEX].value.elts: # type: ignore
+    for step in method.body[BODY_INDEX].value.elts:  # type: ignore
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
         arg_is_commissioning = False
         if (
