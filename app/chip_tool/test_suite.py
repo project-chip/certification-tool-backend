@@ -163,12 +163,8 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
             # the test completes. So we need to start it again to
             # perform decommissioning
             elif self.test_type == ChipToolTestType.CHIP_APP:
-                logger.info("Run simulated app instance to perform decommissioning")
-                await self.chip_tool.start_runner()
                 logger.info("Prompt user to perform decommissioning")
                 await self.__prompt_user_to_perform_decommission()
-                logger.info("Stop simulated app instance")
-                await self.chip_tool.stop_runner()
 
         logger.info("Stopping chip-tool container")
         self.chip_tool.destroy_device()
