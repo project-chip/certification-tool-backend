@@ -17,6 +17,7 @@ from pathlib import Path
 
 import pytest
 
+from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 from test_collections.sdk_tests.support.yaml_tests.models.test_declarations import (
     YamlCaseDeclaration,
     YamlCollectionDeclaration,
@@ -32,7 +33,7 @@ from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
 )
 
 VERSION_FILE_FILENAME = ".version"
-VERSION_FILE_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/")
+VERSION_FILE_PATH = SDK_CHECKOUT_PATH
 
 
 @pytest.fixture
