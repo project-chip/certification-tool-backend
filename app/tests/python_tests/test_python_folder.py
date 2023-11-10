@@ -50,7 +50,7 @@ def test_python_folder_version_missing() -> None:
 def test_python_folder_filename_pattern() -> None:
     """Test PythonTestFolder will search for files with filename pattern."""
     with mock.patch.object(target=Path, attribute="glob") as path_glob:
-        # Default file_name_patter: *
+        # Default file_name_pattern: *
         python_folder = PythonTestFolder(test_python_path)
         _ = python_folder.python_file_paths()
         path_glob.assert_called_once_with("*.py")

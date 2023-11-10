@@ -53,8 +53,8 @@ def test_sdk_yaml_collection(
     assert len(yaml_collection.test_suites.keys()) == 3
 
     # test version number
-    test_sdk_yaml_path = "/app/backend/app/tests/yaml_tests/test_yamls/.version"
-    with open(test_sdk_yaml_path, "r") as version_file:
+    test_sdk_yaml_version_path = "/app/backend/app/tests/yaml_tests/test_yamls/.version"
+    with open(test_sdk_yaml_version_path, "r") as version_file:
         assert yaml_collection.yaml_version == version_file.read().rstrip()
 
 

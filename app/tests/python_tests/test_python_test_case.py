@@ -210,17 +210,7 @@ async def test_python_version_logging() -> None:
             logger_info.assert_any_call(f"Python Test Version: {test_python_version}")
 
 
-def test_default_first_steps_for_python_chip_tool_test_case() -> None:
-    test = python_test_instance(type=PythonTestType.AUTOMATED, steps=[])
-    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version="version"
-    )
-    instance = case_class(TestCaseExecution())
-    assert len(instance.test_steps) == 1
-    assert instance.test_steps[0].name == "Start Python test"
-
-
-def test_normal_steps_for_non_manual_tests() -> None:
+def test_normal_steps_for_python_tests() -> None:
     """Test that non-manual tests include enabled steps."""
     for type in list(PythonTestType):
         test_step = PythonTestStep(label="Step1")
@@ -234,7 +224,7 @@ def test_normal_steps_for_non_manual_tests() -> None:
         assert any(s.name == test_step.label for s in instance.test_steps)
 
 
-def test_multiple_steps_for_non_manual() -> None:
+def test_multiple_steps_for_python_tests() -> None:
     """Test that non-manual tests multiple enabled steps are all included."""
     for type in list(PythonTestType):
         test_step = PythonTestStep(label="StepN")

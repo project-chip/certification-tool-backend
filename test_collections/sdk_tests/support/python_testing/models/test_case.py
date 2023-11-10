@@ -13,42 +13,141 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 import re
+from multiprocessing import Process
+from multiprocessing.managers import BaseManager
 from typing import Any, Type, TypeVar
+
+# TODO check if this should be changed to  SDK python test specific entries
+from matter_chip_tool_adapter.decoder import MatterLog
+from matter_yamltests.hooks import TestRunnerHooks
 
 from app.chip_tool.chip_tool import ChipToolTestType
 from app.chip_tool.test_case import ChipToolTest
-from app.test_engine.logger import test_engine_logger
-from app.test_engine.models import TestCase, TestStep
+from app.test_engine.logger import (
+    CHIP_LOG_FORMAT,
+    CHIPTOOL_LEVEL,
+    logger,
+    test_engine_logger,
+)
+from app.test_engine.models import ManualVerificationTestStep, TestCase, TestStep
 
 from .python_test_models import PythonTest
+from .python_testing_hooks_proxy import SDKPythonTestRunnerHooks
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
 
 
 class PythonTestCase(TestCase):
-    """Base class for all Python based test cases.
+    """Base class for all Python Test based test cases.
 
     This class provides a class factory that will dynamically declare a new sub-class
     based on the test-type the Python test is expressing.
 
-    The PythonTest will be stored as a class property that will be used at run-time
-    in all instances of such subclass.
+    The PythonTest will be stored as a class property that will be used at run-time in all
+    instances of such subclass.
     """
 
     python_test: PythonTest
     python_test_version: str
+    test_finished: bool
+
+    def reset(self) -> None:
+        self.start_called = False
+        self.stop_called = False
+        self.test_start_called = False
+        self.test_stop_called = False
+        self.step_success_count = 0
+        self.step_failure_count = 0
+        self.step_unknown_count = 0
+        self.__runned = 0
+
+    def start(self, count: int) -> None:
+        pass
+
+    def stop(self, duration: int) -> None:
+        pass
+
+    def test_start(self, filename: str, name: str, count: int) -> None:
+        pass
+        # Dont know if it is necessary for python testing (came from chip_tool)
+        # self.next_step()
+
+    def test_stop(self, exception: Exception, duration: int) -> None:
+        self.current_test_step.mark_as_completed()
+
+    def step_skipped(self, name: str, expression: str) -> None:
+        self.current_test_step.mark_as_not_applicable(
+            f"Test step skipped: {name}. {expression} == False"
+        )
+        self.next_step()
+
+    def step_start(self, name: str) -> None:
+        pass
+
+    def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
+        self.__handle_logs(logs)
+        self.next_step()
+
+    def step_failure(
+        self, logger: Any, logs: str, duration: int, request: Any, received: Any
+    ) -> None:
+        self.__handle_logs(logs)
+        self.__report_failures(logger, request, received)
+        self.next_step()
+
+    def step_unknown(self) -> None:
+        self.__runned += 1
+
+    def is_finished(self) -> bool:
+        return self.test_finished
+
+    def __handle_logs(self, logs: Any) -> None:
+        for log_entry in logs or []:
+            if not isinstance(log_entry, MatterLog):
+                continue
+
+            test_engine_logger.log(
+                CHIPTOOL_LEVEL,
+                CHIP_LOG_FORMAT.format(log_entry.module, log_entry.message),
+            )
+
+    def __report_failures(self, logger: Any, request: TestStep, received: Any) -> None:
+        """
+        The logger from runner contains all logs entries for the test step, this method
+        seeks for the error entries.
+        """
+        if not logger:
+            # It is expected the runner to return a PostProcessResponseResult,
+            # but in case of returning a different type
+            self.current_test_step.append_failure(
+                "Test Step Failure: \n " f"Expected: '<Empty>' \n Received:  '<Empty>'"
+            )
+            return
+
+        # Iterate through the entries seeking for the errors entries
+        for log_entry in logger.entries or []:
+            if log_entry.is_error():
+                # Check if the step error came from exception or not, since the message
+                # in exception object has more details
+                # TODO: There is an issue raised in SDK runner in order to improve the
+                # message from log_entry:
+                # https://github.com/project-chip/connectedhomeip/issues/28101
+                if log_entry.exception:
+                    self.current_test_step.append_failure(log_entry.exception.message)
+                else:
+                    self.current_test_step.append_failure(log_entry.message)
 
     @classmethod
     def pics(cls) -> set[str]:
-        """Test Case level PICS. Read directly from parsed python test."""
+        """Test Case level PICS. Read directly from parsed Python Test."""
         return cls.python_test.PICS
 
     @classmethod
     def default_test_parameters(cls) -> dict[str, Any]:
-        """Python test config dict, sometimes have a nested dict with type
-        and default value.
+        """Python Testing config dict, sometimes have a nested dict with type and default value.
         Only defaultValue is used in this case.
         """
         parameters = {}
@@ -70,7 +169,7 @@ class PythonTestCase(TestCase):
 
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
-        """Dynamically declares a subclass based on the type of Python test."""
+        """Dynamically declares a subclass based on the type of Python Test test."""
         case_class: Type[PythonTestCase] = PythonChipToolTestCase
 
         return case_class.__class_factory(
@@ -102,7 +201,7 @@ class PythonTestCase(TestCase):
 
     @staticmethod
     def __test_identifier(name: str) -> str:
-        """Find TC-XX-1.1 in Python test title.
+        """Find TC-XX-1.1 in Python Test title.
         Note some have [TC-XX-1.1] and others TC-XX-1.1
         """
         title_pattern = re.compile(r"(?P<title>TC-[^\s\]]*)")
@@ -116,14 +215,71 @@ class PythonTestCase(TestCase):
         """Replace all non-alphanumeric characters with _ to make valid class name."""
         return re.sub("[^0-9a-zA-Z]+", "_", identifier)
 
+    def run_command(self, cmd: str) -> None:
+        os.system(cmd)
+
+    async def execute(self) -> None:
+        try:
+            logger.info("Running Python Test: " + self.metadata["title"])
+
+            # NOTE that this aproach invalidates  parallel  execution since test_case_instance object is shared  by the class
+            # TODO: Same approach could work from TestCase side: create test_case_instance inside PythonTestCase to avoid using SDKPythonTestRunnerHooks
+
+            BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
+            manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
+            manager.start()
+
+            test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
+
+            command = (
+                "docker run -it --network host --privileged"
+                " -v /var/paa-root-certs:/root/paa-root-certs"
+                " -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:rw"
+                " -v /home/ubuntu/chip-certification-tool/backend/sdk_content/python_testing2:/root/python_testing2"
+                " connectedhomeip/chip-cert-bins:19771ed7101321d68b87d05201d42d00adf5368f"
+                " python3 python_testing2/hello_external_runner.py "
+                f" {self.metadata['title']}"
+            )
+            # Start the command in a new process
+            p = Process(target=self.run_command, args=(command,))
+            p.start()
+
+            while ((update := test_runner_hooks.updates_test()) is not None) or (
+                not test_runner_hooks.finished()
+            ):
+                if not update:
+                    continue
+
+                def handle_update(update: dict) -> None:
+                    def call_function(obj, func_name: str, kwargs) -> None:  # type: ignore
+                        func = getattr(obj, func_name, None)
+                        if not func:
+                            raise AttributeError(
+                                f"{func_name} is not a method of {obj}"
+                            )
+                        if not callable(func):
+                            raise TypeError(f"{func_name} is not callable")
+                        # Call the method with the unpacked keyword arguments.
+                        func(**kwargs)
+
+                    for func_name, kwargs in update.items():
+                        call_function(self, func_name, kwargs)
+
+                handle_update(update)
+
+        finally:
+            pass
+
+    async def cleanup(self) -> None:
+        logger.info("Test Cleanup")
+
 
 class PythonChipToolTestCase(PythonTestCase, ChipToolTest):
-    """Automated Python test cases."""
+    """Automated Python test cases using chip-tool."""
 
     test_type = ChipToolTestType.PYTHON_TEST
 
     def create_test_steps(self) -> None:
-        self.test_steps = [TestStep("Start Python test")]
         for step in self.python_test.steps:
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)

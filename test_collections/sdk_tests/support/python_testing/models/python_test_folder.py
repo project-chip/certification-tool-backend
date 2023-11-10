@@ -15,9 +15,10 @@
 #
 from pathlib import Path
 
+from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
+
 UNKNOWN_version = "Unknown"
 VERSION_FILE_FILENAME = ".version"
-VERSION_FILE_PATH = Path("/app/backend/test_collections/sdk_tests/sdk_checkout/")
 
 
 class PythonTestFolder:
@@ -34,7 +35,7 @@ class PythonTestFolder:
     def __version(self) -> str:
         """Read version string from .version file in
         /app/backend/test_collections/sdk_tests/sdk_checkout path."""
-        version_file_path = VERSION_FILE_PATH / VERSION_FILE_FILENAME
+        version_file_path = SDK_CHECKOUT_PATH / VERSION_FILE_FILENAME
 
         if not version_file_path.exists():
             return UNKNOWN_version

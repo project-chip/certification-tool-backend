@@ -267,6 +267,7 @@ class ChipTool(metaclass=Singleton):
             prefix = CHIP_APP_EXE
             command = ["--interactive", "--port 9002"]
         elif test_type == ChipToolTestType.PYTHON_TEST:
+            # TODO - To be implemented
             pass
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")

@@ -17,6 +17,8 @@ from pathlib import Path
 
 from loguru import logger
 
+from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
+
 from .models.python_test_folder import PythonTestFolder
 from .models.python_test_parser import PythonParserException, parse_python_test
 from .models.test_declarations import (
@@ -27,7 +29,7 @@ from .models.test_declarations import (
 from .models.test_suite import SuiteType
 
 ###
-# This file hosts logic load and parse Python test-cases, located in
+# This file hosts logic to load and parse Python test cases, located in
 # `test_collections/sdk_tests/sdk_checkout/python_testing/scripts/sdk`.
 # The `sdk` sub-folder here is automatically maintained using the
 # `test_collections/sdk_tests/fetch_sdk_tests_and_runner.sh` script.
@@ -36,9 +38,7 @@ from .models.test_suite import SuiteType
 #        - Automated
 ###
 
-SDK_PYTHON_TEST_PATH = Path(
-    "/app/backend/test_collections/sdk_tests/sdk_checkout/python_testing/scripts/sdk"
-)
+SDK_PYTHON_TEST_PATH = SDK_CHECKOUT_PATH / Path("python_testing/scripts/sdk")
 SDK_PYTHON_TEST_FOLDER = PythonTestFolder(
     path=SDK_PYTHON_TEST_PATH, filename_pattern="TC*"
 )

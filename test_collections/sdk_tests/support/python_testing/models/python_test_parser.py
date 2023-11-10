@@ -28,19 +28,33 @@ class PythonParserException(Exception):
     """Raised when an error occurs during the parser of python file."""
 
 
+class PythonTestInfo:
+    """This class stores all the information from a python test case that came from
+    python test script file."""
+
+    def __init__(
+        self,
+        desc: str,
+        pics: list,
+        config: dict,
+        steps: list[PythonTestStep],
+        type: PythonTestType,
+    ) -> None:
+        self.desc = desc
+        self.pics = pics
+        self.config = config
+        self.steps = steps
+        self.type = type
+
+
 def parse_python_test(path: Path) -> PythonTest:
     """Parse a single Python test file into PythonTest model.
 
     This will also annotate parsed python test with it's path and test type.
     """
-    tc_steps: list[PythonTestStep] = []
-    # Currently PICS and config is not configured in Python Testing
-    tc_pics: list = []
-    tc_config: dict = {}
+    tc_info = __extract_tcs_info(path)
 
-    tc_desc, tc_steps = __extract_tcs_info(path)
-
-    if not tc_desc or not tc_steps:
+    if not tc_info.desc or not tc_info.steps:
         # The file name from path
         tc_name = path.name.split(".")[0]
         raise PythonParserException(
@@ -48,14 +62,20 @@ def parse_python_test(path: Path) -> PythonTest:
             f"or steps_{tc_name}"
         )
 
-    test = PythonTest(name=tc_desc, steps=tc_steps, config=tc_config, PICS=tc_pics)
+    test = PythonTest(
+        name=tc_info.desc, steps=tc_info.steps, config=tc_info.config, PICS=tc_info.pics
+    )
     test.path = path
-    test.type = PythonTestType.AUTOMATED
+    test.type = tc_info.type
 
     return test
 
 
-def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
+def __extract_tcs_info(path: Path) -> PythonTestInfo:
+    # Currently PICS and config is not configured in Python Testing
+    tc_pics: list = []
+    tc_config: dict = {}
+
     with open(path, "r") as python_file:
         parsed_python_file = ast.parse(python_file.read())
         classes = [c for c in parsed_python_file.body if isinstance(c, ast.ClassDef)]
@@ -72,7 +92,13 @@ def __extract_tcs_info(path: Path) -> Tuple[str, List[PythonTestStep]]:
                 elif "steps_" in method.name:
                     tc_steps = __retrieve_steps(method)
 
-    return tc_desc, tc_steps
+    return PythonTestInfo(
+        desc=tc_desc,
+        pics=tc_pics,
+        config=tc_config,
+        steps=tc_steps,
+        type=PythonTestType.AUTOMATED,
+    )
 
 
 def __retrieve_steps(method: ast.FunctionDef) -> List[PythonTestStep]:
