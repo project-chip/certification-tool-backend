@@ -98,7 +98,7 @@ LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
 DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
 # Websocket runner
-BACKEND_ROOT = Path(__file__).parents[2]
+BACKEND_ROOT = Path(__file__).parents[4]
 TEST_COLLECTION_SDK_CHECKOUT_PATH = BACKEND_ROOT / Path(
     "test_collections/sdk_tests/sdk_checkout/"
 )

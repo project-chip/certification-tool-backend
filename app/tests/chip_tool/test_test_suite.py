@@ -20,8 +20,8 @@ from unittest import mock
 
 import pytest
 
-from app.chip_tool.test_case import PromptOption
-from app.chip_tool.test_suite import (
+from test_collections.sdk_tests.support.chip_tool.test_case import PromptOption
+from test_collections.sdk_tests.support.chip_tool.test_suite import (
     ChipToolSuite,
     DUTCommissioningError,
     SuiteSetupError,

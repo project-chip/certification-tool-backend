@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from app.chip_tool.test_suite import TestSuite
+from test_collections.sdk_tests.support.chip_tool.test_suite import TestSuite
 
 
 class TestSuiteChipTool(TestSuite):

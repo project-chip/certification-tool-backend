@@ -15,9 +15,9 @@
 #
 from typing import Optional
 
-from app.chip_tool import ChipTool
-from app.chip_tool.chip_tool import ChipToolTestType
-from app.chip_tool.test_case import PromptOption
+from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.test_case import PromptOption
 from app.models import TestSuiteExecution
 from app.otbr_manager.otbr_manager import ThreadBorderRouter
 from app.schemas.test_environment_config import (

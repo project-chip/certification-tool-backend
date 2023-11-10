@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from app.chip_tool.chip_tool import ChipToolTestType
-from app.chip_tool.test_case import ChipToolTest
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.test_case import ChipToolTest
 from app.default_environment_config import default_environment_config
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger

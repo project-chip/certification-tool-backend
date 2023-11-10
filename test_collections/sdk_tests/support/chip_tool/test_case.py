@@ -22,8 +22,8 @@ from matter_chip_tool_adapter.decoder import MatterLog
 from matter_yamltests.hooks import TestParserHooks, TestRunnerHooks
 from matter_yamltests.parser import PostProcessResponseResult, TestStep
 
-from app.chip_tool import ChipTool
-from app.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
 from app.models import TestStateEnum
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import CHIP_LOG_FORMAT, CHIPTOOL_LEVEL, test_engine_logger
