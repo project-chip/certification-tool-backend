@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import os
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -26,6 +27,8 @@ from sqlalchemy import create_engine
 
 from alembic.migration import MigrationContext
 from app.core.config import settings
+from app.models import TestRunExecution
+from app.schemas import TestSelection
 
 
 def send_email(
@@ -162,3 +165,31 @@ def get_db_revision() -> str:
     current_rev = context.get_current_revision() or "Unknown"
 
     return current_rev
+
+
+def selected_tests_from_execution(run: TestRunExecution) -> TestSelection:
+    selected_tests: TestSelection = {}
+
+    for suite in run.test_suite_executions:
+        selected_tests.setdefault(suite.collection_id, {})
+        selected_tests[suite.collection_id][suite.public_id] = {}
+        for case in suite.test_case_executions:
+            selected_tests[suite.collection_id][suite.public_id].update(
+                {case.public_id: 1}
+            )
+
+    return selected_tests
+
+
+def formated_datetime_now_str() -> str:
+    """Returns the string for the date and time now, with a specific format.
+    The date format used is: '_YYYY_MM_DD_hh_mm_ss'
+    """
+    return datetime.now().strftime("_%Y_%m_%d_%H_%M_%S")
+
+
+def remove_title_date(title: str) -> str:
+    """Use regex to remove the date suffix of the title string
+    The date format expected is: '_YYYY_MM_DD_hh_mm_ss'
+    """
+    return re.sub(r"\_\d{4}(\_\d{2}){5}", "", title)

@@ -15,6 +15,7 @@
 #
 from http import HTTPStatus
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,7 @@ from app.core.config import settings
 from app.tests.utils.test_run_config import create_random_test_run_config
 
 
+@pytest.mark.deprecated("The test_run_config is now deprecated along with this test")
 def test_create_test_run_config(client: TestClient, db: Session) -> None:
     data = {
         "name": "Foo",
@@ -50,6 +52,7 @@ def test_create_test_run_config(client: TestClient, db: Session) -> None:
     assert "id" in content
 
 
+@pytest.mark.deprecated("The test_run_config is now deprecated along with this test")
 def test_create_test_run_config_invalid_selection(
     client: TestClient, db: Session
 ) -> None:
@@ -77,6 +80,7 @@ def test_create_test_run_config_invalid_selection(
     assert "detail" in content
 
 
+@pytest.mark.deprecated("The test_run_config is now deprecated along with this test")
 def test_read_test_run_config(client: TestClient, db: Session) -> None:
     test_run_config = create_random_test_run_config(db)
     response = client.get(
@@ -90,6 +94,7 @@ def test_read_test_run_config(client: TestClient, db: Session) -> None:
     assert content["selected_tests"] == test_run_config.selected_tests
 
 
+@pytest.mark.deprecated("The test_run_config is now deprecated along with this test")
 def test_update_test_run_config(client: TestClient, db: Session) -> None:
     test_run_config = create_random_test_run_config(db)
     data = {"name": "Updated Name"}
