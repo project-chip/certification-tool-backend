@@ -237,7 +237,7 @@ class PythonTestCase(TestCase):
             manager.start()
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
             runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
-            result = self.chip_tool.send_command(
+            self.chip_tool.send_command(
                 f"{runner_class} {self.metadata['title']}", prefix=EXECUTABLE
             )
             while ((update := test_runner_hooks.updates_test()) is not None) or (
