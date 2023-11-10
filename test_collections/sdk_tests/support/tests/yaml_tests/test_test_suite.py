@@ -107,7 +107,8 @@ async def test_suite_setup_log_yaml_version() -> None:
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
         ) as logger_info, mock.patch(
-            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite.setup"
+            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite."
+            "setup"
         ) as _:
             await suite_instance.setup()
             logger_info.assert_called()
