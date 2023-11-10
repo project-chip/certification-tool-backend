@@ -16,17 +16,17 @@
 import re
 from typing import Any, Type, TypeVar
 
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
-from test_collections.sdk_tests.support.chip_tool.test_case import (
-    ChipToolManualPromptTest,
-    ChipToolTest,
-)
 from app.test_engine.logger import test_engine_logger
 from app.test_engine.models import (
     ManualTestCase,
     ManualVerificationTestStep,
     TestCase,
     TestStep,
+)
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.test_case import (
+    ChipToolManualPromptTest,
+    ChipToolTest,
 )
 
 from .yaml_test_models import YamlTest, YamlTestStep, YamlTestType

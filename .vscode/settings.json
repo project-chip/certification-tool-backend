@@ -35,6 +35,7 @@
     "python.testing.pytestPath": "/usr/local/bin/pytest",
     "python.testing.pytestArgs": [
         "app/tests",
+        "test_collections/sdk_tests/support/tests",
         "--no-cov"
     ],
     "python.linting.ignorePatterns": [

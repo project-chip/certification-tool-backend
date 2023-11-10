@@ -1,2 +1,4 @@
 [run]
-omit = */app/tests/*
+omit =
+        */app/tests/*
+        */test_collections/sdk_tests/support/tests/*

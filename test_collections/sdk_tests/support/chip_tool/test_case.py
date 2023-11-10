@@ -22,8 +22,6 @@ from matter_chip_tool_adapter.decoder import MatterLog
 from matter_yamltests.hooks import TestParserHooks, TestRunnerHooks
 from matter_yamltests.parser import PostProcessResponseResult, TestStep
 
-from test_collections.sdk_tests.support.chip_tool import ChipTool
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
 from app.models import TestStateEnum
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import CHIP_LOG_FORMAT, CHIPTOOL_LEVEL, test_engine_logger
@@ -36,6 +34,8 @@ from app.user_prompt_support import OptionsSelectPromptRequest
 from app.user_prompt_support.uploaded_file_support import UploadFile
 from app.user_prompt_support.user_prompt_manager import user_prompt_manager
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
 
 CHIP_TOOL_DEFAULT_PROMPT_TIMEOUT_S = 60  # seconds
 OUTCOME_TIMEOUT_S = 60 * 10  # Seconds

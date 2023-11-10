@@ -16,10 +16,10 @@
 from enum import Enum
 from typing import Type, TypeVar
 
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
-from test_collections.sdk_tests.support.chip_tool.test_suite import ChipToolSuite
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.test_suite import ChipToolSuite
 
 
 class YamlTestSuiteFactoryError(Exception):

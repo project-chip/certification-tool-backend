@@ -19,7 +19,9 @@ from unittest import mock
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from app.tests.yaml_tests.test_test_case import yaml_test_instance
+from test_collections.sdk_tests.support.tests.yaml_tests.test_test_case import (
+    yaml_test_instance,
+)
 from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_models import (
     YamlTestStep,
     YamlTestType,
