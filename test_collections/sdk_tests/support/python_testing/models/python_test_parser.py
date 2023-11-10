@@ -15,7 +15,7 @@
 #
 import ast
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 from .python_test_models import PythonTest, PythonTestStep, PythonTestType
 

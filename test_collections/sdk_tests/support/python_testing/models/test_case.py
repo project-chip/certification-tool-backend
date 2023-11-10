@@ -15,29 +15,32 @@
 #
 import os
 import re
-from multiprocessing import Process
 from multiprocessing.managers import BaseManager
 from typing import Any, Type, TypeVar
 
-# TODO check if this should be changed to  SDK python test specific entries
 from matter_chip_tool_adapter.decoder import MatterLog
-from matter_yamltests.hooks import TestRunnerHooks
 
-from app.chip_tool.chip_tool import ChipToolTestType
+from app.chip_tool.chip_tool import ChipTool, ChipToolTestType
 from app.chip_tool.test_case import ChipToolTest
+from app.models import TestCaseExecution
 from app.test_engine.logger import (
     CHIP_LOG_FORMAT,
     CHIPTOOL_LEVEL,
     logger,
     test_engine_logger,
 )
-from app.test_engine.models import ManualVerificationTestStep, TestCase, TestStep
+from app.test_engine.models import TestCase, TestStep
 
 from .python_test_models import PythonTest
 from .python_testing_hooks_proxy import SDKPythonTestRunnerHooks
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
+
+# Command line params
+RUNNER_CLASS = "external_runner.py"
+RUNNER_CLASS_PATH = "./testing2/"
+EXECUTABLE = "python3"
 
 
 class PythonTestCase(TestCase):
@@ -46,13 +49,17 @@ class PythonTestCase(TestCase):
     This class provides a class factory that will dynamically declare a new sub-class
     based on the test-type the Python test is expressing.
 
-    The PythonTest will be stored as a class property that will be used at run-time in all
-    instances of such subclass.
+    The PythonTest will be stored as a class property that will be used at run-time
+    in all instances of such subclass.
     """
 
     python_test: PythonTest
     python_test_version: str
     test_finished: bool
+
+    def __init__(self, test_case_execution: TestCaseExecution) -> None:
+        super().__init__(test_case_execution=test_case_execution)
+        self.chip_tool: ChipTool
 
     def reset(self) -> None:
         self.start_called = False
@@ -123,7 +130,7 @@ class PythonTestCase(TestCase):
             # It is expected the runner to return a PostProcessResponseResult,
             # but in case of returning a different type
             self.current_test_step.append_failure(
-                "Test Step Failure: \n " f"Expected: '<Empty>' \n Received:  '<Empty>'"
+                "Test Step Failure: \n Expected: '<Empty>' \n Received:  '<Empty>'"
             )
             return
 
@@ -147,7 +154,8 @@ class PythonTestCase(TestCase):
 
     @classmethod
     def default_test_parameters(cls) -> dict[str, Any]:
-        """Python Testing config dict, sometimes have a nested dict with type and default value.
+        """Python Testing config dict, sometimes have a nested dict with type and
+        default value.
         Only defaultValue is used in this case.
         """
         parameters = {}
@@ -164,6 +172,9 @@ class PythonTestCase(TestCase):
         test_engine_logger.info(f"Python Test Version: {self.python_test_version}")
         try:
             await super().setup()
+            self.chip_tool = ChipTool()
+            await self.chip_tool.start_container_no_server()
+            assert self.chip_tool.is_running()
         except NotImplementedError:
             pass
 
@@ -221,29 +232,14 @@ class PythonTestCase(TestCase):
     async def execute(self) -> None:
         try:
             logger.info("Running Python Test: " + self.metadata["title"])
-
-            # NOTE that this aproach invalidates  parallel  execution since test_case_instance object is shared  by the class
-            # TODO: Same approach could work from TestCase side: create test_case_instance inside PythonTestCase to avoid using SDKPythonTestRunnerHooks
-
             BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
             manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
             manager.start()
-
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
-
-            command = (
-                "docker run -it --network host --privileged"
-                " -v /var/paa-root-certs:/root/paa-root-certs"
-                " -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:rw"
-                " -v /home/ubuntu/chip-certification-tool/backend/sdk_content/python_testing2:/root/python_testing2"
-                " connectedhomeip/chip-cert-bins:19771ed7101321d68b87d05201d42d00adf5368f"
-                " python3 python_testing2/hello_external_runner.py "
-                f" {self.metadata['title']}"
+            runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
+            result = self.chip_tool.send_command(
+                f"{runner_class} {self.metadata['title']}", prefix=EXECUTABLE
             )
-            # Start the command in a new process
-            p = Process(target=self.run_command, args=(command,))
-            p.start()
-
             while ((update := test_runner_hooks.updates_test()) is not None) or (
                 not test_runner_hooks.finished()
             ):
@@ -251,7 +247,7 @@ class PythonTestCase(TestCase):
                     continue
 
                 def handle_update(update: dict) -> None:
-                    def call_function(obj, func_name: str, kwargs) -> None:  # type: ignore
+                    def call_function(obj, func_name, kwargs) -> None:  # type: ignore
                         func = getattr(obj, func_name, None)
                         if not func:
                             raise AttributeError(
@@ -266,12 +262,12 @@ class PythonTestCase(TestCase):
                         call_function(self, func_name, kwargs)
 
                 handle_update(update)
-
         finally:
             pass
 
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
+        self.chip_tool.destroy_device()
 
 
 class PythonChipToolTestCase(PythonTestCase, ChipToolTest):

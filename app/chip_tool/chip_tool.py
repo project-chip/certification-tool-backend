@@ -266,9 +266,6 @@ class ChipTool(metaclass=Singleton):
         elif test_type == ChipToolTestType.CHIP_APP:
             prefix = CHIP_APP_EXE
             command = ["--interactive", "--port 9002"]
-        elif test_type == ChipToolTestType.PYTHON_TEST:
-            # TODO - To be implemented
-            pass
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")
 
@@ -349,6 +346,32 @@ class ChipTool(metaclass=Singleton):
             .get(DOCKER_GATEWAY_KEY, "")
         )
 
+    async def start_container_no_server(self) -> None:
+        """
+        Creates the chip-tool container without any service running
+        (ChipTool or ChipApp).
+        """
+        # Ensure there's no existing container running using the same name.
+        self.__destroy_existing_container()
+        # Async return when the container is running
+        self.__chip_tool_container = await container_manager.create_container(
+            self.image_tag, self.run_parameters
+        )
+        # Reset any previous states
+        self.__last_exec_id = None
+        self.__pics_file_created = False
+        # Generate new random node id for the DUT
+        self.__reset_node_id()
+        self.logger.info(f"New Node Id generated: {hex(self.node_id)}")
+        self.logger.info(
+            f"""
+            chip-tool started: {self.container_name}
+            with configuration: {self.run_parameters}
+            """
+        )
+        # Server started is false after spinning up a new container.
+        self.__server_started = False
+
     async def start_container(
         self, test_type: ChipToolTestType, use_paa_certs: bool = False
     ) -> None:
@@ -356,38 +379,13 @@ class ChipTool(metaclass=Singleton):
 
         Returns only when the container is created and all chip-tool services start.
         """
-
         if self.is_running():
             self.logger.info(
                 "chip-tool container already running, no need to start a new container"
             )
             return
 
-        # Ensure there's no existing container running using the same name.
-        self.__destroy_existing_container()
-
-        # Async return when the container is running
-        self.__chip_tool_container = await container_manager.create_container(
-            self.image_tag, self.run_parameters
-        )
-
-        # Reset any previous states
-        self.__last_exec_id = None
-        self.__pics_file_created = False
-
-        # Generate new random node id for the DUT
-        self.__reset_node_id()
-        self.logger.info(f"New Node Id generated: {hex(self.node_id)}")
-
-        self.logger.info(
-            f"""
-            chip-tool started: {self.container_name}
-            with configuration: {self.run_parameters}
-            """
-        )
-
-        # Server started is false after spinning up a new container.
-        self.__server_started = False
+        await self.start_container_no_server()
 
         web_socket_config = WebSocketRunnerConfig()
         web_socket_config.server_address = self.__get_gateway_ip()
@@ -602,9 +600,6 @@ class ChipTool(metaclass=Singleton):
             adapter = ChipToolAdapter.Adapter(parser_config.definitions)
         elif test_type == ChipToolTestType.CHIP_APP:
             adapter = ChipAppAdapter.Adapter(parser_config.definitions)
-        elif test_type == ChipToolTestType.PYTHON_TEST:
-            # TODO - run_test() for python_test to be implemented
-            pass
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")
 
