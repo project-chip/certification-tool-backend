@@ -30,6 +30,7 @@ class TestSuiteExecutionBase(BaseModel):
     state: TestStateEnum
     public_id: str
     execution_index: int
+    collection_id: str
 
 
 # Properties shared by models stored in DB

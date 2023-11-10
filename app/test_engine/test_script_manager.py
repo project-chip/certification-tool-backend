@@ -112,7 +112,9 @@ class TestScriptManager(object, metaclass=Singleton):
             test_suite = test_collection.test_suites[test_suite_id]
 
             # Create pending test suite
-            test_suite_execution = self.__pending_test_suite_execution(test_suite)
+            test_suite_execution = self.__pending_test_suite_execution(
+                test_suite, test_collection
+            )
 
             # Create pending test cases
             test_cases = self.___pending_test_cases_for_test_suite(
@@ -130,6 +132,7 @@ class TestScriptManager(object, metaclass=Singleton):
     def __pending_test_suite_execution(
         self,
         test_suite: TestSuiteDeclaration,
+        test_collection: TestCollectionDeclaration,
     ) -> TestSuiteExecution:
         """
         This will create a DB entry for test suite.
@@ -139,7 +142,9 @@ class TestScriptManager(object, metaclass=Singleton):
         metadata = self.__find_or_create_test_suite_metadata(test_suite=test_suite)
 
         test_suite_execution = TestSuiteExecution(
-            public_id=metadata.public_id, test_suite_metadata=metadata
+            public_id=metadata.public_id,
+            test_suite_metadata=metadata,
+            collection_id=test_collection.name,
         )
         return test_suite_execution
 

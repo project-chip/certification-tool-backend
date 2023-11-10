@@ -26,7 +26,7 @@ from app.test_engine.test_script_manager import TestNotFound
 router = APIRouter()
 
 
-@router.get("/", response_model=List[schemas.TestRunConfig])
+@router.get("/", response_model=List[schemas.TestRunConfig], deprecated=True)
 def read_test_run_configs(
     db: Session = Depends(get_db),
     skip: int = 0,
@@ -38,7 +38,7 @@ def read_test_run_configs(
     return crud.test_run_config.get_multi(db, skip=skip, limit=limit)
 
 
-@router.post("/", response_model=schemas.TestRunConfig)
+@router.post("/", response_model=schemas.TestRunConfig, deprecated=True)
 def create_test_run_config(
     *,
     db: Session = Depends(get_db),
@@ -56,7 +56,7 @@ def create_test_run_config(
         )
 
 
-@router.put("/{id}", response_model=schemas.TestRunConfig)
+@router.put("/{id}", response_model=schemas.TestRunConfig, deprecated=True)
 def update_test_run_config(
     *,
     db: Session = Depends(get_db),
@@ -78,7 +78,7 @@ def update_test_run_config(
     return test_run_config
 
 
-@router.get("/{id}", response_model=schemas.TestRunConfig)
+@router.get("/{id}", response_model=schemas.TestRunConfig, deprecated=True)
 def read_test_run_config(
     *,
     db: Session = Depends(get_db),

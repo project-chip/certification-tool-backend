@@ -31,6 +31,11 @@ from app.models.test_run_execution import TestRunExecution
 from app.test_engine import TEST_ENGINE_ABORTING_TESTING_MESSAGE
 from app.test_engine.test_runner import AbortError, LoadingError, TestRunner
 from app.test_engine.test_script_manager import TestNotFound
+from app.utils import (
+    formated_datetime_now_str,
+    remove_title_date,
+    selected_tests_from_execution,
+)
 from app.version import version_information
 
 router = APIRouter()
@@ -72,21 +77,12 @@ def create_test_run_execution(
     *,
     db: Session = Depends(get_db),
     test_run_execution_in: schemas.TestRunExecutionCreate,
-    selected_tests: Optional[schemas.TestSelection] = None,
+    selected_tests: schemas.TestSelection,
 ) -> TestRunExecution:
-    """
-    Create new test run execution.
-    """
-    test_run_config_present = test_run_execution_in.test_run_config_id is not None
-    selected_tests_present = selected_tests is not None
+    """Create a new test run execution."""
 
-    if test_run_config_present and selected_tests_present:
-        msg = "Only either test_run_config_id or selected_tests must be present"
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=msg)
-
-    if not test_run_config_present and not selected_tests_present:
-        msg = "Either test_run_config_id or selected_tests must be present"
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=msg)
+    # TODO: Remove test_run_config completely from the project
+    test_run_execution_in.test_run_config_id = None
 
     test_run_execution = crud.test_run_execution.create(
         db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
@@ -228,6 +224,50 @@ def unarchive(
         )
 
     return crud.test_run_execution.unarchive(db=db, db_obj=test_run_execution)
+
+
+@router.post("/{id}/repeat", response_model=schemas.TestRunExecutionWithChildren)
+def repeat_test_run_execution(
+    *, db: Session = Depends(get_db), id: int, title: Optional[str] = None
+) -> TestRunExecution:
+    """Repeat a test run execution by id.
+
+    Args:
+        id (int): test run execution id
+        title (str): Optional title to the repeated test run execution. If not provided,
+            the old title will be used with the date and time updated.
+
+    Raises:
+        HTTPException: if no test run execution exists for the provided id
+
+    Returns:
+        TestRunExecution: new test run execution with the same test cases from id
+    """
+    execution_to_repeat = crud.test_run_execution.get(db=db, id=id)
+    if not execution_to_repeat:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="TestRunExecution not found"
+        )
+
+    if title is None:
+        # If no title is provided, the old title will be used without data info
+        title = remove_title_date(execution_to_repeat.title)
+
+    date_now = formated_datetime_now_str()
+    title += date_now
+
+    test_run_execution_in = schemas.TestRunExecutionCreate(title=title)
+    test_run_execution_in.description = execution_to_repeat.description
+    test_run_execution_in.project_id = execution_to_repeat.project_id
+    test_run_execution_in.operator_id = execution_to_repeat.operator_id
+    # TODO: Remove test_run_config completely from the project
+    test_run_execution_in.test_run_config_id = None
+
+    selected_tests = selected_tests_from_execution(execution_to_repeat)
+
+    return crud.test_run_execution.create(
+        db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
+    )
 
 
 @router.delete("/{id}", response_model=schemas.TestRunExecutionInDBBase)
