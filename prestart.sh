@@ -32,5 +32,5 @@ do
     [ -x $prestart ] && $prestart
 done
 
+# We echo "complete" to ensure this scripts last command has exit code 0.
 echo "Prestart Complete"
-exit 0
