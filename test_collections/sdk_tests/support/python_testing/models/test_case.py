@@ -15,6 +15,7 @@
 #
 import os
 import re
+from asyncio import sleep
 from multiprocessing.managers import BaseManager
 from typing import Any, Type, TypeVar
 
@@ -55,7 +56,6 @@ class PythonTestCase(TestCase):
 
     python_test: PythonTest
     python_test_version: str
-    test_finished: bool
 
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
@@ -65,7 +65,8 @@ class PythonTestCase(TestCase):
         pass
 
     def stop(self, duration: int) -> None:
-        pass
+        if not self.test_stop_called:
+            self.current_test_step.mark_as_completed()
 
     def test_start(self, filename: str, name: str, count: int) -> None:
         pass
@@ -73,6 +74,7 @@ class PythonTestCase(TestCase):
         # self.next_step()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
+        self.test_stop_called = True
         self.current_test_step.mark_as_completed()
 
     def step_skipped(self, name: str, expression: str) -> None:
@@ -97,9 +99,6 @@ class PythonTestCase(TestCase):
 
     def step_unknown(self) -> None:
         self.__runned += 1
-
-    def is_finished(self) -> bool:
-        return self.test_finished
 
     def __handle_logs(self, logs: Any) -> None:
         for log_entry in logs or []:
@@ -227,9 +226,14 @@ class PythonTestCase(TestCase):
             manager.start()
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
             runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
+            # TODO Ignoring stream from docker execution until client impl is done
             self.chip_tool.send_command(
-                f"{runner_class} {self.metadata['title']}", prefix=EXECUTABLE
-            )
+                f"{runner_class} {self.metadata['title']}",
+                prefix=EXECUTABLE,
+                is_stream=True,
+                is_socket=False,
+            ).output
+
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
             ):
@@ -252,6 +256,7 @@ class PythonTestCase(TestCase):
                         call_function(self, func_name, kwargs)
 
                 handle_update(update)
+                await sleep(0.1)
         finally:
             pass
 
