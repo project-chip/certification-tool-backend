@@ -61,16 +61,6 @@ class PythonTestCase(TestCase):
         super().__init__(test_case_execution=test_case_execution)
         self.chip_tool: ChipTool
 
-    def reset(self) -> None:
-        self.start_called = False
-        self.stop_called = False
-        self.test_start_called = False
-        self.test_stop_called = False
-        self.step_success_count = 0
-        self.step_failure_count = 0
-        self.step_unknown_count = 0
-        self.__runned = 0
-
     def start(self, count: int) -> None:
         pass
 
@@ -240,8 +230,8 @@ class PythonTestCase(TestCase):
             self.chip_tool.send_command(
                 f"{runner_class} {self.metadata['title']}", prefix=EXECUTABLE
             )
-            while ((update := test_runner_hooks.updates_test()) is not None) or (
-                not test_runner_hooks.finished()
+            while ((update := test_runner_hooks.update_test()) is not None) or (
+                not test_runner_hooks.is_finished()
             ):
                 if not update:
                     continue
