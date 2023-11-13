@@ -31,3 +31,6 @@ do
     # Only run prestart.sh if present/
     [ -x $prestart ] && $prestart
 done
+
+echo "Prestart Complete"
+exit 0
