@@ -36,7 +36,6 @@ from app.schemas.test_run_execution import (
     TestRunExecutionStats,
     TestRunExecutionWithStats,
 )
-from app.schemas.test_selection import SelectedTests
 from app.test_engine.test_script_manager import test_script_manager
 
 
@@ -177,17 +176,9 @@ class CRUDTestRunExecution(
 
         test_run_execution = super().create(db=db, obj_in=obj_in)
 
-        # https://github.com/project-chip/certification-tool/issues/14
-        # TODO: while we change the API. selected tests can come from two places:
-        # 1. Pass in directly
-        # 2. from the optional test_run_config
-        selected_tests: Optional[SelectedTests] = kwargs.get("selected_tests")
-
-        selected_tests = SelectedTests() if not selected_tests else selected_tests
-
         test_suites = (
             test_script_manager.pending_test_suite_executions_for_selected_tests(
-                selected_tests
+                obj_in.selected_tests
             )
         )
 

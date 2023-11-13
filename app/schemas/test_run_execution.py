@@ -19,6 +19,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 from app.models.test_enums import TestStateEnum
+from app.schemas.test_selection import SelectedTests
 
 from .operator import Operator, OperatorToExport
 from .test_run_config import TestRunConfigToExport
@@ -51,6 +52,7 @@ class TestRunExecutionBaseWithRelationships(TestRunExecutionBase):
 class TestRunExecutionCreate(TestRunExecutionBaseWithRelationships):
     # TODO(#124): Require project ID when UI supports project management.
     operator_id: Optional[int]
+    selected_tests: Optional[SelectedTests]
 
 
 # Properties shared by models stored in DB

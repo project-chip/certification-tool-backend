@@ -48,7 +48,12 @@ from .test_run_execution import (
 )
 from .test_run_log_entry import TestRunLogEntry
 from .test_runner_status import TestRunnerStatus
-from .test_selection import SelectedTests
+from .test_selection import (
+    SelectedCollection,
+    SelectedTestCase,
+    SelectedTests,
+    SelectedTestSuite,
+)
 from .test_step_execution import TestStepExecution, TestStepExecutionToExport
 from .test_suite_execution import TestSuiteExecution, TestSuiteExecutionToExport
 from .test_suite_metadata import TestSuiteMetadata, TestSuiteMetadataBase

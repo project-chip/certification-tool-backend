@@ -28,7 +28,12 @@ from sqlalchemy import create_engine
 from alembic.migration import MigrationContext
 from app.core.config import settings
 from app.models import TestRunExecution
-from app.schemas import TestSelection
+from app.schemas import (
+    SelectedCollection,
+    SelectedTestCase,
+    SelectedTests,
+    SelectedTestSuite,
+)
 
 
 def send_email(
@@ -167,18 +172,30 @@ def get_db_revision() -> str:
     return current_rev
 
 
-def selected_tests_from_execution(run: TestRunExecution) -> TestSelection:
-    selected_tests: TestSelection = {}
+def selected_tests_from_execution(run: TestRunExecution) -> SelectedTests:
+    collections: list[SelectedCollection] = []
 
     for suite in run.test_suite_executions:
-        selected_tests.setdefault(suite.collection_id, {})
-        selected_tests[suite.collection_id][suite.public_id] = {}
+        index = -1
+
+        for i, c in enumerate(collections):
+            if c.public_id == suite.collection_id:
+                index = i
+                break
+        if index == -1:
+            collections.append(SelectedCollection(public_id=suite.collection_id))
+
+        collections[index].test_suites.append(
+            SelectedTestSuite(public_id=suite.public_id)
+        )
         for case in suite.test_case_executions:
-            selected_tests[suite.collection_id][suite.public_id].update(
-                {case.public_id: 1}
+            collections[index].test_suites[-1].test_cases.append(
+                SelectedTestCase(
+                    public_id=case.public_id, iterations=case.execution_index
+                )
             )
 
-    return selected_tests
+    return SelectedTests(collections=collections)
 
 
 def formated_datetime_now_str() -> str:
