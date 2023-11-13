@@ -348,7 +348,7 @@ class ChipTool(metaclass=Singleton):
 
     async def start_container_no_server(self) -> None:
         """
-        Creates the chip-tool container without any service running
+        Creates the chip-tool container without any server running
         (ChipTool or ChipApp).
         """
         # Ensure there's no existing container running using the same name.

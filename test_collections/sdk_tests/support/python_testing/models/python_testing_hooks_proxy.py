@@ -23,14 +23,14 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     is_finished = False
     results: Queue
 
-    def updates_test(self) -> Union[dict, None]:
+    def update_test(self) -> Union[dict, None]:
         try:
             result = self.results.get(block=False)
             return result
         except Empty:
             return None
 
-    def finished(self) -> bool:
+    def is_finished(self) -> bool:
         return SDKPythonTestRunnerHooks.is_finished
 
     def __init__(self) -> None:

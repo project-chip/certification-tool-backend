@@ -13,8 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from .support.python_testing import sdk_python_collection
 from .support.yaml_tests import custom_collection, sdk_collection
-
-# TODO The Python test support implementation is ongoing.
-# Uncomment line below when the implementation is done.
-# from .support.python_testing import sdk_python_collection

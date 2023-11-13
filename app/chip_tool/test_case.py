@@ -225,7 +225,6 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
             )
 
         self.chip_tool = ChipTool()
-        await self.chip_tool.start_container_no_server()
 
         # Use test engine logger to log all events to test run.
         self.chip_tool.logger = test_engine_logger
