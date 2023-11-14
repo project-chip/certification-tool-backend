@@ -37,6 +37,7 @@ class TestSuiteExecution(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     public_id: Mapped[str] = mapped_column(nullable=False)
     execution_index: Mapped[int] = mapped_column(nullable=False)
+    collection_id: Mapped[str] = mapped_column(nullable=False)
 
     state: Mapped[TestStateEnum] = mapped_column(
         Enum(TestStateEnum), nullable=False, default=TestStateEnum.PENDING

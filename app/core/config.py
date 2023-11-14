@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     # Logging
     LOGGING_PATH: str = "./logs"
     LOGGING_FILENAME: str = "{time:YYYY-MM-DD}.log"
-    LOGGING_LEVEL: str = "debug"
+    LOGGING_LEVEL: str = "info"
     LOGGING_ROTATION: str = "20 days"
     LOGGING_RETENTION: str = "1 months"
     LOGGING_FORMAT: str = (
@@ -113,9 +113,9 @@ class Settings(BaseSettings):
 
     # SDK Docker Image
     SDK_DOCKER_IMAGE: str = "connectedhomeip/chip-cert-bins"
-    SDK_DOCKER_TAG: str = "19771ed7101321d68b87d05201d42d00adf5368f"
+    SDK_DOCKER_TAG: str = "f06d9520d02d68076c5accbf839f168cda89c47c"
     # SDK SHA: used to fetch test YAML from SDK.
-    SDK_SHA: str = "19771ed7101321d68b87d05201d42d00adf5368f"
+    SDK_SHA: str = "f06d9520d02d68076c5accbf839f168cda89c47c"
 
     class Config:
         case_sensitive = True

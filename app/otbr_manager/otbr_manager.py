@@ -142,7 +142,7 @@ class ThreadBorderRouter(metaclass=Singleton):
 
         except (asyncio.exceptions.TimeoutError, ThreadBorderRouterError):
             err_msg = "Border router does not start properly for " + self.__docker_image
-            logger.debug(self.__otbr_docker.logs().decode("utf-8"))
+            logger.warning(self.__otbr_docker.logs().decode("utf-8"))
             logger.error(err_msg)
             self.destroy_device()
             raise ThreadBorderRouterError(err_msg)

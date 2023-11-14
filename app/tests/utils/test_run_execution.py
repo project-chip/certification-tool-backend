@@ -171,6 +171,7 @@ test_run_execution_base_dict = {
                 "source_hash": "de7f3c1390cd283f91f74a334aaf0ec3",
             },
             "execution_index": 0,
+            "collection_id": "SDK YAML Tests",
             "test_case_executions": [
                 {
                     "state": "passed",

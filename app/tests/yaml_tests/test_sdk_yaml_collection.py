@@ -18,6 +18,7 @@ from unittest import mock
 
 import pytest
 
+from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 from test_collections.sdk_tests.support.yaml_tests.models.test_declarations import (
     YamlCaseDeclaration,
     YamlCollectionDeclaration,
@@ -31,7 +32,6 @@ from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_models impor
 from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
     sdk_yaml_test_collection,
 )
-
 
 @pytest.fixture
 def yaml_collection() -> YamlCollectionDeclaration:

@@ -50,80 +50,13 @@ from app.tests.utils.test_run_execution import (
 )
 from app.tests.utils.utils import random_lower_string
 from app.tests.utils.validate_json_response import validate_json_response
+from app.utils import remove_title_date
 
 faker = Faker()
 
 
-def test_create_test_run_execution_with_test_run_config_succeeds(
-    client: TestClient, db: Session
-) -> None:
-    """This unit test will test the create API for TestRunExecution.
-    The selected tests are passed indirectly by reffering to a TestRunConfig.
-    This is expected to succeed, and the API should respond with HTTP status 200 OK
-    """
-
-    test_run_config = create_random_test_run_config(db)
-    title = "Foo"
-    description = random_lower_string()
-    json_data = {
-        "test_run_execution_in": {
-            "title": title,
-            "description": description,
-            "test_run_config_id": test_run_config.id,
-        }
-    }
-    response = client.post(
-        f"{settings.API_V1_STR}/test_run_executions/",
-        json=json_data,
-    )
-    assert response.status_code == HTTPStatus.OK
-    content = response.json()
-    assert content["title"] == title
-    assert content["description"] == description
-
-
-def test_create_test_run_execution_with_test_run_config_and_selected_tests_fails(
-    client: TestClient, db: Session
-) -> None:
-    """This is a negative unit test, that will test the create API for TestRunExecution.
-    The selected tests are passed both:
-    - directly in the json payload, and
-    - by referencing a TestRunConfig
-
-    The response is expected to be an error,
-    as the API only supports one of these options at once.
-    """
-    test_run_config = create_random_test_run_config(db)
-    title = "Foo"
-    json_data = {
-        "test_run_execution_in": {
-            "title": title,
-            "test_run_config_id": test_run_config.id,
-        },
-        "selected_tests": {
-            "sample_tests": {
-                "SampleTestSuite1": {
-                    "TCSS1001": 1,
-                    "TCSS1002": 2,
-                    "TCSS1003": 2,
-                    "TCSS1004": 5,
-                    "TCSS1005": 8,
-                },
-            },
-        },
-    }
-    response = client.post(
-        f"{settings.API_V1_STR}/test_run_executions/",
-        json=json_data,
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    content = response.json()
-    assert isinstance(content, dict)
-    assert content.get("detail") is not None
-
-
 def test_create_test_run_execution_with_selected_tests_succeeds(
-    client: TestClient, db: Session
+    client: TestClient,
 ) -> None:
     """This unit test will test the create API for TestRunExecution.
     The selected tests are passed directly in the json payload. This is expected to
@@ -191,6 +124,262 @@ def test_create_test_run_execution_with_selected_tests_and_operator_succeeds(
     assert response_operator["id"] == operator.id
     assert "name" in response_operator
     assert response_operator["name"] == operator.name
+
+
+def test_create_test_run_execution_with_selected_tests_project_operator_succeeds(
+    client: TestClient, db: Session
+) -> None:
+    """This test will create a new test run execution. A success is expected.
+    The selected tests, the project and the operator reference are passed directly by
+    JSON payload.
+    """
+
+    title = "TestRunExecutionFoo"
+    project = create_random_project(db)
+    operator = create_random_operator(db)
+    json_data = {
+        "test_run_execution_in": {
+            "title": title,
+            "operator_id": operator.id,
+            "project_id": project.id,
+        },
+        "selected_tests": {
+            "sample_tests": {
+                "SampleTestSuite1": {"TCSS1001": 1},
+            },
+        },
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/",
+        json=json_data,
+    )
+    assert response.status_code == HTTPStatus.OK
+    content = response.json()
+    assert content.get("title") == title
+    assert content.get("project_id") == project.id
+
+    response_operator = content.get("operator")
+    assert response_operator is not None
+    assert "id" in response_operator
+    assert response_operator["id"] == operator.id
+    assert "name" in response_operator
+    assert response_operator["name"] == operator.name
+
+
+def test_create_test_run_execution_with_test_run_config_and_selected_tests_succeeds(
+    client: TestClient, db: Session
+) -> None:
+    """This test will create a new test run execution. A success is expected.
+    The selected tests are passed directly by JSON payload.
+    Also, one reference to a test run config is also included, but this is ignored by
+    the API by assigning None.
+    """
+
+    test_run_config = create_random_test_run_config(db)
+    title = "TestRunExecutionFoo"
+    description = random_lower_string()
+    json_data = {
+        "test_run_execution_in": {
+            "title": title,
+            "description": description,
+            "test_run_config_id": test_run_config.id,
+        },
+        "selected_tests": {
+            "sample_tests": {
+                "SampleTestSuite1": {
+                    "TCSS1001": 1,
+                    "TCSS1002": 2,
+                    "TCSS1003": 4,
+                    "TCSS1004": 8,
+                    "TCSS1005": 16,
+                },
+            },
+        },
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/",
+        json=json_data,
+    )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content={
+            "title": title,
+            "description": description,
+            "test_run_config_id": None,
+        },
+    )
+
+
+def test_create_test_run_execution_with_selected_tests_with_two_suites_succeeds(
+    client: TestClient,
+) -> None:
+    """This test will create a new test run execution with two suites selected.
+    A success is expected.
+    The selected tests are passed directly by JSON payload.
+    """
+
+    title = "TestRunExecutionFoo"
+    description = random_lower_string()
+    json_data = {
+        "test_run_execution_in": {
+            "title": title,
+            "description": description,
+        },
+        "selected_tests": {
+            "sample_tests": {
+                "SampleTestSuite1": {
+                    "TCSS1001": 1,
+                    "TCSS1002": 2,
+                    "TCSS1003": 4,
+                    "TCSS1004": 8,
+                    "TCSS1005": 16,
+                },
+                "SampleTestSuite2": {
+                    "TCSS2001": 1,
+                    "TCSS2002": 2,
+                    "TCSS2003": 4,
+                    "TCSS2004": 8,
+                    "TCSS2005": 16,
+                },
+            },
+        },
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/",
+        json=json_data,
+    )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_keys=["id", "test_suite_executions"],
+        expected_content={"title": title, "description": description},
+    )
+
+    content = response.json()
+    suites = content.get("test_suite_executions")
+    returned_suites = [s["public_id"] for s in suites]
+    selected_tests = json_data["selected_tests"]["sample_tests"].keys()
+    for selected_suite in selected_tests:
+        assert selected_suite in returned_suites
+
+
+def test_create_test_run_execution_without_selected_tests_fails(
+    client: TestClient,
+) -> None:
+    """This test will try to create a new test run execution. A failure is expected.
+    The selected tests is a required argument for this API and it's missing in this
+    example.
+    """
+
+    title = "TestRunExecutionFoo"
+    description = random_lower_string()
+    json_data = {
+        "test_run_execution_in": {
+            "title": title,
+            "description": description,
+        }
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/",
+        json=json_data,
+    )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+        expected_keys=["detail"],
+    )
+
+
+def test_repeat_existing_test_run_execution_with_two_suites_succeeds(
+    client: TestClient, db: Session
+) -> None:
+    """This test will repeat all the tests from a previous created test run execution.
+    A success is expected.
+    We use a sample collection, suites and test cases to create the test run execution
+    that will be repeated. The title and description are provided by the JSON payload.
+    """
+
+    selected_tests = {
+        "sample_tests": {
+            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3},
+            "SampleTestSuite2": {"TCSS2004": 4, "TCSS2005": 5, "TCSS2006": 6},
+        }
+    }
+    test_run_execution = create_random_test_run_execution(
+        db=db, selected_tests=selected_tests
+    )
+
+    base_title = remove_title_date(test_run_execution.title)
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/repeat",
+    )
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_keys=["id", "title", "description", "test_suite_executions"],
+        expected_content={"description": test_run_execution.description},
+    )
+
+    content = response.json()
+    assert test_run_execution.id != content.get("id")
+    assert base_title == remove_title_date(content.get("title"))
+
+    suites = content.get("test_suite_executions")
+    returned_suites = [s["public_id"] for s in suites]
+    for selected_suite in selected_tests["sample_tests"].keys():
+        assert selected_suite in returned_suites
+
+
+def test_repeat_existing_test_run_execution_with_title_succeeds(
+    client: TestClient, db: Session
+) -> None:
+    """This test will repeat all the tests from a previous created test run execution,
+    with a custom title instead of the old name.
+    A success is expected.
+    """
+    title = "TestRunExecutionFoo"
+    selected_tests = {
+        "sample_tests": {
+            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3}
+        }
+    }
+    test_run_execution = create_random_test_run_execution(
+        db=db, selected_tests=selected_tests
+    )
+    url = f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/repeat"
+    response = client.post(url + f"?title={title}")
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_keys=["id", "title", "description", "test_suite_executions"],
+    )
+    content = response.json()
+    assert title == remove_title_date(content.get("title"))
+
+
+def test_repeat_non_existing_test_run_execution_fails(
+    client: TestClient, db: Session
+) -> None:
+    """This test will try to repeat a non-existing test run execution.
+    A failure is expected.
+    A temporary test run execution is created and deleted it in sequence. The repeat
+    feature will not have nothing to repeat anymore then.
+    """
+    test_run_execution_id = create_test_run_execution_with_some_test_cases(db=db).id
+    crud.test_run_execution.remove(db=db, id=test_run_execution_id)
+
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution_id}/repeat",
+    )
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.NOT_FOUND,
+        expected_keys=["detail"],
+    )
 
 
 def test_read_multiple_test_run_executions(client: TestClient, db: Session) -> None:
