@@ -586,6 +586,9 @@ async def test_run_test_default_config() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
+        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        return_value=True,
+    ), mock.patch(
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
@@ -610,7 +613,7 @@ async def test_run_test_default_config() -> None:
     runner_config: TestRunnerConfig = mock_run.mock_calls[0].args[1]
     runner_options = runner_config.options
     assert runner_options.stop_on_error is not CHIP_TOOL_CONTINUE_ON_FAILURE_VALUE
-    assert runner_options.stop_on_warning is False
+    assert runner_options.stop_on_warning is False 
     assert runner_options.stop_at_number == -1
     assert runner_options.delay_in_ms == TEST_STEP_DELAY_VALUE
 
@@ -639,6 +642,9 @@ async def test_run_test_custom_timeout() -> None:
         return_value=fake_container,
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
+    ), mock.patch(
+        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        return_value=True,
     ), mock.patch(
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
@@ -687,6 +693,9 @@ async def test_run_test_with_custom_parameter() -> None:
         return_value=fake_container,
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
+    ), mock.patch(
+        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        return_value=True,
     ), mock.patch(
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
@@ -737,6 +746,9 @@ async def test_run_test_with_endpoint_parameter() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
+        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        return_value=True,
+    ), mock.patch(
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
@@ -784,6 +796,9 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
         return_value=fake_container,
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
+    ), mock.patch(
+        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        return_value=True,
     ), mock.patch(
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
