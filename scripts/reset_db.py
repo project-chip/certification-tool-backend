@@ -16,5 +16,7 @@
 #
 from app.db.init_db import reset_app_db
 from app.db.session import engine
+from app.tests.conftest import test_engine
 
 reset_app_db(engine)
+reset_app_db(test_engine)
