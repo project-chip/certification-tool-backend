@@ -13,34 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from enum import Enum
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from pydantic import BaseModel
+from ...models.th_test_models import THTest, THTestType
 
 ###
 # This file declares Python test models that are used to parse the Python Test Cases.
 ###
 
 
-class PythonTestType(Enum):
-    AUTOMATED = 0
-
-
-class PythonTestStep(BaseModel):
-    label: str
-    PICS: Optional[str] = None
-    verification: Optional[str] = None
-    command: Optional[str]
-    disabled: bool = False
-    arguments: Optional[dict[str, Any]]
-
-
-class PythonTest(BaseModel):
-    name: str
-    PICS: set[str] = set()
-    config: dict[str, Any]
-    steps: list[PythonTestStep]
-    type: PythonTestType = PythonTestType.AUTOMATED
-    path: Optional[Path]
+class PythonTest(THTest):
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.type: THTestType.MANUAL  # type: ignore

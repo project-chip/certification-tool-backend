@@ -20,9 +20,9 @@ import pytest
 from pydantic.error_wrappers import ValidationError
 
 from app.tests.yaml_tests.test_test_case import yaml_test_instance
-from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_models import (
-    YamlTestStep,
-    YamlTestType,
+from test_collections.sdk_tests.support.models.th_test_models import (
+    THTestStep,
+    THTestType,
 )
 from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_parser import (
     YamlParserException,
@@ -97,54 +97,54 @@ def test_yaml_file_parser() -> None:
 
 
 def test_test_type_all_disabled_steps() -> None:
-    disabled_step = YamlTestStep(label="Disabled Test Step", disabled=True)
+    disabled_step = THTestStep(label="Disabled Test Step", disabled=True)
     five_disabled_steps_test = yaml_test_instance(tests=[disabled_step] * 5)
 
     type = _test_type(five_disabled_steps_test)
-    assert type == YamlTestType.MANUAL
+    assert type == THTestType.MANUAL
 
     # simulated in path overrides test type to simulated
     five_disabled_steps_test.path = Path("TC_XX_Simulated.yaml")
     type = _test_type(five_disabled_steps_test)
-    assert type == YamlTestType.SIMULATED
+    assert type == THTestType.SIMULATED
 
 
 def test_test_type_some_disabled_steps() -> None:
-    disabled_step = YamlTestStep(label="Disabled Test Step", disabled=True)
-    enabled_step = YamlTestStep(label="Enabled Test Step", disabled=False)
+    disabled_step = THTestStep(label="Disabled Test Step", disabled=True)
+    enabled_step = THTestStep(label="Enabled Test Step", disabled=False)
     test = yaml_test_instance(tests=[disabled_step, enabled_step])
 
     type = _test_type(test)
-    assert type == YamlTestType.AUTOMATED
+    assert type == THTestType.AUTOMATED
 
     # simulated in path overrides test type to simulated
     test.path = Path("TC_XX_Simulated.yaml")
     type = _test_type(test)
-    assert type == YamlTestType.SIMULATED
+    assert type == THTestType.SIMULATED
 
 
 def test_test_type_all_enabled_steps_no_prompts() -> None:
-    enabled_step = YamlTestStep(label="Enabled Test Step")
+    enabled_step = THTestStep(label="Enabled Test Step")
     five_enabled_steps_test = yaml_test_instance(tests=[enabled_step] * 5)
 
     type = _test_type(five_enabled_steps_test)
-    assert type == YamlTestType.AUTOMATED
+    assert type == THTestType.AUTOMATED
 
     # simulated in path overrides test type to simulated
     five_enabled_steps_test.path = Path("TC_XX_Simulated.yaml")
     type = _test_type(five_enabled_steps_test)
-    assert type == YamlTestType.SIMULATED
+    assert type == THTestType.SIMULATED
 
 
 def test_test_type_all_enabled_steps_some_prompts() -> None:
-    enabled_step = YamlTestStep(label="Enable Test Step")
-    prompt_step = YamlTestStep(label="Prompt Test Step", command="UserPrompt")
+    enabled_step = THTestStep(label="Enable Test Step")
+    prompt_step = THTestStep(label="Prompt Test Step", command="UserPrompt")
     test = yaml_test_instance(tests=[enabled_step, prompt_step])
 
     type = _test_type(test)
-    assert type == YamlTestType.SEMI_AUTOMATED
+    assert type == THTestType.SEMI_AUTOMATED
 
     # simulated in path overrides test type to simulated
     test.path = Path("TC_XX_Simulated.yaml")
     type = _test_type(test)
-    assert type == YamlTestType.SIMULATED
+    assert type == THTestType.SIMULATED

@@ -108,7 +108,7 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
         # since there is step execute outside runner context
         self.next_step()
 
-    def test_stop(self, exception: Exception, duration: int) -> None:
+    def test_stop(self, duration: int) -> None:
         self.current_test_step.mark_as_completed()
 
     def step_skipped(self, name: str, expression: str) -> None:

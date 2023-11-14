@@ -25,8 +25,12 @@ from app.test_engine.models import (
     TestCase,
     TestStep,
 )
+from test_collections.sdk_tests.support.models.th_test_models import (
+    THTestStep,
+    THTestType,
+)
 
-from .yaml_test_models import YamlTest, YamlTestStep, YamlTestType
+from .yaml_test_models import YamlTest
 
 # Custom type variable used to annotate the factory method in YamlTestCase.
 T = TypeVar("T", bound="YamlTestCase")
@@ -76,11 +80,11 @@ class YamlTestCase(TestCase):
     def class_factory(cls, test: YamlTest, yaml_version: str) -> Type[T]:
         """Dynamically declares a subclass based on the type of YAML test."""
         case_class: Type[YamlTestCase]
-        if test.type == YamlTestType.MANUAL:
+        if test.type == THTestType.MANUAL:
             case_class = YamlManualTestCase
-        elif test.type == YamlTestType.SEMI_AUTOMATED:
+        elif test.type == THTestType.SEMI_AUTOMATED:
             case_class = YamlSemiAutomatedChipToolTestCase
-        elif test.type == YamlTestType.SIMULATED:
+        elif test.type == THTestType.SIMULATED:
             case_class = YamlSimulatedTestCase
         else:  # Automated
             case_class = YamlChipToolTestCase
@@ -143,7 +147,7 @@ class YamlTestCase(TestCase):
         """
         title = identifier
 
-        if test_yaml.type == YamlTestType.SEMI_AUTOMATED:
+        if test_yaml.type == THTestType.SEMI_AUTOMATED:
             title += " (Semi-automated)"
 
         if cls.__has_steps_disabled(test_yaml):
@@ -151,7 +155,7 @@ class YamlTestCase(TestCase):
 
         return title
 
-    def _append_automated_test_step(self, yaml_step: YamlTestStep) -> None:
+    def _append_automated_test_step(self, yaml_step: THTestStep) -> None:
         """
         Disabled steps are ignored.
         (Such tests will be marked as 'Steps Disabled' elsewhere)

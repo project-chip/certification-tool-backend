@@ -24,7 +24,7 @@ from test_collections.sdk_tests.support.python_testing.models.python_test_folder
     PythonTestFolder,
 )
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
-    PythonTestType,
+    THTestType,
 )
 from test_collections.sdk_tests.support.python_testing.models.test_declarations import (
     PythonCaseDeclaration,
@@ -72,9 +72,9 @@ def test_automated_suite(python_test_collection: PythonCollectionDeclaration) ->
     automated_suite = python_test_collection.test_suites["Python Testing Suite"]
     assert len(automated_suite.test_cases) == expected_automated_test_cases
 
-    type_count = dict.fromkeys(PythonTestType, 0)
+    type_count = dict.fromkeys(THTestType, 0)
     for test_case in automated_suite.test_cases.values():
         assert isinstance(test_case, PythonCaseDeclaration)
         type_count[test_case.test_type] += 1
 
-    assert type_count[PythonTestType.AUTOMATED] == expected_automated_test_cases
+    assert type_count[THTestType.AUTOMATED] == expected_automated_test_cases

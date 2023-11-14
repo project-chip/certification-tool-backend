@@ -27,11 +27,12 @@ from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_folder impor
     YamlTestFolder,
 )
 from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_models import (
-    YamlTestType,
+    THTestType,
 )
 from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
     sdk_yaml_test_collection,
 )
+
 
 @pytest.fixture
 def yaml_collection() -> YamlCollectionDeclaration:
@@ -66,7 +67,7 @@ def test_manual_suite(yaml_collection: YamlCollectionDeclaration) -> None:
     assert len(manual_suite.test_cases) == expected_manual_test_cases
     for test_case in manual_suite.test_cases.values():
         assert isinstance(test_case, YamlCaseDeclaration)
-        assert test_case.test_type == YamlTestType.MANUAL
+        assert test_case.test_type == THTestType.MANUAL
 
 
 def test_automated_suite(yaml_collection: YamlCollectionDeclaration) -> None:
@@ -83,15 +84,15 @@ def test_automated_suite(yaml_collection: YamlCollectionDeclaration) -> None:
         == expected_automated_test_cases + expected_semi_automated_test_cases
     )
 
-    type_count = dict.fromkeys(YamlTestType, 0)
+    type_count = dict.fromkeys(THTestType, 0)
     for test_case in automated_suite.test_cases.values():
         assert isinstance(test_case, YamlCaseDeclaration)
         type_count[test_case.test_type] += 1
 
-    assert type_count[YamlTestType.AUTOMATED] == expected_automated_test_cases
-    assert type_count[YamlTestType.SEMI_AUTOMATED] == expected_semi_automated_test_cases
-    assert type_count[YamlTestType.SIMULATED] == expected_simulated_test_cases
-    assert type_count[YamlTestType.MANUAL] == expected_manual_test_cases
+    assert type_count[THTestType.AUTOMATED] == expected_automated_test_cases
+    assert type_count[THTestType.SEMI_AUTOMATED] == expected_semi_automated_test_cases
+    assert type_count[THTestType.SIMULATED] == expected_simulated_test_cases
+    assert type_count[THTestType.MANUAL] == expected_manual_test_cases
 
 
 def test_simulated_suite(yaml_collection: YamlCollectionDeclaration) -> None:
@@ -102,4 +103,4 @@ def test_simulated_suite(yaml_collection: YamlCollectionDeclaration) -> None:
     assert len(simulated_suite.test_cases) == expected_simulated_test_cases
     for test_case in simulated_suite.test_cases.values():
         assert isinstance(test_case, YamlCaseDeclaration)
-        assert test_case.test_type == YamlTestType.SIMULATED
+        assert test_case.test_type == THTestType.SIMULATED

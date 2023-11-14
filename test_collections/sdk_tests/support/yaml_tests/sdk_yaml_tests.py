@@ -27,7 +27,7 @@ from .models.test_declarations import (
 )
 from .models.test_suite import SuiteType
 from .models.yaml_test_folder import YamlTestFolder
-from .models.yaml_test_models import YamlTestType
+from .models.yaml_test_models import THTestType
 from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
 ###
@@ -94,9 +94,9 @@ def _parse_all_yaml(
                 yaml_path=yaml_file, yaml_version=yaml_version
             )
 
-            if test_case.test_type == YamlTestType.MANUAL:
+            if test_case.test_type == THTestType.MANUAL:
                 suites[SuiteType.MANUAL].add_test_case(test_case)
-            elif test_case.test_type == YamlTestType.SIMULATED:
+            elif test_case.test_type == THTestType.SIMULATED:
                 suites[SuiteType.SIMULATED].add_test_case(test_case)
             else:
                 suites[SuiteType.AUTOMATED].add_test_case(test_case)

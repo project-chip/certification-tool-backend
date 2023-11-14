@@ -25,11 +25,13 @@ from app.chip_tool.chip_tool import ChipToolTestType
 from app.chip_tool.test_case import TestError
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
+from test_collections.sdk_tests.support.models.th_test_models import (
+    THTestStep,
+    THTestType,
+)
 from test_collections.sdk_tests.support.python_testing.models import PythonTestCase
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     PythonTest,
-    PythonTestStep,
-    PythonTestType,
 )
 from test_collections.sdk_tests.support.python_testing.models.test_case import (
     PythonChipToolTestCase,
@@ -43,8 +45,8 @@ def python_test_instance(
         "param1": "value1",
         "param2": {"type": "config_type", "defaultValue": "value2"},
     },
-    steps: list[PythonTestStep] = [],
-    type: PythonTestType = PythonTestType.AUTOMATED,
+    steps: list[THTestStep] = [],
+    type: THTestType = THTestType.AUTOMATED,
     path: Optional[Path] = None,
 ) -> PythonTest:
     return PythonTest(
@@ -127,7 +129,7 @@ def test_python_test_case_class_default_test_parameters() -> None:
 def test_automated_test_case_class_factory_subclass_mapping() -> None:
     """Test Automated tests are created as a subclass of
     PythonChipToolTestCase."""
-    test = python_test_instance(type=PythonTestType.AUTOMATED)
+    test = python_test_instance(type=THTestType.AUTOMATED)
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
         test=test, python_test_version="version"
     )
@@ -176,7 +178,7 @@ def test_class_factory_test_class_name() -> None:
 
 def test_test_type_for_automated_tests() -> None:
     """Test that automated tests are set to use chip-tool"""
-    test = python_test_instance(type=PythonTestType.AUTOMATED)
+    test = python_test_instance(type=THTestType.AUTOMATED)
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
         test=test, python_test_version="version"
     )
@@ -191,7 +193,7 @@ async def test_python_version_logging() -> None:
 
     Note that since `chip-tool` is not setup, we except the TestError raised.
     """
-    for type in list(PythonTestType):
+    for type in list(THTestType):
         test = python_test_instance(type=type)
         test_python_version = "PythonVersionTest"
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
@@ -211,9 +213,9 @@ async def test_python_version_logging() -> None:
 
 
 def test_normal_steps_for_python_tests() -> None:
-    """Test that non-manual tests include enabled steps."""
-    for type in list(PythonTestType):
-        test_step = PythonTestStep(label="Step1")
+    """Test that python tests include enabled steps."""
+    for type in list(THTestType):
+        test_step = THTestStep(label="Step1")
         test = python_test_instance(type=type, steps=[test_step])
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
             test=test, python_test_version="version"
@@ -225,9 +227,9 @@ def test_normal_steps_for_python_tests() -> None:
 
 
 def test_multiple_steps_for_python_tests() -> None:
-    """Test that non-manual tests multiple enabled steps are all included."""
-    for type in list(PythonTestType):
-        test_step = PythonTestStep(label="StepN")
+    """Test that python tests multiple enabled steps are all included."""
+    for type in list(THTestType):
+        test_step = THTestStep(label="StepN")
         no_steps = 5
         test = python_test_instance(type=type, steps=([test_step] * no_steps))
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(

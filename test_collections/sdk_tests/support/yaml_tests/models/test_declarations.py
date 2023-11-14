@@ -20,11 +20,12 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
+from test_collections.sdk_tests.support.models.th_test_models import THTestType
 
 from .test_case import YamlTestCase
 from .test_suite import SuiteType, YamlTestSuite
 from .yaml_test_folder import YamlTestFolder
-from .yaml_test_models import YamlTest, YamlTestType
+from .yaml_test_models import YamlTest
 
 
 class YamlCollectionDeclaration(TestCollectionDeclaration):
@@ -59,5 +60,5 @@ class YamlCaseDeclaration(TestCaseDeclaration):
         )
 
     @property
-    def test_type(self) -> YamlTestType:
+    def test_type(self) -> THTestType:
         return self.class_ref.yaml_test.type

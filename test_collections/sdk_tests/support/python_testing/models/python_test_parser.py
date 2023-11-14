@@ -17,7 +17,12 @@ import ast
 from pathlib import Path
 from typing import List
 
-from .python_test_models import PythonTest, PythonTestStep, PythonTestType
+from test_collections.sdk_tests.support.models.th_test_models import (
+    THTestStep,
+    THTestType,
+)
+
+from .python_test_models import PythonTest
 
 ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
@@ -37,8 +42,8 @@ class PythonTestInfo:
         desc: str,
         pics: list,
         config: dict,
-        steps: list[PythonTestStep],
-        type: PythonTestType,
+        steps: list[THTestStep],
+        type: THTestType,
     ) -> None:
         self.desc = desc
         self.pics = pics
@@ -82,7 +87,7 @@ def __extract_tcs_info(path: Path) -> PythonTestInfo:
 
         # Get TC description and TC steps from python test file
         tc_desc: str = ""
-        tc_steps: List[PythonTestStep] = []
+        tc_steps: List[THTestStep] = []
 
         for class_ in classes:
             methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
@@ -97,12 +102,12 @@ def __extract_tcs_info(path: Path) -> PythonTestInfo:
         pics=tc_pics,
         config=tc_config,
         steps=tc_steps,
-        type=PythonTestType.AUTOMATED,
+        type=THTestType.AUTOMATED,
     )
 
 
-def __retrieve_steps(method: ast.FunctionDef) -> List[PythonTestStep]:
-    python_steps: List[PythonTestStep] = []
+def __retrieve_steps(method: ast.FunctionDef) -> List[THTestStep]:
+    python_steps: List[THTestStep] = []
     for step in method.body[BODY_INDEX].value.elts:  # type: ignore
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
         arg_is_commissioning = False
@@ -115,7 +120,7 @@ def __retrieve_steps(method: ast.FunctionDef) -> List[PythonTestStep]:
             ].value.value
 
         python_steps.append(
-            PythonTestStep(label=step_name, is_commissioning=arg_is_commissioning)
+            THTestStep(label=step_name, is_commissioning=arg_is_commissioning)
         )
 
     return python_steps
