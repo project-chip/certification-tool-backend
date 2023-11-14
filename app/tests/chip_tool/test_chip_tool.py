@@ -613,7 +613,7 @@ async def test_run_test_default_config() -> None:
     runner_config: TestRunnerConfig = mock_run.mock_calls[0].args[1]
     runner_options = runner_config.options
     assert runner_options.stop_on_error is not CHIP_TOOL_CONTINUE_ON_FAILURE_VALUE
-    assert runner_options.stop_on_warning is False 
+    assert runner_options.stop_on_warning is False
     assert runner_options.stop_at_number == -1
     assert runner_options.delay_in_ms == TEST_STEP_DELAY_VALUE
 
