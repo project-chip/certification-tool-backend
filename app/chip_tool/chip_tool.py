@@ -322,11 +322,12 @@ class ChipTool(metaclass=Singleton):
         return exit_code
 
     async def stop_chip_tool_server(self) -> None:
-        await self.start_runner()
-        await self.__test_harness_runner._client.send("quit()")
-        self.__wait_for_server_exit()
-        self.stop_runner()
-        self.__server_started = False
+        if self.__server_started:
+            await self.start_runner()
+            await self.__test_harness_runner._client.send("quit()")
+            self.__wait_for_server_exit()
+            await self.stop_runner()
+            self.__server_started = False
 
     def __get_gateway_ip(self) -> str:
         """
@@ -392,9 +393,9 @@ class ChipTool(metaclass=Singleton):
 
         self.__chip_tool_log = await self.start_chip_server(test_type, use_paa_certs)
 
-    def destroy_device(self) -> None:
+    async def destroy_device(self) -> None:
         """Destroy the device container."""
-        self.stop_chip_tool_server()
+        await self.stop_chip_tool_server()
 
         if self.__chip_tool_container is not None:
             container_manager.destroy(self.__chip_tool_container)

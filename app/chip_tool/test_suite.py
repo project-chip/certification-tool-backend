@@ -167,7 +167,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
                 await self.__prompt_user_to_perform_decommission()
 
         logger.info("Stopping chip-tool container")
-        self.chip_tool.destroy_device()
+        await self.chip_tool.destroy_device()
         if self.border_router is not None:
             logger.info("Stopping border router container")
             self.border_router.destroy_device()
