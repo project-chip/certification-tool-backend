@@ -25,6 +25,8 @@ NO_HANDLER_FOR_MSG_ERROR_STR = "There is no handler registered for this message 
 # Enum Keys for different types of messages currently supported by the tool
 class MessageTypeEnum(str, Enum):
     PROMPT_REQUEST = "prompt_request"
+    OPTIONS_REQUEST = "options_request"
+    MESSAGE_REQUEST = "message_request"    
     PROMPT_RESPONSE = "prompt_response"
     TEST_UPDATE = "test_update"
     TIME_OUT_NOTIFICATION = "time_out_notification"
