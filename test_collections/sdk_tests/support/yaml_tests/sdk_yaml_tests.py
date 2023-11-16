@@ -18,6 +18,7 @@ from typing import Optional
 
 from loguru import logger
 
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 
 from .models.test_declarations import (
@@ -26,7 +27,6 @@ from .models.test_declarations import (
     YamlSuiteDeclaration,
 )
 from .models.test_suite import SuiteType
-from .models.yaml_test_folder import YamlTestFolder
 from .models.yaml_test_models import THTestType
 from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
@@ -43,10 +43,10 @@ from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
 YAML_PATH = SDK_CHECKOUT_PATH / "yaml_tests/yaml"
 SDK_YAML_PATH = YAML_PATH / "sdk"
-SDK_YAML_TEST_FOLDER = YamlTestFolder(path=SDK_YAML_PATH, filename_pattern="Test_TC*")
+SDK_YAML_TEST_FOLDER = SDKTestFolder(path=SDK_YAML_PATH, filename_pattern="Test_TC*")
 
 CUSTOM_YAML_PATH = YAML_PATH / "custom"
-CUSTOM_YAML_TEST_FOLDER = YamlTestFolder(
+CUSTOM_YAML_TEST_FOLDER = SDKTestFolder(
     path=CUSTOM_YAML_PATH, filename_pattern="Test_TC*"
 )
 
@@ -109,7 +109,7 @@ def _parse_all_yaml(
 
 
 def sdk_yaml_test_collection(
-    yaml_test_folder: YamlTestFolder = SDK_YAML_TEST_FOLDER,
+    yaml_test_folder: SDKTestFolder = SDK_YAML_TEST_FOLDER,
 ) -> YamlCollectionDeclaration:
     """Declare a new collection of test suites with the 3 test suites."""
     collection = YamlCollectionDeclaration(
@@ -128,7 +128,7 @@ def sdk_yaml_test_collection(
 
 
 def custom_yaml_test_collection(
-    yaml_test_folder: YamlTestFolder = CUSTOM_YAML_TEST_FOLDER,
+    yaml_test_folder: SDKTestFolder = CUSTOM_YAML_TEST_FOLDER,
 ) -> Optional[YamlCollectionDeclaration]:
     """Declare a new collection of test suites."""
     collection = YamlCollectionDeclaration(

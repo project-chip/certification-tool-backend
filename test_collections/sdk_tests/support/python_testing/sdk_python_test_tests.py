@@ -17,9 +17,9 @@ from pathlib import Path
 
 from loguru import logger
 
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 
-from .models.python_test_folder import PythonTestFolder
 from .models.python_test_parser import PythonParserException, parse_python_test
 from .models.test_declarations import (
     PythonCaseDeclaration,
@@ -39,7 +39,7 @@ from .models.test_suite import SuiteType
 ###
 
 SDK_PYTHON_TEST_PATH = SDK_CHECKOUT_PATH / Path("python_testing/scripts/sdk")
-SDK_PYTHON_TEST_FOLDER = PythonTestFolder(
+SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
     path=SDK_PYTHON_TEST_PATH, filename_pattern="TC*"
 )
 
@@ -90,7 +90,7 @@ def _parse_all_sdk_python_tests(
 
 
 def sdk_python_test_collection(
-    python_test_folder: PythonTestFolder = SDK_PYTHON_TEST_FOLDER,
+    python_test_folder: SDKTestFolder = SDK_PYTHON_TEST_FOLDER,
 ) -> PythonCollectionDeclaration:
     """Declare a new collection of test suites."""
     collection = PythonCollectionDeclaration(

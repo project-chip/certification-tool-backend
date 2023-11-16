@@ -18,9 +18,7 @@
 from pathlib import Path
 from unittest import mock
 
-from test_collections.sdk_tests.support.python_testing.models.python_test_folder import (
-    PythonTestFolder,
-)
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 
 test_python_path = Path("/test/python")
 
@@ -31,11 +29,10 @@ def test_python_folder_version() -> None:
     # We mock open to read version_file_content and Path exists to ignore that we're
     # testing with a fake path
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models."
-        "python_test_folder.open",
+        "test_collections.sdk_tests.support.models.sdk_test_folder.open",
         new=mock.mock_open(read_data=version_file_content),
     ), mock.patch.object(target=Path, attribute="exists", return_value=True) as _:
-        python_test_folder = PythonTestFolder(test_python_path)
+        python_test_folder = SDKTestFolder(test_python_path)
 
         assert python_test_folder.version == version_file_content
 
@@ -43,22 +40,20 @@ def test_python_folder_version() -> None:
 def test_python_folder_version_missing() -> None:
     expected_version = "Unknown"
     with mock.patch.object(target=Path, attribute="exists", return_value=False) as _:
-        python_folder = PythonTestFolder(test_python_path)
+        python_folder = SDKTestFolder(test_python_path)
         assert python_folder.version == expected_version
 
 
 def test_python_folder_filename_pattern() -> None:
-    """Test PythonTestFolder will search for files with filename pattern."""
+    """Test SDKTestFolder will search for files with filename pattern."""
     with mock.patch.object(target=Path, attribute="glob") as path_glob:
         # Default file_name_pattern: *
-        python_folder = PythonTestFolder(test_python_path)
+        python_folder = SDKTestFolder(test_python_path)
         _ = python_folder.python_file_paths()
         path_glob.assert_called_once_with("*.py")
 
         path_glob.reset_mock()
         pattern = "TC_*"
-        python_test_folder = PythonTestFolder(
-            test_python_path, filename_pattern=pattern
-        )
+        python_test_folder = SDKTestFolder(test_python_path, filename_pattern=pattern)
         _ = python_test_folder.python_file_paths()
         path_glob.assert_called_once_with(f"{pattern}.py")

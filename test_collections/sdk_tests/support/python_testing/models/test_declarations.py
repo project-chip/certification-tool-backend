@@ -20,15 +20,15 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 
-from .python_test_folder import PythonTestFolder
 from .python_test_models import PythonTest, THTestType
 from .test_case import PythonTestCase
 from .test_suite import PythonTestSuite, SuiteType
 
 
 class PythonCollectionDeclaration(TestCollectionDeclaration):
-    def __init__(self, folder: PythonTestFolder, name: str) -> None:
+    def __init__(self, folder: SDKTestFolder, name: str) -> None:
         super().__init__(path=str(folder.path), name=name)
         self.python_test_version = folder.version
 

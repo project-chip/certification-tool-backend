@@ -25,4 +25,4 @@ from ...models.th_test_models import THTest, THTestType
 class PythonTest(THTest):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.type: THTestType.MANUAL  # type: ignore
+        self.type: THTestType.AUTOMATED  # type: ignore

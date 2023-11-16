@@ -21,10 +21,10 @@ UNKNOWN_version = "Unknown"
 VERSION_FILE_FILENAME = ".version"
 
 
-class PythonTestFolder:
-    """Representing a folder with Test Python files.
+class SDKTestFolder:
+    """Representing a folder with SDK Test files.
 
-    Note: Python version is read from .version file in folder on init.
+    Note: SDK version is read from .version file in folder on init.
     """
 
     def __init__(self, path: Path, filename_pattern: str = "*") -> None:
@@ -42,6 +42,20 @@ class PythonTestFolder:
         else:
             with open(version_file_path, "r") as file:
                 return file.read().rstrip()
+
+    def yaml_file_paths(self) -> list[Path]:
+        """Get list of paths to yaml files in folder.
+
+        Filename filter can be applied if only some files should be selected.
+        Note: filter is without extension. Will search for .yml and .yaml files
+
+        Args:
+            filename_pattern (str, optional): custom file filter. Defaults to "*".
+
+        Returns:
+            list[Path]: list of paths to YAML test files.
+        """
+        return list(self.path.glob(self.filename_pattern + ".y*ml"))
 
     def python_file_paths(self) -> list[Path]:
         """Get list of paths to Python test files in folder.

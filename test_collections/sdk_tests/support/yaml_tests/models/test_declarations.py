@@ -20,16 +20,16 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.models.th_test_models import THTestType
 
 from .test_case import YamlTestCase
 from .test_suite import SuiteType, YamlTestSuite
-from .yaml_test_folder import YamlTestFolder
 from .yaml_test_models import YamlTest
 
 
 class YamlCollectionDeclaration(TestCollectionDeclaration):
-    def __init__(self, folder: YamlTestFolder, name: str) -> None:
+    def __init__(self, folder: SDKTestFolder, name: str) -> None:
         super().__init__(path=str(folder.path), name=name)
         self.yaml_version = folder.version
 

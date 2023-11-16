@@ -57,11 +57,10 @@ def parse_python_test(path: Path) -> PythonTest:
 
     This will also annotate parsed python test with it's path and test type.
     """
-    tc_info = __extract_tcs_info(path)
+    tc_name = path.name.split(".")[0]
+    tc_info = __extract_tcs_info(path, tc_name)
 
     if not tc_info.desc or not tc_info.steps:
-        # The file name from path
-        tc_name = path.name.split(".")[0]
         raise PythonParserException(
             f"Test Case {tc_name} does not have methods desc_{tc_name} "
             f"or steps_{tc_name}"
@@ -76,8 +75,8 @@ def parse_python_test(path: Path) -> PythonTest:
     return test
 
 
-def __extract_tcs_info(path: Path) -> PythonTestInfo:
-    # Currently PICS and config is not configured in Python Testing
+def __extract_tcs_info(path: Path, tc_name: str) -> PythonTestInfo:
+    # Currently config is not configured in Python Testing
     tc_pics: list = []
     tc_config: dict = {}
 
@@ -92,10 +91,12 @@ def __extract_tcs_info(path: Path) -> PythonTestInfo:
         for class_ in classes:
             methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
             for method in methods:
-                if "desc_" in method.name:
+                if "desc_" + tc_name in method.name:
                     tc_desc = method.body[BODY_INDEX].value.value  # type: ignore
-                elif "steps_" in method.name:
+                elif "steps_" + tc_name in method.name:
                     tc_steps = __retrieve_steps(method)
+                elif "pics_" + tc_name in method.name:
+                    tc_pics = __retrieve_pics(method)
 
     return PythonTestInfo(
         desc=tc_desc,
@@ -122,5 +123,13 @@ def __retrieve_steps(method: ast.FunctionDef) -> List[THTestStep]:
         python_steps.append(
             THTestStep(label=step_name, is_commissioning=arg_is_commissioning)
         )
+
+    return python_steps
+
+
+def __retrieve_pics(method: ast.FunctionDef) -> list:
+    python_steps: list = []
+    for step in method.body[BODY_INDEX].value.elts:  # type: ignore
+        python_steps.append(step.value)
 
     return python_steps

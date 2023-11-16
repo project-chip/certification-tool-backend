@@ -48,6 +48,8 @@ class TC_Sample(MatterBaseTest):
         ]
         return steps
 
-    @async_test_body
-    async def test_steps_TC_Sample(self):
+    def test_TC_Sample(self):
         print("Test execution")
+
+    def pics_TC_Sample(self):
+        pics = ["PICS"]

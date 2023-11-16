@@ -34,8 +34,7 @@ class TC_Sample(MatterBaseTest):
         ]
         return steps
 
-    @async_test_body
-    async def test_steps_TC_Sample(self):
+    def test_steps_TC_Sample(self):
         print("Test execution")
 
 """
@@ -54,9 +53,11 @@ class TC_Sample(MatterBaseTest):
         ]
         return steps
 
-    @async_test_body
-    async def test_steps_TC_Sample(self):
+    def test_TC_Sample(self):
         print("Test execution")
+    
+    def pics_TC_Sample(self):
+         pics =  ["MCORE.ROLE.COMMISSIONEE"]
 
 """
 
@@ -78,7 +79,7 @@ def test_python_file_parser_throws_pythonparserexception() -> None:
 
 
 def test_python_file_parser() -> None:
-    file_path = Path("/test/file.py")
+    file_path = Path("/test/TC_Sample.py")
 
     # We mock builtin `open` method to read sample python file content,
     # to avoid having to load a real file.

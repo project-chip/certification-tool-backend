@@ -20,9 +20,7 @@ from unittest import mock
 
 import pytest
 
-from test_collections.sdk_tests.support.python_testing.models.python_test_folder import (
-    PythonTestFolder,
-)
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     THTestType,
 )
@@ -39,12 +37,10 @@ from test_collections.sdk_tests.support.python_testing.sdk_python_test_tests imp
 def python_test_collection() -> PythonCollectionDeclaration:
     test_sdk_python_path = Path(__file__).parent / "test_python_script"
     with mock.patch.object(Path, "exists", return_value=True), mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_folder.open",
+        "test_collections.sdk_tests.support.models.sdk_test_folder.open",
         new=mock.mock_open(read_data="unit-test-python-version"),
     ):
-        folder = PythonTestFolder(
-            path=test_sdk_python_path, filename_pattern="UnitTest_TC_*"
-        )
+        folder = SDKTestFolder(path=test_sdk_python_path, filename_pattern="TC_*")
         return sdk_python_test_collection(folder)
 
 
