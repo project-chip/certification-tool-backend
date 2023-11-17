@@ -22,11 +22,10 @@ from sqlalchemy.orm import Session
 
 from app.crud import operator as crud_operator
 from app.crud import project as crud_project
-from app.crud import test_run_config as crud_test_run_config
 from app.crud.base import CRUDBaseCreate, CRUDBaseDelete, CRUDBaseRead
 from app.models import Project, TestCaseExecution, TestRunExecution, TestSuiteExecution
 from app.schemas import (
-    TestRunConfigCreate,
+    SelectedTests,
     TestRunExecutionToExport,
     TestRunExecutionToImport,
 )
@@ -176,9 +175,22 @@ class CRUDTestRunExecution(
 
         test_run_execution = super().create(db=db, obj_in=obj_in)
 
+        db.commit()
+        db.refresh(test_run_execution)
+        return test_run_execution
+
+    def create_with_selected_tests(
+        self,
+        db: Session,
+        obj_in: TestRunExecutionCreate,
+        selected_tests: SelectedTests,
+        **kwargs: Optional[dict],
+    ) -> TestRunExecution:
+        test_run_execution = self.create(db, obj_in=obj_in, **kwargs)
+
         test_suites = (
             test_script_manager.pending_test_suite_executions_for_selected_tests(
-                obj_in.selected_tests
+                selected_tests
             )
         )
 
@@ -257,12 +269,6 @@ class CRUDTestRunExecution(
                 db=db, name=operator.name, commit=False
             )
             imported_execution.operator_id = operator_id
-
-        if execution.test_run_config:
-            test_run_config = crud_test_run_config.create(
-                db=db, obj_in=TestRunConfigCreate(**execution.test_run_config.__dict__)
-            )
-            imported_execution.test_run_config_id = test_run_config.id
 
         imported_model = TestRunExecution(**jsonable_encoder(imported_execution))
 

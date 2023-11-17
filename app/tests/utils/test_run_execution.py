@@ -44,7 +44,7 @@ def random_test_run_execution_dict(
     if state is not None:
         output["state"] = state
 
-    # Title is not optional,
+    # Title is not optional
     if title is None:
         title = fake.text(max_nb_chars=20)
     output["title"] = title
@@ -80,7 +80,7 @@ def create_random_test_run_execution_archived(
 
 
 def create_random_test_run_execution(
-    db: Session, selected_tests: SelectedTests, **kwargs: Any
+    db: Session, selected_tests: SelectedTests = SelectedTests(), **kwargs: Any
 ) -> models.TestRunExecution:
     test_run_execution_dict = random_test_run_execution_dict(**kwargs)
 
@@ -89,8 +89,10 @@ def create_random_test_run_execution(
         test_run_execution_dict["project_id"] = project.id
 
     test_run_execution_in = TestRunExecutionCreate(**test_run_execution_dict)
-    return crud.test_run_execution.create(
-        db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
+    return crud.test_run_execution.create_with_selected_tests(
+        db=db,
+        obj_in=test_run_execution_in,
+        selected_tests=selected_tests,
     )
 
 
@@ -102,10 +104,23 @@ def create_random_test_run_execution_with_test_case_states(
     # and real test case
     num_test_cases = sum(test_case_states.values())
     selected_tests: dict = {
-        "sample_tests": {"SampleTestSuite1": {"TCSS1001": num_test_cases}}
+        "collections": [
+            {
+                "public_id": "sample_tests",
+                "test_suites": [
+                    {
+                        "public_id": "SampleTestSuite1",
+                        "test_cases": [
+                            {"public_id": "TCSS1001", "iterations": num_test_cases}
+                        ],
+                    }
+                ],
+            }
+        ]
     }
+
     test_run_execution = create_random_test_run_execution(
-        db=db, selected_tests=selected_tests
+        db=db, selected_tests=SelectedTests(**selected_tests)
     )
 
     test_suite_execution = test_run_execution.test_suite_executions[0]
@@ -125,15 +140,42 @@ def create_random_test_run_execution_with_test_case_states(
 def create_test_run_execution_with_some_test_cases(
     db: Session, **kwargs: Any
 ) -> TestRunExecution:
-    return create_random_test_run_execution(
-        db=db,
-        selected_tests={
-            "sample_tests": {
-                "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3}
+    selected_tests_dict = {
+        "collections": [
+            {
+                "public_id": "sample_tests",
+                "test_suites": [
+                    {
+                        "public_id": "SampleTestSuite1",
+                        "test_cases": [
+                            {"public_id": "TCSS1001", "iterations": 1},
+                            {"public_id": "TCSS1002", "iterations": 2},
+                            {"public_id": "TCSS1003", "iterations": 3},
+                        ],
+                    }
+                ],
             }
-        },
-        **kwargs
+        ]
+    }
+    selected_tests = SelectedTests(**selected_tests_dict)
+    return create_random_test_run_execution(
+        db=db, selected_tests=selected_tests, **kwargs
     )
+
+
+selected_tests_base_dict = {
+    "collections": [
+        {
+            "public_id": "SDK YAML Tests",
+            "test_suites": [
+                {
+                    "public_id": "FirstChipToolSuite",
+                    "test_cases": [{"public_id": "TC-ACE-1.1", "iterations": 1}],
+                }
+            ],
+        }
+    ]
+}
 
 
 test_run_execution_base_dict = {

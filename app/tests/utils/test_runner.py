@@ -70,9 +70,27 @@ async def load_and_run_tool_unit_tests(
     iterations: int = 1,
 ) -> Tuple[TestRunner, TestRun, TestSuite, TestCase]:
     selected_tests = {
-        "tool_unit_tests": {suite_cls.public_id(): {case_cls.public_id(): iterations}}
+        "collections": [
+            {
+                "public_id": "tool_unit_tests",
+                "test_suites": [
+                    {
+                        "public_id": suite_cls.public_id(),
+                        "test_cases": [
+                            {
+                                "public_id": case_cls.public_id(),
+                                "iterations": iterations,
+                            }
+                        ],
+                    }
+                ],
+            }
+        ]
     }
-    runner = load_test_run_for_test_cases(db=db, test_cases=selected_tests)
+
+    runner = load_test_run_for_test_cases(
+        db=db, test_cases=SelectedTests(**selected_tests)
+    )
     run = runner.test_run
     assert run is not None
 

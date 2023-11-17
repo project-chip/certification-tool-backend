@@ -82,9 +82,8 @@ def create_test_run_execution(
     """
     Create new test run execution.
     """
-    test_run_execution_in.selected_tests = selected_tests
-    test_run_execution = crud.test_run_execution.create(
-        db=db, obj_in=test_run_execution_in
+    test_run_execution = crud.test_run_execution.create_with_selected_tests(
+        db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
     )
     return test_run_execution
 
@@ -259,13 +258,12 @@ def repeat_test_run_execution(
     test_run_execution_in.description = execution_to_repeat.description
     test_run_execution_in.project_id = execution_to_repeat.project_id
     test_run_execution_in.operator_id = execution_to_repeat.operator_id
-    test_run_execution_in.selected_tests = selected_tests_from_execution(
-        execution_to_repeat
-    )
-    # TODO: Remove test_run_config completely from the project
-    test_run_execution_in.test_run_config_id = None
 
-    return crud.test_run_execution.create(db=db, obj_in=test_run_execution_in)
+    return crud.test_run_execution.create_with_selected_tests(
+        db=db,
+        obj_in=test_run_execution_in,
+        selected_tests=selected_tests_from_execution(execution_to_repeat),
+    )
 
 
 @router.delete("/{id}", response_model=schemas.TestRunExecutionInDBBase)

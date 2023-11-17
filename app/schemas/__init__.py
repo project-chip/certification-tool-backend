@@ -30,12 +30,6 @@ from .test_case_metadata import TestCaseMetadata, TestCaseMetadataBase
 from .test_collections import TestCollections
 from .test_environment_config import TestEnvironmentConfig
 from .test_harness_backend_version import TestHarnessBackendVersion
-from .test_run_config import (
-    TestRunConfig,
-    TestRunConfigCreate,
-    TestRunConfigInDB,
-    TestRunConfigUpdate,
-)
 from .test_run_execution import (
     ExportedTestRunExecution,
     TestRunExecution,
