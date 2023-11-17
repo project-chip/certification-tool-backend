@@ -298,7 +298,7 @@ def __expected_response_dict_cancelled() -> Dict[str, Any]:
 
 def __expected_prompt_dict(timeout: int = 2, message_id: int = 1) -> Dict[str, Any]:
     return {
-        MessageKeysEnum.TYPE: MessageTypeEnum.PROMPT_REQUEST,
+        MessageKeysEnum.TYPE: MessageTypeEnum.OPTIONS_REQUEST,
         MessageKeysEnum.PAYLOAD: {
             OPTIONS_KEY: test_options,
             TIMEOUT_KEY: timeout,
