@@ -60,7 +60,7 @@ class PromptExchange(object):
                 message_type = MessageTypeEnum.MESSAGE_REQUEST
                 
         message_dict = {
-            MessageKeysEnum.TYPE: MessageTypeEnum.PROMPT_REQUEST,
+            MessageKeysEnum.TYPE: message_type,
             MessageKeysEnum.PAYLOAD: prompt_dict,
         }
         return message_dict
