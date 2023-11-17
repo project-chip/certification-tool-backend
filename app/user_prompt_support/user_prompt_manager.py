@@ -58,7 +58,6 @@ class PromptExchange(object):
                 message_type = MessageTypeEnum.OPTIONS_REQUEST
             else:
                 message_type = MessageTypeEnum.MESSAGE_REQUEST
-                
         message_dict = {
             MessageKeysEnum.TYPE: message_type,
             MessageKeysEnum.PAYLOAD: prompt_dict,
