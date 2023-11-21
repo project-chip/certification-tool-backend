@@ -45,6 +45,7 @@ from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import CHIP_LOG_FORMAT, CHIPTOOL_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
+from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 
 from .exec_run_in_container import ExecResultExtended, exec_run_in_container
 
@@ -98,13 +99,9 @@ LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
 DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
 # Websocket runner
-BACKEND_ROOT = Path(__file__).parents[4]
-TEST_COLLECTION_SDK_CHECKOUT_PATH = BACKEND_ROOT / Path(
-    "test_collections/sdk_tests/sdk_checkout/"
-)
-YAML_TESTS_PATH_BASE = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path("yaml_tests/")
+YAML_TESTS_PATH_BASE = SDK_CHECKOUT_PATH / Path("yaml_tests/")
 YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
-XML_SPEC_DEFINITION_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
+XML_SPEC_DEFINITION_PATH = SDK_CHECKOUT_PATH / Path(
     "sdk_runner/specifications/chip/"
 )
 
