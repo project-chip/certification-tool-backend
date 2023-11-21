@@ -101,9 +101,7 @@ DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 # Websocket runner
 YAML_TESTS_PATH_BASE = SDK_CHECKOUT_PATH / Path("yaml_tests/")
 YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
-XML_SPEC_DEFINITION_PATH = SDK_CHECKOUT_PATH / Path(
-    "sdk_runner/specifications/chip/"
-)
+XML_SPEC_DEFINITION_PATH = SDK_CHECKOUT_PATH / Path("sdk_runner/specifications/chip/")
 
 
 # Docker Network
