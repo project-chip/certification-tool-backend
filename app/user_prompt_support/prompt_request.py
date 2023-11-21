@@ -13,43 +13,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from enum import Enum
 from typing import Dict, Optional
 
 from pydantic import BaseModel
+from app.constants.websockets_constants import MessageTypeEnum
 
 default_timeout_s = 60  # Seconds
-
-
-class PromptRequestType(str, Enum):
-    BASE = "base"
-    OPTIONS = "options"
-    TEXT = "text"
-    FILE = "file"
 
 
 class PromptRequest(BaseModel):
     prompt: Optional[str]
     timeout: int = default_timeout_s
-    __type: PromptRequestType = PromptRequestType.BASE
 
     @property
-    def type(self) -> PromptRequestType:
-        return self.__type
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.INVALID_MESSAGE
 
 
 class OptionsSelectPromptRequest(PromptRequest):
-    __type = PromptRequestType.OPTIONS
     options: Dict[str, int]
+
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.OPTIONS_REQUEST
 
 
 class TextInputPromptRequest(PromptRequest):
-    __type = PromptRequestType.TEXT
     placeholder_text: Optional[str]
     default_value: Optional[str]
     regex_pattern: Optional[str]
 
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.PROMPT_REQUEST
+
 
 class UploadFilePromptRequest(PromptRequest):
-    __type = PromptRequestType.FILE
     path: str = "api/v1/test_run_execution/file_upload/"
+
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.FILE_UPLOAD_REQUEST

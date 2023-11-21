@@ -33,7 +33,7 @@ from app.user_prompt_support.constants import (
     UserResponseStatusEnum,
 )
 
-from .prompt_request import PromptRequest
+from .prompt_request import PromptRequest, UploadFilePromptRequest
 from .prompt_response import PromptResponse
 
 
@@ -50,16 +50,9 @@ class PromptExchange(object):
     def as_dictionary(self) -> Dict[MessageKeysEnum, Any]:
         prompt_dict = self.prompt.dict()
         prompt_dict[MESSAGE_ID_KEY] = self.message_id
-        message_type = MessageTypeEnum.PROMPT_REQUEST
 
-        # Check if options exist
-        if "options" in prompt_dict:
-            if prompt_dict["options"]:
-                message_type = MessageTypeEnum.OPTIONS_REQUEST
-            else:
-                message_type = MessageTypeEnum.MESSAGE_REQUEST
         message_dict = {
-            MessageKeysEnum.TYPE: message_type,
+            MessageKeysEnum.TYPE: self.prompt.messageType,
             MessageKeysEnum.PAYLOAD: prompt_dict,
         }
         return message_dict
@@ -227,4 +220,4 @@ class UserPromptManager(object, metaclass=Singleton):
         )
 
 
-user_prompt_manager = UserPromptManager()
+user_prompt_manager: UserPromptManager = UserPromptManager()
