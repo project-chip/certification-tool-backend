@@ -33,7 +33,7 @@ from app.user_prompt_support.constants import (
     UserResponseStatusEnum,
 )
 
-from .prompt_request import PromptRequest, UploadFilePromptRequest
+from .prompt_request import PromptRequest
 from .prompt_response import PromptResponse
 
 
