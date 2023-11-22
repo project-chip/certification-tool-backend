@@ -73,9 +73,7 @@ def test_python_file_parser_throws_pythonparserexception() -> None:
         try:
             parse_python_test(file_path)
         except PythonParserException as e:
-            assert (
-                "/test/file.py must have a class name file" == str(e)
-            )
+            assert "/test/file.py must have a class name file" == str(e)
 
 
 def test_python_file_parser() -> None:

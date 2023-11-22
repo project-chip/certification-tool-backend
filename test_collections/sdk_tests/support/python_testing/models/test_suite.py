@@ -74,7 +74,6 @@ class PythonTestSuite(TestSuite):
 
 
 class ChipToolPythonTestSuite(PythonTestSuite):
-
     async def setup(self) -> None:
         """Due top multi inheritance, we need to call setup on both super classes."""
         await PythonTestSuite.setup(self)

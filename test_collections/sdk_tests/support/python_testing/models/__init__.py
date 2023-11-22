@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 from .test_case import PythonTestCase
-# from .test_suite import PythonTestSuite, SuiteType
+from .test_suite import PythonTestSuite, SuiteType

@@ -18,6 +18,10 @@ from typing import Optional
 
 from loguru import logger
 
+from test_collections.sdk_tests.support.models.matter_test_models import (
+    MatterTestStep,
+    MatterTestType,
+)
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 
@@ -26,12 +30,6 @@ from .models.test_declarations import (
     YamlCollectionDeclaration,
     YamlSuiteDeclaration,
 )
-
-from test_collections.sdk_tests.support.models.matter_test_models import (
-    MatterTestStep,
-    MatterTestType,
-)
-
 from .models.test_suite import SuiteType
 from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 

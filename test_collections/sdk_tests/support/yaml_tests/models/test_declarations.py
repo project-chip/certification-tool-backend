@@ -20,8 +20,8 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
-from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 
 from .test_case import YamlTestCase
 from .test_suite import SuiteType, YamlTestSuite

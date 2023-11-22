@@ -22,7 +22,7 @@ from app.test_engine.models.test_declarations import (
 )
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 
-from .python_test_models import PythonTest, MatterTestType
+from .python_test_models import MatterTestType, PythonTest
 from .test_case import PythonTestCase
 from .test_suite import PythonTestSuite, SuiteType
 
