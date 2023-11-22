@@ -55,3 +55,9 @@ class UploadFilePromptRequest(PromptRequest):
     @property
     def messageType(self) -> MessageTypeEnum:
         return MessageTypeEnum.FILE_UPLOAD_REQUEST
+
+
+class MessagePromptRequest(PromptRequest):
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.MESSAGE_REQUEST

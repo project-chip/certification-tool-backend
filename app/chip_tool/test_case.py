@@ -32,7 +32,7 @@ from app.test_engine.models.manual_test_case import (
     ManualLogUploadStep,
     ManualVerificationTestStep,
 )
-from app.user_prompt_support import OptionsSelectPromptRequest
+from app.user_prompt_support.prompt_request import MessagePromptRequest
 from app.user_prompt_support.uploaded_file_support import UploadFile
 from app.user_prompt_support.user_prompt_manager import user_prompt_manager
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
@@ -256,9 +256,7 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
         """
 
         prompt = f"Please do the following action on the Controller: {action}"
-        prompt_request = OptionsSelectPromptRequest(
-            prompt=prompt, options={}, timeout=60
-        )
+        prompt_request = MessagePromptRequest(prompt=prompt, timeout=60)
         await self.send_prompt_request(prompt_request)
 
     def __handle_logs(self, logs: Any) -> None:
