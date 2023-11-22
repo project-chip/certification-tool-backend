@@ -15,11 +15,11 @@
 #
 import ast
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
-from test_collections.sdk_tests.support.models.th_test_models import (
-    THTestStep,
-    THTestType,
+from test_collections.sdk_tests.support.models.matter_test_models import (
+    MatterTestStep,
+    MatterTestType,
 )
 
 from .python_test_models import PythonTest
@@ -33,82 +33,66 @@ class PythonParserException(Exception):
     """Raised when an error occurs during the parser of python file."""
 
 
-class PythonTestInfo:
-    """This class stores all the information from a python test case that came from
-    python test script file."""
-
-    def __init__(
-        self,
-        desc: str,
-        pics: list,
-        config: dict,
-        steps: list[THTestStep],
-        type: THTestType,
-    ) -> None:
-        self.desc = desc
-        self.pics = pics
-        self.config = config
-        self.steps = steps
-        self.type = type
-
-
 def parse_python_test(path: Path) -> PythonTest:
     """Parse a single Python test file into PythonTest model.
 
     This will also annotate parsed python test with it's path and test type.
     """
-    tc_name = path.name.split(".")[0]
-    tc_info = __extract_tcs_info(path, tc_name)
 
-    if not tc_info.desc or not tc_info.steps:
-        raise PythonParserException(
-            f"Test Case {tc_name} does not have methods desc_{tc_name} "
-            f"or steps_{tc_name}"
-        )
-
-    test = PythonTest(
-        name=tc_info.desc, steps=tc_info.steps, config=tc_info.config, PICS=tc_info.pics
-    )
-    test.path = path
-    test.type = tc_info.type
-
-    return test
+    return __parse_test_case_from_file(path)
 
 
-def __extract_tcs_info(path: Path, tc_name: str) -> PythonTestInfo:
-    # Currently config is not configured in Python Testing
-    tc_pics: list = []
-    tc_config: dict = {}
-
+def __parse_test_case_from_file(path: Path) -> PythonTest:
     with open(path, "r") as python_file:
         parsed_python_file = ast.parse(python_file.read())
         classes = [c for c in parsed_python_file.body if isinstance(c, ast.ClassDef)]
 
-        # Get TC description and TC steps from python test file
-        tc_desc: str = ""
-        tc_steps: List[THTestStep] = []
+    tc_name = path.name.split(".")[0]
+    try:
+        class_ = next(c for c in classes if tc_name in c.name)
+    except StopIteration as si:  # Raised when `next` doesn't find a matching method
+        raise PythonParserException(f"{path} must have a class name {tc_name}") from si
 
-        for class_ in classes:
-            methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
-            for method in methods:
-                if "desc_" + tc_name in method.name:
-                    tc_desc = method.body[BODY_INDEX].value.value  # type: ignore
-                elif "steps_" + tc_name in method.name:
-                    tc_steps = __retrieve_steps(method)
-                elif "pics_" + tc_name in method.name:
-                    tc_pics = __retrieve_pics(method)
+    return __parse_test_case_from_class(class_=class_, path=path, tc_name=tc_name)
 
-    return PythonTestInfo(
-        desc=tc_desc,
-        pics=tc_pics,
-        config=tc_config,
+
+def __parse_test_case_from_class(
+    class_: ast.ClassDef, path: Path, tc_name: str
+) -> PythonTest:
+    # Currently config is not configured in Python Testing
+    tc_config: dict = {}
+
+    desc_method_name = "desc_" + tc_name
+    steps_method_name = "steps_" + tc_name
+    pics_method_name = "pics_" + tc_name
+
+    methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
+    try:
+        desc_method = next(m for m in methods if desc_method_name in m.name)
+        tc_desc = desc_method.body[BODY_INDEX].value.value  # type: ignore
+
+        steps_method = next(m for m in methods if steps_method_name in m.name)
+        tc_steps = __retrieve_steps(steps_method)
+
+        pics_method = next(m for m in methods if pics_method_name in m.name)
+        tc_pics = __retrieve_pics(pics_method)
+    except StopIteration as si:  # Raised when `next` doesn't find a matching method
+        raise PythonParserException(
+            f"{path} did not contain valid definition for {tc_name}"
+        ) from si
+
+    return PythonTest(
+        name=tc_desc,
         steps=tc_steps,
-        type=THTestType.AUTOMATED,
+        config=tc_config,
+        PICS=tc_pics,
+        path=path,
+        type=MatterTestType.AUTOMATED,
     )
 
 
-def __retrieve_steps(method: ast.FunctionDef) -> List[THTestStep]:
-    python_steps: List[THTestStep] = []
+def __retrieve_steps(method: ast.FunctionDef) -> List[MatterTestStep]:
+    python_steps: List[MatterTestStep] = []
     for step in method.body[BODY_INDEX].value.elts:  # type: ignore
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
         arg_is_commissioning = False
@@ -121,7 +105,7 @@ def __retrieve_steps(method: ast.FunctionDef) -> List[THTestStep]:
             ].value.value
 
         python_steps.append(
-            THTestStep(label=step_name, is_commissioning=arg_is_commissioning)
+            MatterTestStep(label=step_name, is_commissioning=arg_is_commissioning)
         )
 
     return python_steps

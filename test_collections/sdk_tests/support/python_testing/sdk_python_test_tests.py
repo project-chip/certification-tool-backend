@@ -97,7 +97,7 @@ def sdk_python_test_collection(
         name="SDK Python Tests", folder=python_test_folder
     )
 
-    files = python_test_folder.python_file_paths()
+    files = python_test_folder.file_paths(extension=".py")
     version = python_test_folder.version
     suites = _parse_all_sdk_python_tests(
         python_test_files=files, python_test_version=version

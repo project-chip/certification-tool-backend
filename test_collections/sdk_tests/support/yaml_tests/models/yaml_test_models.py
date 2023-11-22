@@ -17,14 +17,14 @@ from typing import Any
 
 from pydantic_yaml import YamlModelMixin
 
-from ...models.th_test_models import THTest, THTestType
+from ...models.matter_test_models import MatterTest, MatterTestType
 
 ###
 # This file declares YAML models that are used to parse the YAML Test Cases.
 ###
 
 
-class YamlTest(YamlModelMixin, THTest):
+class YamlTest(YamlModelMixin, MatterTest):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(steps=kwargs["tests"], **kwargs)
-        self.type: THTestType.MANUAL  # type: ignore
+        self.type: MatterTestType.MANUAL  # type: ignore

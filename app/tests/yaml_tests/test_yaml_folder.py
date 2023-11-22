@@ -47,11 +47,11 @@ def test_yaml_folder_filename_pattern() -> None:
     with mock.patch.object(target=Path, attribute="glob") as path_glob:
         # Default file_name_patter: *
         yaml_folder = SDKTestFolder(test_yaml_path)
-        _ = yaml_folder.yaml_file_paths()
+        _ = yaml_folder.file_paths(extension=".y*ml")
         path_glob.assert_called_once_with("*.y*ml")
 
         path_glob.reset_mock()
         pattern = "TC_*"
         yaml_folder = SDKTestFolder(test_yaml_path, filename_pattern=pattern)
-        _ = yaml_folder.yaml_file_paths()
+        _ = yaml_folder.file_paths(extension=".y*ml")
         path_glob.assert_called_once_with(f"{pattern}.y*ml")

@@ -26,8 +26,13 @@ from .models.test_declarations import (
     YamlCollectionDeclaration,
     YamlSuiteDeclaration,
 )
+
+from test_collections.sdk_tests.support.models.matter_test_models import (
+    MatterTestStep,
+    MatterTestType,
+)
+
 from .models.test_suite import SuiteType
-from .models.yaml_test_models import THTestType
 from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
 ###
@@ -94,9 +99,9 @@ def _parse_all_yaml(
                 yaml_path=yaml_file, yaml_version=yaml_version
             )
 
-            if test_case.test_type == THTestType.MANUAL:
+            if test_case.test_type == MatterTestType.MANUAL:
                 suites[SuiteType.MANUAL].add_test_case(test_case)
-            elif test_case.test_type == THTestType.SIMULATED:
+            elif test_case.test_type == MatterTestType.SIMULATED:
                 suites[SuiteType.SIMULATED].add_test_case(test_case)
             else:
                 suites[SuiteType.AUTOMATED].add_test_case(test_case)
@@ -116,7 +121,7 @@ def sdk_yaml_test_collection(
         name="SDK YAML Tests", folder=yaml_test_folder
     )
 
-    files = yaml_test_folder.yaml_file_paths()
+    files = yaml_test_folder.file_paths(extension=".y*ml")
     version = yaml_test_folder.version
     suites = _parse_all_yaml(yaml_files=files, yaml_version=version)
 
@@ -135,7 +140,7 @@ def custom_yaml_test_collection(
         name="Custom YAML Tests", folder=yaml_test_folder
     )
 
-    files = yaml_test_folder.yaml_file_paths()
+    files = yaml_test_folder.file_paths(extension=".y*ml")
     suites = _parse_all_yaml(yaml_files=files, yaml_version="custom")
 
     for suite in suites:

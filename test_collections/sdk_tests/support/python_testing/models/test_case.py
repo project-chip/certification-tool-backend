@@ -265,10 +265,8 @@ class PythonTestCase(TestCase):
         self.chip_tool.destroy_device()
 
 
-class PythonChipToolTestCase(PythonTestCase, ChipToolTest):
-    """Automated Python test cases using chip-tool."""
-
-    test_type = ChipToolTestType.PYTHON_TEST
+class PythonChipToolTestCase(PythonTestCase):
+    """Automated Python test cases"""
 
     def create_test_steps(self) -> None:
         for step in self.python_test.steps:

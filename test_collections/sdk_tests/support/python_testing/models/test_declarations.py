@@ -22,7 +22,7 @@ from app.test_engine.models.test_declarations import (
 )
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 
-from .python_test_models import PythonTest, THTestType
+from .python_test_models import PythonTest, MatterTestType
 from .test_case import PythonTestCase
 from .test_suite import PythonTestSuite, SuiteType
 
@@ -61,5 +61,5 @@ class PythonCaseDeclaration(TestCaseDeclaration):
         )
 
     @property
-    def test_type(self) -> THTestType:
+    def test_type(self) -> MatterTestType:
         return self.class_ref.python_test.type

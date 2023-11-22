@@ -66,8 +66,6 @@ def test_automated_suite_subclass() -> None:
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
         suite_type=type, name="SomeSuite", python_test_version="some_version"
     )
-    assert issubclass(suite_class, ChipToolPythonTestSuite)
-    assert suite_class.test_type == ChipToolTestType.PYTHON_TEST
 
 
 @pytest.mark.asyncio
@@ -109,9 +107,6 @@ async def test_chip_tool_suite_setup() -> None:
 
     with mock.patch(
         "test_collections.sdk_tests.support.python_testing.models.test_suite.PythonTestSuite.setup"
-    ) as python_suite_setup, mock.patch(
-        "app.chip_tool.test_suite.ChipToolSuite.setup"
-    ) as chip_tool_suite_setup:
+    ) as python_suite_setup:
         await suite_instance.setup()
         python_suite_setup.assert_called_once()
-        chip_tool_suite_setup.assert_called_once()

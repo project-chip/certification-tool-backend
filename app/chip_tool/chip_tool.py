@@ -132,7 +132,6 @@ class ChipToolUnknownTestType(Exception):
 class ChipToolTestType(str, Enum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
-    PYTHON_TEST = "python-test"
 
 
 class ChipTool(metaclass=Singleton):
@@ -588,7 +587,7 @@ class ChipTool(metaclass=Singleton):
 
         if test_type == ChipToolTestType.CHIP_TOOL:
             test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
-        elif test_type == ChipToolTestType.CHIP_APP:
+        else:
             test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
 
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)

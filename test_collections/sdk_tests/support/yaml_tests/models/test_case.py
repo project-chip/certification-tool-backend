@@ -25,9 +25,9 @@ from app.test_engine.models import (
     TestCase,
     TestStep,
 )
-from test_collections.sdk_tests.support.models.th_test_models import (
-    THTestStep,
-    THTestType,
+from test_collections.sdk_tests.support.models.matter_test_models import (
+    MatterTestStep,
+    MatterTestType,
 )
 
 from .yaml_test_models import YamlTest
@@ -80,11 +80,11 @@ class YamlTestCase(TestCase):
     def class_factory(cls, test: YamlTest, yaml_version: str) -> Type[T]:
         """Dynamically declares a subclass based on the type of YAML test."""
         case_class: Type[YamlTestCase]
-        if test.type == THTestType.MANUAL:
+        if test.type == MatterTestType.MANUAL:
             case_class = YamlManualTestCase
-        elif test.type == THTestType.SEMI_AUTOMATED:
+        elif test.type == MatterTestType.SEMI_AUTOMATED:
             case_class = YamlSemiAutomatedChipToolTestCase
-        elif test.type == THTestType.SIMULATED:
+        elif test.type == MatterTestType.SIMULATED:
             case_class = YamlSimulatedTestCase
         else:  # Automated
             case_class = YamlChipToolTestCase
@@ -147,7 +147,7 @@ class YamlTestCase(TestCase):
         """
         title = identifier
 
-        if test_yaml.type == THTestType.SEMI_AUTOMATED:
+        if test_yaml.type == MatterTestType.SEMI_AUTOMATED:
             title += " (Semi-automated)"
 
         if cls.__has_steps_disabled(test_yaml):
@@ -155,7 +155,7 @@ class YamlTestCase(TestCase):
 
         return title
 
-    def _append_automated_test_step(self, yaml_step: THTestStep) -> None:
+    def _append_automated_test_step(self, yaml_step: MatterTestStep) -> None:
         """
         Disabled steps are ignored.
         (Such tests will be marked as 'Steps Disabled' elsewhere)

@@ -15,14 +15,14 @@
 #
 from typing import Any
 
-from ...models.th_test_models import THTest, THTestType
+from ...models.matter_test_models import MatterTest, MatterTestType
 
 ###
 # This file declares Python test models that are used to parse the Python Test Cases.
 ###
 
 
-class PythonTest(THTest):
+class PythonTest(MatterTest):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.type: THTestType.AUTOMATED  # type: ignore
+        self.type: MatterTestType.AUTOMATED  # type: ignore

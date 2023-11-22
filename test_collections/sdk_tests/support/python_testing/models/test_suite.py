@@ -16,14 +16,8 @@
 from enum import Enum
 from typing import Type, TypeVar
 
-from app.chip_tool.chip_tool import ChipToolTestType
-from app.chip_tool.test_suite import ChipToolSuite
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
-
-
-class PythonTestSuiteFactoryError(Exception):
-    pass
 
 
 class SuiteType(Enum):
@@ -79,10 +73,8 @@ class PythonTestSuite(TestSuite):
         )
 
 
-class ChipToolPythonTestSuite(PythonTestSuite, ChipToolSuite):
-    test_type = ChipToolTestType.PYTHON_TEST
+class ChipToolPythonTestSuite(PythonTestSuite):
 
     async def setup(self) -> None:
         """Due top multi inheritance, we need to call setup on both super classes."""
         await PythonTestSuite.setup(self)
-        await ChipToolSuite.setup(self)

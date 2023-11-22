@@ -24,14 +24,14 @@ from pydantic import BaseModel
 ###
 
 
-class THTestType(Enum):
+class MatterTestType(Enum):
     AUTOMATED = 0
     SEMI_AUTOMATED = 1
     MANUAL = 2
     SIMULATED = 3
 
 
-class THTestStep(BaseModel):
+class MatterTestStep(BaseModel):
     label: str
     PICS: Optional[str] = None
     verification: Optional[str] = None
@@ -40,10 +40,10 @@ class THTestStep(BaseModel):
     arguments: Optional[dict[str, Any]]
 
 
-class THTest(BaseModel):
+class MatterTest(BaseModel):
     name: str
     PICS: set[str] = set()
     config: dict[str, Any]
-    steps: list[THTestStep]
-    type: THTestType = THTestType.MANUAL
+    steps: list[MatterTestStep]
+    type: MatterTestType = MatterTestType.MANUAL
     path: Optional[Path]

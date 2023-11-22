@@ -21,7 +21,7 @@ from app.test_engine.models.test_declarations import (
     TestSuiteDeclaration,
 )
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
-from test_collections.sdk_tests.support.models.th_test_models import THTestType
+from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
 
 from .test_case import YamlTestCase
 from .test_suite import SuiteType, YamlTestSuite
@@ -60,5 +60,5 @@ class YamlCaseDeclaration(TestCaseDeclaration):
         )
 
     @property
-    def test_type(self) -> THTestType:
+    def test_type(self) -> MatterTestType:
         return self.class_ref.yaml_test.type

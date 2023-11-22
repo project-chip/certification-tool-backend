@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 # flake8: noqa
-# Ignore flake8 check for this file
 from pathlib import Path
 from unittest import mock
 
@@ -49,11 +48,11 @@ def test_python_folder_filename_pattern() -> None:
     with mock.patch.object(target=Path, attribute="glob") as path_glob:
         # Default file_name_pattern: *
         python_folder = SDKTestFolder(test_python_path)
-        _ = python_folder.python_file_paths()
+        _ = python_folder.file_paths(extension=".py")
         path_glob.assert_called_once_with("*.py")
 
         path_glob.reset_mock()
         pattern = "TC_*"
         python_test_folder = SDKTestFolder(test_python_path, filename_pattern=pattern)
-        _ = python_test_folder.python_file_paths()
+        _ = python_test_folder.file_paths(extension=".py")
         path_glob.assert_called_once_with(f"{pattern}.py")

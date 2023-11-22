@@ -18,7 +18,7 @@ from pathlib import Path
 from loguru import logger
 from pydantic import ValidationError
 
-from test_collections.sdk_tests.support.models.th_test_models import THTestType
+from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
 
 from .yaml_test_models import YamlTest
 
@@ -27,7 +27,7 @@ class YamlParserException(Exception):
     """Raised when an error occurs during the parser of yaml file."""
 
 
-def _test_type(test: YamlTest) -> THTestType:
+def _test_type(test: YamlTest) -> MatterTestType:
     """Determine the type of a test based on the parsed yaml.
 
     This is mainly determined by the number of disabled test steps.
@@ -43,20 +43,20 @@ def _test_type(test: YamlTest) -> THTestType:
             - Simulated: Tests where file name have "Simulated"
     """
     if test.path is not None and "Simulated" in str(test.path):
-        return THTestType.SIMULATED
+        return MatterTestType.SIMULATED
 
     steps = test.steps
 
     # If all disabled:
     if all(s.disabled is True for s in steps):
-        return THTestType.MANUAL
+        return MatterTestType.MANUAL
 
     # if any step has a UserPrompt, categorize as semi-automated
     if any(s.command == "UserPrompt" for s in steps):
-        return THTestType.SEMI_AUTOMATED
+        return MatterTestType.SEMI_AUTOMATED
 
     # Otherwise Automated
-    return THTestType.AUTOMATED
+    return MatterTestType.AUTOMATED
 
 
 def parse_yaml_test(path: Path) -> YamlTest:

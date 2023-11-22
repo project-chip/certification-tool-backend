@@ -24,9 +24,9 @@ from app.chip_tool.test_case import TestError
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
 from app.test_engine.models.manual_test_case import ManualVerificationTestStep
-from test_collections.sdk_tests.support.models.th_test_models import (
-    THTestStep,
-    THTestType,
+from test_collections.sdk_tests.support.models.matter_test_models import (
+    MatterTestStep,
+    MatterTestType,
 )
 from test_collections.sdk_tests.support.yaml_tests.models import YamlTestCase
 from test_collections.sdk_tests.support.yaml_tests.models.test_case import (
@@ -47,8 +47,8 @@ def yaml_test_instance(
         "param1": "value1",
         "param2": {"type": "config_type", "defaultValue": "value2"},
     },
-    tests: list[THTestStep] = [],
-    type: THTestType = THTestType.AUTOMATED,
+    tests: list[MatterTestStep] = [],
+    type: MatterTestType = MatterTestType.AUTOMATED,
     path: Optional[Path] = None,
 ) -> YamlTest:
     return YamlTest(
@@ -130,7 +130,7 @@ def test_yaml_test_case_class_default_test_parameters() -> None:
 
 def test_manual_test_case_class_factory_subclass_mapping() -> None:
     """Test Manual tests are created as a subclass of YamlManualTestCase."""
-    test = yaml_test_instance(type=THTestType.MANUAL)
+    test = yaml_test_instance(type=MatterTestType.MANUAL)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -140,7 +140,7 @@ def test_manual_test_case_class_factory_subclass_mapping() -> None:
 def test_automated_test_case_class_factory_subclass_mapping() -> None:
     """Test Automated tests are created as a subclass of
     YamlChipToolTestCase."""
-    test = yaml_test_instance(type=THTestType.AUTOMATED)
+    test = yaml_test_instance(type=MatterTestType.AUTOMATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -150,7 +150,7 @@ def test_automated_test_case_class_factory_subclass_mapping() -> None:
 def test_semi_automated_test_case_class_factory_subclass_mapping() -> None:
     """Test Semi-Automated tests are created as a subclass of
     YamlSemiAutomatedChipToolTestCase."""
-    test = yaml_test_instance(type=THTestType.SEMI_AUTOMATED)
+    test = yaml_test_instance(type=MatterTestType.SEMI_AUTOMATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -160,7 +160,7 @@ def test_semi_automated_test_case_class_factory_subclass_mapping() -> None:
 def test_simulated_test_case_class_factory_subclass_mapping() -> None:
     """Test Simulated tests are created as a subclass of
     YamlSimulatedTestCase."""
-    test = yaml_test_instance(type=THTestType.SIMULATED)
+    test = yaml_test_instance(type=MatterTestType.SIMULATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -170,7 +170,7 @@ def test_simulated_test_case_class_factory_subclass_mapping() -> None:
 def test_incomplete_test_case_class_factory_subclass_mapping() -> None:
     """Test Semi-Automated tests are created as a subclass of
     YamlSimulatedTestCase."""
-    test = yaml_test_instance(type=THTestType.SIMULATED)
+    test = yaml_test_instance(type=MatterTestType.SIMULATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -221,13 +221,13 @@ def test_class_factory_test_title_semi_automated() -> None:
     """Test that class factory correctly finds identifier 'TC-XX-1.1', use it as
     metadata title, and append (Semi-automated) when appropriate."""
 
-    for type in list(THTestType):
+    for type in list(MatterTestType):
         test = yaml_test_instance(type=type, name="TC-AB-1.2")
         case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
             test=test, yaml_version="version"
         )
 
-        if type == THTestType.SEMI_AUTOMATED:
+        if type == MatterTestType.SEMI_AUTOMATED:
             assert test.name in case_class.metadata["title"]
             assert "(Semi-automated)" in case_class.metadata["title"]
         else:
@@ -237,12 +237,12 @@ def test_class_factory_test_title_semi_automated() -> None:
 def test_class_factory_test_title_steps_disabled() -> None:
     """Test that class factory correctly finds identifier 'TC-XX-1.1', use it as
     metadata title, and (Steps Disabled) when some but not all steps are disabled."""
-    disabled_step = THTestStep(label="Step1", disabled=True)
-    enabled_step = THTestStep(label="Step2", disabled=False)
+    disabled_step = MatterTestStep(label="Step1", disabled=True)
+    enabled_step = MatterTestStep(label="Step2", disabled=False)
     for type in [
-        THTestType.AUTOMATED,
-        THTestType.SEMI_AUTOMATED,
-        THTestType.SIMULATED,
+        MatterTestType.AUTOMATED,
+        MatterTestType.SEMI_AUTOMATED,
+        MatterTestType.SIMULATED,
     ]:
         test = yaml_test_instance(
             type=type, name="TC-AB-1.2", tests=[disabled_step, enabled_step]
@@ -263,10 +263,10 @@ def test_steps_in_manual_yaml_test_case() -> None:
     - verification details are optional but passed when present in yaml
     """
     steps = [
-        THTestStep(label="Step1"),
-        THTestStep(label="Step2Verification", verification="Verification String"),
+        MatterTestStep(label="Step1"),
+        MatterTestStep(label="Step2Verification", verification="Verification String"),
     ]
-    test = yaml_test_instance(type=THTestType.MANUAL, tests=steps)
+    test = yaml_test_instance(type=MatterTestType.MANUAL, tests=steps)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -283,7 +283,7 @@ def test_steps_in_manual_yaml_test_case() -> None:
 
 def test_test_type_for_automated_tests() -> None:
     """Test that automated tests are set to use chip-tool"""
-    test = yaml_test_instance(type=THTestType.AUTOMATED)
+    test = yaml_test_instance(type=MatterTestType.AUTOMATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -294,7 +294,7 @@ def test_test_type_for_automated_tests() -> None:
 
 def test_test_type_for_simulated_tests() -> None:
     """Test that simulated tests are set to use chip-app"""
-    test = yaml_test_instance(type=THTestType.SIMULATED)
+    test = yaml_test_instance(type=MatterTestType.SIMULATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -309,7 +309,7 @@ async def test_yaml_version_logging() -> None:
 
     Note that since `chip-tool` is not setup, we except the TestError raised.
     """
-    for type in list(THTestType):
+    for type in list(MatterTestType):
         test = yaml_test_instance(type=type)
         test_yaml_version = "YamlVersionTest"
         case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
@@ -329,7 +329,7 @@ async def test_yaml_version_logging() -> None:
 
 
 def test_default_first_steps_for_yaml_chip_tool_test_case() -> None:
-    test = yaml_test_instance(type=THTestType.AUTOMATED, tests=[])
+    test = yaml_test_instance(type=MatterTestType.AUTOMATED, tests=[])
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -339,7 +339,7 @@ def test_default_first_steps_for_yaml_chip_tool_test_case() -> None:
 
 
 def test_no_default_first_steps_for_yaml_simulated_test_case() -> None:
-    test = yaml_test_instance(type=THTestType.SIMULATED, tests=[])
+    test = yaml_test_instance(type=MatterTestType.SIMULATED, tests=[])
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
@@ -350,10 +350,10 @@ def test_no_default_first_steps_for_yaml_simulated_test_case() -> None:
 
 def test_disabled_steps_for_non_manual_test() -> None:
     """Test that non-manual tests skip disabled steps."""
-    for type in list(THTestType):
-        if type == THTestType.MANUAL:
+    for type in list(MatterTestType):
+        if type == MatterTestType.MANUAL:
             continue
-        test_step = THTestStep(label="Disabled Step", disabled=True)
+        test_step = MatterTestStep(label="Disabled Step", disabled=True)
         test = yaml_test_instance(type=type, tests=[test_step])
         case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
             test=test, yaml_version="version"
@@ -365,10 +365,10 @@ def test_disabled_steps_for_non_manual_test() -> None:
 
 def test_normal_steps_for_non_manual_tests() -> None:
     """Test that non-manual tests include enabled steps."""
-    for type in list(THTestType):
-        if type == THTestType.MANUAL:
+    for type in list(MatterTestType):
+        if type == MatterTestType.MANUAL:
             continue
-        test_step = THTestStep(label="Step1")
+        test_step = MatterTestStep(label="Step1")
         test = yaml_test_instance(type=type, tests=[test_step])
         case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
             test=test, yaml_version="version"
@@ -381,10 +381,10 @@ def test_normal_steps_for_non_manual_tests() -> None:
 
 def test_multiple_steps_for_non_manual() -> None:
     """Test that non-manual tests multiple enabled steps are all included."""
-    for type in list(THTestType):
-        if type == THTestType.MANUAL:
+    for type in list(MatterTestType):
+        if type == MatterTestType.MANUAL:
             continue
-        test_step = THTestStep(label="StepN")
+        test_step = MatterTestStep(label="StepN")
         no_steps = 5
         test = yaml_test_instance(type=type, tests=([test_step] * no_steps))
         case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
@@ -399,13 +399,13 @@ def test_multiple_steps_for_non_manual() -> None:
 
 
 def test_prompt_steps_for_yaml_chip_tool_test_case() -> None:
-    test_step = THTestStep(
+    test_step = MatterTestStep(
         label="Step1",
         command="UserPrompt",
         verification="Verify that This happened",
     )
 
-    test = yaml_test_instance(type=THTestType.AUTOMATED, tests=[test_step])
+    test = yaml_test_instance(type=MatterTestType.AUTOMATED, tests=[test_step])
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
