@@ -21,8 +21,7 @@ from typing import Any, Type, TypeVar
 
 from matter_chip_tool_adapter.decoder import MatterLog
 
-from app.chip_tool.chip_tool import ChipTool, ChipToolTestType
-from app.chip_tool.test_case import ChipToolTest
+from app.chip_tool.chip_tool import ChipTool
 from app.models import TestCaseExecution
 from app.test_engine.logger import (
     CHIP_LOG_FORMAT,
