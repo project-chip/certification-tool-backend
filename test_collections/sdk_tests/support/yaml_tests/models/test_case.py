@@ -23,7 +23,7 @@ from app.test_engine.models import (
     TestCase,
     TestStep,
 )
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTestType
 from test_collections.sdk_tests.support.chip_tool.test_case import (
     ChipToolManualPromptTest,
     ChipToolTest,
@@ -198,7 +198,7 @@ class YamlManualTestCase(YamlTestCase, ManualTestCase):
 class YamlChipToolTestCase(YamlTestCase, ChipToolTest):
     """Automated test cases using chip-tool."""
 
-    test_type = ChipToolTestType.CHIP_TOOL
+    test_type = ChipTestType.CHIP_TOOL
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start chip-tool test")]
@@ -215,7 +215,7 @@ class YamlSemiAutomatedChipToolTestCase(YamlChipToolTestCase, ChipToolManualProm
 class YamlSimulatedTestCase(YamlTestCase, ChipToolTest):
     """Simulated test cases using chip-app"""
 
-    test_type = ChipToolTestType.CHIP_APP
+    test_type = ChipTestType.CHIP_APP
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start chip-app test")]

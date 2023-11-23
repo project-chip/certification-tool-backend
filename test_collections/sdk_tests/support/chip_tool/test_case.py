@@ -35,7 +35,7 @@ from app.user_prompt_support.uploaded_file_support import UploadFile
 from app.user_prompt_support.user_prompt_manager import user_prompt_manager
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.sdk_tests.support.chip_tool import ChipTool
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTestType
 
 CHIP_TOOL_DEFAULT_PROMPT_TIMEOUT_S = 60  # seconds
 OUTCOME_TIMEOUT_S = 60 * 10  # Seconds
@@ -62,7 +62,7 @@ class TestError(Exception):
 class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
     chip_tool: ChipTool
     chip_tool_test_identifier: str
-    test_type: ChipToolTestType
+    test_type: ChipTestType
 
     def __init__(self, test_case_execution: TestCaseExecution):
         self.__show_adapter_logs = False
@@ -125,7 +125,7 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
 
     def step_start(self, request: TestStep) -> None:
         if (
-            self.test_type == ChipToolTestType.CHIP_APP
+            self.test_type == ChipTestType.CHIP_APP
             and
             # Manual steps will be handled by step_manual function.
             not isinstance(self.current_test_step, ManualVerificationTestStep)

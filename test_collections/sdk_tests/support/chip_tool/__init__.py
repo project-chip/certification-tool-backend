@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .chip_tool import ChipTool, ChipToolTestType
+from .chip_tool import ChipTool, ChipTestType
