@@ -368,7 +368,7 @@ async def test_destroy_container_running() -> None:
 
         assert chip_tool._ChipTool__chip_tool_container is not None
 
-        chip_tool.destroy_device()
+        await chip_tool.destroy_device()
 
     mock_destroy.assert_called()
     assert chip_tool._ChipTool__chip_tool_container is None
@@ -381,7 +381,7 @@ async def test_destroy_container_not_running() -> None:
     with mock.patch.object(
         target=container_manager, attribute="destroy"
     ) as mock_destroy:
-        chip_tool.destroy_device()
+        await chip_tool.destroy_device()
 
     mock_destroy.assert_not_called()
     assert chip_tool._ChipTool__chip_tool_container is None
@@ -410,8 +410,8 @@ async def test_destroy_container_once() -> None:
     ):
         await chip_tool.start_container(test_type)
 
-        chip_tool.destroy_device()
-        chip_tool.destroy_device()
+        await chip_tool.destroy_device()
+        await chip_tool.destroy_device()
 
     mock_destroy.assert_called_once()
     assert chip_tool._ChipTool__chip_tool_container is None
@@ -593,8 +593,12 @@ async def test_run_test_default_config() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="test_collections.sdk_tests.support.chip_tool.chip_tool.WebSocketRunner."
-        "run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
+        return_value=True,
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_container(test_type)
@@ -648,8 +652,12 @@ async def test_run_test_custom_timeout() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="test_collections.sdk_tests.support.chip_tool.chip_tool.WebSocketRunner."
-        "run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
+        return_value=True,
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_container(test_type)
@@ -697,8 +705,12 @@ async def test_run_test_with_custom_parameter() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="test_collections.sdk_tests.support.chip_tool.chip_tool.WebSocketRunner."
-        "run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
+        return_value=True,
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_container(test_type)
@@ -747,8 +759,12 @@ async def test_run_test_with_endpoint_parameter() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="test_collections.sdk_tests.support.chip_tool.chip_tool.WebSocketRunner."
-        "run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
+        return_value=True,
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_container(test_type)
@@ -796,8 +812,12 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="test_collections.sdk_tests.support.chip_tool.chip_tool.WebSocketRunner."
-        "run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
+        return_value=True,
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_container(test_type)
