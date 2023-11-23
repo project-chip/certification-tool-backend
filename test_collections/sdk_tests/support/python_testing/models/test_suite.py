@@ -18,7 +18,7 @@ from typing import Generator, Type, TypeVar, cast
 
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
-from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip import ChipTool
 
 from .utils import (
     EXECUTABLE,

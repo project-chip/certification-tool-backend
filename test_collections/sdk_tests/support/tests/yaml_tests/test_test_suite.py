@@ -20,9 +20,9 @@ import pytest
 
 from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
 from test_collections.sdk_tests.support.yaml_tests.models.test_suite import (
-    ChipToolYamlTestSuite,
+    ChipYamlTestSuite,
     ManualYamlTestSuite,
     SimulatedYamlTestSuite,
     SuiteType,
@@ -69,13 +69,13 @@ def test_manual_suite_subclass() -> None:
 
 def test_automated_suite_subclass() -> None:
     """Test that for suite type automated class factory creates a subclass of
-    ChipToolYamlTestSuite, and that test_type is set to CHIP_TOOL"""
+    ChipYamlTestSuite, and that test_type is set to CHIP_TOOL"""
     type = SuiteType.AUTOMATED
     # Create a subclass of YamlTestSuite
     suite_class: Type[YamlTestSuite] = YamlTestSuite.class_factory(
         suite_type=type, name="SomeSuite", yaml_version="some_version"
     )
-    assert issubclass(suite_class, ChipToolYamlTestSuite)
+    assert issubclass(suite_class, ChipYamlTestSuite)
     assert suite_class.test_type == ChipTestType.CHIP_TOOL
 
 
@@ -103,12 +103,11 @@ async def test_suite_setup_log_yaml_version() -> None:
 
         suite_instance = suite_class(TestSuiteExecution())
 
-        # We're patching ChipToolSuite.setup to avoid starting chip-tool
+        # We're patching ChipSuite.setup to avoid starting the SDK container and server
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
         ) as logger_info, mock.patch(
-            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite."
-            "setup"
+            "test_collections.sdk_tests.support.chip.test_suite.ChipSuite.setup"
         ) as _:
             await suite_instance.setup()
             logger_info.assert_called()
@@ -144,10 +143,10 @@ async def test_manual_suite_setup_cleanup() -> None:
 
 
 @pytest.mark.asyncio
-async def test_chip_tool_suite_setup() -> None:
-    """Test that both YamlTestSuite.setup and ChipToolSuite.setup are called when
-    YamlChipToolsSuite.setup is called. We do this as YamlChipToolsSuite inherits from
-    both YamlTestSuite and ChipToolSuite."""
+async def test_chip_suite_setup() -> None:
+    """Test that both YamlTestSuite.setup and ChipSuite.setup are called when
+    ChipYamlTestSuite.setup is called. We do this as ChipYamlTestSuite inherits from
+    both YamlTestSuite and ChipSuite."""
 
     for type in [SuiteType.AUTOMATED, SuiteType.SIMULATED]:
         suite_class: Type[YamlTestSuite] = YamlTestSuite.class_factory(
@@ -160,9 +159,8 @@ async def test_chip_tool_suite_setup() -> None:
             "test_collections.sdk_tests.support.yaml_tests.models."
             "test_suite.YamlTestSuite.setup"
         ) as yaml_suite_setup, mock.patch(
-            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite."
-            "setup"
-        ) as chip_tool_suite_setup:
+            "test_collections.sdk_tests.support.chip.test_suite.ChipSuite.setup"
+        ) as chip_suite_setup:
             await suite_instance.setup()
             yaml_suite_setup.assert_called_once()
-            chip_tool_suite_setup.assert_called_once()
+            chip_suite_setup.assert_called_once()

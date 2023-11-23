@@ -13,13 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from app.test_engine.models import TestSuite
-
-
-class TestSuiteChipTool(TestSuite):
-    metadata = {
-        "public_id": "TestSuiteChipTool",
-        "version": "1.2.3",
-        "title": "This is Chip Tool Unit Test Suite",
-        "description": "This is Chip Tool Unit Test Suite",
-    }
+from .test_suite_chip import TestSuiteChip

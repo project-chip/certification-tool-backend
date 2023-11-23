@@ -21,10 +21,7 @@ from typing import Any, Generator, Type, TypeVar, cast
 from app.models import TestCaseExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
-from test_collections.sdk_tests.support.chip_tool.chip_tool import (
-    PICS_FILE_PATH,
-    ChipTool,
-)
+from test_collections.sdk_tests.support.chip.chip_tool import PICS_FILE_PATH, ChipTool
 
 from .python_test_models import PythonTest
 from .python_testing_hooks_proxy import (

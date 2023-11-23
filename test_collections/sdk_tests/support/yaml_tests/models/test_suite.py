@@ -18,8 +18,8 @@ from typing import Type, TypeVar
 
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTestType
-from test_collections.sdk_tests.support.chip_tool.test_suite import ChipToolSuite
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.test_suite import ChipSuite
 
 
 class YamlTestSuiteFactoryError(Exception):
@@ -62,7 +62,7 @@ class YamlTestSuite(TestSuite):
         elif suite_type == SuiteType.SIMULATED:
             suite_class = SimulatedYamlTestSuite
         elif suite_type == SuiteType.AUTOMATED:
-            suite_class = ChipToolYamlTestSuite
+            suite_class = ChipYamlTestSuite
 
         return suite_class.__class_factory(name=name, yaml_version=yaml_version)
 
@@ -95,14 +95,14 @@ class ManualYamlTestSuite(YamlTestSuite):
         logger.info("This is the MANUAL test suite cleanup.")
 
 
-class ChipToolYamlTestSuite(YamlTestSuite, ChipToolSuite):
+class ChipYamlTestSuite(YamlTestSuite, ChipSuite):
     test_type = ChipTestType.CHIP_TOOL
 
     async def setup(self) -> None:
         """Due top multi inheritance, we need to call setup on both super classes."""
         await YamlTestSuite.setup(self)
-        await ChipToolSuite.setup(self)
+        await ChipSuite.setup(self)
 
 
-class SimulatedYamlTestSuite(ChipToolYamlTestSuite):
+class SimulatedYamlTestSuite(ChipYamlTestSuite):
     test_type = ChipTestType.CHIP_APP

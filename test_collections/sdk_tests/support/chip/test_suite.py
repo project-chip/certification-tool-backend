@@ -26,9 +26,9 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.sdk_tests.support.chip_tool import ChipTool
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTestType
-from test_collections.sdk_tests.support.chip_tool.test_case import PromptOption
+from test_collections.sdk_tests.support.chip import ChipTool
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.test_case import PromptOption
 
 CHIP_APP_PAIRING_CODE = "CHIP:SVR: Manual pairing code:"
 
@@ -41,7 +41,7 @@ class DUTCommissioningError(Exception):
     pass
 
 
-class ChipToolSuite(TestSuite, UserPromptSupport):
+class ChipSuite(TestSuite, UserPromptSupport):
     chip_tool = ChipTool()
     border_router: Optional[ThreadBorderRouter] = None
     test_type: ChipTestType = ChipTestType.CHIP_TOOL
@@ -51,7 +51,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
         super().__init__(test_suite_execution)
 
     async def setup(self) -> None:
-        logger.info("Setting up chip_tool")
+        logger.info("Setting up container")
         # Use test engine logger to log all events to test run.
         self.chip_tool.logger = logger
         await self.chip_tool.start_server(
@@ -62,7 +62,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
             logger.info("Create PICS file for DUT")
             self.chip_tool.set_pics(pics=self.pics, in_container=False)
         else:
-            # Disable sending "-PICS" option when running chip-tool
+            # Disable sending "-PICS" option when running chip server
             self.chip_tool.reset_pics_state()
 
         self.__dut_commissioned_successfully = False
@@ -166,7 +166,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
                 logger.info("Prompt user to perform decommissioning")
                 await self.__prompt_user_to_perform_decommission()
 
-        logger.info("Stopping chip-tool container")
+        logger.info("Stopping SDK container")
         await self.chip_tool.destroy_device()
         if self.border_router is not None:
             logger.info("Stopping border router container")

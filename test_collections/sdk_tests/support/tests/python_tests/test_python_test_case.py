@@ -23,7 +23,7 @@ import pytest
 
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
-from test_collections.sdk_tests.support.chip_tool.test_case import TestError
+from test_collections.sdk_tests.support.chip.test_case import TestError
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
@@ -136,10 +136,7 @@ def test_class_factory_test_class_name() -> None:
 
 @pytest.mark.asyncio
 async def test_python_version_logging() -> None:
-    """Test that all Python tests will log Python test version to test_engine_logger.
-
-    Note that since `chip-tool` is not setup, we except the TestError raised.
-    """
+    """Test that all Python tests will log Python test version to test_engine_logger."""
     for type in list(MatterTestType):
         test = python_test_instance(type=type)
         test_python_version = "PythonVersionTest"
@@ -151,10 +148,8 @@ async def test_python_version_logging() -> None:
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
         ) as logger_info:
-            try:
-                await instance.setup()
-            except TestError:
-                pass
+            await instance.setup()
+
             logger_info.assert_called()
             logger_info.assert_any_call("Test Setup")
 

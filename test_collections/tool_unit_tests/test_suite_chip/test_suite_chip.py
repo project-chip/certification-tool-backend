@@ -13,4 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .tctr_chip_tool_log_parsing import TCTRChipToolLogParsing
+from app.test_engine.models import TestSuite
+
+
+class TestSuiteChip(TestSuite):
+    metadata = {
+        "public_id": "TestSuiteChip",
+        "version": "1.2.3",
+        "title": "This is Chip Tool Unit Test Suite",
+        "description": "This is Chip Tool Unit Test Suite",
+    }

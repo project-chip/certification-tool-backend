@@ -23,9 +23,9 @@ import pytest
 from app.models.test_suite_execution import TestSuiteExecution
 from app.user_prompt_support.constants import UserResponseStatusEnum
 from app.user_prompt_support.prompt_response import PromptResponse
-from test_collections.sdk_tests.support.chip_tool.test_case import PromptOption
-from test_collections.sdk_tests.support.chip_tool.test_suite import (
-    ChipToolSuite,
+from test_collections.sdk_tests.support.chip.test_case import PromptOption
+from test_collections.sdk_tests.support.chip.test_suite import (
+    ChipSuite,
     DUTCommissioningError,
     SuiteSetupError,
 )
@@ -43,31 +43,31 @@ UNEXPECTED_PROMPT_RESPONSE = PromptResponse(
 
 @pytest.mark.asyncio
 async def test_test_suite_commission_dut_allowing_retries_success() -> None:
-    test_suite = ChipToolSuite(TestSuiteExecution())
+    test_suite = ChipSuite(TestSuiteExecution())
 
     with mock.patch.object(
         target=test_suite,
-        attribute="_ChipToolSuite__pair_with_dut",
+        attribute="_ChipSuite__pair_with_dut",
         side_effect=None,
     ) as mock_pair_with_dut, mock.patch.object(
         target=test_suite,
         attribute="send_prompt_request",
         return_value=None,
     ) as mock_send_prompt_request:
-        await test_suite._ChipToolSuite__commission_dut_allowing_retries()
+        await test_suite._ChipSuite__commission_dut_allowing_retries()
 
         mock_pair_with_dut.assert_called_once()
         mock_send_prompt_request.assert_not_called()
-        assert test_suite._ChipToolSuite__dut_commissioned_successfully is True
+        assert test_suite._ChipSuite__dut_commissioned_successfully is True
 
 
 @pytest.mark.asyncio
 async def test_test_suite_commission_dut_allowing_retries_retry_success() -> None:
-    test_suite = ChipToolSuite(TestSuiteExecution())
+    test_suite = ChipSuite(TestSuiteExecution())
 
     with mock.patch.object(
         target=test_suite,
-        attribute="_ChipToolSuite__pair_with_dut",
+        attribute="_ChipSuite__pair_with_dut",
         side_effect=[
             DUTCommissioningError(),
             DUTCommissioningError(),
@@ -83,22 +83,22 @@ async def test_test_suite_commission_dut_allowing_retries_retry_success() -> Non
             RETRY_PROMPT_RESPONSE,
         ],
     ) as mock_send_prompt_request:
-        await test_suite._ChipToolSuite__commission_dut_allowing_retries()
+        await test_suite._ChipSuite__commission_dut_allowing_retries()
 
         # __pair_with_dut should be called 3 times with an error and once with success
         assert mock_pair_with_dut.call_count == 4
         # mock_send_prompt_request should be called once for each error
         assert mock_send_prompt_request.call_count == 3
-        assert test_suite._ChipToolSuite__dut_commissioned_successfully is True
+        assert test_suite._ChipSuite__dut_commissioned_successfully is True
 
 
 @pytest.mark.asyncio
 async def test_test_suite_commission_dut_allowing_retries_retry_cancel() -> None:
-    test_suite = ChipToolSuite(TestSuiteExecution())
+    test_suite = ChipSuite(TestSuiteExecution())
 
     with mock.patch.object(
         target=test_suite,
-        attribute="_ChipToolSuite__pair_with_dut",
+        attribute="_ChipSuite__pair_with_dut",
         side_effect=[
             DUTCommissioningError(),
             DUTCommissioningError(),
@@ -114,22 +114,22 @@ async def test_test_suite_commission_dut_allowing_retries_retry_cancel() -> None
         ],
     ) as mock_send_prompt_request:
         with pytest.raises(SuiteSetupError):
-            await test_suite._ChipToolSuite__commission_dut_allowing_retries()
+            await test_suite._ChipSuite__commission_dut_allowing_retries()
 
         # __pair_with_dut should be called 3 times with an error
         assert mock_pair_with_dut.call_count == 3
         # mock_send_prompt_request should be called once for each error
         assert mock_send_prompt_request.call_count == 3
-        assert test_suite._ChipToolSuite__dut_commissioned_successfully is False
+        assert test_suite._ChipSuite__dut_commissioned_successfully is False
 
 
 @pytest.mark.asyncio
 async def test_test_suite_commission_dut_allowing_retries_retry_unexpected() -> None:
-    test_suite = ChipToolSuite(TestSuiteExecution())
+    test_suite = ChipSuite(TestSuiteExecution())
 
     with mock.patch.object(
         target=test_suite,
-        attribute="_ChipToolSuite__pair_with_dut",
+        attribute="_ChipSuite__pair_with_dut",
         side_effect=[
             DUTCommissioningError(),
             DUTCommissioningError(),
@@ -145,10 +145,10 @@ async def test_test_suite_commission_dut_allowing_retries_retry_unexpected() -> 
         ],
     ) as mock_send_prompt_request:
         with pytest.raises(ValueError):
-            await test_suite._ChipToolSuite__commission_dut_allowing_retries()
+            await test_suite._ChipSuite__commission_dut_allowing_retries()
 
         # __pair_with_dut should be called 3 times with an error
         assert mock_pair_with_dut.call_count == 3
         # mock_send_prompt_request should be called once for each error
         assert mock_send_prompt_request.call_count == 3
-        assert test_suite._ChipToolSuite__dut_commissioned_successfully is False
+        assert test_suite._ChipSuite__dut_commissioned_successfully is False

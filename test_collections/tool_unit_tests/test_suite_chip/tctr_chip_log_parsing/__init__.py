@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .chip_tool import ChipTool, ChipTestType
+from .tctr_chip_log_parsing import TCTRChipLogParsing
