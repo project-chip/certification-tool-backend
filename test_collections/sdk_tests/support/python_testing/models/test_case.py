@@ -39,7 +39,7 @@ T = TypeVar("T", bound="PythonTestCase")
 
 # Command line params
 RUNNER_CLASS = "test_harness_client.py"
-RUNNER_CLASS_PATH = "/root/python_testing/rpc_client"
+RUNNER_CLASS_PATH = "/root/python_testing/rpc_client/"
 EXECUTABLE = "python3"
 
 
@@ -159,7 +159,6 @@ class PythonTestCase(TestCase):
         """Override Setup to log Python Test version."""
         test_engine_logger.info(f"Python Test Version: {self.python_test_version}")
         try:
-            await super().setup()
             self.chip_tool = ChipTool()
             await self.chip_tool.start_container()
             assert self.chip_tool.is_running()

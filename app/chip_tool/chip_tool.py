@@ -114,10 +114,10 @@ XML_SPEC_DEFINITION_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
 # DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
 
 # RPC Client Running on SDK Container
-LOCAL_RPC_PYTHON_TESTING_PATH = BACKEND_ROOT / Path(
-    "test_collections/sdk_tests/support/python_testing/models/rpc_client/"
+LOCAL_RPC_PYTHON_TESTING_PATH = Path(
+    "/home/ubuntu/certification-tool/backend/test_collections/sdk_tests/support/python_testing/models/rpc_client/test_harness_client.py"
 )
-DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/rpc_client"
+DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/test_harness_client.py"
 
 
 # Docker Network

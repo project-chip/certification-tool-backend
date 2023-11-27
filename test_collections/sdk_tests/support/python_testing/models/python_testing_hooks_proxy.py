@@ -20,7 +20,7 @@ from matter_yamltests.hooks import TestRunnerHooks
 
 
 class SDKPythonTestRunnerHooks(TestRunnerHooks):
-    is_finished = False
+    finished = False
     results: Queue
 
     def update_test(self) -> Union[dict, None]:
@@ -31,10 +31,10 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
             return None
 
     def is_finished(self) -> bool:
-        return SDKPythonTestRunnerHooks.is_finished
+        return SDKPythonTestRunnerHooks.finished
 
     def __init__(self) -> None:
-        SDKPythonTestRunnerHooks.is_finished = False
+        SDKPythonTestRunnerHooks.finished = False
         SDKPythonTestRunnerHooks.results = Queue()
 
     def start(self, count: int) -> None:
