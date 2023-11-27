@@ -69,7 +69,7 @@ async def test_start_container() -> None:
     ) as mock_create_container, mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ) as mock_start_chip_server:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
     mock_create_container.assert_called_once_with(docker_image, ChipTool.run_parameters)
     mock_start_chip_server.assert_awaited_once_with(test_type, False)
@@ -98,7 +98,7 @@ async def test_start_container_using_paa_certs() -> None:
     ) as mock_create_container, mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ) as mock_start_chip_server:
-        await chip_tool.start_container(test_type, use_paa_certs=True)
+        await chip_tool.start_server(test_type, use_paa_certs=True)
 
     mock_create_container.assert_called_once_with(docker_image, ChipTool.run_parameters)
     mock_start_chip_server.assert_awaited_once_with(test_type, True)
@@ -120,7 +120,7 @@ async def test_not_start_container_when_running() -> None:
     ) as mock_create_container, mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ) as mock_start_chip_server:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
     mock_create_container.assert_not_called()
     mock_start_chip_server.assert_not_called()
@@ -359,8 +359,8 @@ async def test_destroy_container_running() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ):
-        await chip_tool.start_container(test_type)
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
+        await chip_tool.start_server(test_type)
 
         assert chip_tool._ChipTool__chip_tool_container is not None
 
@@ -403,7 +403,7 @@ async def test_destroy_container_once() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ):
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         chip_tool.destroy_device()
         chip_tool.destroy_device()
@@ -452,7 +452,7 @@ async def test_set_pics() -> None:
         target="app.chip_tool.chip_tool.subprocess.run",
         return_value=CompletedProcess(expected_command, 0),
     ) as mock_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         chip_tool.set_pics(pics)
 
@@ -505,7 +505,7 @@ async def test_send_command_default_prefix() -> None:
         target="app.chip_tool.chip_tool.exec_run_in_container",
         return_value=mock_result,
     ) as mock_exec_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         result = chip_tool.send_command(cmd, prefix=chip_tool_prefix)
 
@@ -548,7 +548,7 @@ async def test_send_command_custom_prefix() -> None:
         target="app.chip_tool.chip_tool.exec_run_in_container",
         return_value=mock_result,
     ) as mock_exec_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         result = chip_tool.send_command(cmd, prefix=chip_tool_prefix)
 
@@ -589,7 +589,7 @@ async def test_run_test_default_config() -> None:
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         await chip_tool.run_test(
             test_step_interface=TestRunnerHooks(),
@@ -643,7 +643,7 @@ async def test_run_test_custom_timeout() -> None:
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         await chip_tool.run_test(
             test_step_interface=TestRunnerHooks(),
@@ -691,7 +691,7 @@ async def test_run_test_with_custom_parameter() -> None:
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         await chip_tool.run_test(
             test_step_interface=TestRunnerHooks(),
@@ -740,7 +740,7 @@ async def test_run_test_with_endpoint_parameter() -> None:
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         await chip_tool.run_test(
             test_step_interface=TestRunnerHooks(),
@@ -788,7 +788,7 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
         target="app.chip_tool.chip_tool.WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         await chip_tool.run_test(
             test_step_interface=TestRunnerHooks(),
@@ -847,7 +847,7 @@ async def test_pairing_on_network_command_params() -> None:
         attribute="send_websocket_command",
         return_value='{"results": []}',
     ) as mock_send_websocket_command:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         # Send on-network pairing command
         result = await chip_tool.pairing_on_network(
@@ -898,7 +898,7 @@ async def test_pairing_ble_wifi_command_params() -> None:
         attribute="send_websocket_command",
         return_value='{"results": []}',
     ) as mock_send_websocket_command:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         # Send BLE-WIFI pairing command
         result = await chip_tool.pairing_ble_wifi(
@@ -953,7 +953,7 @@ async def test_pairing_ble_thread_command_params() -> None:
         return_value='{"results": []}',
         # '{  "results": [{ "error": "FAILURE" }]
     ) as mock_send_websocket_command:
-        await chip_tool.start_container(test_type)
+        await chip_tool.start_server(test_type)
 
         # Send BLE-THREAD pairing command
         result = await chip_tool.pairing_ble_thread(
@@ -973,3 +973,4 @@ async def test_pairing_ble_thread_command_params() -> None:
     # clean up:
     chip_tool._ChipTool__chip_tool_container = None
     settings.CHIP_TOOL_TRACE = original_trace_setting_value
+

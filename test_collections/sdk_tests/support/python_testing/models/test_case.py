@@ -38,8 +38,8 @@ from .python_testing_hooks_proxy import SDKPythonTestRunnerHooks
 T = TypeVar("T", bound="PythonTestCase")
 
 # Command line params
-RUNNER_CLASS = "external_runner.py"
-RUNNER_CLASS_PATH = "./testing2/"
+RUNNER_CLASS = "test_harness_client.py"
+RUNNER_CLASS_PATH = "/root/python_testing/rpc_client"
 EXECUTABLE = "python3"
 
 
@@ -161,7 +161,7 @@ class PythonTestCase(TestCase):
         try:
             await super().setup()
             self.chip_tool = ChipTool()
-            await self.chip_tool.start_container_no_server()
+            await self.chip_tool.start_container()
             assert self.chip_tool.is_running()
         except NotImplementedError:
             pass
@@ -225,7 +225,7 @@ class PythonTestCase(TestCase):
             manager.start()
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
             runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
-            # TODO Ignoring stream from docker execution until client impl is done
+            # TODO Ignoring stream from docker execution
             self.chip_tool.send_command(
                 f"{runner_class} {self.metadata['title']}",
                 prefix=EXECUTABLE,
@@ -239,25 +239,22 @@ class PythonTestCase(TestCase):
                 if not update:
                     continue
 
-                def handle_update(update: dict) -> None:
-                    def call_function(obj, func_name, kwargs) -> None:  # type: ignore
-                        func = getattr(obj, func_name, None)
-                        if not func:
-                            raise AttributeError(
-                                f"{func_name} is not a method of {obj}"
-                            )
-                        if not callable(func):
-                            raise TypeError(f"{func_name} is not callable")
-                        # Call the method with the unpacked keyword arguments.
-                        func(**kwargs)
-
-                    for func_name, kwargs in update.items():
-                        call_function(self, func_name, kwargs)
-
-                handle_update(update)
+                self.__handle_update(update)
                 await sleep(0.1)
         finally:
             pass
+
+    def __handle_update(self, update: dict) -> None:
+        for func_name, kwargs in update.items():
+            self.__call_function_from_name(self, func_name, kwargs)
+
+    def __call_function_from_name(self, obj, func_name, kwargs) -> None:  # type: ignore
+        func = getattr(obj, func_name, None)
+        if not func:
+            raise AttributeError(f"{func_name} is not a method of {obj}")
+        if not callable(func):
+            raise TypeError(f"{func_name} is not callable")
+        func(**kwargs)
 
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")

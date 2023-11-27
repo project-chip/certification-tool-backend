@@ -54,7 +54,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
         logger.info("Setting up chip_tool")
         # Use test engine logger to log all events to test run.
         self.chip_tool.logger = logger
-        await self.chip_tool.start_container(
+        await self.chip_tool.start_server(
             self.test_type, self.config.dut_config.chip_tool_use_paa_certs
         )
 
@@ -284,3 +284,4 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
                     f"Received unknown prompt option for \
                         decommissioning step: {prompt_response.response}"
                 )
+

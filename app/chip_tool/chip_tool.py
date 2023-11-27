@@ -107,6 +107,17 @@ YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
 XML_SPEC_DEFINITION_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
     "sdk_runner/specifications/chip/"
 )
+# Python Testing Folder
+# LOCAL_PYTHON_TESTING_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
+#     "python_testing/scripts/sdk"
+# )
+# DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
+
+# RPC Client Running on SDK Container
+LOCAL_RPC_PYTHON_TESTING_PATH = BACKEND_ROOT / Path(
+    "test_collections/sdk_tests/support/python_testing/models/rpc_client/"
+)
+DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/rpc_client"
 
 
 # Docker Network
@@ -132,6 +143,7 @@ class ChipToolUnknownTestType(Exception):
 class ChipToolTestType(str, Enum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
+    PYTHON_TEST = "python-test"
 
 
 class ChipTool(metaclass=Singleton):
@@ -167,6 +179,10 @@ class ChipTool(metaclass=Singleton):
             LOCAL_CREDENTIALS_DEVELOPMENT_PATH: {
                 "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
                 "mode": "ro",
+            },
+            LOCAL_RPC_PYTHON_TESTING_PATH: {
+                "bind": DOCKER_RPC_PYTHON_TESTING_PATH,
+                "mode": "rw",
             },
         },
     }
@@ -345,7 +361,7 @@ class ChipTool(metaclass=Singleton):
             .get(DOCKER_GATEWAY_KEY, "")
         )
 
-    async def start_container_no_server(self) -> None:
+    async def start_container(self) -> None:
         """
         Creates the chip-tool container without any server running
         (ChipTool or ChipApp).
@@ -371,7 +387,7 @@ class ChipTool(metaclass=Singleton):
         # Server started is false after spinning up a new container.
         self.__server_started = False
 
-    async def start_container(
+    async def start_server(
         self, test_type: ChipToolTestType, use_paa_certs: bool = False
     ) -> None:
         """Creates the chip-tool container.
@@ -384,7 +400,7 @@ class ChipTool(metaclass=Singleton):
             )
             return
 
-        await self.start_container_no_server()
+        await self.start_container()
 
         web_socket_config = WebSocketRunnerConfig()
         web_socket_config.server_address = self.__get_gateway_ip()
@@ -587,7 +603,7 @@ class ChipTool(metaclass=Singleton):
 
         if test_type == ChipToolTestType.CHIP_TOOL:
             test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
-        else:
+        elif test_type == ChipToolTestType.CHIP_APP:
             test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
 
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)
