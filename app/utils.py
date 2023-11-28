@@ -190,9 +190,7 @@ def selected_tests_from_execution(run: TestRunExecution) -> SelectedTests:
         )
         for case in suite.test_case_executions:
             collections[index].test_suites[-1].test_cases.append(
-                SelectedTestCase(
-                    public_id=case.public_id, iterations=case.execution_index
-                )
+                SelectedTestCase(public_id=case.public_id, iterations=1)
             )
 
     return SelectedTests(collections=collections)
