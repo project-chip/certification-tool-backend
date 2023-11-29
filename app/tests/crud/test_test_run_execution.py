@@ -336,9 +336,8 @@ def test_create_test_run_execution_from_selected_tests(db: Session) -> None:
     first_test_case_execution = test_case_executions[0]
     assert first_test_case_execution.public_id == first_test_case_identifier
 
-    remaining_test_cases = [
-        x for x in selected_tests["collections"][0]["test_suites"][0]["test_cases"]
-    ]
+    remaining_test_cases = selected_tests["collections"][0]["test_suites"][0]["test_cases"]
+
     for test_case_execution in test_case_executions:
         public_id = test_case_execution.public_id
         # Assert all test case public id's match
