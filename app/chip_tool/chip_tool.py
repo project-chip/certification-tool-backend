@@ -322,10 +322,12 @@ class ChipTool(metaclass=Singleton):
         return exit_code
 
     async def stop_chip_tool_server(self) -> None:
-        await self.__test_harness_runner.start()
-        await self.__test_harness_runner._client.send("quit()")
-        self.__wait_for_server_exit()
-        self.__server_started = False
+        if self.__server_started:
+            await self.start_runner()
+            await self.__test_harness_runner._client.send("quit()")
+            self.__wait_for_server_exit()
+            await self.stop_runner()
+            self.__server_started = False
 
     def __get_gateway_ip(self) -> str:
         """
@@ -391,14 +393,17 @@ class ChipTool(metaclass=Singleton):
 
         self.__chip_tool_log = await self.start_chip_server(test_type, use_paa_certs)
 
-    def destroy_device(self) -> None:
+    async def destroy_device(self) -> None:
         """Destroy the device container."""
+        await self.stop_chip_tool_server()
+
         if self.__chip_tool_container is not None:
             container_manager.destroy(self.__chip_tool_container)
         self.__chip_tool_container = None
 
     async def start_runner(self) -> None:
-        await self.__test_harness_runner.start()
+        if not self.__test_harness_runner.is_connected:
+            await self.__test_harness_runner.start()
 
     async def stop_runner(self) -> None:
         await self.__test_harness_runner.stop()
@@ -470,12 +475,8 @@ class ChipTool(metaclass=Singleton):
         return exit_code
 
     async def send_websocket_command(self, cmd: str) -> Union[str, bytes, bytearray]:
-        response = None
-        try:
-            await self.__test_harness_runner.start()
-            response = await self.__test_harness_runner.execute(cmd)
-        finally:
-            await self.__test_harness_runner.stop()
+        await self.start_runner()
+        response = await self.__test_harness_runner.execute(cmd)
 
         # Log response
         if response:
@@ -523,12 +524,15 @@ class ChipTool(metaclass=Singleton):
         )
         self.__runner_hooks = test_step_interface
         runner_config = TestRunnerConfig(
-            adapter, self.pseudo_clusters, runner_options, test_step_interface
+            adapter,
+            self.pseudo_clusters,
+            runner_options,
+            test_step_interface,
+            auto_start_stop=False,
         )
 
-        web_socket_config = WebSocketRunnerConfig()
-        web_socket_config.server_address = self.__get_gateway_ip()
-        self.__test_harness_runner = WebSocketRunner(config=web_socket_config)
+        await self.start_runner()
+
         return await self.__test_harness_runner.run(
             parser_builder_config, runner_config
         )
