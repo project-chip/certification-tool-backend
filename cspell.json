@@ -60,6 +60,7 @@
         "yamltests"
     ],
     "ignoreWords": [
+        "astext",
         "bdist",
         "BINFO",
         "RPCs",
