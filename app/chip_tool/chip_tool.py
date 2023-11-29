@@ -373,6 +373,12 @@ class ChipTool(metaclass=Singleton):
         Creates the chip-tool container without any server running
         (ChipTool or ChipApp).
         """
+        if self.is_running():
+            self.logger.info(
+                "chip-tool container already running, no need to start a new container"
+            )
+            return
+    
         # Ensure there's no existing container running using the same name.
         self.__destroy_existing_container()
         # Async return when the container is running
@@ -401,12 +407,6 @@ class ChipTool(metaclass=Singleton):
 
         Returns only when the container is created and all chip-tool services start.
         """
-        if self.is_running():
-            self.logger.info(
-                "chip-tool container already running, no need to start a new container"
-            )
-            return
-
         await self.start_container()
 
         web_socket_config = WebSocketRunnerConfig()

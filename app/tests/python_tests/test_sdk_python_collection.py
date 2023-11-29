@@ -28,7 +28,7 @@ from test_collections.sdk_tests.support.python_testing.models.test_declarations 
     PythonCaseDeclaration,
     PythonCollectionDeclaration,
 )
-from test_collections.sdk_tests.support.python_testing.sdk_python_test_tests import (
+from test_collections.sdk_tests.support.python_testing.sdk_python_tests import (
     sdk_python_test_collection,
 )
 

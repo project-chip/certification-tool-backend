@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+# type: ignore
+# flake8: noqa
 
 import importlib
 import sys
@@ -45,7 +47,7 @@ test_params = {
 }
 
 
-def main():
+def main() -> None:
     sys.path.append("/root/python_testing")
 
     if len(sys.argv) != 2:
@@ -64,7 +66,7 @@ def main():
     BaseManager.register(TestRunnerHooks.__name__)
     manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
     manager.connect()
-    test_runner_hooks = manager.TestRunnerHooks()  # shared object proxy
+    test_runner_hooks = manager.TestRunnerHooks()  # shared object proxy # type: ignore
 
     matter_testing_support.run_tests(TestClassReference, config, test_runner_hooks)
 

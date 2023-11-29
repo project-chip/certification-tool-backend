@@ -38,11 +38,6 @@ def parse_python_test(path: Path) -> PythonTest:
 
     This will also annotate parsed python test with it's path and test type.
     """
-
-    return __parse_test_case_from_file(path)
-
-
-def __parse_test_case_from_file(path: Path) -> PythonTest:
     with open(path, "r") as python_file:
         parsed_python_file = ast.parse(python_file.read())
         classes = [c for c in parsed_python_file.body if isinstance(c, ast.ClassDef)]
@@ -51,7 +46,7 @@ def __parse_test_case_from_file(path: Path) -> PythonTest:
     try:
         class_ = next(c for c in classes if tc_name in c.name)
     except StopIteration as si:  # Raised when `next` doesn't find a matching method
-        raise PythonParserException(f"{path} must have a class name {tc_name}") from si
+        raise PythonParserException(f"{path} must have a class named {tc_name}") from si
 
     return __parse_test_case_from_class(class_=class_, path=path, tc_name=tc_name)
 

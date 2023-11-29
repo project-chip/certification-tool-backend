@@ -13,22 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import re
 from asyncio import sleep
 from multiprocessing.managers import BaseManager
 from typing import Any, Type, TypeVar
 
-from matter_chip_tool_adapter.decoder import MatterLog
-
 from app.chip_tool.chip_tool import ChipTool
 from app.models import TestCaseExecution
-from app.test_engine.logger import (
-    CHIP_LOG_FORMAT,
-    CHIPTOOL_LEVEL,
-    logger,
-    test_engine_logger,
-)
+from app.test_engine.logger import logger, test_engine_logger
 from app.test_engine.models import TestCase, TestStep
 
 from .python_test_models import PythonTest
@@ -60,6 +51,7 @@ class PythonTestCase(TestCase):
         super().__init__(test_case_execution=test_case_execution)
         self.chip_tool: ChipTool
         self.__runned = 0
+        self.test_stop_called = False
 
     def start(self, count: int) -> None:
         pass
@@ -69,9 +61,7 @@ class PythonTestCase(TestCase):
             self.current_test_step.mark_as_completed()
 
     def test_start(self, filename: str, name: str, count: int) -> None:
-        pass
-        # Dont know if it is necessary for python testing (came from chip_tool)
-        # self.next_step()
+        self.next_step()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
@@ -87,74 +77,22 @@ class PythonTestCase(TestCase):
         pass
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
-        self.__handle_logs(logs)
+        # TODO Handle Logs properly
         self.next_step()
 
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
-        self.__handle_logs(logs)
-        self.__report_failures(logger, request, received)
+        # TODO Handle Logs properly
         self.next_step()
 
     def step_unknown(self) -> None:
         self.__runned += 1
 
-    def __handle_logs(self, logs: Any) -> None:
-        for log_entry in logs or []:
-            if not isinstance(log_entry, MatterLog):
-                continue
-
-            test_engine_logger.log(
-                CHIPTOOL_LEVEL,
-                CHIP_LOG_FORMAT.format(log_entry.module, log_entry.message),
-            )
-
-    def __report_failures(self, logger: Any, request: TestStep, received: Any) -> None:
-        """
-        The logger from runner contains all logs entries for the test step, this method
-        seeks for the error entries.
-        """
-        if not logger:
-            # It is expected the runner to return a PostProcessResponseResult,
-            # but in case of returning a different type
-            self.current_test_step.append_failure(
-                "Test Step Failure: \n Expected: '<Empty>' \n Received:  '<Empty>'"
-            )
-            return
-
-        # Iterate through the entries seeking for the errors entries
-        for log_entry in logger.entries or []:
-            if log_entry.is_error():
-                # Check if the step error came from exception or not, since the message
-                # in exception object has more details
-                # TODO: There is an issue raised in SDK runner in order to improve the
-                # message from log_entry:
-                # https://github.com/project-chip/connectedhomeip/issues/28101
-                if log_entry.exception:
-                    self.current_test_step.append_failure(log_entry.exception.message)
-                else:
-                    self.current_test_step.append_failure(log_entry.message)
-
     @classmethod
     def pics(cls) -> set[str]:
         """Test Case level PICS. Read directly from parsed Python Test."""
         return cls.python_test.PICS
-
-    @classmethod
-    def default_test_parameters(cls) -> dict[str, Any]:
-        """Python Testing config dict, sometimes have a nested dict with type and
-        default value.
-        Only defaultValue is used in this case.
-        """
-        parameters = {}
-        for param_name, value in cls.python_test.config.items():
-            if isinstance(value, dict):
-                if "defaultValue" in value:
-                    parameters[param_name] = value["defaultValue"]
-            else:
-                parameters[param_name] = value
-        return parameters
 
     async def setup(self) -> None:
         """Override Setup to log Python Test version."""
@@ -168,54 +106,22 @@ class PythonTestCase(TestCase):
 
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
-        """Dynamically declares a subclass based on the type of Python Test test."""
-        case_class: Type[PythonTestCase] = PythonChipToolTestCase
-
-        return case_class.__class_factory(
-            test=test, python_test_version=python_test_version
-        )
-
-    @classmethod
-    def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
-        """Common class factory method for all subclasses of PythonTestCase."""
-        identifier = test.name
-        class_name = cls.__class_name(identifier)
-        title = identifier
-
+        """class factory method for PythonTestCase."""
         return type(
-            class_name,
+            test.name,
             (cls,),
             {
                 "python_test": test,
                 "python_test_version": python_test_version,
-                "chip_tool_test_identifier": class_name,
+                "chip_tool_test_identifier": test.name,
                 "metadata": {
                     "public_id": test.name,
                     "version": "0.0.1",
-                    "title": title,
+                    "title": test.name,
                     "description": test.description,
                 },
             },
         )
-
-    @staticmethod
-    def __test_identifier(name: str) -> str:
-        """Find TC-XX-1.1 in Python Test title.
-        Note some have [TC-XX-1.1] and others TC-XX-1.1
-        """
-        title_pattern = re.compile(r"(?P<title>TC-[^\s\]]*)")
-        if match := re.search(title_pattern, name):
-            return match["title"]
-        else:
-            return name
-
-    @staticmethod
-    def __class_name(identifier: str) -> str:
-        """Replace all non-alphanumeric characters with _ to make valid class name."""
-        return re.sub("[^0-9a-zA-Z]+", "_", identifier)
-
-    def run_command(self, cmd: str) -> None:
-        os.system(cmd)
 
     async def execute(self) -> None:
         try:
@@ -259,11 +165,8 @@ class PythonTestCase(TestCase):
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
 
-
-class PythonChipToolTestCase(PythonTestCase):
-    """Automated Python test cases"""
-
     def create_test_steps(self) -> None:
+        self.test_steps = [TestStep("Start Python test")]
         for step in self.python_test.steps:
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)

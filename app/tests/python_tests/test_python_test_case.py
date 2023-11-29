@@ -33,9 +33,6 @@ from test_collections.sdk_tests.support.python_testing.models import PythonTestC
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     PythonTest,
 )
-from test_collections.sdk_tests.support.python_testing.models.test_case import (
-    PythonChipToolTestCase,
-)
 
 
 def python_test_instance(
@@ -126,16 +123,6 @@ def test_python_test_case_class_default_test_parameters() -> None:
     assert case_class.default_test_parameters() == expected_default_test_parameters
 
 
-def test_automated_test_case_class_factory_subclass_mapping() -> None:
-    """Test Automated tests are created as a subclass of
-    PythonChipToolTestCase."""
-    test = python_test_instance(type=MatterTestType.AUTOMATED)
-    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version="version"
-    )
-    assert issubclass(case_class, PythonChipToolTestCase)
-
-
 def test_class_factory_test_public_id() -> None:
     """Test that class factory correctly finds identifier 'TC-XX-1.1' in python test name.
     And set it as public_id in metadata"""
@@ -174,15 +161,6 @@ def test_class_factory_test_class_name() -> None:
             test=test, python_test_version="version"
         )
         assert case_class.__name__ == data["class_name"]
-
-
-def test_test_type_for_automated_tests() -> None:
-    """Test that automated tests are set to use chip-tool"""
-    test = python_test_instance(type=MatterTestType.AUTOMATED)
-    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version="version"
-    )
-    assert issubclass(case_class, PythonChipToolTestCase)
 
 
 @pytest.mark.asyncio

@@ -23,6 +23,10 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     finished = False
     results: Queue
 
+    def __init__(self) -> None:
+        SDKPythonTestRunnerHooks.finished = False
+        SDKPythonTestRunnerHooks.results = Queue()
+
     def update_test(self) -> Union[dict, None]:
         try:
             result = self.results.get(block=False)
@@ -32,10 +36,6 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
 
     def is_finished(self) -> bool:
         return SDKPythonTestRunnerHooks.finished
-
-    def __init__(self) -> None:
-        SDKPythonTestRunnerHooks.finished = False
-        SDKPythonTestRunnerHooks.results = Queue()
 
     def start(self, count: int) -> None:
         self.results.put({"start": {"count": count}})
