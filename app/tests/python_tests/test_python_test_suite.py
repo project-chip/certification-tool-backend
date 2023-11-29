@@ -82,9 +82,8 @@ async def test_suite_setup_log_python_version() -> None:
 
 @pytest.mark.asyncio
 async def test_chip_tool_suite_setup() -> None:
-    """Test that both PythonTestSuite.setup and ChipToolSuite.setup are called when
-    PythonChipToolsSuite.setup is called. We do this as PythonChipToolsSuite inherits from
-    both PythonTestSuite and ChipToolSuite."""
+    """Test that PythonTestSuite.setup is called when PythonChipToolsSuite.setup is called.
+    We do this as PythonChipToolsSuite inherits from PythonTestSuite."""
 
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
         suite_type=SuiteType.AUTOMATED,
