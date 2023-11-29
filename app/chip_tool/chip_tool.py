@@ -378,7 +378,7 @@ class ChipTool(metaclass=Singleton):
                 "chip-tool container already running, no need to start a new container"
             )
             return
-    
+
         # Ensure there's no existing container running using the same name.
         self.__destroy_existing_container()
         # Async return when the container is running
