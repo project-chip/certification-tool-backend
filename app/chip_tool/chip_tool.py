@@ -108,14 +108,16 @@ XML_SPEC_DEFINITION_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
     "sdk_runner/specifications/chip/"
 )
 # Python Testing Folder
-# LOCAL_PYTHON_TESTING_PATH = TEST_COLLECTION_SDK_CHECKOUT_PATH / Path(
-#     "python_testing/scripts/sdk"
-# )
-# DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
+LOCAL_TEST_COLLECTIONS_PATH = "/home/ubuntu/certification-tool/backend/test_collections"
+LOCAL_PYTHON_TESTING_PATH = Path(
+    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/sdk_checkout/python_testing/scripts/sdk"
+)
+DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
 
 # RPC Client Running on SDK Container
 LOCAL_RPC_PYTHON_TESTING_PATH = Path(
-    "/home/ubuntu/certification-tool/backend/test_collections/sdk_tests/support/python_testing/models/rpc_client/test_harness_client.py"
+    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/python_testing/models/rpc_client/"
+    "test_harness_client.py"
 )
 DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/test_harness_client.py"
 
@@ -143,7 +145,6 @@ class ChipToolUnknownTestType(Exception):
 class ChipToolTestType(str, Enum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
-    PYTHON_TEST = "python-test"
 
 
 class ChipTool(metaclass=Singleton):
@@ -179,6 +180,10 @@ class ChipTool(metaclass=Singleton):
             LOCAL_CREDENTIALS_DEVELOPMENT_PATH: {
                 "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
                 "mode": "ro",
+            },
+            LOCAL_PYTHON_TESTING_PATH: {
+                "bind": DOCKER_PYTHON_TESTING_PATH,
+                "mode": "rw",
             },
             LOCAL_RPC_PYTHON_TESTING_PATH: {
                 "bind": DOCKER_RPC_PYTHON_TESTING_PATH,
@@ -412,8 +417,6 @@ class ChipTool(metaclass=Singleton):
 
     async def destroy_device(self) -> None:
         """Destroy the device container."""
-        await self.stop_chip_tool_server()
-
         if self.__chip_tool_container is not None:
             container_manager.destroy(self.__chip_tool_container)
         self.__chip_tool_container = None
@@ -607,7 +610,7 @@ class ChipTool(metaclass=Singleton):
 
         if test_type == ChipToolTestType.CHIP_TOOL:
             test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
-        elif test_type == ChipToolTestType.CHIP_APP:
+        else:
             test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
 
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)

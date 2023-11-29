@@ -47,16 +47,6 @@ class PythonTestSuite(TestSuite):
         cls, suite_type: SuiteType, name: str, python_test_version: str
     ) -> Type[T]:
         """Dynamically declares a subclass based on the type of test suite."""
-        suite_class = ChipToolPythonTestSuite
-
-        return suite_class.__class_factory(
-            name=name, python_test_version=python_test_version
-        )
-
-    @classmethod
-    def __class_factory(cls, name: str, python_test_version: str) -> Type[T]:
-        """Common class factory method for all subclasses of PythonTestSuite."""
-
         return type(
             name,
             (cls,),
@@ -71,9 +61,3 @@ class PythonTestSuite(TestSuite):
                 },
             },
         )
-
-
-class ChipToolPythonTestSuite(PythonTestSuite):
-    async def setup(self) -> None:
-        """Due top multi inheritance, we need to call setup on both super classes."""
-        await PythonTestSuite.setup(self)

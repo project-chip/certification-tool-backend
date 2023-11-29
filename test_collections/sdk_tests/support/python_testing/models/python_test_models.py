@@ -23,6 +23,8 @@ from ...models.matter_test_models import MatterTest, MatterTestType
 
 
 class PythonTest(MatterTest):
+    description: str
+
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.type: MatterTestType.AUTOMATED  # type: ignore
+        self.type = MatterTestType.AUTOMATED

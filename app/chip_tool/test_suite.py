@@ -280,4 +280,3 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
                     f"Received unknown prompt option for \
                         decommissioning step: {prompt_response.response}"
                 )
-

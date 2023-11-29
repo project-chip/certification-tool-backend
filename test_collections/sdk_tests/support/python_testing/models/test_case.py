@@ -39,7 +39,7 @@ T = TypeVar("T", bound="PythonTestCase")
 
 # Command line params
 RUNNER_CLASS = "test_harness_client.py"
-RUNNER_CLASS_PATH = "/root/python_testing/rpc_client/"
+RUNNER_CLASS_PATH = "/root/python_testing/"
 EXECUTABLE = "python3"
 
 
@@ -59,6 +59,7 @@ class PythonTestCase(TestCase):
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
         self.chip_tool: ChipTool
+        self.__runned = 0
 
     def start(self, count: int) -> None:
         pass
@@ -177,7 +178,7 @@ class PythonTestCase(TestCase):
     @classmethod
     def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """Common class factory method for all subclasses of PythonTestCase."""
-        identifier = cls.__test_identifier(test.name)
+        identifier = test.name
         class_name = cls.__class_name(identifier)
         title = identifier
 
@@ -189,10 +190,10 @@ class PythonTestCase(TestCase):
                 "python_test_version": python_test_version,
                 "chip_tool_test_identifier": class_name,
                 "metadata": {
-                    "public_id": identifier,
+                    "public_id": test.name,
                     "version": "0.0.1",
                     "title": title,
-                    "description": test.name,
+                    "description": test.description,
                 },
             },
         )
@@ -239,7 +240,7 @@ class PythonTestCase(TestCase):
                     continue
 
                 self.__handle_update(update)
-                await sleep(0.1)
+                await sleep(0.001)
         finally:
             pass
 
@@ -257,7 +258,6 @@ class PythonTestCase(TestCase):
 
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
-        self.chip_tool.destroy_device()
 
 
 class PythonChipToolTestCase(PythonTestCase):

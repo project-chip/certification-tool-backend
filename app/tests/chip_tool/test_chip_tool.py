@@ -988,4 +988,3 @@ async def test_pairing_ble_thread_command_params() -> None:
     # clean up:
     chip_tool._ChipTool__chip_tool_container = None
     settings.CHIP_TOOL_TRACE = original_trace_setting_value
-

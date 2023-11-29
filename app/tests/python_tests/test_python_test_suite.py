@@ -24,7 +24,6 @@ from app.chip_tool.chip_tool import ChipToolTestType
 from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
-    ChipToolPythonTestSuite,
     PythonTestSuite,
     SuiteType,
 )
@@ -56,16 +55,6 @@ def test_python_test_suite_python_version() -> None:
     )
 
     assert suite_class.python_test_version == python_test_version
-
-
-def test_automated_suite_subclass() -> None:
-    """Test that for suite type automated class factory creates a subclass of
-    ChipToolPythonTestSuite, and that test_type is set to CHIP_TOOL"""
-    type = SuiteType.AUTOMATED
-    # Create a subclass of PythonTestSuite
-    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=type, name="SomeSuite", python_test_version="some_version"
-    )
 
 
 @pytest.mark.asyncio

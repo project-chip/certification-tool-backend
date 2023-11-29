@@ -82,7 +82,8 @@ def __parse_test_case_from_class(
         ) from si
 
     return PythonTest(
-        name=tc_desc,
+        name=tc_name,
+        description=tc_desc,
         steps=tc_steps,
         config=tc_config,
         PICS=tc_pics,

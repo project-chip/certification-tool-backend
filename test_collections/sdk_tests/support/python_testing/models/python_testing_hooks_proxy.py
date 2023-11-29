@@ -42,7 +42,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
 
     def stop(self, duration: int) -> None:
         self.results.put({"stop": {"duration": duration}})
-        self.is_finished = True
+        SDKPythonTestRunnerHooks.finished = True
 
     def test_start(self, filename: str, name: str, count: int) -> None:
         self.results.put(
