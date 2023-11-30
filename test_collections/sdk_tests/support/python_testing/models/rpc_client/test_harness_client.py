@@ -23,39 +23,18 @@ from multiprocessing.managers import BaseManager
 
 import matter_testing_support
 
-try:
-    from matter_yamltests.hooks import TestRunnerHooks
-except:
 
-    class TestRunnerHooks:
-        pass
-
-
-MATTER_DEVELOPMENT_PAA_ROOT_CERTS = "/paa-root-certs"
-
-# Pre-computed param list for each Python Test as defined in Verification Steps.
-test_params = {
-    "TC_ACE_1_3": matter_testing_support.MatterTestConfig(
-        tests=["test_TC_ACE_1_3"],
-        commissioning_method="on-network",
-        discriminators=[3840],
-        setup_passcodes=[20202021],
-        dut_node_ids=[0x12344321],
-        paa_trust_store_path=MATTER_DEVELOPMENT_PAA_ROOT_CERTS,
-        storage_path="/root/admin_storage.json",
-    )
-}
+class TestRunnerHooks:
+    pass
 
 
 def main() -> None:
     sys.path.append("/root/python_testing")
 
-    if len(sys.argv) != 2:
-        raise Exception("Python test id should be provided as the only parameter.")
-
     test_name = sys.argv[1]
 
-    config = test_params.get(test_name)
+    config_options = sys.argv[2:]
+    config = matter_testing_support.parse_matter_test_args(config_options)
 
     if config is None:
         raise ValueError(f"Not a valid test id: {test_name}")

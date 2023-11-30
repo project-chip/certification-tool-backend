@@ -454,7 +454,7 @@ async def test_set_pics() -> None:
     ) as mock_run:
         await chip_tool.start_server(test_type)
 
-        chip_tool.set_pics(pics)
+        chip_tool.set_pics(pics, in_container=False)
 
     mock_run.assert_called_once_with(expected_command, shell=True)
     assert chip_tool._ChipTool__pics_file_created is True
@@ -473,7 +473,7 @@ def test_set_pics_with_error() -> None:
         target="app.chip_tool.chip_tool.subprocess.run",
         return_value=CompletedProcess("", 1),
     ), pytest.raises(PICSError):
-        chip_tool.set_pics(pics)
+        chip_tool.set_pics(pics, in_container=False)
         assert chip_tool._ChipTool__pics_file_created is False
 
     # clean up:
