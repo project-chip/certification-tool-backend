@@ -390,8 +390,6 @@ class ChipTool(metaclass=Singleton):
 
     async def destroy_device(self) -> None:
         """Destroy the device container."""
-        await self.stop_chip_tool_server()
-
         if self.__chip_tool_container is not None:
             container_manager.destroy(self.__chip_tool_container)
         self.__chip_tool_container = None
