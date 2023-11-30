@@ -60,7 +60,7 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
-            self.chip_tool.set_pics(pics=self.pics)
+            self.chip_tool.set_pics(pics=self.pics, in_container=False)
         else:
             # Disable sending "-PICS" option when running chip-tool
             self.chip_tool.reset_pics_state()

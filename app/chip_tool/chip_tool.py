@@ -225,6 +225,10 @@ class ChipTool(metaclass=Singleton):
         )
 
     @property
+    def pics_file_created(self) -> bool:
+        return self.__pics_file_created
+
+    @property
     def node_id(self) -> int:
         """Node id is used to reference DUT during testing.
 
@@ -683,32 +687,36 @@ class ChipTool(metaclass=Singleton):
         path = Path(DOCKER_LOGS_PATH) / filename
         return f'--trace_file "{path}" --trace_decode 1'
 
-    def set_pics(self, pics: PICS) -> None:
-        """Sends command to chip tool to create pics file inside the container.
+    def set_pics(self, pics: PICS, in_container: bool) -> None:
+        """Sends command to create pics file.
 
         Args:
             pics (PICS): PICS that contains all the pics codes
+            in_container (bool): Whether the file should be created in the container or
+                                not. If false, the file is created on the host.
 
         Raises:
-            ChipToolNotRunning: Raises exception if chip tool is not running.
             PICSError: If creating PICS file inside the container fails.
-
         """
         # List of default PICS which needs to set specifically in TH are added here.
         # These PICS are applicable for CI / Chip tool testing purposes only.
         # These PICS are unknown / not visible to external users.
 
         pics_codes = self.__pics_file_content(pics) + "\n".join(DEFAULT_PICS)
-        cmd = f"{SHELL_PATH} {SHELL_OPTION} "
-        cmd = cmd + f"\"{ECHO_COMMAND} '{pics_codes}\n' > {PICS_FILE_PATH}\""
-        self.logger.info(f"Sending command: {cmd}")
-        result = subprocess.run(cmd, shell=True)
 
-        # When streaming logs, the exit code is not directly available.
-        # By storing the execution id, the exit code can be fetched from docker later.
-        self.__last_exec_id = str(result.returncode)
+        prefix = f"{SHELL_PATH} {SHELL_OPTION}"
+        cmd = f"\"{ECHO_COMMAND} '{pics_codes}' > {PICS_FILE_PATH}\""
 
-        if result.returncode != 0:
+        if in_container:
+            exec_result = self.send_command(cmd, prefix=prefix)
+            success = exec_result.exit_code == 0
+        else:
+            full_cmd = f"{prefix} {cmd}"
+            self.logger.info(f"Sending command: {full_cmd}")
+            result = subprocess.run(full_cmd, shell=True)
+            success = result.returncode == 0
+
+        if not success:
             raise PICSError("Creating PICS file failed")
 
         self.__pics_file_created = True

@@ -16,6 +16,7 @@
 from enum import Enum
 from typing import Type, TypeVar
 
+from app.chip_tool import ChipTool
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 
@@ -37,10 +38,7 @@ class PythonTestSuite(TestSuite):
 
     python_test_version: str
     suite_name: str
-
-    async def setup(self) -> None:
-        """Override Setup to log Python Test version."""
-        logger.info(f"Python Test Version: {self.python_test_version}")
+    chip_tool: ChipTool = ChipTool(logger)
 
     @classmethod
     def class_factory(
@@ -61,3 +59,23 @@ class PythonTestSuite(TestSuite):
                 },
             },
         )
+
+    async def setup(self) -> None:
+        """Override Setup to log Python Test version and set PICS."""
+        logger.info("Suite Setup")
+        logger.info(f"Python Test Version: {self.python_test_version}")
+
+        logger.info("Starting SDK container")
+        await self.chip_tool.start_container()
+
+        if len(self.pics.clusters) > 0:
+            logger.info("Create PICS file for DUT")
+            self.chip_tool.set_pics(pics=self.pics, in_container=True)
+        else:
+            self.chip_tool.reset_pics_state()
+
+    async def cleanup(self) -> None:
+        logger.info("Suite Cleanup")
+
+        logger.info("Stopping SDK container")
+        await self.chip_tool.destroy_device()

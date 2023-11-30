@@ -20,9 +20,11 @@ from unittest import mock
 
 import pytest
 
-from app.chip_tool.chip_tool import ChipToolTestType
+from app.chip_tool.chip_tool import ChipTool
 from app.models.test_suite_execution import TestSuiteExecution
+from app.schemas import PICS
 from app.test_engine.logger import test_engine_logger
+from app.tests.utils.test_pics_data import create_random_pics
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
     PythonTestSuite,
     SuiteType,
@@ -60,6 +62,8 @@ def test_python_test_suite_python_version() -> None:
 @pytest.mark.asyncio
 async def test_suite_setup_log_python_version() -> None:
     """Test that test suite python version is logged to test engine logger in setup."""
+    chip_tool: ChipTool = ChipTool()
+
     for type in list(SuiteType):
         python_test_version = "best_version"
         # Create a subclass of PythonTestSuite
@@ -69,15 +73,78 @@ async def test_suite_setup_log_python_version() -> None:
 
         suite_instance = suite_class(TestSuiteExecution())
 
-        # We're patching ChipToolSuite.setup to avoid starting chip-tool
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
-        ) as logger_info, mock.patch(
-            "app.chip_tool.test_suite.ChipToolSuite.setup"
-        ) as _:
+        ) as logger_info, mock.patch.object(
+            target=chip_tool, attribute="start_container"
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".PythonTestSuite.pics",
+            new_callable=PICS,
+        ):
             await suite_instance.setup()
             logger_info.assert_called()
             logger_info.assert_any_call(f"Python Test Version: {python_test_version}")
+
+
+@pytest.mark.asyncio
+async def test_suite_setup_without_pics() -> None:
+    chip_tool: ChipTool = ChipTool()
+
+    for type in list(SuiteType):
+        python_test_version = "best_version"
+        # Create a subclass of PythonTestSuite
+        suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+            suite_type=type, name="SomeSuite", python_test_version=python_test_version
+        )
+
+        suite_instance = suite_class(TestSuiteExecution())
+
+        with mock.patch(
+            "app.chip_tool.test_suite.ChipToolSuite.setup"
+        ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".PythonTestSuite.pics",
+            new_callable=PICS,
+        ), mock.patch.object(
+            target=chip_tool, attribute="set_pics"
+        ) as mock_set_pics, mock.patch.object(
+            target=chip_tool, attribute="reset_pics_state"
+        ) as mock_reset_pics_state:
+            await suite_instance.setup()
+
+        mock_set_pics.assert_not_called()
+        mock_reset_pics_state.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_suite_setup_with_pics() -> None:
+    chip_tool: ChipTool = ChipTool()
+
+    for type in list(SuiteType):
+        python_test_version = "best_version"
+        # Create a subclass of PythonTestSuite
+        suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+            suite_type=type, name="SomeSuite", python_test_version=python_test_version
+        )
+
+        suite_instance = suite_class(TestSuiteExecution())
+
+        with mock.patch(
+            "app.chip_tool.test_suite.ChipToolSuite.setup"
+        ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".PythonTestSuite.pics",
+            new_callable=create_random_pics,
+        ), mock.patch.object(
+            target=chip_tool, attribute="set_pics"
+        ) as mock_set_pics, mock.patch.object(
+            target=chip_tool, attribute="reset_pics_state"
+        ) as mock_reset_pics_state:
+            await suite_instance.setup()
+
+        mock_set_pics.assert_called_once()
+        mock_reset_pics_state.assert_not_called()
 
 
 @pytest.mark.asyncio

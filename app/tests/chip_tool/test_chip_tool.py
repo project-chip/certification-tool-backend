@@ -111,7 +111,6 @@ async def test_start_container_using_paa_certs() -> None:
 @pytest.mark.asyncio
 async def test_not_start_container_when_running() -> None:
     chip_tool = ChipTool()
-    test_type = ChipToolTestType.CHIP_TOOL
 
     with mock.patch.object(
         target=chip_tool, attribute="is_running", return_value=True
@@ -120,7 +119,7 @@ async def test_not_start_container_when_running() -> None:
     ) as mock_create_container, mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ) as mock_start_chip_server:
-        await chip_tool.start_server(test_type)
+        await chip_tool.start_container()
 
     mock_create_container.assert_not_called()
     mock_start_chip_server.assert_not_called()
@@ -432,7 +431,7 @@ async def test_set_pics() -> None:
         "PICS_USER_PROMPT=1"
     )
     expected_command = (
-        f"{SHELL_PATH} {SHELL_OPTION} \"echo '{expected_pics_data}\n' "
+        f"{SHELL_PATH} {SHELL_OPTION} \"echo '{expected_pics_data}' "
         f'> {PICS_FILE_PATH}"'
     )
 
@@ -454,7 +453,7 @@ async def test_set_pics() -> None:
     ) as mock_run:
         await chip_tool.start_server(test_type)
 
-        chip_tool.set_pics(pics)
+        chip_tool.set_pics(pics, in_container=False)
 
     mock_run.assert_called_once_with(expected_command, shell=True)
     assert chip_tool._ChipTool__pics_file_created is True
@@ -473,7 +472,7 @@ def test_set_pics_with_error() -> None:
         target="app.chip_tool.chip_tool.subprocess.run",
         return_value=CompletedProcess("", 1),
     ), pytest.raises(PICSError):
-        chip_tool.set_pics(pics)
+        chip_tool.set_pics(pics, in_container=False)
         assert chip_tool._ChipTool__pics_file_created is False
 
     # clean up:

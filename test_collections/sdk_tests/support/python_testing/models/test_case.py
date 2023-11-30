@@ -17,9 +17,9 @@ from asyncio import sleep
 from multiprocessing.managers import BaseManager
 from typing import Any, Type, TypeVar
 
-from app.chip_tool.chip_tool import ChipTool
+from app.chip_tool.chip_tool import PICS_FILE_PATH, ChipTool
 from app.models import TestCaseExecution
-from app.test_engine.logger import logger, test_engine_logger
+from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 
 from .python_test_models import PythonTest
@@ -49,7 +49,7 @@ class PythonTestCase(TestCase):
 
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
-        self.chip_tool: ChipTool
+        self.chip_tool: ChipTool = ChipTool(logger)
         self.__runned = 0
         self.test_stop_called = False
 
@@ -68,9 +68,7 @@ class PythonTestCase(TestCase):
         self.current_test_step.mark_as_completed()
 
     def step_skipped(self, name: str, expression: str) -> None:
-        self.current_test_step.mark_as_not_applicable(
-            f"Test step skipped: {name}. {expression} == False"
-        )
+        self.current_test_step.mark_as_not_applicable("Test step skipped")
         self.next_step()
 
     def step_start(self, name: str) -> None:
@@ -94,16 +92,6 @@ class PythonTestCase(TestCase):
         """Test Case level PICS. Read directly from parsed Python Test."""
         return cls.python_test.PICS
 
-    async def setup(self) -> None:
-        """Override Setup to log Python Test version."""
-        test_engine_logger.info(f"Python Test Version: {self.python_test_version}")
-        try:
-            self.chip_tool = ChipTool()
-            await self.chip_tool.start_container()
-            assert self.chip_tool.is_running()
-        except NotImplementedError:
-            pass
-
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """class factory method for PythonTestCase."""
@@ -123,17 +111,35 @@ class PythonTestCase(TestCase):
             },
         )
 
+    async def setup(self) -> None:
+        logger.info("Test Setup")
+
+    async def cleanup(self) -> None:
+        logger.info("Test Cleanup")
+
     async def execute(self) -> None:
         try:
             logger.info("Running Python Test: " + self.metadata["title"])
+
             BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
             manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
             manager.start()
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
+
             runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
+            command = (
+                f"{runner_class} {self.metadata['title']}"
+                " --commissioning-method on-network --discriminator 3840 --passcode"
+                " 20202021 --storage-path /root/admin_storage.json"
+                " --paa-trust-store-path /paa-root-certs"
+            )
+
+            if self.chip_tool.pics_file_created:
+                command += f" --PICS {PICS_FILE_PATH}"
+
             # TODO Ignoring stream from docker execution
             self.chip_tool.send_command(
-                f"{runner_class} {self.metadata['title']}",
+                command,
                 prefix=EXECUTABLE,
                 is_stream=True,
                 is_socket=False,
@@ -161,9 +167,6 @@ class PythonTestCase(TestCase):
         if not callable(func):
             raise TypeError(f"{func_name} is not callable")
         func(**kwargs)
-
-    async def cleanup(self) -> None:
-        logger.info("Test Cleanup")
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start Python test")]
