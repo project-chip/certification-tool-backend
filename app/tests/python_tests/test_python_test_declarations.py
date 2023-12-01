@@ -47,7 +47,9 @@ def test_python_suite_declaration() -> None:
 
 
 def test_python_case_declaration() -> None:
-    test = PythonTest(name="TestTest", config={}, steps=[])
+    test = PythonTest(
+        name="TestTest", description="TestTest description", config={}, steps=[]
+    )
     version = "SomeVersionStr"
     with mock.patch(
         "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.class_factory"

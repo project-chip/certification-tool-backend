@@ -37,6 +37,7 @@ from test_collections.sdk_tests.support.python_testing.models.python_test_models
 
 def python_test_instance(
     name: str = "Test Python",
+    description: str = "Test Python Description",
     PICS: set[str] = {"PICS.A", "PICS.B"},
     config: dict[str, Any] = {
         "param1": "value1",
@@ -53,19 +54,22 @@ def python_test_instance(
         steps=steps,
         type=type,
         path=path,
+        description=description,
     )
 
 
 def test_python_test_name() -> None:
     """Test that test name is set as description in metadata."""
     name = "Another Test Name"
-    test = python_test_instance(name=name)
+    description = "Another Test Name Description"
+    test = python_test_instance(name=name, description=description)
 
     # Create a subclass of PythonTest
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
         test=test, python_test_version="version"
     )
-    assert case_class.metadata["description"] == name
+    assert case_class.metadata["title"] == name
+    assert case_class.metadata["description"] == description
 
 
 def test_python_test_python_version() -> None:
@@ -224,7 +228,9 @@ def test_multiple_steps_for_python_tests() -> None:
 @pytest.mark.asyncio
 async def test_setup_super_error_handling() -> None:
     # ignore requirement to create_tests on init
-    with mock.patch("app.test_engine.models.test_case.TestCase.create_test_steps") as _:
+    with mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.create_test_steps"
+    ) as _:
         test = PythonTestCase(TestCaseExecution())
         test.python_test_version = "some version"
         # Assert this doesn't raise an exception
