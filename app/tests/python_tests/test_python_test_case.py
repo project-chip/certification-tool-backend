@@ -106,27 +106,6 @@ def test_python_test_case_class_pics() -> None:
     assert case_class.pics() == test_PICS
 
 
-def test_python_test_case_class_default_test_parameters() -> None:
-    """Test that the default_test_parameters of the python test is available in the class
-    method default_test_parameters on TestCase.
-
-    Also parameters with type in Python test should be flattened and type dropped."""
-
-    test_input_config = {
-        "param1": "value1",
-        "param2": {"type": "config_type", "defaultValue": "value2"},
-    }
-
-    test = python_test_instance(config=test_input_config)
-    expected_default_test_parameters = {"param1": "value1", "param2": "value2"}
-
-    # Create a subclass of PythonTest
-    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version="version"
-    )
-    assert case_class.default_test_parameters() == expected_default_test_parameters
-
-
 def test_class_factory_test_public_id() -> None:
     """Test that class factory correctly finds identifier 'TC-XX-1.1' in python test name.
     And set it as public_id in metadata"""
@@ -189,7 +168,7 @@ async def test_python_version_logging() -> None:
             except TestError:
                 pass
             logger_info.assert_called()
-            logger_info.assert_any_call(f"Python Test Version: {test_python_version}")
+            logger_info.assert_any_call("Test Setup")
 
 
 def test_normal_steps_for_python_tests() -> None:

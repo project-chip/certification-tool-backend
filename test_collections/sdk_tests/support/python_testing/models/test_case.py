@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import re
 from asyncio import sleep
 from multiprocessing.managers import BaseManager
 from typing import Any, Type, TypeVar
@@ -95,80 +96,48 @@ class PythonTestCase(TestCase):
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """class factory method for PythonTestCase."""
+
+        identifier = cls.__test_identifier(test.name)
+        class_name = cls.__class_name(identifier)
+        title = identifier
+
         return type(
-            test.name,
+            class_name,
             (cls,),
             {
                 "python_test": test,
                 "python_test_version": python_test_version,
-                "chip_tool_test_identifier": test.name,
+                "chip_tool_test_identifier": class_name,
                 "metadata": {
-                    "public_id": test.name,
+                    "public_id": identifier,
                     "version": "0.0.1",
-                    "title": test.name,
+                    "title": title,
                     "description": test.description,
                 },
             },
         )
+
+    @staticmethod
+    def __test_identifier(name: str) -> str:
+        """Find TC-XX-1.1 in YAML title.
+        Note some have [TC-XX-1.1] and others TC-XX-1.1
+        """
+        title_pattern = re.compile(r"(?P<title>TC-[^\s\]]*)")
+        if match := re.search(title_pattern, name):
+            return match["title"]
+        else:
+            return name
+
+    @staticmethod
+    def __class_name(identifier: str) -> str:
+        """Replace all non-alphanumeric characters with _ to make valid class name."""
+        return re.sub("[^0-9a-zA-Z]+", "_", identifier)
 
     async def setup(self) -> None:
         logger.info("Test Setup")
 
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
-
-    def __generate_command_arguments(self) -> list:
-        # All valid arguments for python test
-        valid_args = [
-            "ble_interface_id",
-            "commissioning_method",
-            "controller_node_id",
-            "discriminator",
-            "endpoint",
-            "logs_path",
-            "PICS",
-            "paa_trust_store_path",
-            "timeout",
-            "trace_to",
-            "int_arg",
-            "float_arg",
-            "string_arg",
-            "json_arg",
-            "hex_arg",
-            "bool_arg",
-            "storage_path",
-            "passcode",
-            "dut-node-id",
-        ]
-
-        dut_config = self.project.config.dut_config
-        test_parameters = self.project.config.test_parameters
-
-        pairing_mode = (
-            "on-network"
-            if dut_config.pairing_mode == "onnetwork"
-            else dut_config.pairing_mode
-        )
-
-        arguments = []
-        # Retrieve arguments from dut_config
-        arguments.append(f"--discriminator {dut_config.discriminator}")
-        arguments.append(f"--passcode {dut_config.setup_code}")
-        arguments.append(f"--commissioning-method {pairing_mode}")
-
-        # Retrieve arguments from test_parameters
-
-        if test_parameters:
-            for name, value in test_parameters.items():
-                if name in valid_args:
-                    if str(value) != "":
-                        arguments.append(f"--{name.replace('_','-')} {str(value)}")
-                    else:
-                        arguments.append(f"--{name.replace('_','-')} " "")
-                else:
-                    logger.warning(f"Argument {name} is not valid")
-
-        return arguments
 
     async def execute(self) -> None:
         try:
@@ -180,15 +149,15 @@ class PythonTestCase(TestCase):
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
             runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
-            command = [f"{runner_class} {self.metadata['title']}"]
-
-            # Generate the command argument by getting the test_parameters from
-            # project configuration
-            command_arguments = self.__generate_command_arguments()
-            command.extend(command_arguments)
+            command = (
+                f"{runner_class} {self.metadata['title']}"
+                " --commissioning-method on-network --discriminator 3840 --passcode"
+                " 20202021 --storage-path /root/admin_storage.json"
+                " --paa-trust-store-path /paa-root-certs"
+            )
 
             if self.chip_tool.pics_file_created:
-                command.append(f" --PICS {PICS_FILE_PATH}")
+                command += f" --PICS {PICS_FILE_PATH}"
 
             # TODO Ignoring stream from docker execution
             self.chip_tool.send_command(
