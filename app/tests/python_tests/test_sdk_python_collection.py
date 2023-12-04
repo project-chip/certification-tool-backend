@@ -49,15 +49,7 @@ def test_sdk_python_test_collection(
 ) -> None:
     assert python_test_collection.name == "SDK Python Tests"
     assert len(python_test_collection.test_suites.keys()) == 1
-
-    # test version number
-    test_sdk_python_version_path = (
-        "/app/backend/app/tests/python_tests/test_python_script/.version"
-    )
-    with open(test_sdk_python_version_path, "r") as version_file:
-        assert (
-            python_test_collection.python_test_version == version_file.read().rstrip()
-        )
+    assert python_test_collection.python_test_version == "unit-test-python-version"
 
 
 def test_automated_suite(python_test_collection: PythonCollectionDeclaration) -> None:
