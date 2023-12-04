@@ -47,7 +47,6 @@ def test_sdk_yaml_collection(
 ) -> None:
     assert yaml_collection.name == "SDK YAML Tests"
     assert len(yaml_collection.test_suites.keys()) == 3
-
     assert yaml_collection.yaml_version == "unit-test-yaml-version"
 
 
