@@ -692,8 +692,9 @@ class ChipTool(metaclass=Singleton):
 
         Args:
             pics (PICS): PICS that contains all the pics codes
-            in_container (bool): Whether the file should be created in the container or
-                                not. If false, the file is created on the host.
+            in_container (bool): Whether the file should be created in the SDK container
+                                or not. YAML tests run directly in the backend and
+                                python tests run in the SDK container.
 
         Raises:
             PICSError: If creating PICS file inside the container fails.

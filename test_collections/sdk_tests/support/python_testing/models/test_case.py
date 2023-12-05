@@ -96,10 +96,8 @@ class PythonTestCase(TestCase):
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """class factory method for PythonTestCase."""
-
-        identifier = cls.__test_identifier(test.name)
-        class_name = cls.__class_name(identifier)
-        title = identifier
+        title = cls.__title(test.name)
+        class_name = cls.__class_name(test.name)
 
         return type(
             class_name,
@@ -107,9 +105,8 @@ class PythonTestCase(TestCase):
             {
                 "python_test": test,
                 "python_test_version": python_test_version,
-                "chip_tool_test_identifier": class_name,
                 "metadata": {
-                    "public_id": identifier,
+                    "public_id": test.name,
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,
@@ -118,20 +115,22 @@ class PythonTestCase(TestCase):
         )
 
     @staticmethod
-    def __test_identifier(name: str) -> str:
-        """Find TC-XX-1.1 in YAML title.
-        Note some have [TC-XX-1.1] and others TC-XX-1.1
-        """
-        title_pattern = re.compile(r"(?P<title>TC-[^\s\]]*)")
-        if match := re.search(title_pattern, name):
-            return match["title"]
-        else:
-            return name
-
-    @staticmethod
     def __class_name(identifier: str) -> str:
         """Replace all non-alphanumeric characters with _ to make valid class name."""
         return re.sub("[^0-9a-zA-Z]+", "_", identifier)
+
+    @staticmethod
+    def __title(identifier: str) -> str:
+        """Retrieve the test title in format TC_ABC_1_2"""
+        title: str = ""
+        elements = identifier.split("_")
+
+        if len(elements) > 2:
+            title = "-".join(elements[0:2]) + "-" + ".".join(elements[2:])
+        else:
+            title = identifier.replace("_", "-")
+
+        return title
 
     async def setup(self) -> None:
         logger.info("Test Setup")
@@ -141,7 +140,7 @@ class PythonTestCase(TestCase):
 
     async def execute(self) -> None:
         try:
-            logger.info("Running Python Test: " + self.metadata["title"])
+            logger.info("Running Python Test: " + self.python_test.name)
 
             BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
             manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
@@ -150,7 +149,7 @@ class PythonTestCase(TestCase):
 
             runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
             command = (
-                f"{runner_class} {self.metadata['title']}"
+                f"{runner_class} {self.python_test.name}"
                 " --commissioning-method on-network --discriminator 3840 --passcode"
                 " 20202021 --storage-path /root/admin_storage.json"
                 " --paa-trust-store-path /paa-root-certs"
@@ -171,10 +170,11 @@ class PythonTestCase(TestCase):
                 not test_runner_hooks.is_finished()
             ):
                 if not update:
+                    await sleep(0.0001)
                     continue
 
                 self.__handle_update(update)
-                await sleep(0.001)
+
         finally:
             pass
 

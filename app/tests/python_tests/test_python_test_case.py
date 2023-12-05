@@ -36,7 +36,7 @@ from test_collections.sdk_tests.support.python_testing.models.python_test_models
 
 
 def python_test_instance(
-    name: str = "Test Python",
+    name: str = "TC-Test-Python",
     description: str = "Test Python Description",
     PICS: set[str] = {"PICS.A", "PICS.B"},
     config: dict[str, Any] = {
@@ -111,12 +111,6 @@ def test_class_factory_test_public_id() -> None:
     And set it as public_id in metadata"""
     test_data = [
         {"name": "TC-AB-1.2", "public_id": "TC-AB-1.2"},
-        {"name": "[TC-CD-3.4]", "public_id": "TC-CD-3.4"},
-        {"name": "Test Name before [TC-EF-5.6]", "public_id": "TC-EF-5.6"},
-        {"name": "[TC-GH-7.8] Test Name after", "public_id": "TC-GH-7.8"},
-        {"name": "Before and [TC-IJ-9.0] after", "public_id": "TC-IJ-9.0"},
-        {"name": "Before and TC-KL-10.11 after", "public_id": "TC-KL-10.11"},
-        {"name": "TC-MORE-NAME-13.110", "public_id": "TC-MORE-NAME-13.110"},
     ]
     for data in test_data:
         test = python_test_instance(name=data["name"])
@@ -131,12 +125,7 @@ def test_class_factory_test_class_name() -> None:
     a safe class name, eg TC_XX_1_1"""
     test_data = [
         {"name": "TC-AB-1.2", "class_name": "TC_AB_1_2"},
-        {"name": "[TC-CD-3.4]", "class_name": "TC_CD_3_4"},
-        {"name": "Test Name before [TC-EF-5.6]", "class_name": "TC_EF_5_6"},
-        {"name": "[TC-GH-7.8] Test Name after", "class_name": "TC_GH_7_8"},
-        {"name": "Before and [TC-IJ-9.0] after", "class_name": "TC_IJ_9_0"},
-        {"name": "Before and TC-KL-10.11 after", "class_name": "TC_KL_10_11"},
-        {"name": "TC-MORE-NAME-13.110", "class_name": "TC_MORE_NAME_13_110"},
+        {"name": "TC-CD-3.4", "class_name": "TC_CD_3_4"},
     ]
     for data in test_data:
         test = python_test_instance(name=data["name"])

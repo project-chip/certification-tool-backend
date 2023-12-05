@@ -29,8 +29,8 @@ class TestRunnerHooks:
 
 
 def main() -> None:
+    # Load python_testing as a module. This folder is where all python script is located
     sys.path.append("/root/python_testing")
-
     test_name = sys.argv[1]
 
     config_options = sys.argv[2:]

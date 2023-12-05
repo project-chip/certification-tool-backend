@@ -37,6 +37,17 @@ def parse_python_test(path: Path) -> PythonTest:
     """Parse a single Python test file into PythonTest model.
 
     This will also annotate parsed python test with it's path and test type.
+
+    It's expected that the python script files has a class with the same file name,
+    and also the following methods:
+     * desc_[class_name] - This method should return a str with the test description
+     * pics_[class_name] - This method should return a list with the PICS required
+        for the test case
+     * steps_[class_name] - This method should return a list with the step description
+     * test_[class_name] -  This method contains the test logic
+
+    Example: file TC_ACE_1_3.py must have the methods desc_TC_ACE_1_3, pics_TC_ACE_1_3,
+        steps_TC_ACE_1_3 and test_TC_ACE_1_3.
     """
     with open(path, "r") as python_file:
         parsed_python_file = ast.parse(python_file.read())
