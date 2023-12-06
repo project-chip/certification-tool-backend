@@ -24,7 +24,10 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 
 from .python_test_models import PythonTest
-from .python_testing_hooks_proxy import SDKPythonTestResult, SDKPythonTestRunnerHooks
+from .python_testing_hooks_proxy import (
+    SDKPythonTestResultBase,
+    SDKPythonTestRunnerHooks,
+)
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -54,43 +57,36 @@ class PythonTestCase(TestCase):
         self.__runned = 0
         self.test_stop_called = False
 
-    def start(self, count: int, **kwargs: Any) -> None:
+    def start(self, count: int) -> None:
         pass
 
-    def stop(self, duration: int, **kwargs: Any) -> None:
+    def stop(self, duration: int) -> None:
         if not self.test_stop_called:
             self.current_test_step.mark_as_completed()
 
-    def test_start(self, filename: str, name: str, count: int, **kwargs: Any) -> None:
+    def test_start(self, filename: str, name: str, count: int) -> None:
         self.next_step()
 
-    def test_stop(self, exception: Exception, duration: int, **kwargs: Any) -> None:
+    def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
         self.current_test_step.mark_as_completed()
 
-    def step_skipped(self, name: str, expression: str, **kwargs: Any) -> None:
+    def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
         self.next_step()
 
-    def step_start(self, name: str, **kwargs: Any) -> None:
+    def step_start(self, name: str) -> None:
         pass
 
-    def step_success(
-        self, logger: Any, logs: str, duration: int, request: Any, **kwargs: Any
-    ) -> None:
+    def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
         # TODO Handle Logs properly
         self.next_step()
 
     def step_failure(
-        self,
-        logger: Any,
-        logs: str,
-        duration: int,
-        request: Any,
-        received: Any,
-        **kwargs: Any,
+        self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
         # TODO Handle Logs properly
+        self.mark_step_failure("Python test step failure")
         self.next_step()
 
     def step_unknown(self) -> None:
@@ -186,13 +182,13 @@ class PythonTestCase(TestCase):
         finally:
             pass
 
-    def __handle_update(self, update: SDKPythonTestResult) -> None:
-        self.__call_function_from_name(self, update.type.value, update.__dict__)
+    def __handle_update(self, update: SDKPythonTestResultBase) -> None:
+        self.__call_function_from_name(update.type.value, update.params_dict())
 
-    def __call_function_from_name(self, obj, func_name, kwargs) -> None:  # type: ignore
-        func = getattr(obj, func_name, None)
+    def __call_function_from_name(self, func_name: str, kwargs: Any) -> None:
+        func = getattr(self, func_name, None)
         if not func:
-            raise AttributeError(f"{func_name} is not a method of {obj}")
+            raise AttributeError(f"{func_name} is not a method of {self}")
         if not callable(func):
             raise TypeError(f"{func_name} is not callable")
         func(**kwargs)
