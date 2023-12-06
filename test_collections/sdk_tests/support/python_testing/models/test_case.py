@@ -24,7 +24,7 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 
 from .python_test_models import PythonTest
-from .python_testing_hooks_proxy import SDKPythonTestRunnerHooks
+from .python_testing_hooks_proxy import SDKPythonTestResult, SDKPythonTestRunnerHooks
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -54,33 +54,41 @@ class PythonTestCase(TestCase):
         self.__runned = 0
         self.test_stop_called = False
 
-    def start(self, count: int) -> None:
+    def start(self, count: int, **kwargs: Any) -> None:
         pass
 
-    def stop(self, duration: int) -> None:
+    def stop(self, duration: int, **kwargs: Any) -> None:
         if not self.test_stop_called:
             self.current_test_step.mark_as_completed()
 
-    def test_start(self, filename: str, name: str, count: int) -> None:
+    def test_start(self, filename: str, name: str, count: int, **kwargs: Any) -> None:
         self.next_step()
 
-    def test_stop(self, exception: Exception, duration: int) -> None:
+    def test_stop(self, exception: Exception, duration: int, **kwargs: Any) -> None:
         self.test_stop_called = True
         self.current_test_step.mark_as_completed()
 
-    def step_skipped(self, name: str, expression: str) -> None:
+    def step_skipped(self, name: str, expression: str, **kwargs: Any) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
         self.next_step()
 
-    def step_start(self, name: str) -> None:
+    def step_start(self, name: str, **kwargs: Any) -> None:
         pass
 
-    def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
+    def step_success(
+        self, logger: Any, logs: str, duration: int, request: Any, **kwargs: Any
+    ) -> None:
         # TODO Handle Logs properly
         self.next_step()
 
     def step_failure(
-        self, logger: Any, logs: str, duration: int, request: Any, received: Any
+        self,
+        logger: Any,
+        logs: str,
+        duration: int,
+        request: Any,
+        received: Any,
+        **kwargs: Any,
     ) -> None:
         # TODO Handle Logs properly
         self.next_step()
@@ -178,9 +186,8 @@ class PythonTestCase(TestCase):
         finally:
             pass
 
-    def __handle_update(self, update: dict) -> None:
-        for func_name, kwargs in update.items():
-            self.__call_function_from_name(self, func_name, kwargs)
+    def __handle_update(self, update: SDKPythonTestResult) -> None:
+        self.__call_function_from_name(self, update.type.value, update.__dict__)
 
     def __call_function_from_name(self, obj, func_name, kwargs) -> None:  # type: ignore
         func = getattr(obj, func_name, None)
