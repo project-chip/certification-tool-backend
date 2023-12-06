@@ -15,7 +15,7 @@
 #
 from enum import Enum
 from queue import Empty, Queue
-from typing import Any, Literal, Optional, Union
+from typing import Any, Optional, Union
 
 from matter_yamltests.hooks import TestRunnerHooks
 from pydantic import BaseModel
@@ -42,41 +42,41 @@ class SDKPythonTestResultBase(BaseModel):
 
 
 class SDKPythonTestResultStart(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.START]
+    type = SDKPythonTestResultEnum.START
     count: int
 
 
 class SDKPythonTestResultStop(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.STOP]
+    type = SDKPythonTestResultEnum.STOP
     duration: int
 
 
 class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.TEST_START]
+    type = SDKPythonTestResultEnum.TEST_START
     filename: Optional[str]
     name: Optional[str]
     count: Optional[int]
 
 
 class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.TEST_STOP]
+    type = SDKPythonTestResultEnum.TEST_STOP
     duration: Optional[str]
     exception: Any
 
 
 class SDKPythonTestResultStepSkipped(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.STEP_SKIPPED]
+    type = SDKPythonTestResultEnum.STEP_SKIPPED
     name: Optional[str]
     expression: Optional[str]
 
 
 class SDKPythonTestResultStepStart(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.STEP_START]
+    type = SDKPythonTestResultEnum.STEP_START
     name: Optional[str]
 
 
 class SDKPythonTestResultStepSuccess(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.STEP_SUCCESS]
+    type = SDKPythonTestResultEnum.STEP_SUCCESS
     logger: Any
     logs: Any
     duration: int
@@ -84,7 +84,7 @@ class SDKPythonTestResultStepSuccess(SDKPythonTestResultBase):
 
 
 class SDKPythonTestResultStepFailure(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.STEP_FAILURE]
+    type = SDKPythonTestResultEnum.STEP_FAILURE
     logger: Any
     logs: Any
     duration: int
@@ -93,11 +93,11 @@ class SDKPythonTestResultStepFailure(SDKPythonTestResultBase):
 
 
 class SDKPythonTestResultStepUnknown(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.STEP_UNKNOWN]
+    type = SDKPythonTestResultEnum.STEP_UNKNOWN
 
 
 class SDKPythonTestResultStepManual(SDKPythonTestResultBase):
-    type: Literal[SDKPythonTestResultEnum.STEP_MANUAL]
+    type = SDKPythonTestResultEnum.STEP_MANUAL
 
 
 class SDKPythonTestRunnerHooks(TestRunnerHooks):
@@ -119,22 +119,15 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         return SDKPythonTestRunnerHooks.finished
 
     def start(self, count: int) -> None:
-        self.results.put(
-            SDKPythonTestResultStart(type=SDKPythonTestResultEnum.START, count=count)
-        )
+        self.results.put(SDKPythonTestResultStart(count=count))
 
     def stop(self, duration: int) -> None:
-        self.results.put(
-            SDKPythonTestResultStop(
-                type=SDKPythonTestResultEnum.STOP, duration=duration
-            )
-        )
+        self.results.put(SDKPythonTestResultStop(duration=duration))
         SDKPythonTestRunnerHooks.finished = True
 
     def test_start(self, filename: str, name: str, count: int) -> None:
         self.results.put(
             SDKPythonTestResultTestStart(
-                type=SDKPythonTestResultEnum.TEST_START,
                 filename=filename,
                 name=name,
                 count=count,
@@ -144,30 +137,20 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.results.put(
             SDKPythonTestResultTestStop(
-                type=SDKPythonTestResultEnum.TEST_STOP,
                 exception=exception,
                 duration=duration,
             )
         )
 
     def SDKPythonTestResultStepSkipped(self, name: str, expression: str) -> None:
-        self.results.put(
-            SDKPythonTestResultStepSkipped(
-                type=SDKPythonTestResultEnum.STEP_SKIPPED, expression=expression
-            )
-        )
+        self.results.put(SDKPythonTestResultStepSkipped(expression=expression))
 
     def step_start(self, name: str) -> None:
-        self.results.put(
-            SDKPythonTestResultStepStart(
-                type=SDKPythonTestResultEnum.STEP_START, name=name
-            )
-        )
+        self.results.put(SDKPythonTestResultStepStart(name=name))
 
     def step_success(self, logger: Any, logs: Any, duration: int, request: Any) -> None:
         self.results.put(
             SDKPythonTestResultStepSuccess(
-                type=SDKPythonTestResultEnum.STEP_SUCCESS,
                 logger=logger,
                 logs=logs,
                 duration=duration,
@@ -180,7 +163,6 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     ) -> None:
         self.results.put(
             SDKPythonTestResultStepFailure(
-                type=SDKPythonTestResultEnum.STEP_FAILURE,
                 logger=logger,
                 logs=logs,
                 duration=duration,
@@ -190,14 +172,10 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         )
 
     def step_unknown(self) -> None:
-        self.results.put(
-            SDKPythonTestResultStepUnknown(type=SDKPythonTestResultEnum.STEP_UNKNOWN)
-        )
+        self.results.put(SDKPythonTestResultStepUnknown())
 
     def step_manual(self) -> None:
-        self.results.put(
-            SDKPythonTestResultStepManual(type=SDKPythonTestResultEnum.STEP_MANUAL)
-        )
+        self.results.put(SDKPythonTestResultStepManual())
 
     def step_start_list(self) -> None:
         pass
