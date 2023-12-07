@@ -27,6 +27,7 @@ from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestT
 from test_collections.sdk_tests.support.chip_tool.test_case import (
     ChipToolManualPromptTest,
     ChipToolTest,
+)
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,

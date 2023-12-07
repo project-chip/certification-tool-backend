@@ -20,11 +20,11 @@ from unittest import mock
 
 import pytest
 
-from app.chip_tool.chip_tool import ChipTool
 from app.models.test_suite_execution import TestSuiteExecution
 from app.schemas import PICS
 from app.test_engine.logger import test_engine_logger
 from app.tests.utils.test_pics_data import create_random_pics
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTool
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
     PythonTestSuite,
     SuiteType,
@@ -101,7 +101,7 @@ async def test_suite_setup_without_pics() -> None:
         suite_instance = suite_class(TestSuiteExecution())
 
         with mock.patch(
-            "app.chip_tool.test_suite.ChipToolSuite.setup"
+            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite.setup"
         ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
@@ -131,7 +131,7 @@ async def test_suite_setup_with_pics() -> None:
         suite_instance = suite_class(TestSuiteExecution())
 
         with mock.patch(
-            "app.chip_tool.test_suite.ChipToolSuite.setup"
+            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite.setup"
         ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
