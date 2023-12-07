@@ -13,16 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# flake8: noqa
 from pathlib import Path
 from unittest import mock
 
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 
-test_yaml_path = Path("/test/yaml")
+test_python_path = Path("/test/python")
 
 
-def test_yaml_folder_version() -> None:
-    version_file_content = "yaml_version"
+def test_python_folder_version() -> None:
+    version_file_content = "python_test_version"
 
     # We mock open to read version_file_content and Path exists to ignore that we're
     # testing with a fake path
@@ -30,28 +31,28 @@ def test_yaml_folder_version() -> None:
         "test_collections.sdk_tests.support.models.sdk_test_folder.open",
         new=mock.mock_open(read_data=version_file_content),
     ), mock.patch.object(target=Path, attribute="exists", return_value=True) as _:
-        yaml_folder = SDKTestFolder(test_yaml_path)
+        python_test_folder = SDKTestFolder(test_python_path)
 
-        assert yaml_folder.version == version_file_content
+        assert python_test_folder.version == version_file_content
 
 
-def test_yaml_folder_version_missing() -> None:
+def test_python_folder_version_missing() -> None:
     expected_version = "Unknown"
     with mock.patch.object(target=Path, attribute="exists", return_value=False) as _:
-        yaml_folder = SDKTestFolder(test_yaml_path)
-        assert yaml_folder.version == expected_version
+        python_folder = SDKTestFolder(test_python_path)
+        assert python_folder.version == expected_version
 
 
-def test_yaml_folder_filename_pattern() -> None:
+def test_python_folder_filename_pattern() -> None:
     """Test SDKTestFolder will search for files with filename pattern."""
     with mock.patch.object(target=Path, attribute="glob") as path_glob:
-        # Default file_name_patter: *
-        yaml_folder = SDKTestFolder(test_yaml_path)
-        _ = yaml_folder.file_paths(extension=".y*ml")
-        path_glob.assert_called_once_with("*.y*ml")
+        # Default file_name_pattern: *
+        python_folder = SDKTestFolder(test_python_path)
+        _ = python_folder.file_paths(extension=".py")
+        path_glob.assert_called_once_with("*.py")
 
         path_glob.reset_mock()
         pattern = "TC_*"
-        yaml_folder = SDKTestFolder(test_yaml_path, filename_pattern=pattern)
-        _ = yaml_folder.file_paths(extension=".y*ml")
-        path_glob.assert_called_once_with(f"{pattern}.y*ml")
+        python_test_folder = SDKTestFolder(test_python_path, filename_pattern=pattern)
+        _ = python_test_folder.file_paths(extension=".py")
+        path_glob.assert_called_once_with(f"{pattern}.py")

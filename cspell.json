@@ -89,7 +89,9 @@
         "isnot",
         "DBAPI",
         "repr",
-        "zinfo"
+        "zinfo",
+        "MCORE",
+        "elts"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [

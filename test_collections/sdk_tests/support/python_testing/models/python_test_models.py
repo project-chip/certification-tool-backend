@@ -13,5 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .support.python_testing import sdk_python_collection
-from .support.yaml_tests import custom_collection, sdk_collection
+from typing import Any
+
+from ...models.matter_test_models import MatterTest, MatterTestType
+
+###
+# This file declares Python test models that are used to parse the Python Test Cases.
+###
+
+
+class PythonTest(MatterTest):
+    description: str
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.type = MatterTestType.AUTOMATED

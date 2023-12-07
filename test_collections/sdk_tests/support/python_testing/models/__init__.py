@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .support.python_testing import sdk_python_collection
-from .support.yaml_tests import custom_collection, sdk_collection
+from .test_case import PythonTestCase
+from .test_suite import PythonTestSuite, SuiteType

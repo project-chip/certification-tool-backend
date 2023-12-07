@@ -103,6 +103,20 @@ YAML_TESTS_PATH_BASE = SDK_CHECKOUT_PATH / Path("yaml_tests/")
 YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
 XML_SPEC_DEFINITION_PATH = SDK_CHECKOUT_PATH / Path("sdk_runner/specifications/chip/")
 
+# Python Testing Folder
+LOCAL_TEST_COLLECTIONS_PATH = "/home/ubuntu/certification-tool/backend/test_collections"
+LOCAL_PYTHON_TESTING_PATH = Path(
+    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/sdk_checkout/python_testing/scripts/sdk"
+)
+DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
+
+# RPC Client Running on SDK Container
+LOCAL_RPC_PYTHON_TESTING_PATH = Path(
+    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/python_testing/models/rpc_client/"
+    "test_harness_client.py"
+)
+DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/test_harness_client.py"
+
 
 # Docker Network
 DOCKER_NETWORK_SETTINGS_KEY = "NetworkSettings"
@@ -163,6 +177,14 @@ class ChipTool(metaclass=Singleton):
                 "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
                 "mode": "ro",
             },
+            LOCAL_PYTHON_TESTING_PATH: {
+                "bind": DOCKER_PYTHON_TESTING_PATH,
+                "mode": "rw",
+            },
+            LOCAL_RPC_PYTHON_TESTING_PATH: {
+                "bind": DOCKER_RPC_PYTHON_TESTING_PATH,
+                "mode": "rw",
+            },
         },
     }
 
@@ -197,6 +219,10 @@ class ChipTool(metaclass=Singleton):
         self.specifications = SpecDefinitionsFromPaths(
             specifications_paths, self.pseudo_clusters
         )
+
+    @property
+    def pics_file_created(self) -> bool:
+        return self.__pics_file_created
 
     @property
     def node_id(self) -> int:
@@ -342,14 +368,11 @@ class ChipTool(metaclass=Singleton):
             .get(DOCKER_GATEWAY_KEY, "")
         )
 
-    async def start_container(
-        self, test_type: ChipToolTestType, use_paa_certs: bool = False
-    ) -> None:
-        """Creates the chip-tool container.
-
-        Returns only when the container is created and all chip-tool services start.
+    async def start_container(self) -> None:
         """
-
+        Creates the chip-tool container without any server running
+        (ChipTool or ChipApp).
+        """
         if self.is_running():
             self.logger.info(
                 "chip-tool container already running, no need to start a new container"
@@ -358,29 +381,33 @@ class ChipTool(metaclass=Singleton):
 
         # Ensure there's no existing container running using the same name.
         self.__destroy_existing_container()
-
         # Async return when the container is running
         self.__chip_tool_container = await container_manager.create_container(
             self.image_tag, self.run_parameters
         )
-
         # Reset any previous states
         self.__last_exec_id = None
         self.__pics_file_created = False
-
         # Generate new random node id for the DUT
         self.__reset_node_id()
         self.logger.info(f"New Node Id generated: {hex(self.node_id)}")
-
         self.logger.info(
             f"""
             chip-tool started: {self.container_name}
             with configuration: {self.run_parameters}
             """
         )
-
         # Server started is false after spinning up a new container.
         self.__server_started = False
+
+    async def start_server(
+        self, test_type: ChipToolTestType, use_paa_certs: bool = False
+    ) -> None:
+        """Creates the chip-tool container.
+
+        Returns only when the container is created and all chip-tool services start.
+        """
+        await self.start_container()
 
         web_socket_config = WebSocketRunnerConfig()
         web_socket_config.server_address = self.__get_gateway_ip()
@@ -656,32 +683,37 @@ class ChipTool(metaclass=Singleton):
         path = Path(DOCKER_LOGS_PATH) / filename
         return f'--trace_file "{path}" --trace_decode 1'
 
-    def set_pics(self, pics: PICS) -> None:
-        """Sends command to chip tool to create pics file inside the container.
+    def set_pics(self, pics: PICS, in_container: bool) -> None:
+        """Sends command to create pics file.
 
         Args:
             pics (PICS): PICS that contains all the pics codes
+            in_container (bool): Whether the file should be created in the SDK container
+                                or not. YAML tests run directly in the backend and
+                                python tests run in the SDK container.
 
         Raises:
-            ChipToolNotRunning: Raises exception if chip tool is not running.
             PICSError: If creating PICS file inside the container fails.
-
         """
         # List of default PICS which needs to set specifically in TH are added here.
         # These PICS are applicable for CI / Chip tool testing purposes only.
         # These PICS are unknown / not visible to external users.
 
         pics_codes = self.__pics_file_content(pics) + "\n".join(DEFAULT_PICS)
-        cmd = f"{SHELL_PATH} {SHELL_OPTION} "
-        cmd = cmd + f"\"{ECHO_COMMAND} '{pics_codes}\n' > {PICS_FILE_PATH}\""
-        self.logger.info(f"Sending command: {cmd}")
-        result = subprocess.run(cmd, shell=True)
 
-        # When streaming logs, the exit code is not directly available.
-        # By storing the execution id, the exit code can be fetched from docker later.
-        self.__last_exec_id = str(result.returncode)
+        prefix = f"{SHELL_PATH} {SHELL_OPTION}"
+        cmd = f"\"{ECHO_COMMAND} '{pics_codes}' > {PICS_FILE_PATH}\""
 
-        if result.returncode != 0:
+        if in_container:
+            exec_result = self.send_command(cmd, prefix=prefix)
+            success = exec_result.exit_code == 0
+        else:
+            full_cmd = f"{prefix} {cmd}"
+            self.logger.info(f"Sending command: {full_cmd}")
+            result = subprocess.run(full_cmd, shell=True)
+            success = result.returncode == 0
+
+        if not success:
             raise PICSError("Creating PICS file failed")
 
         self.__pics_file_created = True
