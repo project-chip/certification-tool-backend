@@ -18,6 +18,8 @@ from typing import Optional
 
 from loguru import logger
 
+from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 
 from .models.test_declarations import (
@@ -26,8 +28,6 @@ from .models.test_declarations import (
     YamlSuiteDeclaration,
 )
 from .models.test_suite import SuiteType
-from .models.yaml_test_folder import YamlTestFolder
-from .models.yaml_test_models import YamlTestType
 from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
 ###
@@ -43,10 +43,10 @@ from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
 YAML_PATH = SDK_CHECKOUT_PATH / "yaml_tests/yaml"
 SDK_YAML_PATH = YAML_PATH / "sdk"
-SDK_YAML_TEST_FOLDER = YamlTestFolder(path=SDK_YAML_PATH, filename_pattern="Test_TC*")
+SDK_YAML_TEST_FOLDER = SDKTestFolder(path=SDK_YAML_PATH, filename_pattern="Test_TC*")
 
 CUSTOM_YAML_PATH = YAML_PATH / "custom"
-CUSTOM_YAML_TEST_FOLDER = YamlTestFolder(
+CUSTOM_YAML_TEST_FOLDER = SDKTestFolder(
     path=CUSTOM_YAML_PATH, filename_pattern="Test_TC*"
 )
 
@@ -94,9 +94,9 @@ def _parse_all_yaml(
                 yaml_path=yaml_file, yaml_version=yaml_version
             )
 
-            if test_case.test_type == YamlTestType.MANUAL:
+            if test_case.test_type == MatterTestType.MANUAL:
                 suites[SuiteType.MANUAL].add_test_case(test_case)
-            elif test_case.test_type == YamlTestType.SIMULATED:
+            elif test_case.test_type == MatterTestType.SIMULATED:
                 suites[SuiteType.SIMULATED].add_test_case(test_case)
             else:
                 suites[SuiteType.AUTOMATED].add_test_case(test_case)
@@ -109,14 +109,14 @@ def _parse_all_yaml(
 
 
 def sdk_yaml_test_collection(
-    yaml_test_folder: YamlTestFolder = SDK_YAML_TEST_FOLDER,
+    yaml_test_folder: SDKTestFolder = SDK_YAML_TEST_FOLDER,
 ) -> YamlCollectionDeclaration:
     """Declare a new collection of test suites with the 3 test suites."""
     collection = YamlCollectionDeclaration(
         name="SDK YAML Tests", folder=yaml_test_folder
     )
 
-    files = yaml_test_folder.yaml_file_paths()
+    files = yaml_test_folder.file_paths(extension=".y*ml")
     version = yaml_test_folder.version
     suites = _parse_all_yaml(yaml_files=files, yaml_version=version)
 
@@ -128,14 +128,14 @@ def sdk_yaml_test_collection(
 
 
 def custom_yaml_test_collection(
-    yaml_test_folder: YamlTestFolder = CUSTOM_YAML_TEST_FOLDER,
+    yaml_test_folder: SDKTestFolder = CUSTOM_YAML_TEST_FOLDER,
 ) -> Optional[YamlCollectionDeclaration]:
     """Declare a new collection of test suites."""
     collection = YamlCollectionDeclaration(
         name="Custom YAML Tests", folder=yaml_test_folder
     )
 
-    files = yaml_test_folder.yaml_file_paths()
+    files = yaml_test_folder.file_paths(extension=".y*ml")
     suites = _parse_all_yaml(yaml_files=files, yaml_version="custom")
 
     for suite in suites:

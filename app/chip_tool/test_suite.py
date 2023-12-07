@@ -54,13 +54,13 @@ class ChipToolSuite(TestSuite, UserPromptSupport):
         logger.info("Setting up chip_tool")
         # Use test engine logger to log all events to test run.
         self.chip_tool.logger = logger
-        await self.chip_tool.start_container(
+        await self.chip_tool.start_server(
             self.test_type, self.config.dut_config.chip_tool_use_paa_certs
         )
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
-            self.chip_tool.set_pics(pics=self.pics)
+            self.chip_tool.set_pics(pics=self.pics, in_container=False)
         else:
             # Disable sending "-PICS" option when running chip-tool
             self.chip_tool.reset_pics_state()

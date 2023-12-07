@@ -13,17 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Any
+from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
 
-from pydantic_yaml import YamlModelMixin
-
-from ...models.matter_test_models import MatterTest
+from pydantic import BaseModel
 
 ###
 # This file declares YAML models that are used to parse the YAML Test Cases.
 ###
 
 
-class YamlTest(YamlModelMixin, MatterTest):
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(steps=kwargs["tests"], **kwargs)
+class MatterTestType(Enum):
+    AUTOMATED = 0
+    SEMI_AUTOMATED = 1
+    MANUAL = 2
+    SIMULATED = 3
+
+
+class MatterTestStep(BaseModel):
+    label: str
+    PICS: Optional[str] = None
+    verification: Optional[str] = None
+    command: Optional[str]
+    disabled: bool = False
+    arguments: Optional[dict[str, Any]]
+
+
+class MatterTest(BaseModel):
+    name: str
+    PICS: set[str] = set()
+    config: dict[str, Any]
+    steps: list[MatterTestStep]
+    type: MatterTestType = MatterTestType.MANUAL
+    path: Optional[Path]
