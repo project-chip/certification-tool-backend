@@ -22,5 +22,9 @@ test_engine_logger = logger.bind(test_run_log=True)
 CHIPTOOL_LEVEL = "CHIPTOOL"
 test_engine_logger.level(CHIPTOOL_LEVEL, no=21, icon="🤖", color="<cyan>")
 
+# Add custom logger for python tests
+PYTHON_TEST_LEVEL = "PYTHON_TEST"
+test_engine_logger.level(PYTHON_TEST_LEVEL, no=22, icon="🐍", color="<cyan>")
+
 # Log format for logs that come from CHIP. Arguments: module (e.g. "DMG"), message
 CHIP_LOG_FORMAT = "CHIP:{} {}"

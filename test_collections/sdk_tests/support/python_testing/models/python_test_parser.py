@@ -73,23 +73,31 @@ def __parse_test_case_from_class(
     pics_method_name = "pics_" + tc_name
 
     methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
+
+    tc_desc = tc_name
+    tc_steps = []
+    tc_pics = []
+
     try:
         desc_method = next(m for m in methods if desc_method_name in m.name)
         tc_desc = desc_method.body[BODY_INDEX].value.value  # type: ignore
+    except StopIteration:  # Raised when `next` doesn't find a matching method
+        pass
 
+    try:
         steps_method = next(m for m in methods if steps_method_name in m.name)
         tc_steps = __retrieve_steps(steps_method)
-    except StopIteration as si:  # Raised when `next` doesn't find a matching method
-        raise PythonParserException(
-            f"{path} did not contain valid definition for {tc_name}"
-        ) from si
+    except StopIteration:  # Raised when `next` doesn't find a matching method
+        # If the python test does not implement the steps template method,
+        # the test case will be presented in UI and the whole test case will be
+        # executed as one step
+        pass
 
-    # PICS method is optional
     try:
         pics_method = next(m for m in methods if pics_method_name in m.name)
         tc_pics = __retrieve_pics(pics_method)
     except StopIteration:  # Raised when `next` doesn't find a matching method
-        tc_pics = []
+        pass
 
     return PythonTest(
         name=tc_name,

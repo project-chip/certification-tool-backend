@@ -14,11 +14,18 @@
 # limitations under the License.
 #
 from enum import Enum
-from typing import Type, TypeVar
+from typing import Generator, Type, TypeVar, cast
 
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from test_collections.sdk_tests.support.chip_tool import ChipTool
+
+from .utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
+    generate_command_arguments,
+    handle_logs,
+)
 
 
 class SuiteType(Enum):
@@ -74,8 +81,25 @@ class PythonTestSuite(TestSuite):
         else:
             self.chip_tool.reset_pics_state()
 
+        logger.info("Commission DUT")
+        self.commission_device()
+
     async def cleanup(self) -> None:
         logger.info("Suite Cleanup")
 
         logger.info("Stopping SDK container")
         await self.chip_tool.destroy_device()
+
+    def commission_device(self) -> None:
+        command = [f"{RUNNER_CLASS_PATH} commission"]
+        command_arguments = generate_command_arguments(config=self.config)
+        command.extend(command_arguments)
+
+        exec_result = self.chip_tool.send_command(
+            command,
+            prefix=EXECUTABLE,
+            is_stream=True,
+            is_socket=False,
+        )
+
+        handle_logs(cast(Generator, exec_result.output), logger)
