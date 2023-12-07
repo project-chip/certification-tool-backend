@@ -16,9 +16,9 @@
 from enum import Enum
 from typing import Type, TypeVar
 
-from app.chip_tool import ChipTool
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
+from test_collections.sdk_tests.support.chip_tool import ChipTool
 
 
 class SuiteType(Enum):

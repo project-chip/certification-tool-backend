@@ -25,8 +25,13 @@ from matter_yamltests.hooks import TestParserHooks, TestRunnerHooks
 from matter_yamltests.parser_builder import TestParserBuilderConfig
 from matter_yamltests.runner import TestRunnerConfig
 
-from app.chip_tool import ChipTool
-from app.chip_tool.chip_tool import (
+from app.container_manager import container_manager
+from app.core.config import settings
+from app.schemas.pics import PICSError
+from app.tests.utils.docker import make_fake_container
+from app.tests.utils.test_pics_data import create_random_pics
+from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip_tool.chip_tool import (
     CHIP_APP_EXE,
     CHIP_TOOL_ARG_PAA_CERTS_PATH,
     CHIP_TOOL_CONTINUE_ON_FAILURE_VALUE,
@@ -42,12 +47,9 @@ from app.chip_tool.chip_tool import (
     ChipToolTestType,
     ChipToolUnknownTestType,
 )
-from app.chip_tool.exec_run_in_container import ExecResultExtended
-from app.container_manager import container_manager
-from app.core.config import settings
-from app.schemas.pics import PICSError
-from app.tests.utils.docker import make_fake_container
-from app.tests.utils.test_pics_data import create_random_pics
+from test_collections.sdk_tests.support.chip_tool.exec_run_in_container import (
+    ExecResultExtended,
+)
 
 
 @pytest.mark.asyncio
@@ -63,7 +65,8 @@ async def test_start_container() -> None:
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch(
-        target="app.chip_tool.chip_tool.backend_container"
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool."
+        "backend_container"
     ), mock.patch.object(
         target=container_manager, attribute="create_container"
     ) as mock_create_container, mock.patch.object(
@@ -92,7 +95,8 @@ async def test_start_container_using_paa_certs() -> None:
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch(
-        target="app.chip_tool.chip_tool.backend_container"
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool."
+        "backend_container"
     ), mock.patch.object(
         target=container_manager, attribute="create_container"
     ) as mock_create_container, mock.patch.object(
@@ -392,7 +396,8 @@ async def test_destroy_container_once() -> None:
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch(
-        target="app.chip_tool.chip_tool.backend_container"
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool."
+        "backend_container"
     ), mock.patch.object(
         target=container_manager, attribute="destroy"
     ) as mock_destroy, mock.patch.object(
@@ -448,7 +453,7 @@ async def test_set_pics() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.subprocess.run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool.subprocess.run",
         return_value=CompletedProcess(expected_command, 0),
     ) as mock_run:
         await chip_tool.start_server(test_type)
@@ -469,7 +474,7 @@ def test_set_pics_with_error() -> None:
     pics = create_random_pics()
 
     with mock.patch(
-        target="app.chip_tool.chip_tool.subprocess.run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool.subprocess.run",
         return_value=CompletedProcess("", 1),
     ), pytest.raises(PICSError):
         chip_tool.set_pics(pics, in_container=False)
@@ -501,7 +506,8 @@ async def test_send_command_default_prefix() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.exec_run_in_container",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool."
+        "exec_run_in_container",
         return_value=mock_result,
     ) as mock_exec_run:
         await chip_tool.start_server(test_type)
@@ -544,7 +550,8 @@ async def test_send_command_custom_prefix() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.exec_run_in_container",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool."
+        "exec_run_in_container",
         return_value=mock_result,
     ) as mock_exec_run:
         await chip_tool.start_server(test_type)
@@ -585,10 +592,12 @@ async def test_run_test_default_config() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
         return_value=True,
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_server(test_type)
@@ -642,10 +651,12 @@ async def test_run_test_custom_timeout() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
         return_value=True,
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_server(test_type)
@@ -693,10 +704,12 @@ async def test_run_test_with_custom_parameter() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
         return_value=True,
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_server(test_type)
@@ -745,10 +758,12 @@ async def test_run_test_with_endpoint_parameter() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
         return_value=True,
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_server(test_type)
@@ -796,10 +811,12 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
     ), mock.patch.object(
         target=chip_tool, attribute="start_chip_server"
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.start",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.start",
         return_value=True,
     ), mock.patch(
-        target="app.chip_tool.chip_tool.WebSocketRunner.run",
+        target="test_collections.sdk_tests.support.chip_tool.chip_tool"
+        ".WebSocketRunner.run",
         return_value=True,
     ) as mock_run:
         await chip_tool.start_server(test_type)
