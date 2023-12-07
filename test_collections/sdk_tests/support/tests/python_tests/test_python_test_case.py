@@ -18,10 +18,14 @@
 from pathlib import Path
 from typing import Any, Optional, Type
 from unittest import mock
+from unittest.mock import PropertyMock
 
 import pytest
 
+from app.default_environment_config import default_environment_config
+from app.models import Project
 from app.models.test_case_execution import TestCaseExecution
+from app.schemas.test_environment_config import DutConfig, DutPairingModeEnum
 from app.test_engine.logger import test_engine_logger
 from test_collections.sdk_tests.support.chip_tool.test_case import TestError
 from test_collections.sdk_tests.support.models.matter_test_models import (
@@ -202,3 +206,196 @@ async def test_setup_super_error_handling() -> None:
         test.python_test_version = "some version"
         # Assert this doesn't raise an exception
         await test.setup()
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_on_network() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = {
+        "paa_trust_store_path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        discriminator="123",
+        setup_code="1234",
+        pairing_mode=DutPairingModeEnum.ON_NETWORK,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    mock_project = Project()
+    mock_project.config = mock_config
+
+    with mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.create_test_steps"
+    ), mock.patch(
+        "app.test_engine.models.test_case.TestCase.project",
+        new_callable=PropertyMock,
+        return_value=mock_project,
+    ):
+        test = PythonTestCase(TestCaseExecution())
+        arguments = test._PythonTestCase__generate_command_arguments()  # type: ignore
+
+        assert [
+            "--discriminator 123",
+            "--passcode 1234",
+            "--commissioning-method on-network",
+            "--paa-trust-store-path /paa-root-certs",
+            "--storage-path /root/admin_storage.json",
+        ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_ble_wifi() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = {
+        "paa_trust_store_path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        discriminator="147",
+        setup_code="357",
+        pairing_mode=DutPairingModeEnum.BLE_WIFI,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    mock_project = Project()
+    mock_project.config = mock_config
+
+    with mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.create_test_steps"
+    ), mock.patch(
+        "app.test_engine.models.test_case.TestCase.project",
+        new_callable=PropertyMock,
+        return_value=mock_project,
+    ):
+        test = PythonTestCase(TestCaseExecution())
+        arguments = test._PythonTestCase__generate_command_arguments()  # type: ignore
+
+        assert [
+            "--discriminator 147",
+            "--passcode 357",
+            "--commissioning-method ble-wifi",
+            "--paa-trust-store-path /paa-root-certs",
+            "--storage-path /root/admin_storage.json",
+        ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_ble_thread() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = {
+        "paa_trust_store_path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        discriminator="456",
+        setup_code="8765",
+        pairing_mode=DutPairingModeEnum.BLE_THREAD,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    mock_project = Project()
+    mock_project.config = mock_config
+
+    with mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.create_test_steps"
+    ), mock.patch(
+        "app.test_engine.models.test_case.TestCase.project",
+        new_callable=PropertyMock,
+        return_value=mock_project,
+    ):
+        test = PythonTestCase(TestCaseExecution())
+        arguments = test._PythonTestCase__generate_command_arguments()  # type: ignore
+
+        assert [
+            "--discriminator 456",
+            "--passcode 8765",
+            "--commissioning-method ble-thread",
+            "--paa-trust-store-path /paa-root-certs",
+            "--storage-path /root/admin_storage.json",
+        ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_no_test_parameter_informed() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = None
+
+    mock_dut_config = DutConfig(
+        discriminator="456",
+        setup_code="8765",
+        pairing_mode=DutPairingModeEnum.BLE_THREAD,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    mock_project = Project()
+    mock_project.config = mock_config
+
+    with mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.create_test_steps"
+    ), mock.patch(
+        "app.test_engine.models.test_case.TestCase.project",
+        new_callable=PropertyMock,
+        return_value=mock_project,
+    ):
+        test = PythonTestCase(TestCaseExecution())
+        arguments = test._PythonTestCase__generate_command_arguments()  # type: ignore
+
+        assert [
+            "--discriminator 456",
+            "--passcode 8765",
+            "--commissioning-method ble-thread",
+        ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_invalid_arg() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = {
+        "my_arg1": "/paa-root-certs",
+        "my_arg2": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        discriminator="456",
+        setup_code="8765",
+        pairing_mode=DutPairingModeEnum.BLE_THREAD,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    mock_project = Project()
+    mock_project.config = mock_config
+
+    with mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.create_test_steps"
+    ), mock.patch(
+        "app.test_engine.models.test_case.TestCase.project",
+        new_callable=PropertyMock,
+        return_value=mock_project,
+    ):
+        test = PythonTestCase(TestCaseExecution())
+        arguments = test._PythonTestCase__generate_command_arguments()  # type: ignore
+
+        assert [
+            "--discriminator 456",
+            "--passcode 8765",
+            "--commissioning-method ble-thread",
+        ] == arguments
