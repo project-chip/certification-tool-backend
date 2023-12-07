@@ -208,7 +208,7 @@ class PythonTestCase(TestCase):
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
             runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
-            command = [f"{runner_class} {self.metadata['title']}"]
+            command = [f"{runner_class} {self.python_test.name}"]
 
             # Generate the command argument by getting the test_parameters from
             # project configuration
