@@ -18,24 +18,23 @@ from asyncio import sleep
 from multiprocessing.managers import BaseManager
 from typing import Any, Type, TypeVar
 
-from app.chip_tool.chip_tool import PICS_FILE_PATH, ChipTool
 from app.models import TestCaseExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
+from test_collections.sdk_tests.support.chip_tool.chip_tool import (
+    PICS_FILE_PATH,
+    ChipTool,
+)
 
 from .python_test_models import PythonTest
 from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
 )
+from .utils import EXECUTABLE, RUNNER_CLASS_PATH, generate_command_arguments
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
-
-# Command line params
-RUNNER_CLASS = "test_harness_client.py"
-RUNNER_CLASS_PATH = "/root/python_testing/"
-EXECUTABLE = "python3"
 
 
 class PythonTestCase(TestCase):
@@ -56,6 +55,15 @@ class PythonTestCase(TestCase):
         self.chip_tool: ChipTool = ChipTool(logger)
         self.__runned = 0
         self.test_stop_called = False
+
+    def next_step(self) -> None:
+        # Python tests that don't follow the template only have the default step "Start
+        # Python test", but inside the file there can be more than one test case, so the
+        # hooks steps methods will continue to be called
+        if len(self.test_steps) == 1:
+            return
+
+        super().next_step()
 
     def start(self, count: int) -> None:
         pass
@@ -151,16 +159,18 @@ class PythonTestCase(TestCase):
             manager.start()
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
-            runner_class = RUNNER_CLASS_PATH + RUNNER_CLASS
-            command = (
-                f"{runner_class} {self.python_test.name}"
-                " --commissioning-method on-network --discriminator 3840 --passcode"
-                " 20202021 --storage-path /root/admin_storage.json"
-                " --paa-trust-store-path /paa-root-certs"
+            command = [f"{RUNNER_CLASS_PATH} {self.python_test.name}"]
+
+            # Generate the command argument by getting the test_parameters from
+            # project configuration
+            # comissioning method is omitted because it's handled by the test suite
+            command_arguments = generate_command_arguments(
+                config=self.config, omit_commissioning_method=True
             )
+            command.extend(command_arguments)
 
             if self.chip_tool.pics_file_created:
-                command += f" --PICS {PICS_FILE_PATH}"
+                command.append(f" --PICS {PICS_FILE_PATH}")
 
             # TODO Ignoring stream from docker execution
             self.chip_tool.send_command(

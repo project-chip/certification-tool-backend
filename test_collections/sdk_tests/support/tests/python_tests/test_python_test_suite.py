@@ -20,14 +20,18 @@ from unittest import mock
 
 import pytest
 
-from app.chip_tool.chip_tool import ChipTool
 from app.models.test_suite_execution import TestSuiteExecution
 from app.schemas import PICS
 from app.test_engine.logger import test_engine_logger
 from app.tests.utils.test_pics_data import create_random_pics
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTool
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
     PythonTestSuite,
     SuiteType,
+)
+from test_collections.sdk_tests.support.python_testing.models.utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
 )
 
 
@@ -81,8 +85,11 @@ async def test_suite_setup_log_python_version() -> None:
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
             new_callable=PICS,
+        ), mock.patch.object(
+            target=suite_instance, attribute="commission_device"
         ):
             await suite_instance.setup()
+
             logger_info.assert_called()
             logger_info.assert_any_call(f"Python Test Version: {python_test_version}")
 
@@ -101,7 +108,7 @@ async def test_suite_setup_without_pics() -> None:
         suite_instance = suite_class(TestSuiteExecution())
 
         with mock.patch(
-            "app.chip_tool.test_suite.ChipToolSuite.setup"
+            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite.setup"
         ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
@@ -110,11 +117,14 @@ async def test_suite_setup_without_pics() -> None:
             target=chip_tool, attribute="set_pics"
         ) as mock_set_pics, mock.patch.object(
             target=chip_tool, attribute="reset_pics_state"
-        ) as mock_reset_pics_state:
+        ) as mock_reset_pics_state, mock.patch.object(
+            target=suite_instance, attribute="commission_device"
+        ) as mock_commission_device:
             await suite_instance.setup()
 
         mock_set_pics.assert_not_called()
         mock_reset_pics_state.assert_called_once()
+        mock_commission_device.called_once()
 
 
 @pytest.mark.asyncio
@@ -131,7 +141,7 @@ async def test_suite_setup_with_pics() -> None:
         suite_instance = suite_class(TestSuiteExecution())
 
         with mock.patch(
-            "app.chip_tool.test_suite.ChipToolSuite.setup"
+            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite.setup"
         ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
@@ -140,11 +150,45 @@ async def test_suite_setup_with_pics() -> None:
             target=chip_tool, attribute="set_pics"
         ) as mock_set_pics, mock.patch.object(
             target=chip_tool, attribute="reset_pics_state"
-        ) as mock_reset_pics_state:
+        ) as mock_reset_pics_state, mock.patch.object(
+            target=suite_instance, attribute="commission_device"
+        ) as mock_commission_device:
             await suite_instance.setup()
 
         mock_set_pics.assert_called_once()
         mock_reset_pics_state.assert_not_called()
+        mock_commission_device.called_once()
+
+
+@pytest.mark.asyncio
+async def test_commission_device() -> None:
+    chip_tool: ChipTool = ChipTool()
+
+    command_args = ["arg1", "arg2", "arg3"]
+    expected_command = [f"{RUNNER_CLASS_PATH} commission"]
+    expected_command.extend(command_args)
+
+    suite = PythonTestSuite(TestSuiteExecution())
+
+    with mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config"
+    ), mock.patch.object(
+        target=chip_tool, attribute="send_command"
+    ) as mock_send_command, mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".generate_command_arguments",
+        return_value=command_args,
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".handle_logs"
+    ) as mock_handle_logs:
+        suite.commission_device()
+
+    mock_send_command.assert_called_once_with(
+        expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
+    )
+    mock_handle_logs.assert_called_once()
 
 
 @pytest.mark.asyncio

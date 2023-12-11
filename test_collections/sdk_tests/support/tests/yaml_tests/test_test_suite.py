@@ -18,9 +18,9 @@ from unittest import mock
 
 import pytest
 
-from app.chip_tool.chip_tool import ChipToolTestType
 from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
 from test_collections.sdk_tests.support.yaml_tests.models.test_suite import (
     ChipToolYamlTestSuite,
     ManualYamlTestSuite,
@@ -107,7 +107,8 @@ async def test_suite_setup_log_yaml_version() -> None:
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
         ) as logger_info, mock.patch(
-            "app.chip_tool.test_suite.ChipToolSuite.setup"
+            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite."
+            "setup"
         ) as _:
             await suite_instance.setup()
             logger_info.assert_called()
@@ -159,7 +160,8 @@ async def test_chip_tool_suite_setup() -> None:
             "test_collections.sdk_tests.support.yaml_tests.models."
             "test_suite.YamlTestSuite.setup"
         ) as yaml_suite_setup, mock.patch(
-            "app.chip_tool.test_suite.ChipToolSuite.setup"
+            "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite."
+            "setup"
         ) as chip_tool_suite_setup:
             await suite_instance.setup()
             yaml_suite_setup.assert_called_once()

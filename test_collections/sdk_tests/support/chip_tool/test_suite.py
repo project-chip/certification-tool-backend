@@ -15,9 +15,6 @@
 #
 from typing import Optional
 
-from app.chip_tool import ChipTool
-from app.chip_tool.chip_tool import ChipToolTestType
-from app.chip_tool.test_case import PromptOption
 from app.models import TestSuiteExecution
 from app.otbr_manager.otbr_manager import ThreadBorderRouter
 from app.schemas.test_environment_config import (
@@ -29,6 +26,9 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.test_case import PromptOption
 
 CHIP_APP_PAIRING_CODE = "CHIP:SVR: Manual pairing code:"
 

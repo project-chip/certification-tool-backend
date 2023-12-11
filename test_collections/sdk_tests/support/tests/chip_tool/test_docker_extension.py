@@ -15,8 +15,10 @@
 #
 from typing import Generator
 
-from app.chip_tool.exec_run_in_container import exec_run_in_container
 from app.tests.utils.docker import make_fake_container
+from test_collections.sdk_tests.support.chip_tool.exec_run_in_container import (
+    exec_run_in_container,
+)
 
 
 def test_exec_run_in_container_not_stream() -> None:

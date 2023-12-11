@@ -19,11 +19,11 @@ from unittest import mock
 
 import pytest
 
-from app.chip_tool.chip_tool import ChipToolTestType
-from app.chip_tool.test_case import TestError
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
 from app.test_engine.models.manual_test_case import ManualVerificationTestStep
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.test_case import TestError
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
