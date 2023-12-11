@@ -16,7 +16,7 @@
 import re
 from asyncio import sleep
 from multiprocessing.managers import BaseManager
-from typing import Any, Type, TypeVar
+from typing import Any, Generator, Type, TypeVar, cast
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import test_engine_logger as logger
@@ -31,7 +31,12 @@ from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
 )
-from .utils import EXECUTABLE, RUNNER_CLASS_PATH, generate_command_arguments
+from .utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
+    generate_command_arguments,
+    handle_logs,
+)
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -172,13 +177,12 @@ class PythonTestCase(TestCase):
             if self.chip_tool.pics_file_created:
                 command.append(f" --PICS {PICS_FILE_PATH}")
 
-            # TODO Ignoring stream from docker execution
-            self.chip_tool.send_command(
+            exec_result = self.chip_tool.send_command(
                 command,
                 prefix=EXECUTABLE,
                 is_stream=True,
                 is_socket=False,
-            ).output
+            )
 
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
@@ -189,6 +193,11 @@ class PythonTestCase(TestCase):
 
                 self.__handle_update(update)
 
+            # Step: Show test logs
+            self.next_step()
+            logger.info("---- Start of Python test logs ----")
+            handle_logs(cast(Generator, exec_result.output), logger)
+            logger.info("---- End of Python test logs ----")
         finally:
             pass
 
@@ -208,3 +217,4 @@ class PythonTestCase(TestCase):
         for step in self.python_test.steps:
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
+        self.test_steps.append(TestStep("Show test logs"))
