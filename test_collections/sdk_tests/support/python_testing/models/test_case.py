@@ -61,14 +61,16 @@ class PythonTestCase(TestCase):
         self.__runned = 0
         self.test_stop_called = False
 
-    def next_step(self) -> None:
+    # Move to the next step if the test case has additional steps appart from the 2
+    # deafult ones
+    def step_over(self) -> None:
         # Python tests that don't follow the template only have the default steps "Start
         # Python test" and "Show test logs", but inside the file there can be more than
-        # one test case, so the hooks steps methods will continue to be called
+        # one test case, so the hooks' step methods will continue to be called
         if len(self.test_steps) == 2:
             return
 
-        super().next_step()
+        self.next_step()
 
     def start(self, count: int) -> None:
         pass
@@ -78,29 +80,28 @@ class PythonTestCase(TestCase):
             self.current_test_step.mark_as_completed()
 
     def test_start(self, filename: str, name: str, count: int) -> None:
-        self.next_step()
+        self.step_over()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
-        self.current_test_step.mark_as_completed()
 
     def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
-        self.next_step()
+        self.step_over()
 
     def step_start(self, name: str) -> None:
         pass
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
         # TODO Handle Logs properly
-        self.next_step()
+        self.step_over()
 
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
         # TODO Handle Logs properly
         self.mark_step_failure("Python test step failure")
-        self.next_step()
+        self.step_over()
 
     def step_unknown(self) -> None:
         self.__runned += 1
@@ -194,11 +195,20 @@ class PythonTestCase(TestCase):
                 self.__handle_update(update)
 
             # Step: Show test logs
-            # Skip the override because here it should always go to the next step
-            super().next_step()
+
+            # Python tests that don't follow the template only have the 2 default steps
+            # and, at this point, will still be in the first step because of the
+            # step_over method. So we have to explicitly move on to the next step here.
+            # The tests that do follow the template will have additional steps and will
+            # have already been moved to the correct step by the hooks' step methods.
+            if len(self.test_steps) == 2:
+                self.next_step()
+
             logger.info("---- Start of Python test logs ----")
             handle_logs(cast(Generator, exec_result.output), logger)
             logger.info("---- End of Python test logs ----")
+
+            self.current_test_step.mark_as_completed()
         finally:
             pass
 
