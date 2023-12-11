@@ -61,7 +61,7 @@ class PythonTestCase(TestCase):
         self.__runned = 0
         self.test_stop_called = False
 
-    # Move to the next step if the test case has additional steps appart from the 2
+    # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
     def step_over(self) -> None:
         # Python tests that don't follow the template only have the default steps "Start
