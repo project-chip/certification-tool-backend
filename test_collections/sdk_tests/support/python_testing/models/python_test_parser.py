@@ -15,7 +15,7 @@
 #
 import ast
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
@@ -73,23 +73,25 @@ def __parse_test_case_from_class(
     pics_method_name = "pics_" + tc_name
 
     methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
-    try:
-        desc_method = next(m for m in methods if desc_method_name in m.name)
+
+    tc_desc = tc_name
+    tc_steps = []
+    tc_pics = []
+
+    desc_method = __get_method_by_name(desc_method_name, methods)
+    if desc_method:
         tc_desc = desc_method.body[BODY_INDEX].value.value  # type: ignore
 
-        steps_method = next(m for m in methods if steps_method_name in m.name)
+    # If the python test does not implement the steps template method,
+    # the test case will be presented in UI and the whole test case will be
+    # executed as one step
+    steps_method = __get_method_by_name(steps_method_name, methods)
+    if steps_method:
         tc_steps = __retrieve_steps(steps_method)
-    except StopIteration as si:  # Raised when `next` doesn't find a matching method
-        raise PythonParserException(
-            f"{path} did not contain valid definition for {tc_name}"
-        ) from si
 
-    # PICS method is optional
-    try:
-        pics_method = next(m for m in methods if pics_method_name in m.name)
+    pics_method = __get_method_by_name(pics_method_name, methods)
+    if pics_method:
         tc_pics = __retrieve_pics(pics_method)
-    except StopIteration:  # Raised when `next` doesn't find a matching method
-        tc_pics = []
 
     return PythonTest(
         name=tc_name,
@@ -100,6 +102,12 @@ def __parse_test_case_from_class(
         path=path,
         type=MatterTestType.AUTOMATED,
     )
+
+
+def __get_method_by_name(
+    name: str, methods: list[ast.FunctionDef]
+) -> Optional[ast.FunctionDef]:
+    return next((m for m in methods if name in m.name), None)
 
 
 def __retrieve_steps(method: ast.FunctionDef) -> List[MatterTestStep]:
