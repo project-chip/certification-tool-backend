@@ -62,10 +62,10 @@ class PythonTestCase(TestCase):
         self.test_stop_called = False
 
     def next_step(self) -> None:
-        # Python tests that don't follow the template only have the default step "Start
-        # Python test", but inside the file there can be more than one test case, so the
-        # hooks steps methods will continue to be called
-        if len(self.test_steps) == 1:
+        # Python tests that don't follow the template only have the default steps "Start
+        # Python test" and "Show test logs", but inside the file there can be more than
+        # one test case, so the hooks steps methods will continue to be called
+        if len(self.test_steps) == 2:
             return
 
         super().next_step()
@@ -194,7 +194,8 @@ class PythonTestCase(TestCase):
                 self.__handle_update(update)
 
             # Step: Show test logs
-            self.next_step()
+            # Skip the override because here it should always go to the next step
+            super().next_step()
             logger.info("---- Start of Python test logs ----")
             handle_logs(cast(Generator, exec_result.output), logger)
             logger.info("---- End of Python test logs ----")
