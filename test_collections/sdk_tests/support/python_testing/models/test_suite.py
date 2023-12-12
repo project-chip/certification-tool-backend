@@ -108,5 +108,7 @@ class PythonTestSuite(TestSuite):
 
         handle_logs(cast(Generator, exec_result.output), logger)
 
-        if exec_result.exit_code != 0:
+        exit_code = self.chip_tool.exec_exit_code(exec_result.exec_id)
+
+        if exit_code:
             raise DUTCommissioningError("Failed to commission DUT")

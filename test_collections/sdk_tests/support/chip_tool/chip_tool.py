@@ -494,6 +494,19 @@ class ChipTool(metaclass=Singleton):
         exit_code = exec_data.get("ExitCode")
         return exit_code
 
+    def exec_exit_code(self, exec_id: str) -> Optional[int]:
+        if self.__chip_tool_container is None:
+            self.logger.info("No SDK container, cannot get execution exit code")
+            return None
+
+        exec_data = self.__chip_tool_container.client.api.exec_inspect(exec_id)
+
+        if exec_data is None:
+            self.logger.error("Docker didn't return any execution metadata")
+            return None
+
+        return exec_data.get("ExitCode")
+
     async def send_websocket_command(self, cmd: str) -> Union[str, bytes, bytearray]:
         await self.start_runner()
         response = await self.__test_harness_runner.execute(cmd)
