@@ -93,15 +93,16 @@ class PythonTestCase(TestCase):
         pass
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
-        # TODO Handle Logs properly
         self.step_over()
 
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
-        # TODO Handle Logs properly
         self.mark_step_failure("Python test step failure")
-        self.step_over()
+
+        # Python tests stop when there's a failure. We need to skip the next steps
+        # and execute only the last one, which shows the logs
+        self.skip_to_last_step()
 
     def step_unknown(self) -> None:
         self.__runned += 1
@@ -211,6 +212,11 @@ class PythonTestCase(TestCase):
             self.current_test_step.mark_as_completed()
         finally:
             pass
+
+    def skip_to_last_step(self) -> None:
+        self.current_test_step.mark_as_completed()
+        self.current_test_step_index = len(self.test_steps) - 1
+        self.current_test_step.mark_as_executing()
 
     def __handle_update(self, update: SDKPythonTestResultBase) -> None:
         self.__call_function_from_name(update.type.value, update.params_dict())
