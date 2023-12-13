@@ -23,6 +23,33 @@ from test_collections.sdk_tests.support.python_testing.models.utils import (
 
 
 @pytest.mark.asyncio
+async def test_generate_command_arguments_with_null_value_attribute() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = {"test-argument": None}
+
+    mock_dut_config = DutConfig(
+        discriminator="123",
+        setup_code="1234",
+        pairing_mode=DutPairingModeEnum.ON_NETWORK,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    arguments = generate_command_arguments(
+        config=mock_config, omit_commissioning_method=False
+    )
+
+    assert [
+        "--discriminator 123",
+        "--passcode 1234",
+        "--commissioning-method on-network",
+        "--test-argument ",
+    ] == arguments
+
+
+@pytest.mark.asyncio
 async def test_generate_command_arguments_on_network() -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)
