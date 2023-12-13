@@ -22,7 +22,6 @@ import loguru
 
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
-from app.test_engine.logger import test_engine_logger as logger
 
 # Command line params
 RUNNER_CLASS_PATH = "/root/python_testing/test_harness_client.py"
@@ -32,31 +31,6 @@ EXECUTABLE = "python3"
 def generate_command_arguments(
     config: TestEnvironmentConfig, omit_commissioning_method: bool = False
 ) -> list:
-    # All valid arguments for python test
-    valid_args = [
-        "ble_interface_id",
-        "commissioning_method",
-        "controller_node_id",
-        "discriminator",
-        "endpoint",
-        "logs_path",
-        "PICS",
-        "paa_trust_store_path",
-        "timeout",
-        "trace_to",
-        "int_arg",
-        "float_arg",
-        "string_arg",
-        "json_arg",
-        "hex_arg",
-        "bool_arg",
-        "storage_path",
-        "passcode",
-        "dut_node_id",
-        "qr_code",
-        "manual_code",
-    ]
-
     dut_config = config.dut_config
     test_parameters = config.test_parameters
 
@@ -76,13 +50,8 @@ def generate_command_arguments(
     # Retrieve arguments from test_parameters
     if test_parameters:
         for name, value in test_parameters.items():
-            if name in valid_args:
-                if str(value) != "":
-                    arguments.append(f"--{name.replace('_','-')} {str(value)}")
-                else:
-                    arguments.append(f"--{name.replace('_','-')} " "")
-            else:
-                logger.warning(f"Argument {name} is not valid")
+            arg_value = str(value) if str(value) != "" else " "
+            arguments.append(f"--{name} {str(arg_value)}")
 
     return arguments
 
