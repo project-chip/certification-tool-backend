@@ -50,7 +50,7 @@ def generate_command_arguments(
     # Retrieve arguments from test_parameters
     if test_parameters:
         for name, value in test_parameters.items():
-            arg_value = str(value) if str(value) != "" else " "
+            arg_value = str(value) if str(value) != "" else ""
             arguments.append(f"--{name} {str(arg_value)}")
 
     return arguments
