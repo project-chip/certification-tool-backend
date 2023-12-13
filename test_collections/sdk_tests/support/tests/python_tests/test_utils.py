@@ -23,12 +23,41 @@ from test_collections.sdk_tests.support.python_testing.models.utils import (
 
 
 @pytest.mark.asyncio
+async def test_generate_command_arguments_with_null_value_attribute() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = {"test-argument": None}
+
+    mock_dut_config = DutConfig(
+        discriminator="123",
+        setup_code="1234",
+        pairing_mode=DutPairingModeEnum.ON_NETWORK,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    arguments = generate_command_arguments(
+        config=mock_config, omit_commissioning_method=False
+    )
+
+    assert [
+        "--discriminator 123",
+        "--passcode 1234",
+        "--commissioning-method on-network",
+        "--test-argument ",
+    ] == arguments
+
+
+@pytest.mark.asyncio
 async def test_generate_command_arguments_on_network() -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)
 
+    # Using attributes with both - and _ word separators in test_parameters
+    # Both must be considered as python test arguments the way it was configured
     mock_config.test_parameters = {
-        "paa_trust_store_path": "/paa-root-certs",
+        "paa-trust-store-path": "/paa-root-certs",
         "storage_path": "/root/admin_storage.json",
     }
 
@@ -49,7 +78,7 @@ async def test_generate_command_arguments_on_network() -> None:
         "--passcode 1234",
         "--commissioning-method on-network",
         "--paa-trust-store-path /paa-root-certs",
-        "--storage-path /root/admin_storage.json",
+        "--storage_path /root/admin_storage.json",
     ] == arguments
 
 
@@ -59,7 +88,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
     mock_config = default_environment_config.copy(deep=True)
 
     mock_config.test_parameters = {
-        "paa_trust_store_path": "/paa-root-certs",
+        "paa-trust-store-path": "/paa-root-certs",
         "storage_path": "/root/admin_storage.json",
     }
 
@@ -80,7 +109,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
         "--passcode 357",
         "--commissioning-method ble-wifi",
         "--paa-trust-store-path /paa-root-certs",
-        "--storage-path /root/admin_storage.json",
+        "--storage_path /root/admin_storage.json",
     ] == arguments
 
 
@@ -90,7 +119,7 @@ async def test_generate_command_arguments_ble_thread() -> None:
     mock_config = default_environment_config.copy(deep=True)
 
     mock_config.test_parameters = {
-        "paa_trust_store_path": "/paa-root-certs",
+        "paa-trust-store-path": "/paa-root-certs",
         "storage_path": "/root/admin_storage.json",
     }
 
@@ -110,7 +139,7 @@ async def test_generate_command_arguments_ble_thread() -> None:
         "--passcode 8765",
         "--commissioning-method ble-thread",
         "--paa-trust-store-path /paa-root-certs",
-        "--storage-path /root/admin_storage.json",
+        "--storage_path /root/admin_storage.json",
     ] == arguments
 
 
