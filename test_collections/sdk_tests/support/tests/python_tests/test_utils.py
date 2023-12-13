@@ -27,6 +27,8 @@ async def test_generate_command_arguments_on_network() -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)
 
+    # Using attributes with both - and _ word separators in test_parameters
+    # Both must be considered as python test arguments the way it was configured
     mock_config.test_parameters = {
         "paa-trust-store-path": "/paa-root-certs",
         "storage_path": "/root/admin_storage.json",
