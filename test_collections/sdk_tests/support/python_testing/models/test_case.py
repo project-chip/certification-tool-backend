@@ -93,15 +93,22 @@ class PythonTestCase(TestCase):
         pass
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
-        # TODO Handle Logs properly
         self.step_over()
 
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
-        # TODO Handle Logs properly
         self.mark_step_failure("Python test step failure")
-        self.step_over()
+
+        # Python tests with only 2 steps are the ones that don't follow the template.
+        # In the case of a test file with multiple test cases, more than one of these
+        # tests can fail and so this method will be called for each of them. These
+        # failures should be reported in the first step and moving to the logs step
+        # should only happen after all test cases are executed.
+        if len(self.test_steps) > 2:
+            # Python tests stop when there's a failure. We need to skip the next steps
+            # and execute only the last one, which shows the logs
+            self.skip_to_last_step()
 
     def step_unknown(self) -> None:
         self.__runned += 1
@@ -211,6 +218,11 @@ class PythonTestCase(TestCase):
             self.current_test_step.mark_as_completed()
         finally:
             pass
+
+    def skip_to_last_step(self) -> None:
+        self.current_test_step.mark_as_completed()
+        self.current_test_step_index = len(self.test_steps) - 1
+        self.current_test_step.mark_as_executing()
 
     def __handle_update(self, update: SDKPythonTestResultBase) -> None:
         self.__call_function_from_name(update.type.value, update.params_dict())
