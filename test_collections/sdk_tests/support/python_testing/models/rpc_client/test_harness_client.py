@@ -43,12 +43,12 @@ def main() -> None:
     if sys.argv[1] == "commission":
         commission(config)
     else:
-        run_test(test_name=sys.argv[1], config=config)
+        run_test(script_name=sys.argv[1], config=config)
 
 
-def run_test(test_name: str, config: MatterTestConfig) -> None:
-    module = importlib.import_module(test_name)
-    TestClassReference = getattr(module, test_name)
+def run_test(script_name: str, config: MatterTestConfig) -> None:
+    module = importlib.import_module(script_name)
+    TestClassReference = getattr(module, script_name)
 
     BaseManager.register(TestRunnerHooks.__name__)
     manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")

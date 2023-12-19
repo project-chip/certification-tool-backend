@@ -15,12 +15,10 @@
 #
 from pathlib import Path
 
-from loguru import logger
-
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 
-from .models.python_test_parser import PythonParserException, parse_python_test
+from .models.python_test_parser import parse_python_script
 from .models.test_declarations import (
     PythonCaseDeclaration,
     PythonCollectionDeclaration,
@@ -56,13 +54,15 @@ def _init_test_suites(
     }
 
 
-def _parse_python_test_to_test_case_declaration(
+def _parse_python_script_to_test_case_declarations(
     python_test_path: Path, python_test_version: str
-) -> PythonCaseDeclaration:
-    python_test = parse_python_test(python_test_path)
-    return PythonCaseDeclaration(
-        test=python_test, python_test_version=python_test_version
-    )
+) -> list[PythonCaseDeclaration]:
+    python_tests = parse_python_script(python_test_path)
+
+    return [
+        PythonCaseDeclaration(test=python_test, python_test_version=python_test_version)
+        for python_test in python_tests
+    ]
 
 
 def _parse_all_sdk_python_tests(
@@ -72,19 +72,13 @@ def _parse_all_sdk_python_tests(
     suites = _init_test_suites(python_test_version)
 
     for python_test_file in python_test_files:
-        try:
-            test_case = _parse_python_test_to_test_case_declaration(
-                python_test_path=python_test_file,
-                python_test_version=python_test_version,
-            )
+        test_cases = _parse_python_script_to_test_case_declarations(
+            python_test_path=python_test_file,
+            python_test_version=python_test_version,
+        )
 
+        for test_case in test_cases:
             suites[SuiteType.AUTOMATED].add_test_case(test_case)
-        except PythonParserException as e:
-            # If an exception was raised during parse process, the python file will be
-            # ignored and the loop will continue with the next file
-            logger.error(
-                f"Error while parsing Python File: {python_test_file} \nError:{e}"
-            )
 
     return list(suites.values())
 

@@ -42,6 +42,10 @@ from .utils import (
 T = TypeVar("T", bound="PythonTestCase")
 
 
+class PythonTestCaseError(Exception):
+    pass
+
+
 class PythonTestCase(TestCase):
     """Base class for all Python Test based test cases.
 
@@ -172,7 +176,15 @@ class PythonTestCase(TestCase):
             manager.start()
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
-            command = [f"{RUNNER_CLASS_PATH} {self.python_test.name}"]
+            if not self.python_test.path:
+                raise PythonTestCaseError(
+                    f"Missing file path for python test {self.python_test.name}"
+                )
+
+            command = [
+                f"{RUNNER_CLASS_PATH} {self.python_test.path.stem} --tests"
+                f" test_{self.python_test.name}"
+            ]
 
             # Generate the command argument by getting the test_parameters from
             # project configuration
