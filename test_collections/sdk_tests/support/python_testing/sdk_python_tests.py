@@ -17,15 +17,18 @@ from pathlib import Path
 
 from loguru import logger
 
-from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
-from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
-
-from .models.python_test_parser import PythonParserException, parse_python_test
-from .models.test_declarations import (
+from test_collections.sdk_tests.support.models.matter_test_declarations import (
     PythonCaseDeclaration,
     PythonCollectionDeclaration,
     PythonSuiteDeclaration,
 )
+from test_collections.sdk_tests.support.models.matter_test_parser import (
+    MatterTestParserException,
+    parse_python_test,
+)
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
+from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
+
 from .models.test_suite import SuiteType
 
 ###
@@ -79,7 +82,7 @@ def _parse_all_sdk_python_tests(
             )
 
             suites[SuiteType.AUTOMATED].add_test_case(test_case)
-        except PythonParserException as e:
+        except MatterTestParserException as e:
             # If an exception was raised during parse process, the python file will be
             # ignored and the loop will continue with the next file
             logger.error(

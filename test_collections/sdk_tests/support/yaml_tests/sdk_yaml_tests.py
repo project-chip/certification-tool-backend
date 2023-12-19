@@ -18,17 +18,20 @@ from typing import Optional
 
 from loguru import logger
 
-from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
-from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
-from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
-
-from .models.test_declarations import (
+from test_collections.sdk_tests.support.models.matter_test_declarations import (
     YamlCaseDeclaration,
     YamlCollectionDeclaration,
     YamlSuiteDeclaration,
 )
+from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
+from test_collections.sdk_tests.support.models.matter_test_parser import (
+    MatterTestParserException,
+    parse_yaml_test,
+)
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
+from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
+
 from .models.test_suite import SuiteType
-from .models.yaml_test_parser import YamlParserException, parse_yaml_test
 
 ###
 # This file hosts logic load and parse YAML test-cases, located in
@@ -100,7 +103,7 @@ def _parse_all_yaml(
                 suites[SuiteType.SIMULATED].add_test_case(test_case)
             else:
                 suites[SuiteType.AUTOMATED].add_test_case(test_case)
-        except YamlParserException:
+        except MatterTestParserException:
             # If an exception was raised during parse process, the yaml file will be
             # ignored and the loop will continue with the next yaml file
             logger.error(f"Error while parsing YAML File: {yaml_file}")

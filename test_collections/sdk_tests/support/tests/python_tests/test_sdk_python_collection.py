@@ -20,13 +20,13 @@ from unittest import mock
 
 import pytest
 
+from test_collections.sdk_tests.support.models.matter_test_declarations import (
+    PythonCaseDeclaration,
+    PythonCollectionDeclaration,
+)
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     MatterTestType,
-)
-from test_collections.sdk_tests.support.python_testing.models.test_declarations import (
-    PythonCaseDeclaration,
-    PythonCollectionDeclaration,
 )
 from test_collections.sdk_tests.support.python_testing.sdk_python_tests import (
     sdk_python_test_collection,

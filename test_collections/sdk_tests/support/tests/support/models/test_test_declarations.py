@@ -13,49 +13,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# flake8: noqa
-# Ignore flake8 check for this file
 from unittest import mock
 
-from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
-    PythonTest,
+from test_collections.sdk_tests.support.models.matter_test_declarations import (
+    YamlCaseDeclaration,
+    YamlSuiteDeclaration,
 )
-from test_collections.sdk_tests.support.python_testing.models.test_declarations import (
-    PythonCaseDeclaration,
-    PythonSuiteDeclaration,
-)
-from test_collections.sdk_tests.support.python_testing.models.test_suite import (
-    SuiteType,
+from test_collections.sdk_tests.support.yaml_tests.models.test_suite import SuiteType
+from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_models import (
+    YamlTest,
 )
 
 
-def test_python_suite_declaration() -> None:
+def test_yaml_suite_declaration() -> None:
     name = "TestName"
     type = SuiteType.AUTOMATED
     version = "SomeVersionStr"
 
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.test_suite.PythonTestSuite.class_factory"
+        "test_collections.sdk_tests.support.yaml_tests.models."
+        "test_suite.YamlTestSuite.class_factory"
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestSuiteDeclaration.__init__"
     ) as declaration_init:
-        PythonSuiteDeclaration(name=name, suite_type=type, version=version)
+        YamlSuiteDeclaration(name=name, suite_type=type, version=version)
         class_factory.assert_called_once_with(
-            name=name, suite_type=type, python_test_version=version
+            name=name, suite_type=type, yaml_version=version
         )
         declaration_init.assert_called_once()
 
 
-def test_python_case_declaration() -> None:
-    test = PythonTest(
-        name="TestTest", description="TestTest description", config={}, steps=[]
-    )
+def test_yaml_case_declaration() -> None:
+    test = YamlTest(name="TestTest", config={}, tests=[])
     version = "SomeVersionStr"
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.class_factory"
+        "test_collections.sdk_tests.support.yaml_tests.models."
+        "test_case.YamlTestCase.class_factory"
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestCaseDeclaration.__init__"
     ) as declaration_init:
-        PythonCaseDeclaration(test=test, python_test_version=version)
-        class_factory.assert_called_once_with(test=test, python_test_version=version)
+        YamlCaseDeclaration(test=test, yaml_version=version)
+        class_factory.assert_called_once_with(test=test, yaml_version=version)
         declaration_init.assert_called_once()

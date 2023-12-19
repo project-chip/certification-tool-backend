@@ -18,8 +18,8 @@
 from pathlib import Path
 from unittest import mock
 
-from test_collections.sdk_tests.support.python_testing.models.python_test_parser import (
-    PythonParserException,
+from test_collections.sdk_tests.support.models.matter_test_parser import (
+    MatterTestParserException,
     parse_python_test,
 )
 
@@ -62,17 +62,16 @@ class TC_Sample(MatterBaseTest):
 """
 
 
-def test_python_file_parser_throws_pythonparserexception() -> None:
+def test_python_file_parser_throws_MatterTestParserException() -> None:
     file_path = Path("/test/file.py")
 
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
-        "open",
+        "test_collections.sdk_tests.support.models.matter_test_parser.open",
         new=mock.mock_open(read_data=sample_invalid_python_file_content),
     ):
         try:
             parse_python_test(file_path)
-        except PythonParserException as e:
+        except MatterTestParserException as e:
             assert "/test/file.py must have a class named file" == str(e)
 
 
@@ -82,8 +81,7 @@ def test_python_file_parser() -> None:
     # We mock builtin `open` method to read sample python file content,
     # to avoid having to load a real file.
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
-        "open",
+        "test_collections.sdk_tests.support.models.matter_test_parser.open",
         new=mock.mock_open(read_data=sample_python_file_content),
     ) as file_open:
         test = parse_python_test(file_path)

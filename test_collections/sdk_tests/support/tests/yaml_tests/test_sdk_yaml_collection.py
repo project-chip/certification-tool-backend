@@ -18,12 +18,12 @@ from unittest import mock
 
 import pytest
 
-from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
-from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
-from test_collections.sdk_tests.support.yaml_tests.models.test_declarations import (
+from test_collections.sdk_tests.support.models.matter_test_declarations import (
     YamlCaseDeclaration,
     YamlCollectionDeclaration,
 )
+from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
+from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
     sdk_yaml_test_collection,
 )

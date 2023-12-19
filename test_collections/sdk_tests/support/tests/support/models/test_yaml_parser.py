@@ -23,14 +23,14 @@ from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
 )
-from test_collections.sdk_tests.support.tests.yaml_tests.test_test_case import (
-    yaml_test_instance,
-)
-from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_parser import (
-    YamlParserException,
+from test_collections.sdk_tests.support.models.matter_test_parser import (
+    MatterTestParserException,
     YamlTest,
     _test_type,
     parse_yaml_test,
+)
+from test_collections.sdk_tests.support.tests.yaml_tests.test_test_case import (
+    yaml_test_instance,
 )
 
 sample_yaml_file_content = """
@@ -62,7 +62,7 @@ def test_yaml_file_parser_throws_validationexception() -> None:
     mock_validation = ValidationError(errors=[mock.MagicMock()], model=mock.MagicMock())
 
     with mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models.yaml_test_parser.open",
+        "test_collections.sdk_tests.support.models.matter_test_parser.open",
         new=mock.mock_open(read_data=sample_yaml_file_content),
     ), mock.patch(
         "loguru.logger",
@@ -76,7 +76,7 @@ def test_yaml_file_parser_throws_validationexception() -> None:
         attribute="parse_raw",
         side_effect=mock_validation,
     ), pytest.raises(
-        YamlParserException
+        MatterTestParserException
     ) as e:
         parse_yaml_test(file_path)
 
@@ -89,7 +89,7 @@ def test_yaml_file_parser() -> None:
     # We mock builtin `open` method to read sample yaml file content,
     # to avoid having to load a real file.
     with mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models.yaml_test_parser.open",
+        "test_collections.sdk_tests.support.models.matter_test_parser.open",
         new=mock.mock_open(read_data=sample_yaml_file_content),
     ) as file_open:
         test = parse_yaml_test(file_path)
