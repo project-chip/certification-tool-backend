@@ -90,7 +90,7 @@ def __test_classes(module: ast.Module) -> list[ast.ClassDef]:
 
 
 def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
-    """Find methods in the given class that match the pattern "[\S]+_TC_[\S]+".
+    """Find methods in the given class that match the pattern "[\\S]+_TC_[\\S]+".
     These are the methods that are relevant to the parsing.
 
     Args:
@@ -115,7 +115,7 @@ def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
 
 
 def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
-    """Extract test case names from methods that match the pattern "test_TC_[\S]+".
+    """Extract test case names from methods that match the pattern "test_TC_[\\S]+".
 
     Args:
         methods (list[FunctionDefType]): List of methods to search from.
