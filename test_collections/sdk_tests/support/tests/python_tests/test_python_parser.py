@@ -19,27 +19,10 @@ from pathlib import Path
 from unittest import mock
 
 from test_collections.sdk_tests.support.python_testing.models.python_test_parser import (
-    PythonParserException,
-    parse_python_test,
+    parse_python_script,
 )
 
-sample_invalid_python_file_content = """
-class TC_Sample(MatterBaseTest):
-
-    def steps_TC_Sample(self) -> list[TestStep]:
-        steps = [
-            TestStep(1, "Commissioning, already done", is_commissioning=True),
-            TestStep(2, "Second step"),
-            TestStep(3, "Third step"),
-        ]
-        return steps
-
-    def test_steps_TC_Sample(self):
-        print("Test execution")
-
-"""
-
-sample_python_file_content = """
+sample_single_test_python_file_content = """
 class TC_Sample(MatterBaseTest):
 
     def desc_TC_Sample(self) -> str:
@@ -57,26 +40,34 @@ class TC_Sample(MatterBaseTest):
         print("Test execution")
     
     def pics_TC_Sample(self):
-         pics =  ["MCORE.ROLE.COMMISSIONEE"]
+        pics =  ["MCORE.ROLE.COMMISSIONEE"]
+
+"""
+
+sample_multi_tests_python_file_content = """
+class TC_CommonSample(MatterBaseTest):
+
+    def steps_TC_Sample_1_1(self) -> list[TestStep]:
+        steps = [
+            TestStep(1, "Commissioning, already done", is_commissioning=True),
+            TestStep(2, "Second step"),
+            TestStep(3, "Third step"),
+        ]
+        return steps
+
+    def test_TC_ABC_1_1(self):
+        print("Test execution")
+
+    def test_TC_Sample_1_1(self):
+        print("Test execution")
+
+    def test_TC_Sample_1_2(self):
+        print("Test execution")
 
 """
 
 
-def test_python_file_parser_throws_pythonparserexception() -> None:
-    file_path = Path("/test/file.py")
-
-    with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
-        "open",
-        new=mock.mock_open(read_data=sample_invalid_python_file_content),
-    ):
-        try:
-            parse_python_test(file_path)
-        except PythonParserException as e:
-            assert "/test/file.py must have a class named file" == str(e)
-
-
-def test_python_file_parser() -> None:
+def test_single_test_python_file_parser() -> None:
     file_path = Path("/test/TC_Sample.py")
 
     # We mock builtin `open` method to read sample python file content,
@@ -84,9 +75,37 @@ def test_python_file_parser() -> None:
     with mock.patch(
         "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
         "open",
-        new=mock.mock_open(read_data=sample_python_file_content),
+        new=mock.mock_open(read_data=sample_single_test_python_file_content),
     ) as file_open:
-        test = parse_python_test(file_path)
+        tests = parse_python_script(file_path)
 
-        file_open.assert_called_once_with(file_path, "r")
-        assert test.path == file_path
+    file_open.assert_called_once_with(file_path, "r")
+
+    assert len(tests) is 1
+    assert all(test.path == file_path for test in tests)
+    assert len(tests[0].steps) is 3
+    assert tests[0].description == "Sample TC Description"
+    assert "MCORE.ROLE.COMMISSIONEE" in tests[0].PICS
+    assert len(tests[0].PICS) is 1
+
+
+def test_multi_tests_python_file_parser() -> None:
+    file_path = Path("/test/TC_Sample.py")
+
+    # We mock builtin `open` method to read sample python file content,
+    # to avoid having to load a real file.
+    with mock.patch(
+        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
+        "open",
+        new=mock.mock_open(read_data=sample_multi_tests_python_file_content),
+    ) as file_open:
+        tests = parse_python_script(file_path)
+
+    file_open.assert_called_once_with(file_path, "r")
+
+    assert len(tests) is 3
+    assert all(test.path == file_path for test in tests)
+    test_names = [test.name for test in tests]
+    assert "TC_ABC_1_1" in test_names
+    assert "TC_Sample_1_1" in test_names
+    assert "TC_Sample_1_2" in test_names
