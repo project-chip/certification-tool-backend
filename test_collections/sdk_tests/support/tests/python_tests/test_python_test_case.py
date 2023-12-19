@@ -45,6 +45,7 @@ def python_test_instance(
     steps: list[MatterTestStep] = [],
     type: MatterTestType = MatterTestType.AUTOMATED,
     path: Optional[Path] = None,
+    class_name: str = "TC_Test_Python",
 ) -> PythonTest:
     return PythonTest(
         name=name,
@@ -54,6 +55,7 @@ def python_test_instance(
         type=type,
         path=path,
         description=description,
+        class_name=class_name,
     )
 
 
