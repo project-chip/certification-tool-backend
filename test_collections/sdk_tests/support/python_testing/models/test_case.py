@@ -150,7 +150,7 @@ class PythonTestCase(TestCase):
 
     @staticmethod
     def __title(identifier: str) -> str:
-        """Retrieve the test title in format TC_ABC_1_2"""
+        """Retrieve the test title in format TC-ABC-1.2"""
         title: str = ""
         elements = identifier.split("_")
 
@@ -182,8 +182,8 @@ class PythonTestCase(TestCase):
                 )
 
             command = [
-                f"{RUNNER_CLASS_PATH} {self.python_test.path.stem} --tests"
-                f" test_{self.python_test.name}"
+                f"{RUNNER_CLASS_PATH} {self.python_test.path.stem}"
+                f" {self.python_test.class_name} --tests test_{self.python_test.name}"
             ]
 
             # Generate the command argument by getting the test_parameters from

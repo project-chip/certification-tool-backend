@@ -58,13 +58,13 @@ def parse_python_script(path: Path) -> list[PythonTest]:
 
     test_classes = __test_classes(parsed_python_file)
 
+    test_cases: list[PythonTest] = []
     for c in test_classes:
         test_methods = __test_methods(c)
         test_names = __test_case_names(test_methods)
 
-        test_cases: list[PythonTest] = []
         for test_name in test_names:
-            test_cases.append(__parse_test_case(test_name, test_methods, path))
+            test_cases.append(__parse_test_case(test_name, test_methods, c.name, path))
 
     return test_cases
 
@@ -135,7 +135,7 @@ def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
 
 
 def __parse_test_case(
-    tc_name: str, methods: list[FunctionDefType], path: Path
+    tc_name: str, methods: list[FunctionDefType], class_name: str, path: Path
 ) -> PythonTest:
     # Currently config is not configured in Python Testing
     tc_config: dict = {}
@@ -171,6 +171,7 @@ def __parse_test_case(
         PICS=tc_pics,
         path=path,
         type=MatterTestType.AUTOMATED,
+        class_name=class_name,
     )
 
 
