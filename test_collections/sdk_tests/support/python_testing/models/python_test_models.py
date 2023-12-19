@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from enum import Enum
 from typing import Any
 
 from ...models.matter_test_models import MatterTest, MatterTestType
@@ -22,9 +23,16 @@ from ...models.matter_test_models import MatterTest, MatterTestType
 ###
 
 
+class PythonTestType(Enum):
+    COMMISSIONING = 1
+    NO_COMMISSIONING = 2
+    LEGACY = 3
+
+
 class PythonTest(MatterTest):
     description: str
     class_name: str
+    python_type: PythonTestType
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
