@@ -43,7 +43,7 @@ def parse_python_script(path: Path) -> list[PythonTest]:
     This method will search the file for classes that inherit from MatterBaseTest and
     then look for methods with the following patterns to extract the needed information:
      * test_[test_name] - (required) This method contains the test logic
-     * desc_[test_name] - (optional) This method should return a string with the test
+     * desc_[test_name] - (required) This method should return a string with the test
         description
      * pics_[test_name] - (optional) This method should return a list of strings with
         the PICS required for the test case
