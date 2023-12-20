@@ -33,10 +33,10 @@ from ..yaml_tests.models.yaml_test_models import YamlTest
 from .matter_test_models import MatterTestType
 
 
-class YamlCollectionDeclaration(TestCollectionDeclaration):
+class MatterCollectionDeclaration(TestCollectionDeclaration):
     def __init__(self, folder: SDKTestFolder, name: str) -> None:
         super().__init__(path=str(folder.path), name=name)
-        self.yaml_version = folder.version
+        self.version = folder.version
 
 
 class YamlSuiteDeclaration(TestSuiteDeclaration):
@@ -67,12 +67,6 @@ class YamlCaseDeclaration(TestCaseDeclaration):
     @property
     def test_type(self) -> MatterTestType:
         return self.class_ref.yaml_test.type
-
-
-class PythonCollectionDeclaration(TestCollectionDeclaration):
-    def __init__(self, folder: SDKTestFolder, name: str) -> None:
-        super().__init__(path=str(folder.path), name=name)
-        self.python_test_version = folder.version
 
 
 class PythonSuiteDeclaration(TestSuiteDeclaration):

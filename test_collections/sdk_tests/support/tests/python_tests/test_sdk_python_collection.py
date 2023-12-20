@@ -22,7 +22,7 @@ import pytest
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
     PythonCaseDeclaration,
-    PythonCollectionDeclaration,
+    MatterCollectionDeclaration,
 )
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
@@ -34,7 +34,7 @@ from test_collections.sdk_tests.support.python_testing.sdk_python_tests import (
 
 
 @pytest.fixture
-def python_test_collection() -> PythonCollectionDeclaration:
+def python_test_collection() -> MatterCollectionDeclaration:
     test_sdk_python_path = Path(__file__).parent / "test_python_script"
     with mock.patch.object(Path, "exists", return_value=True), mock.patch(
         "test_collections.sdk_tests.support.models.sdk_test_folder.open",
@@ -45,14 +45,14 @@ def python_test_collection() -> PythonCollectionDeclaration:
 
 
 def test_sdk_python_test_collection(
-    python_test_collection: PythonCollectionDeclaration,
+    python_test_collection: MatterCollectionDeclaration,
 ) -> None:
     assert python_test_collection.name == "SDK Python Tests"
     assert len(python_test_collection.test_suites.keys()) == 1
-    assert python_test_collection.python_test_version == "unit-test-python-version"
+    assert python_test_collection.version == "unit-test-python-version"
 
 
-def test_automated_suite(python_test_collection: PythonCollectionDeclaration) -> None:
+def test_automated_suite(python_test_collection: MatterCollectionDeclaration) -> None:
     expected_automated_test_cases = 1
 
     # Assert automated tests cases

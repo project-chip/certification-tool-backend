@@ -20,7 +20,7 @@ import pytest
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
     YamlCaseDeclaration,
-    YamlCollectionDeclaration,
+    MatterCollectionDeclaration,
 )
 from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
@@ -30,7 +30,7 @@ from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
 
 
 @pytest.fixture
-def yaml_collection() -> YamlCollectionDeclaration:
+def yaml_collection() -> MatterCollectionDeclaration:
     test_sdk_yaml_path = Path(__file__).parent / "test_yamls"
     with mock.patch.object(Path, "exists", return_value=True), mock.patch(
         "test_collections.sdk_tests.support.models.sdk_test_folder.open",
@@ -43,14 +43,14 @@ def yaml_collection() -> YamlCollectionDeclaration:
 
 
 def test_sdk_yaml_collection(
-    yaml_collection: YamlCollectionDeclaration,
+    yaml_collection: MatterCollectionDeclaration,
 ) -> None:
     assert yaml_collection.name == "SDK YAML Tests"
     assert len(yaml_collection.test_suites.keys()) == 3
     assert yaml_collection.yaml_version == "unit-test-yaml-version"
 
 
-def test_manual_suite(yaml_collection: YamlCollectionDeclaration) -> None:
+def test_manual_suite(yaml_collection: MatterCollectionDeclaration) -> None:
     expected_manual_test_cases = 2
 
     assert "FirstManualSuite" in yaml_collection.test_suites.keys()
@@ -61,7 +61,7 @@ def test_manual_suite(yaml_collection: YamlCollectionDeclaration) -> None:
         assert test_case.test_type == MatterTestType.MANUAL
 
 
-def test_automated_suite(yaml_collection: YamlCollectionDeclaration) -> None:
+def test_automated_suite(yaml_collection: MatterCollectionDeclaration) -> None:
     expected_manual_test_cases = 0
     expected_automated_test_cases = 3
     expected_semi_automated_test_cases = 1
@@ -88,7 +88,7 @@ def test_automated_suite(yaml_collection: YamlCollectionDeclaration) -> None:
     assert type_count[MatterTestType.MANUAL] == expected_manual_test_cases
 
 
-def test_simulated_suite(yaml_collection: YamlCollectionDeclaration) -> None:
+def test_simulated_suite(yaml_collection: MatterCollectionDeclaration) -> None:
     expected_simulated_test_cases = 1
 
     assert "FirstAppSuite" in yaml_collection.test_suites.keys()

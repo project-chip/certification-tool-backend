@@ -19,7 +19,7 @@ from loguru import logger
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
     PythonCaseDeclaration,
-    PythonCollectionDeclaration,
+    MatterCollectionDeclaration,
     PythonSuiteDeclaration,
 )
 from test_collections.sdk_tests.support.models.matter_test_parser import (
@@ -94,9 +94,9 @@ def _parse_all_sdk_python_tests(
 
 def sdk_python_test_collection(
     python_test_folder: SDKTestFolder = SDK_PYTHON_TEST_FOLDER,
-) -> PythonCollectionDeclaration:
+) -> MatterCollectionDeclaration:
     """Declare a new collection of test suites."""
-    collection = PythonCollectionDeclaration(
+    collection = MatterCollectionDeclaration(
         name="SDK Python Tests", folder=python_test_folder
     )
 

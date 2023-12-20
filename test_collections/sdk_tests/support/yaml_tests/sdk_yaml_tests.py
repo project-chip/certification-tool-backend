@@ -20,7 +20,7 @@ from loguru import logger
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
     YamlCaseDeclaration,
-    YamlCollectionDeclaration,
+    MatterCollectionDeclaration,
     YamlSuiteDeclaration,
 )
 from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
@@ -113,9 +113,9 @@ def _parse_all_yaml(
 
 def sdk_yaml_test_collection(
     yaml_test_folder: SDKTestFolder = SDK_YAML_TEST_FOLDER,
-) -> YamlCollectionDeclaration:
+) -> MatterCollectionDeclaration:
     """Declare a new collection of test suites with the 3 test suites."""
-    collection = YamlCollectionDeclaration(
+    collection = MatterCollectionDeclaration(
         name="SDK YAML Tests", folder=yaml_test_folder
     )
 
@@ -132,9 +132,9 @@ def sdk_yaml_test_collection(
 
 def custom_yaml_test_collection(
     yaml_test_folder: SDKTestFolder = CUSTOM_YAML_TEST_FOLDER,
-) -> Optional[YamlCollectionDeclaration]:
+) -> Optional[MatterCollectionDeclaration]:
     """Declare a new collection of test suites."""
-    collection = YamlCollectionDeclaration(
+    collection = MatterCollectionDeclaration(
         name="Custom YAML Tests", folder=yaml_test_folder
     )
 
