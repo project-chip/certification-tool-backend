@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from typing import Optional
+
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
 
 from .sdk_python_tests import custom_python_test_collection, sdk_python_test_collection
