@@ -118,14 +118,14 @@ def sdk_python_test_collection(
 
 
 def custom_python_test_collection(
-    yaml_test_folder: SDKTestFolder = CUSTOM_PYTHON_TEST_FOLDER,
+    python_test_folder: SDKTestFolder = CUSTOM_PYTHON_TEST_FOLDER,
 ) -> Optional[PythonCollectionDeclaration]:
     """Declare a new collection of test suites."""
     collection = PythonCollectionDeclaration(
-        name="Custom Python Tests", folder=yaml_test_folder
+        name="Custom Python Tests", folder=python_test_folder
     )
 
-    files = yaml_test_folder.file_paths(extension=".py")
+    files = python_test_folder.file_paths(extension=".py")
     suites = _parse_all_sdk_python_tests(
         python_test_files=files, python_test_version="custom"
     )
