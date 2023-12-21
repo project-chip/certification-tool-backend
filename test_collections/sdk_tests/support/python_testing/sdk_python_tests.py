@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from pathlib import Path
+from typing import Optional
 
 from loguru import logger
 
@@ -43,9 +44,15 @@ from test_collections.sdk_tests.support.python_testing.models.python_test_parser
 #        - Automated
 ###
 
-SDK_PYTHON_TEST_PATH = SDK_CHECKOUT_PATH / Path("python_testing/scripts/sdk")
+PYTHON_TEST_PATH = SDK_CHECKOUT_PATH / "python_testing/scripts"
+SDK_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "sdk"
 SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
     path=SDK_PYTHON_TEST_PATH, filename_pattern="TC*"
+)
+
+CUSTOM_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "custom"
+CUSTOM_PYTHON_TEST_FOLDER = SDKTestFolder(
+    path=CUSTOM_PYTHON_TEST_PATH, filename_pattern="TC*"
 )
 
 
@@ -112,5 +119,30 @@ def sdk_python_test_collection(
     for suite in suites:
         suite.sort_test_cases()
         collection.add_test_suite(suite)
+
+    return collection
+
+
+def custom_python_test_collection(
+    python_test_folder: SDKTestFolder = CUSTOM_PYTHON_TEST_FOLDER,
+) -> Optional[MatterCollectionDeclaration]:
+    """Declare a new collection of test suites."""
+    collection = MatterCollectionDeclaration(
+        name="Custom SDK Python Tests", folder=python_test_folder
+    )
+
+    files = python_test_folder.file_paths(extension=".py")
+    suites = _parse_all_sdk_python_tests(
+        python_test_files=files, python_test_version="custom"
+    )
+
+    for suite in suites:
+        if not suite.test_cases:
+            continue
+        suite.sort_test_cases()
+        collection.add_test_suite(suite)
+
+    if not collection.test_suites:
+        return None
 
     return collection

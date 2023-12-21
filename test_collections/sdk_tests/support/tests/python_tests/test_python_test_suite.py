@@ -25,6 +25,9 @@ from app.schemas import PICS
 from app.test_engine.logger import test_engine_logger
 from app.tests.utils.test_pics_data import create_random_pics
 from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip_tool.exec_run_in_container import (
+    ExecResultExtended,
+)
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
     PythonTestSuite,
     SuiteType,
@@ -167,6 +170,7 @@ async def test_commission_device() -> None:
     command_args = ["arg1", "arg2", "arg3"]
     expected_command = [f"{RUNNER_CLASS_PATH} commission"]
     expected_command.extend(command_args)
+    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     suite = PythonTestSuite(TestSuiteExecution())
 
@@ -174,7 +178,7 @@ async def test_commission_device() -> None:
         target="test_collections.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config"
     ), mock.patch.object(
-        target=chip_tool, attribute="send_command"
+        target=chip_tool, attribute="send_command", return_value=mock_result
     ) as mock_send_command, mock.patch(
         target="test_collections.sdk_tests.support.python_testing.models.test_suite"
         ".generate_command_arguments",

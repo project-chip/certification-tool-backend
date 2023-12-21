@@ -44,6 +44,10 @@ class SuiteType(Enum):
     MANUAL = 3
 
 
+class DUTCommissioningError(Exception):
+    pass
+
+
 # Custom Type variable used to annotate the factory methods of classmethod.
 T = TypeVar("T", bound="MatterTestSuite")
 
@@ -172,3 +176,8 @@ class PythonTestSuite(MatterTestSuite):
         )
 
         handle_logs(cast(Generator, exec_result.output), logger)
+
+        exit_code = self.chip_tool.exec_exit_code(exec_result.exec_id)
+
+        if exit_code:
+            raise DUTCommissioningError("Failed to commission DUT")
