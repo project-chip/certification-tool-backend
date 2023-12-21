@@ -24,6 +24,7 @@ from ...models.matter_test_models import MatterTest, MatterTestType
 
 class PythonTest(MatterTest):
     description: str
+    class_name: str
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
