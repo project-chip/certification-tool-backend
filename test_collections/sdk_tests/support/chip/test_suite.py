@@ -55,7 +55,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         # Use test engine logger to log all events to test run.
         self.chip_tool.logger = logger
         await self.chip_tool.start_server(
-            self.test_type, self.config.dut_config.chip_tool_use_paa_certs
+            self.test_type, self.config.dut_config.chip_use_paa_certs
         )
 
         if len(self.pics.clusters) > 0:
