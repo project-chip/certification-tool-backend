@@ -122,7 +122,7 @@ def custom_python_test_collection(
 ) -> Optional[PythonCollectionDeclaration]:
     """Declare a new collection of test suites."""
     collection = PythonCollectionDeclaration(
-        name="Custom Python Tests", folder=python_test_folder
+        name="Custom SDK Python Tests", folder=python_test_folder
     )
 
     files = python_test_folder.file_paths(extension=".py")
