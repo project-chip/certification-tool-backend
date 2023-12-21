@@ -20,32 +20,61 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
+from test_collections.sdk_tests.support.models.matter_test_suite import (
+    MatterTestSuite,
+    SuiteFamilyType,
+    SuiteType,
+)
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 
-from .python_test_models import MatterTestType, PythonTest
-from .test_case import PythonTestCase
-from .test_suite import PythonTestSuite, SuiteType
+from ..python_testing.models.python_test_models import PythonTest
+from ..python_testing.models.test_case import PythonTestCase
+from ..yaml_tests.models.test_case import YamlTestCase
+from ..yaml_tests.models.yaml_test_models import YamlTest
+from .matter_test_models import MatterTestType
 
 
-class PythonCollectionDeclaration(TestCollectionDeclaration):
+class MatterCollectionDeclaration(TestCollectionDeclaration):
     def __init__(self, folder: SDKTestFolder, name: str) -> None:
         super().__init__(path=str(folder.path), name=name)
-        self.python_test_version = folder.version
+        self.version = folder.version
 
 
-class PythonSuiteDeclaration(TestSuiteDeclaration):
-    """Direct initialization for Python Test Suite."""
+class MatterSuiteDeclaration(TestSuiteDeclaration):
+    """Direct initialization for YAML Test Suite."""
 
-    class_ref: Type[PythonTestSuite]
+    class_ref: Type[MatterTestSuite]
 
-    def __init__(self, name: str, suite_type: SuiteType, version: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        suite_family_type: SuiteFamilyType,
+        suite_type: SuiteType,
+        version: str,
+    ) -> None:
         super().__init__(
-            PythonTestSuite.class_factory(
+            MatterTestSuite.class_factory(
                 name=name,
+                suite_family_type=suite_family_type,
                 suite_type=suite_type,
-                python_test_version=version,
+                version=version,
             )
         )
+
+
+class YamlCaseDeclaration(TestCaseDeclaration):
+    """Direct initialization for YAML Test Case."""
+
+    class_ref: Type[YamlTestCase]
+
+    def __init__(self, test: YamlTest, yaml_version: str) -> None:
+        super().__init__(
+            YamlTestCase.class_factory(test=test, yaml_version=yaml_version)
+        )
+
+    @property
+    def test_type(self) -> MatterTestType:
+        return self.class_ref.yaml_test.type
 
 
 class PythonCaseDeclaration(TestCaseDeclaration):

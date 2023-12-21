@@ -17,11 +17,7 @@ import ast
 from pathlib import Path
 from typing import List, Optional
 
-from test_collections.sdk_tests.support.models.matter_test_models import (
-    MatterTestStep,
-    MatterTestType,
-)
-
+from ...models.matter_test_models import MatterTestStep, MatterTestType
 from .python_test_models import PythonTest
 
 ARG_STEP_DESCRIPTION_INDEX = 1
@@ -29,8 +25,8 @@ KEYWORD_IS_COMISSIONING_INDEX = 0
 BODY_INDEX = 0
 
 
-class PythonParserException(Exception):
-    """Raised when an error occurs during the parser of python file."""
+class PythonTestParserException(Exception):
+    """Raised when an error occurs during the parser of python test file."""
 
 
 def parse_python_test(path: Path) -> PythonTest:
@@ -57,7 +53,9 @@ def parse_python_test(path: Path) -> PythonTest:
     try:
         class_ = next(c for c in classes if tc_name in c.name)
     except StopIteration as si:  # Raised when `next` doesn't find a matching method
-        raise PythonParserException(f"{path} must have a class named {tc_name}") from si
+        raise PythonTestParserException(
+            f"{path} must have a class named {tc_name}"
+        ) from si
 
     return __parse_test_case_from_class(class_=class_, path=path, tc_name=tc_name)
 

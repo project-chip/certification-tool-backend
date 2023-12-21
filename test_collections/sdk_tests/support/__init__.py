@@ -16,8 +16,20 @@
 from typing import Optional
 
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
+from test_collections.sdk_tests.support.python_testing.sdk_python_tests import (
+    sdk_python_test_collection,
+    custom_python_test_collection,
+)
+from test_collections.sdk_tests.support.yaml_tests.sdk_yaml_tests import (
+    custom_yaml_test_collection,
+    sdk_yaml_test_collection,
+)
 
-from .sdk_python_tests import custom_python_test_collection, sdk_python_test_collection
+# Test engine will auto load TestCollectionDeclarations declared inside the package
+# initializer
+sdk_collection: TestCollectionDeclaration = sdk_yaml_test_collection()
+
+custom_collection: Optional[TestCollectionDeclaration] = custom_yaml_test_collection()
 
 # Test engine will auto load TestCollectionDeclarations declared inside the package
 # initializer

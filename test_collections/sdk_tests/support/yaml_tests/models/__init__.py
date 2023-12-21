@@ -13,5 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from test_collections.sdk_tests.support.models.matter_test_suite import (
+    MatterTestSuite,
+    SuiteType,
+)
+
 from .test_case import YamlTestCase
-from .test_suite import SuiteType, YamlTestSuite

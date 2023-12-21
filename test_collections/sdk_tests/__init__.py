@@ -13,5 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .support.python_testing import custom_python_collection, sdk_python_collection
-from .support.yaml_tests import custom_collection, sdk_collection
+from ..sdk_tests.support import (
+    custom_collection,
+    sdk_collection,
+    sdk_python_collection,
+    custom_python_collection,
+)

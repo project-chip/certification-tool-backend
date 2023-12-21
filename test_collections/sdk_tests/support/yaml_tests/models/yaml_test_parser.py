@@ -23,8 +23,8 @@ from test_collections.sdk_tests.support.models.matter_test_models import MatterT
 from .yaml_test_models import YamlTest
 
 
-class YamlParserException(Exception):
-    """Raised when an error occurs during the parser of yaml file."""
+class YamlTestParserException(Exception):
+    """Raised when an error occurs during the parser of yaml test file."""
 
 
 def _test_type(test: YamlTest) -> MatterTestType:
@@ -72,6 +72,6 @@ def parse_yaml_test(path: Path) -> YamlTest:
             test.type = _test_type(test)
         except ValidationError as e:
             logger.error(str(e))
-            raise YamlParserException(f"The YAML file {path} is invalid") from e
+            raise YamlTestParserException(f"The YAML file {path} is invalid") from e
 
         return test
