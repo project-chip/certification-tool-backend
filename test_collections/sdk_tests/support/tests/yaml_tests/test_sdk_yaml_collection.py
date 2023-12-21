@@ -19,8 +19,8 @@ from unittest import mock
 import pytest
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
-    YamlCaseDeclaration,
     MatterCollectionDeclaration,
+    YamlCaseDeclaration,
 )
 from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder

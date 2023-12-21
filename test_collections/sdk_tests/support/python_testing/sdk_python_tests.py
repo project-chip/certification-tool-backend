@@ -18,18 +18,20 @@ from pathlib import Path
 from loguru import logger
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
-    PythonCaseDeclaration,
     MatterCollectionDeclaration,
-    PythonSuiteDeclaration,
+    MatterSuiteDeclaration,
+    PythonCaseDeclaration,
 )
-from test_collections.sdk_tests.support.models.matter_test_parser import (
-    MatterTestParserException,
-    parse_python_test,
+from test_collections.sdk_tests.support.models.matter_test_suite import (
+    SuiteFamilyType,
+    SuiteType,
 )
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
-
-from .models.test_suite import SuiteType
+from test_collections.sdk_tests.support.python_testing.models.python_test_parser import (
+    PythonTestParserException,
+    parse_python_test,
+)
 
 ###
 # This file hosts logic to load and parse Python test cases, located in
@@ -49,10 +51,11 @@ SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
 
 def _init_test_suites(
     python_test_version: str,
-) -> dict[SuiteType, PythonSuiteDeclaration]:
+) -> dict[SuiteType, MatterSuiteDeclaration]:
     return {
-        SuiteType.AUTOMATED: PythonSuiteDeclaration(
+        SuiteType.AUTOMATED: MatterSuiteDeclaration(
             name="Python Testing Suite",
+            suite_family_type=SuiteFamilyType.PYTHON,
             suite_type=SuiteType.AUTOMATED,
             version=python_test_version,
         ),
@@ -70,7 +73,7 @@ def _parse_python_test_to_test_case_declaration(
 
 def _parse_all_sdk_python_tests(
     python_test_files: list[Path], python_test_version: str
-) -> list[PythonSuiteDeclaration]:
+) -> list[MatterSuiteDeclaration]:
     """Parse all python test files and add them into Automated Suite"""
     suites = _init_test_suites(python_test_version)
 
@@ -82,7 +85,7 @@ def _parse_all_sdk_python_tests(
             )
 
             suites[SuiteType.AUTOMATED].add_test_case(test_case)
-        except MatterTestParserException as e:
+        except PythonTestParserException as e:
             # If an exception was raised during parse process, the python file will be
             # ignored and the loop will continue with the next file
             logger.error(

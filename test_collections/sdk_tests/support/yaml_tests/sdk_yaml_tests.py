@@ -19,19 +19,21 @@ from typing import Optional
 from loguru import logger
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
-    YamlCaseDeclaration,
     MatterCollectionDeclaration,
-    YamlSuiteDeclaration,
+    MatterSuiteDeclaration,
+    YamlCaseDeclaration,
 )
 from test_collections.sdk_tests.support.models.matter_test_models import MatterTestType
-from test_collections.sdk_tests.support.models.matter_test_parser import (
-    MatterTestParserException,
-    parse_yaml_test,
+from test_collections.sdk_tests.support.models.matter_test_suite import (
+    SuiteFamilyType,
+    SuiteType,
 )
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
-
-from .models.test_suite import SuiteType
+from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_parser import (
+    YamlTestParserException,
+    parse_yaml_test,
+)
 
 ###
 # This file hosts logic load and parse YAML test-cases, located in
@@ -54,20 +56,23 @@ CUSTOM_YAML_TEST_FOLDER = SDKTestFolder(
 )
 
 
-def _init_test_suites(yaml_version: str) -> dict[SuiteType, YamlSuiteDeclaration]:
+def _init_test_suites(yaml_version: str) -> dict[SuiteType, MatterSuiteDeclaration]:
     return {
-        SuiteType.MANUAL: YamlSuiteDeclaration(
+        SuiteType.MANUAL: MatterSuiteDeclaration(
             name="FirstManualSuite",
+            suite_family_type=SuiteFamilyType.YAML,
             suite_type=SuiteType.MANUAL,
             version=yaml_version,
         ),
-        SuiteType.AUTOMATED: YamlSuiteDeclaration(
+        SuiteType.AUTOMATED: MatterSuiteDeclaration(
             name="FirstChipToolSuite",
+            suite_family_type=SuiteFamilyType.YAML,
             suite_type=SuiteType.AUTOMATED,
             version=yaml_version,
         ),
-        SuiteType.SIMULATED: YamlSuiteDeclaration(
+        SuiteType.SIMULATED: MatterSuiteDeclaration(
             name="FirstAppSuite",
+            suite_family_type=SuiteFamilyType.YAML,
             suite_type=SuiteType.SIMULATED,
             version=yaml_version,
         ),
@@ -83,7 +88,7 @@ def _parse_yaml_to_test_case_declaration(
 
 def _parse_all_yaml(
     yaml_files: list[Path], yaml_version: str
-) -> list[YamlSuiteDeclaration]:
+) -> list[MatterSuiteDeclaration]:
     """Parse all yaml files and organize them in the 3 test suites:
     - Automated and Semi-Automated using Chip-Tool
     - Simulated using Chip-App1
@@ -103,7 +108,7 @@ def _parse_all_yaml(
                 suites[SuiteType.SIMULATED].add_test_case(test_case)
             else:
                 suites[SuiteType.AUTOMATED].add_test_case(test_case)
-        except MatterTestParserException:
+        except YamlTestParserException:
             # If an exception was raised during parse process, the yaml file will be
             # ignored and the loop will continue with the next yaml file
             logger.error(f"Error while parsing YAML File: {yaml_file}")

@@ -17,20 +17,16 @@ import ast
 from pathlib import Path
 from typing import List, Optional
 
-from loguru import logger
-from pydantic import ValidationError
-
-from ..python_testing.models.python_test_models import PythonTest
-from ..yaml_tests.models.yaml_test_models import YamlTest
-from .matter_test_models import MatterTestStep, MatterTestType
+from ...models.matter_test_models import MatterTestStep, MatterTestType
+from .python_test_models import PythonTest
 
 ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
 BODY_INDEX = 0
 
 
-class MatterTestParserException(Exception):
-    """Raised when an error occurs during the parser of test file."""
+class PythonTestParserException(Exception):
+    """Raised when an error occurs during the parser of python test file."""
 
 
 def parse_python_test(path: Path) -> PythonTest:
@@ -57,7 +53,7 @@ def parse_python_test(path: Path) -> PythonTest:
     try:
         class_ = next(c for c in classes if tc_name in c.name)
     except StopIteration as si:  # Raised when `next` doesn't find a matching method
-        raise MatterTestParserException(
+        raise PythonTestParserException(
             f"{path} must have a class named {tc_name}"
         ) from si
 
@@ -138,53 +134,3 @@ def __retrieve_pics(method: ast.FunctionDef) -> list:
         python_steps.append(step.value)
 
     return python_steps
-
-
-def _test_type(test: YamlTest) -> MatterTestType:
-    """Determine the type of a test based on the parsed yaml.
-
-    This is mainly determined by the number of disabled test steps.
-
-    Args:
-        test (YamlTest): parsed yaml model
-
-    Returns:
-        TestType:
-            - Manual: All steps disabled
-            - Semi-Automated: some steps are disabled
-            - Automated: no disabled steps
-            - Simulated: Tests where file name have "Simulated"
-    """
-    if test.path is not None and "Simulated" in str(test.path):
-        return MatterTestType.SIMULATED
-
-    steps = test.steps
-
-    # If all disabled:
-    if all(s.disabled is True for s in steps):
-        return MatterTestType.MANUAL
-
-    # if any step has a UserPrompt, categorize as semi-automated
-    if any(s.command == "UserPrompt" for s in steps):
-        return MatterTestType.SEMI_AUTOMATED
-
-    # Otherwise Automated
-    return MatterTestType.AUTOMATED
-
-
-def parse_yaml_test(path: Path) -> YamlTest:
-    """Parse a single YAML file into YamlTest model.
-
-    This will also annotate parsed yaml with it's path and test type.
-    """
-    with open(path, "r") as file:
-        try:
-            yaml_str = file.read()
-            test = YamlTest.parse_raw(yaml_str, proto="yaml")
-            test.path = path
-            test.type = _test_type(test)
-        except ValidationError as e:
-            logger.error(str(e))
-            raise MatterTestParserException(f"The YAML file {path} is invalid") from e
-
-        return test

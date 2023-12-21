@@ -21,8 +21,8 @@ from unittest import mock
 import pytest
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
-    PythonCaseDeclaration,
     MatterCollectionDeclaration,
+    PythonCaseDeclaration,
 )
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (

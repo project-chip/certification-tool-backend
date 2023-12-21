@@ -16,8 +16,8 @@
 from unittest import mock
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
+    MatterSuiteDeclaration,
     YamlCaseDeclaration,
-    YamlSuiteDeclaration,
 )
 from test_collections.sdk_tests.support.yaml_tests.models.test_suite import SuiteType
 from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_models import (
@@ -36,7 +36,7 @@ def test_yaml_suite_declaration() -> None:
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestSuiteDeclaration.__init__"
     ) as declaration_init:
-        YamlSuiteDeclaration(name=name, suite_type=type, version=version)
+        MatterSuiteDeclaration(name=name, suite_type=type, version=version)
         class_factory.assert_called_once_with(
             name=name, suite_type=type, yaml_version=version
         )

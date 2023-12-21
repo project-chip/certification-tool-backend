@@ -19,8 +19,9 @@ from typing import Generator, Type, TypeVar, cast
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from test_collections.sdk_tests.support.chip_tool import ChipTool
-
-from .utils import (
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip_tool.test_suite import ChipToolSuite
+from test_collections.sdk_tests.support.python_testing.models.utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
     generate_command_arguments,
@@ -28,36 +29,72 @@ from .utils import (
 )
 
 
+class MatterTestSuiteFactoryError(Exception):
+    pass
+
+
+class SuiteFamilyType(Enum):
+    YAML = 1
+    PYTHON = 2
+
+
 class SuiteType(Enum):
-    AUTOMATED = 1
+    SIMULATED = 1
+    AUTOMATED = 2
+    MANUAL = 3
 
 
 # Custom Type variable used to annotate the factory methods of classmethod.
-T = TypeVar("T", bound="PythonTestSuite")
+T = TypeVar("T", bound="MatterTestSuite")
 
 
-class PythonTestSuite(TestSuite):
-    """Base class for all Python tests based test suites.
+class MatterTestSuite(TestSuite):
+    """Base class for all YAML based test suites.
 
     This class provides a class factory that will dynamically declare a new sub-class
     based on the suite-type.
     """
 
-    python_test_version: str
+    version: str
     suite_name: str
-    chip_tool: ChipTool = ChipTool(logger)
+
+    async def setup(self) -> None:
+        """Override Setup to log YAML version."""
+        logger.info(f"YAML Version: {self.version}")
 
     @classmethod
     def class_factory(
-        cls, suite_type: SuiteType, name: str, python_test_version: str
+        cls,
+        suite_family_type: SuiteFamilyType,
+        suite_type: SuiteType,
+        name: str,
+        version: str,
     ) -> Type[T]:
         """Dynamically declares a subclass based on the type of test suite."""
+        suite_class = MatterTestSuite
+
+        if suite_family_type == SuiteFamilyType.YAML:
+            if suite_type == SuiteType.MANUAL:
+                suite_class = ManualYamlTestSuite
+            elif suite_type == SuiteType.SIMULATED:
+                suite_class = SimulatedYamlTestSuite
+            elif suite_type == SuiteType.AUTOMATED:
+                suite_class = ChipToolYamlTestSuite
+        else:
+            suite_class = PythonTestSuite
+
+        return suite_class.__class_factory(name=name, version=version)
+
+    @classmethod
+    def __class_factory(cls, name: str, version: str) -> Type[T]:
+        """Common class factory method for all subclasses of YamlTestSuite."""
+
         return type(
             name,
             (cls,),
             {
                 "name": name,
-                "python_test_version": python_test_version,
+                "version": version,
                 "metadata": {
                     "public_id": name,
                     "version": "0.0.1",
@@ -67,10 +104,42 @@ class PythonTestSuite(TestSuite):
             },
         )
 
+
+class ManualYamlTestSuite(MatterTestSuite):
+    async def setup(self) -> None:
+        await super().setup()
+        logger.info("This is the MANUAL test suite setup.")
+
+    async def cleanup(self) -> None:
+        logger.info("This is the MANUAL test suite cleanup.")
+
+
+class ChipToolYamlTestSuite(MatterTestSuite, ChipToolSuite):
+    test_type = ChipToolTestType.CHIP_TOOL
+
+    async def setup(self) -> None:
+        """Due top multi inheritance, we need to call setup on both super classes."""
+        await MatterTestSuite.setup(self)
+        await ChipToolSuite.setup(self)
+
+
+class SimulatedYamlTestSuite(ChipToolYamlTestSuite):
+    test_type = ChipToolTestType.CHIP_APP
+
+
+class PythonTestSuite(MatterTestSuite):
+    """Base class for all Python tests based test suites.
+
+    This class provides a class factory that will dynamically declare a new sub-class
+    based on the suite-type.
+    """
+
+    chip_tool: ChipTool = ChipTool(logger)
+
     async def setup(self) -> None:
         """Override Setup to log Python Test version and set PICS."""
         logger.info("Suite Setup")
-        logger.info(f"Python Test Version: {self.python_test_version}")
+        logger.info(f"Python Test Version: {self.version}")
 
         logger.info("Starting SDK container")
         await self.chip_tool.start_container()

@@ -18,8 +18,8 @@
 from unittest import mock
 
 from test_collections.sdk_tests.support.models.matter_test_declarations import (
+    MatterSuiteDeclaration,
     PythonCaseDeclaration,
-    PythonSuiteDeclaration,
 )
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     PythonTest,
@@ -39,7 +39,7 @@ def test_python_suite_declaration() -> None:
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestSuiteDeclaration.__init__"
     ) as declaration_init:
-        PythonSuiteDeclaration(name=name, suite_type=type, version=version)
+        MatterSuiteDeclaration(name=name, suite_type=type, version=version)
         class_factory.assert_called_once_with(
             name=name, suite_type=type, python_test_version=version
         )
