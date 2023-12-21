@@ -20,21 +20,16 @@ from unittest import mock
 
 import pytest
 
+from app.default_environment_config import default_environment_config
 from app.models.test_suite_execution import TestSuiteExecution
 from app.schemas import PICS
 from app.test_engine.logger import test_engine_logger
 from app.tests.utils.test_pics_data import create_random_pics
 from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTool
-from test_collections.sdk_tests.support.chip_tool.exec_run_in_container import (
-    ExecResultExtended,
-)
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
+    CommissioningPythonTestSuite,
     PythonTestSuite,
     SuiteType,
-)
-from test_collections.sdk_tests.support.python_testing.models.utils import (
-    EXECUTABLE,
-    RUNNER_CLASS_PATH,
 )
 
 
@@ -44,7 +39,7 @@ def test_python_suite_class_factory_name() -> None:
 
     # Create a subclass of PythonTestSuite
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=SuiteType.AUTOMATED, name=name, python_test_version="version"
+        suite_type=SuiteType.COMMISSIONING, name=name, python_test_version="version"
     )
 
     assert suite_class.__name__ == name
@@ -58,12 +53,23 @@ def test_python_test_suite_python_version() -> None:
     python_test_version = "best_version"
     # Create a subclass of PythonTestSuite
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=SuiteType.AUTOMATED,
+        suite_type=SuiteType.COMMISSIONING,
         name="SomeSuite",
         python_test_version=python_test_version,
     )
 
     assert suite_class.python_test_version == python_test_version
+
+
+def test_commissioning_suite_subclass() -> None:
+    """Test that for suite type commissioning class factory creates a subclass of
+    CommissioningPythonTestSuite."""
+    type = SuiteType.COMMISSIONING
+    # Create a subclass of PythonTestSuite
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=type, name="SomeSuite", python_test_version="some_version"
+    )
+    assert issubclass(suite_class, CommissioningPythonTestSuite)
 
 
 @pytest.mark.asyncio
@@ -88,8 +94,17 @@ async def test_suite_setup_log_python_version() -> None:
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
             new_callable=PICS,
-        ), mock.patch.object(
-            target=suite_instance, attribute="commission_device"
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".prompt_for_commissioning_mode",
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".commission_device",
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".PythonTestSuite.config",
+            new_callable=mock.PropertyMock,
+            return_value=default_environment_config,
         ):
             await suite_instance.setup()
 
@@ -120,14 +135,22 @@ async def test_suite_setup_without_pics() -> None:
             target=chip_tool, attribute="set_pics"
         ) as mock_set_pics, mock.patch.object(
             target=chip_tool, attribute="reset_pics_state"
-        ) as mock_reset_pics_state, mock.patch.object(
-            target=suite_instance, attribute="commission_device"
-        ) as mock_commission_device:
+        ) as mock_reset_pics_state, mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".prompt_for_commissioning_mode",
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".commission_device",
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".PythonTestSuite.config",
+            new_callable=mock.PropertyMock,
+            return_value=default_environment_config,
+        ):
             await suite_instance.setup()
 
         mock_set_pics.assert_not_called()
         mock_reset_pics_state.assert_called_once()
-        mock_commission_device.called_once()
 
 
 @pytest.mark.asyncio
@@ -153,55 +176,72 @@ async def test_suite_setup_with_pics() -> None:
             target=chip_tool, attribute="set_pics"
         ) as mock_set_pics, mock.patch.object(
             target=chip_tool, attribute="reset_pics_state"
-        ) as mock_reset_pics_state, mock.patch.object(
-            target=suite_instance, attribute="commission_device"
-        ) as mock_commission_device:
+        ) as mock_reset_pics_state, mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".prompt_for_commissioning_mode",
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".commission_device",
+        ), mock.patch(
+            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            ".PythonTestSuite.config",
+            new_callable=mock.PropertyMock,
+            return_value=default_environment_config,
+        ):
             await suite_instance.setup()
 
         mock_set_pics.assert_called_once()
         mock_reset_pics_state.assert_not_called()
-        mock_commission_device.called_once()
 
 
 @pytest.mark.asyncio
-async def test_commission_device() -> None:
+async def test_commissioning_suite_setup_with_pics() -> None:
     chip_tool: ChipTool = ChipTool()
 
-    command_args = ["arg1", "arg2", "arg3"]
-    expected_command = [f"{RUNNER_CLASS_PATH} commission"]
-    expected_command.extend(command_args)
-    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
+    python_test_version = "best_version"
+    # Create a subclass of PythonTestSuite
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version=python_test_version,
+    )
 
-    suite = PythonTestSuite(TestSuiteExecution())
+    suite_instance = suite_class(TestSuiteExecution())
 
-    with mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
+    with mock.patch(
+        "test_collections.sdk_tests.support.chip_tool.test_suite.ChipToolSuite.setup"
+    ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
         target="test_collections.sdk_tests.support.python_testing.models.test_suite"
-        ".PythonTestSuite.config"
+        ".PythonTestSuite.pics",
+        new_callable=PICS,
     ), mock.patch.object(
-        target=chip_tool, attribute="send_command", return_value=mock_result
-    ) as mock_send_command, mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
-        ".generate_command_arguments",
-        return_value=command_args,
+        target=chip_tool, attribute="reset_pics_state"
     ), mock.patch(
         target="test_collections.sdk_tests.support.python_testing.models.test_suite"
-        ".handle_logs"
-    ) as mock_handle_logs:
-        suite.commission_device()
+        ".prompt_for_commissioning_mode",
+    ) as mock_prompt_for_commissioning_mode, mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device",
+    ) as mock_commission_device, mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=default_environment_config,
+    ):
+        await suite_instance.setup()
 
-    mock_send_command.assert_called_once_with(
-        expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
-    )
-    mock_handle_logs.assert_called_once()
+    mock_prompt_for_commissioning_mode.called_once()
+    mock_commission_device.called_once()
 
 
 @pytest.mark.asyncio
-async def test_chip_tool_suite_setup() -> None:
-    """Test that PythonTestSuite.setup is called when PythonChipToolsSuite.setup is called.
-    We do this as PythonChipToolsSuite inherits from PythonTestSuite."""
+async def test_commissioning_suite_setup() -> None:
+    """Test that PythonTestSuite.setup is called when CommissioningPythonTestSuite.setup
+    is called. We do this as CommissioningPythonTestSuite inherits from PythonTestSuite.
+    """
 
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=SuiteType.AUTOMATED,
+        suite_type=SuiteType.COMMISSIONING,
         name="SomeSuite",
         python_test_version="Some version",
     )
@@ -209,7 +249,19 @@ async def test_chip_tool_suite_setup() -> None:
     suite_instance = suite_class(TestSuiteExecution())
 
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.test_suite.PythonTestSuite.setup"
-    ) as python_suite_setup:
+        "test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup"
+    ) as python_suite_setup, mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".prompt_for_commissioning_mode",
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device",
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=default_environment_config,
+    ):
         await suite_instance.setup()
         python_suite_setup.assert_called_once()

@@ -13,11 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest import mock
+
 import pytest
 
 from app.default_environment_config import default_environment_config
 from app.schemas.test_environment_config import DutConfig, DutPairingModeEnum
+from app.test_engine.logger import test_engine_logger
+from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip_tool.exec_run_in_container import (
+    ExecResultExtended,
+)
 from test_collections.sdk_tests.support.python_testing.models.utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
+    commission_device,
     generate_command_arguments,
 )
 
@@ -190,3 +200,30 @@ async def test_generate_command_arguments_omit_comissioning_method() -> None:
         "--discriminator 456",
         "--passcode 8765",
     ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_commission_device() -> None:
+    chip_tool: ChipTool = ChipTool()
+
+    command_args = ["arg1", "arg2", "arg3"]
+    expected_command = [f"{RUNNER_CLASS_PATH} commission"]
+    expected_command.extend(command_args)
+    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
+
+    with mock.patch.object(
+        target=chip_tool, attribute="send_command", return_value=mock_result
+    ) as mock_send_command, mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.utils"
+        ".generate_command_arguments",
+        return_value=command_args,
+    ), mock.patch(
+        target="test_collections.sdk_tests.support.python_testing.models.utils"
+        ".handle_logs"
+    ) as mock_handle_logs:
+        commission_device(default_environment_config, test_engine_logger)
+
+    mock_send_command.assert_called_once_with(
+        expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
+    )
+    mock_handle_logs.assert_called_once()

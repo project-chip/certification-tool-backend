@@ -19,6 +19,7 @@ from unittest import mock
 
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     PythonTest,
+    PythonTestType,
 )
 from test_collections.sdk_tests.support.python_testing.models.test_declarations import (
     PythonCaseDeclaration,
@@ -31,7 +32,7 @@ from test_collections.sdk_tests.support.python_testing.models.test_suite import 
 
 def test_python_suite_declaration() -> None:
     name = "TestName"
-    type = SuiteType.AUTOMATED
+    type = SuiteType.COMMISSIONING
     version = "SomeVersionStr"
 
     with mock.patch(
@@ -53,6 +54,7 @@ def test_python_case_declaration() -> None:
         config={},
         steps=[],
         class_name="TC_TestTest",
+        python_type=PythonTestType.COMMISSIONING,
     )
     version = "SomeVersionStr"
     with mock.patch(
