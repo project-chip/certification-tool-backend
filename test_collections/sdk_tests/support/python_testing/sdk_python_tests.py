@@ -96,7 +96,7 @@ def _parse_all_sdk_python_tests(
         )
 
         for test_case in test_cases:
-            python_test_type = test_case.class_ref.python_test.python_type
+            python_test_type = test_case.class_ref.python_test.python_test_type
             if python_test_type == PythonTestType.COMMISSIONING:
                 suites[SuiteType.COMMISSIONING].add_test_case(test_case)
             elif python_test_type == PythonTestType.NO_COMMISSIONING:

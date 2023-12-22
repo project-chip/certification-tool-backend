@@ -138,9 +138,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         """Dynamically declares a subclass based on the type of Python test."""
         case_class: Type[PythonTestCase]
 
-        if test.python_type == PythonTestType.NO_COMMISSIONING:
+        if test.python_test_type == PythonTestType.NO_COMMISSIONING:
             case_class = NoCommissioningPythonTestCase
-        elif test.python_type == PythonTestType.LEGACY:
+        elif test.python_test_type == PythonTestType.LEGACY:
             case_class = LegacyPythonTestCase
         else:  # Commissioning
             case_class = PythonTestCase

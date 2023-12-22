@@ -54,7 +54,7 @@ def test_python_case_declaration() -> None:
         config={},
         steps=[],
         class_name="TC_TestTest",
-        python_type=PythonTestType.COMMISSIONING,
+        python_test_type=PythonTestType.COMMISSIONING,
     )
     version = "SomeVersionStr"
     with mock.patch(

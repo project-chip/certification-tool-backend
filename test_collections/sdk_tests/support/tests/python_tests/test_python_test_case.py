@@ -47,7 +47,7 @@ def python_test_instance(
     type: MatterTestType = MatterTestType.AUTOMATED,
     path: Optional[Path] = None,
     class_name: str = "TC_Test_Python",
-    python_type: PythonTestType = PythonTestType.COMMISSIONING,
+    python_test_type: PythonTestType = PythonTestType.COMMISSIONING,
 ) -> PythonTest:
     return PythonTest(
         name=name,
@@ -58,7 +58,7 @@ def python_test_instance(
         path=path,
         description=description,
         class_name=class_name,
-        python_type=python_type,
+        python_test_type=python_test_type,
     )
 
 

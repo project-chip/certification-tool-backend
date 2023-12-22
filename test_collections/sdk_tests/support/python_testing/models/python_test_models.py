@@ -32,7 +32,7 @@ class PythonTestType(Enum):
 class PythonTest(MatterTest):
     description: str
     class_name: str
-    python_type: PythonTestType
+    python_test_type: PythonTestType
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)

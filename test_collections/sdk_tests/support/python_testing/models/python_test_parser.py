@@ -169,11 +169,11 @@ def __parse_test_case(
     # - PythonTestType.LEGACY: test cases that don't follow the expected template
     # We use the desc_[test_name] method as an indicator that the test case follows the
     # expected template
-    python_type = PythonTestType.LEGACY
+    python_test_type = PythonTestType.LEGACY
     if len(tc_steps) > 0 and tc_steps[0].is_commissioning:
-        python_type = PythonTestType.COMMISSIONING
+        python_test_type = PythonTestType.COMMISSIONING
     elif desc_method:
-        python_type = PythonTestType.NO_COMMISSIONING
+        python_test_type = PythonTestType.NO_COMMISSIONING
 
     return PythonTest(
         name=tc_name,
@@ -184,7 +184,7 @@ def __parse_test_case(
         path=path,
         type=MatterTestType.AUTOMATED,
         class_name=class_name,
-        python_type=python_type,
+        python_test_type=python_test_type,
     )
 
 
