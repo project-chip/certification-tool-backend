@@ -135,7 +135,9 @@ class PythonTestCase(TestCase):
                 "python_test": test,
                 "python_test_version": python_test_version,
                 "metadata": {
-                    "public_id": test.name,
+                    "public_id": test.name
+                    if python_test_version != "custom"
+                    else test.name + "-custom",
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,
