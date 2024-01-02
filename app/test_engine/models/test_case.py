@@ -26,6 +26,8 @@ from app.test_engine.test_observer import Observer
 from .test_metadata import TestMetadata
 from .test_step import TestStep
 
+CUSTOM_TEST_IDENTIFIER = "custom"
+
 
 class TestCase(TestObservable):
     """
