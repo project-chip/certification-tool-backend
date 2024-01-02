@@ -23,9 +23,7 @@ from app.test_engine.models import (
     TestCase,
     TestStep,
 )
-
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
-
 from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
 from test_collections.sdk_tests.support.chip_tool.test_case import (
     ChipToolManualPromptTest,
