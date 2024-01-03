@@ -38,6 +38,7 @@ class MatterTestStep(BaseModel):
     command: Optional[str]
     disabled: bool = False
     arguments: Optional[dict[str, Any]]
+    is_commissioning: bool = False
 
 
 class MatterTest(BaseModel):

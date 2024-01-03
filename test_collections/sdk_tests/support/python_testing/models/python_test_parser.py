@@ -23,7 +23,7 @@ from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestType,
 )
 
-from .python_test_models import PythonTest
+from .python_test_models import PythonTest, PythonTestType
 
 ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
@@ -163,6 +163,18 @@ def __parse_test_case(
     if pics_method:
         tc_pics = __retrieve_pics(pics_method)
 
+    # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
+    # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
+    #   but don't have a commissioning first step
+    # - PythonTestType.LEGACY: test cases that don't follow the expected template
+    # We use the desc_[test_name] method as an indicator that the test case follows the
+    # expected template
+    python_test_type = PythonTestType.LEGACY
+    if len(tc_steps) > 0 and tc_steps[0].is_commissioning:
+        python_test_type = PythonTestType.COMMISSIONING
+    elif desc_method:
+        python_test_type = PythonTestType.NO_COMMISSIONING
+
     return PythonTest(
         name=tc_name,
         description=tc_desc,
@@ -172,6 +184,7 @@ def __parse_test_case(
         path=path,
         type=MatterTestType.AUTOMATED,
         class_name=class_name,
+        python_test_type=python_test_type,
     )
 
 

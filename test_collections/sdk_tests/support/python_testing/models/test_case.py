@@ -15,6 +15,7 @@
 #
 import re
 from asyncio import sleep
+from enum import IntEnum
 from multiprocessing.managers import BaseManager
 from typing import Any, Generator, Type, TypeVar, cast
 
@@ -22,12 +23,15 @@ from app.models import TestCaseExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
+from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
+from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.sdk_tests.support.chip_tool.chip_tool import (
     PICS_FILE_PATH,
     ChipTool,
 )
+from test_collections.sdk_tests.support.utils import prompt_for_commissioning_mode
 
-from .python_test_models import PythonTest
+from .python_test_models import PythonTest, PythonTestType
 from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
@@ -35,9 +39,16 @@ from .python_testing_hooks_proxy import (
 from .utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
+    commission_device,
     generate_command_arguments,
     handle_logs,
 )
+
+
+class PromptOption(IntEnum):
+    YES = 1
+    NO = 2
+
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -47,7 +58,7 @@ class PythonTestCaseError(Exception):
     pass
 
 
-class PythonTestCase(TestCase):
+class PythonTestCase(TestCase, UserPromptSupport):
     """Base class for all Python Test based test cases.
 
     This class provides a class factory that will dynamically declare a new sub-class
@@ -125,6 +136,22 @@ class PythonTestCase(TestCase):
 
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
+        """Dynamically declares a subclass based on the type of Python test."""
+        case_class: Type[PythonTestCase]
+
+        if test.python_test_type == PythonTestType.NO_COMMISSIONING:
+            case_class = NoCommissioningPythonTestCase
+        elif test.python_test_type == PythonTestType.LEGACY:
+            case_class = LegacyPythonTestCase
+        else:  # Commissioning
+            case_class = PythonTestCase
+
+        return case_class.__class_factory(
+            test=test, python_test_version=python_test_version
+        )
+
+    @classmethod
+    def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """class factory method for PythonTestCase."""
         title = cls.__title(test.name)
         class_name = cls.__class_name(test.name)
@@ -256,3 +283,47 @@ class PythonTestCase(TestCase):
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
         self.test_steps.append(TestStep("Show test logs"))
+
+
+class NoCommissioningPythonTestCase(PythonTestCase):
+    async def setup(self) -> None:
+        await super().setup()
+        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+
+
+class LegacyPythonTestCase(PythonTestCase):
+    async def setup(self) -> None:
+        await super().setup()
+        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+        await self.prompt_about_commissioning()
+
+    async def prompt_about_commissioning(self) -> None:
+        """Prompt the user to ask about commissioning
+
+        Raises:
+            ValueError: Prompt response is unexpected
+        """
+
+        prompt = "Should the DUT be commissioned to run this test case?"
+        options = {
+            "YES": PromptOption.YES,
+            "NO": PromptOption.NO,
+        }
+        prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
+        logger.info(f'User prompt: "{prompt}"')
+        prompt_response = await self.send_prompt_request(prompt_request)
+
+        match prompt_response.response:
+            case PromptOption.YES:
+                logger.info("User chose prompt option YES")
+                logger.info("Commission DUT")
+                commission_device(self.config, logger)
+
+            case PromptOption.NO:
+                logger.info("User chose prompt option NO")
+
+            case _:
+                raise ValueError(
+                    f"Received unknown prompt option for \
+                        commissioning step: {prompt_response.response}"
+                )

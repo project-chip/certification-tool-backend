@@ -14,26 +14,22 @@
 # limitations under the License.
 #
 from enum import Enum
-from typing import Generator, Type, TypeVar, cast
+from typing import Type, TypeVar
 
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
+from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.sdk_tests.support.chip_tool import ChipTool
-
-from .utils import (
-    EXECUTABLE,
-    RUNNER_CLASS_PATH,
-    generate_command_arguments,
-    handle_logs,
+from test_collections.sdk_tests.support.python_testing.models.utils import (
+    commission_device,
 )
+from test_collections.sdk_tests.support.utils import prompt_for_commissioning_mode
 
 
 class SuiteType(Enum):
-    AUTOMATED = 1
-
-
-class DUTCommissioningError(Exception):
-    pass
+    COMMISSIONING = 1
+    NO_COMMISSIONING = 2
+    LEGACY = 3
 
 
 # Custom Type variable used to annotate the factory methods of classmethod.
@@ -56,6 +52,21 @@ class PythonTestSuite(TestSuite):
         cls, suite_type: SuiteType, name: str, python_test_version: str
     ) -> Type[T]:
         """Dynamically declares a subclass based on the type of test suite."""
+        suite_class: Type[PythonTestSuite]
+
+        if suite_type == SuiteType.COMMISSIONING:
+            suite_class = CommissioningPythonTestSuite
+        else:
+            suite_class = PythonTestSuite
+
+        return suite_class.__class_factory(
+            name=name, python_test_version=python_test_version
+        )
+
+    @classmethod
+    def __class_factory(cls, name: str, python_test_version: str) -> Type[T]:
+        """Common class factory method for all subclasses of PythonTestSuite."""
+
         return type(
             name,
             (cls,),
@@ -87,30 +98,18 @@ class PythonTestSuite(TestSuite):
         else:
             self.chip_tool.reset_pics_state()
 
-        logger.info("Commission DUT")
-        self.commission_device()
-
     async def cleanup(self) -> None:
         logger.info("Suite Cleanup")
 
         logger.info("Stopping SDK container")
         await self.chip_tool.destroy_device()
 
-    def commission_device(self) -> None:
-        command = [f"{RUNNER_CLASS_PATH} commission"]
-        command_arguments = generate_command_arguments(config=self.config)
-        command.extend(command_arguments)
 
-        exec_result = self.chip_tool.send_command(
-            command,
-            prefix=EXECUTABLE,
-            is_stream=True,
-            is_socket=False,
-        )
+class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
+    async def setup(self) -> None:
+        await super().setup()
 
-        handle_logs(cast(Generator, exec_result.output), logger)
+        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
 
-        exit_code = self.chip_tool.exec_exit_code(exec_result.exec_id)
-
-        if exit_code:
-            raise DUTCommissioningError("Failed to commission DUT")
+        logger.info("Commission DUT")
+        commission_device(self.config, logger)

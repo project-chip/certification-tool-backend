@@ -19,6 +19,7 @@ from typing import Optional
 from test_collections.sdk_tests.support.models.sdk_test_folder import SDKTestFolder
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
 
+from .models.python_test_models import PythonTestType
 from .models.python_test_parser import parse_python_script
 from .models.test_declarations import (
     PythonCaseDeclaration,
@@ -53,9 +54,19 @@ def _init_test_suites(
     python_test_version: str,
 ) -> dict[SuiteType, PythonSuiteDeclaration]:
     return {
-        SuiteType.AUTOMATED: PythonSuiteDeclaration(
+        SuiteType.COMMISSIONING: PythonSuiteDeclaration(
             name="Python Testing Suite",
-            suite_type=SuiteType.AUTOMATED,
+            suite_type=SuiteType.COMMISSIONING,
+            version=python_test_version,
+        ),
+        SuiteType.NO_COMMISSIONING: PythonSuiteDeclaration(
+            name="Python Testing Suite - No commissioning",
+            suite_type=SuiteType.NO_COMMISSIONING,
+            version=python_test_version,
+        ),
+        SuiteType.LEGACY: PythonSuiteDeclaration(
+            name="Python Testing Suite - Legacy",
+            suite_type=SuiteType.LEGACY,
             version=python_test_version,
         ),
     }
@@ -85,7 +96,13 @@ def _parse_all_sdk_python_tests(
         )
 
         for test_case in test_cases:
-            suites[SuiteType.AUTOMATED].add_test_case(test_case)
+            python_test_type = test_case.class_ref.python_test.python_test_type
+            if python_test_type == PythonTestType.COMMISSIONING:
+                suites[SuiteType.COMMISSIONING].add_test_case(test_case)
+            elif python_test_type == PythonTestType.NO_COMMISSIONING:
+                suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
+            else:
+                suites[SuiteType.LEGACY].add_test_case(test_case)
 
     return list(suites.values())
 
