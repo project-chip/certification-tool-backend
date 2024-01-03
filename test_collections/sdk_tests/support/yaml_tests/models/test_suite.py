@@ -77,7 +77,7 @@ class YamlTestSuite(TestSuite):
                 "name": name,
                 "yaml_version": yaml_version,
                 "metadata": {
-                    "public_id": name,
+                    "public_id": name if yaml_version != "custom" else name + "-custom",
                     "version": "0.0.1",
                     "title": name,
                     "description": name,

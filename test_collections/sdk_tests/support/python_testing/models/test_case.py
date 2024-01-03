@@ -22,6 +22,7 @@ from typing import Any, Generator, Type, TypeVar, cast
 from app.models import TestCaseExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
+from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.sdk_tests.support.chip_tool.chip_tool import (
@@ -162,7 +163,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 "python_test": test,
                 "python_test_version": python_test_version,
                 "metadata": {
-                    "public_id": test.name,
+                    "public_id": test.name
+                    if python_test_version != CUSTOM_TEST_IDENTIFIER
+                    else test.name + "-" + CUSTOM_TEST_IDENTIFIER,
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,

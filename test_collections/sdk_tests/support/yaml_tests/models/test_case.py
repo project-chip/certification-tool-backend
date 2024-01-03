@@ -23,6 +23,7 @@ from app.test_engine.models import (
     TestCase,
     TestStep,
 )
+from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
 from test_collections.sdk_tests.support.chip_tool.test_case import (
     ChipToolManualPromptTest,
@@ -109,7 +110,9 @@ class YamlTestCase(TestCase):
                 "yaml_version": yaml_version,
                 "chip_tool_test_identifier": class_name,
                 "metadata": {
-                    "public_id": identifier,
+                    "public_id": identifier
+                    if yaml_version != CUSTOM_TEST_IDENTIFIER
+                    else identifier + "-" + CUSTOM_TEST_IDENTIFIER,
                     "version": "0.0.1",
                     "title": title,
                     "description": test.name,
