@@ -34,8 +34,9 @@ class TestRunnerHooks:
 
 
 def main() -> None:
-    # Load python_testing as a module. This folder is where all python script is located
-    sys.path.append("/root/python_testing")
+    # Load python_testing/scripts/sdk as a module. This folder is where all python
+    # script are located
+    sys.path.append("/root/python_testing/scripts/sdk")
 
     test_args = sys.argv[2:]
     config = parse_matter_test_args(test_args)
