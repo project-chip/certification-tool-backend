@@ -16,12 +16,13 @@
 
 from __future__ import annotations
 
-from typing import Generator
+from typing import Generator, cast
 
 import loguru
 
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
+from test_collections.sdk_tests.support.chip import ChipTool
 
 # Command line params
 RUNNER_CLASS_PATH = "/root/python_testing/test_harness_client.py"
@@ -62,3 +63,32 @@ def handle_logs(log_generator: Generator, logger: loguru.Logger) -> None:
         log_lines = decoded_log.splitlines()
         for line in log_lines:
             logger.log(PYTHON_TEST_LEVEL, line)
+
+
+class DUTCommissioningError(Exception):
+    pass
+
+
+def commission_device(
+    config: TestEnvironmentConfig,
+    logger: loguru.Logger,
+) -> None:
+    chip_tool = ChipTool()
+
+    command = [f"{RUNNER_CLASS_PATH} commission"]
+    command_arguments = generate_command_arguments(config)
+    command.extend(command_arguments)
+
+    exec_result = chip_tool.send_command(
+        command,
+        prefix=EXECUTABLE,
+        is_stream=True,
+        is_socket=False,
+    )
+
+    handle_logs(cast(Generator, exec_result.output), logger)
+
+    exit_code = chip_tool.exec_exit_code(exec_result.exec_id)
+
+    if exit_code:
+        raise DUTCommissioningError("Failed to commission DUT")

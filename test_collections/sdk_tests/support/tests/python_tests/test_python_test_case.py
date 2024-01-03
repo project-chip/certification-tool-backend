@@ -31,6 +31,7 @@ from test_collections.sdk_tests.support.models.matter_test_models import (
 from test_collections.sdk_tests.support.python_testing.models import PythonTestCase
 from test_collections.sdk_tests.support.python_testing.models.python_test_models import (
     PythonTest,
+    PythonTestType,
 )
 
 
@@ -45,6 +46,8 @@ def python_test_instance(
     steps: list[MatterTestStep] = [],
     type: MatterTestType = MatterTestType.AUTOMATED,
     path: Optional[Path] = None,
+    class_name: str = "TC_Test_Python",
+    python_test_type: PythonTestType = PythonTestType.COMMISSIONING,
 ) -> PythonTest:
     return PythonTest(
         name=name,
@@ -54,11 +57,13 @@ def python_test_instance(
         type=type,
         path=path,
         description=description,
+        class_name=class_name,
+        python_test_type=python_test_type,
     )
 
 
 def test_python_test_name() -> None:
-    """Test that test name is set as description in metadata."""
+    """Test that test name is set as title in metadata."""
     name = "Another Test Name"
     description = "Another Test Name Description"
     test = python_test_instance(name=name, description=description)
@@ -149,7 +154,6 @@ async def test_python_version_logging() -> None:
             target=test_engine_logger, attribute="info"
         ) as logger_info:
             await instance.setup()
-
             logger_info.assert_called()
             logger_info.assert_any_call("Test Setup")
 
@@ -185,15 +189,3 @@ def test_multiple_steps_for_python_tests() -> None:
             s for s in instance.test_steps if s.name == test_step.label
         ]
         assert len(steps_from_python) == no_steps
-
-
-@pytest.mark.asyncio
-async def test_setup_super_error_handling() -> None:
-    # ignore requirement to create_tests on init
-    with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.create_test_steps"
-    ) as _:
-        test = PythonTestCase(TestCaseExecution())
-        test.python_test_version = "some version"
-        # Assert this doesn't raise an exception
-        await test.setup()

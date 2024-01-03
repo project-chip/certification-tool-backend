@@ -14,56 +14,128 @@
 # limitations under the License.
 #
 import ast
+import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
 )
 
-from .python_test_models import PythonTest
+from .python_test_models import PythonTest, PythonTestType
 
 ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
 BODY_INDEX = 0
 
+TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
+TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
 
-class PythonParserException(Exception):
-    """Raised when an error occurs during the parser of python file."""
+FunctionDefType = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
 
-def parse_python_test(path: Path) -> PythonTest:
-    """Parse a single Python test file into PythonTest model.
+def parse_python_script(path: Path) -> list[PythonTest]:
+    """Parse a python file into a list of PythonTest models.
 
-    This will also annotate parsed python test with it's path and test type.
+    This will also annotate parsed python tests with their file path and test type.
 
-    It's expected that the python script files has a class with the same file name,
-    and also the following methods:
-     * desc_[class_name] - This method should return a str with the test description
-     * pics_[class_name] - This method should return a list with the PICS required
-        for the test case
-     * steps_[class_name] - This method should return a list with the step description
-     * test_[class_name] -  This method contains the test logic
+    This method will search the file for classes that inherit from MatterBaseTest and
+    then look for methods with the following patterns to extract the needed information:
+     * test_[test_name] - (required) This method contains the test logic
+     * desc_[test_name] - (required) This method should return a string with the test
+        description
+     * pics_[test_name] - (optional) This method should return a list of strings with
+        the PICS required for the test case
+     * steps_[test_name] - (optional) This method should return a list with the steps'
+        descriptions
 
-    Example: file TC_ACE_1_3.py must have the methods desc_TC_ACE_1_3, pics_TC_ACE_1_3,
-        steps_TC_ACE_1_3 and test_TC_ACE_1_3.
+    Example: file TC_ACE_1_3.py has the methods test_TC_ACE_1_3, desc_TC_ACE_1_3,
+        pics_TC_ACE_1_3 and steps_TC_ACE_1_3.
     """
     with open(path, "r") as python_file:
         parsed_python_file = ast.parse(python_file.read())
-        classes = [c for c in parsed_python_file.body if isinstance(c, ast.ClassDef)]
 
-    tc_name = path.name.split(".")[0]
-    try:
-        class_ = next(c for c in classes if tc_name in c.name)
-    except StopIteration as si:  # Raised when `next` doesn't find a matching method
-        raise PythonParserException(f"{path} must have a class named {tc_name}") from si
+    test_classes = __test_classes(parsed_python_file)
 
-    return __parse_test_case_from_class(class_=class_, path=path, tc_name=tc_name)
+    test_cases: list[PythonTest] = []
+    for c in test_classes:
+        test_methods = __test_methods(c)
+        test_names = __test_case_names(test_methods)
+
+        for test_name in test_names:
+            test_cases.append(__parse_test_case(test_name, test_methods, c.name, path))
+
+    return test_cases
 
 
-def __parse_test_case_from_class(
-    class_: ast.ClassDef, path: Path, tc_name: str
+def __test_classes(module: ast.Module) -> list[ast.ClassDef]:
+    """Find classes that inherit from MatterBaseTest.
+
+    Args:
+        module (ast.Module): Python module.
+
+    Returns:
+        list[ast.ClassDef]: List of classes from the given module that inherit from
+        MatterBaseTest.
+    """
+    return [
+        c
+        for c in module.body
+        if isinstance(c, ast.ClassDef)
+        and any(
+            b for b in c.bases if isinstance(b, ast.Name) and b.id == "MatterBaseTest"
+        )
+    ]
+
+
+def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
+    """Find methods in the given class that match the pattern "[\\S]+_TC_[\\S]+".
+    These are the methods that are relevant to the parsing.
+
+    Args:
+        classes (ast.ClassDef): Class where the methods will be searched for.
+
+    Returns:
+        list[FunctionDefType]: List of methods that are relevant to the parsing.
+    """
+    all_methods: list[FunctionDefType] = []
+
+    methods = [
+        m
+        for m in class_def.body
+        if isinstance(m, ast.FunctionDef) or isinstance(m, ast.AsyncFunctionDef)
+    ]
+    for m in methods:
+        if isinstance(m.name, str):
+            if re.match(TC_FUNCTION_PATTERN, m.name):
+                all_methods.append(m)
+
+    return all_methods
+
+
+def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
+    """Extract test case names from methods that match the pattern "test_TC_[\\S]+".
+
+    Args:
+        methods (list[FunctionDefType]): List of methods to search from.
+
+    Returns:
+        list[str]: List of test case names.
+    """
+    test_names: list[str] = []
+
+    for m in methods:
+        if isinstance(m.name, str):
+            if match := re.match(TC_TEST_FUNCTION_PATTERN, m.name):
+                if name := match["title"]:
+                    test_names.append(name)
+
+    return test_names
+
+
+def __parse_test_case(
+    tc_name: str, methods: list[FunctionDefType], class_name: str, path: Path
 ) -> PythonTest:
     # Currently config is not configured in Python Testing
     tc_config: dict = {}
@@ -71,8 +143,6 @@ def __parse_test_case_from_class(
     desc_method_name = "desc_" + tc_name
     steps_method_name = "steps_" + tc_name
     pics_method_name = "pics_" + tc_name
-
-    methods = [m for m in class_.body if isinstance(m, ast.FunctionDef)]
 
     tc_desc = tc_name
     tc_steps = []
@@ -93,6 +163,18 @@ def __parse_test_case_from_class(
     if pics_method:
         tc_pics = __retrieve_pics(pics_method)
 
+    # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
+    # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
+    #   but don't have a commissioning first step
+    # - PythonTestType.LEGACY: test cases that don't follow the expected template
+    # We use the desc_[test_name] method as an indicator that the test case follows the
+    # expected template
+    python_test_type = PythonTestType.LEGACY
+    if len(tc_steps) > 0 and tc_steps[0].is_commissioning:
+        python_test_type = PythonTestType.COMMISSIONING
+    elif desc_method:
+        python_test_type = PythonTestType.NO_COMMISSIONING
+
     return PythonTest(
         name=tc_name,
         description=tc_desc,
@@ -101,16 +183,18 @@ def __parse_test_case_from_class(
         PICS=tc_pics,
         path=path,
         type=MatterTestType.AUTOMATED,
+        class_name=class_name,
+        python_test_type=python_test_type,
     )
 
 
 def __get_method_by_name(
-    name: str, methods: list[ast.FunctionDef]
-) -> Optional[ast.FunctionDef]:
+    name: str, methods: list[FunctionDefType]
+) -> Optional[FunctionDefType]:
     return next((m for m in methods if name in m.name), None)
 
 
-def __retrieve_steps(method: ast.FunctionDef) -> List[MatterTestStep]:
+def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
     python_steps: List[MatterTestStep] = []
     for step in method.body[BODY_INDEX].value.elts:  # type: ignore
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
@@ -130,7 +214,7 @@ def __retrieve_steps(method: ast.FunctionDef) -> List[MatterTestStep]:
     return python_steps
 
 
-def __retrieve_pics(method: ast.FunctionDef) -> list:
+def __retrieve_pics(method: FunctionDefType) -> list:
     python_steps: list = []
     for step in method.body[BODY_INDEX].value.elts:  # type: ignore
         python_steps.append(step.value)

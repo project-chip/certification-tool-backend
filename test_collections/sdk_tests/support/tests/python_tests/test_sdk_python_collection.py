@@ -48,7 +48,7 @@ def test_sdk_python_test_collection(
     python_test_collection: PythonCollectionDeclaration,
 ) -> None:
     assert python_test_collection.name == "SDK Python Tests"
-    assert len(python_test_collection.test_suites.keys()) == 1
+    assert len(python_test_collection.test_suites.keys()) == 3
     assert python_test_collection.python_test_version == "unit-test-python-version"
 
 
