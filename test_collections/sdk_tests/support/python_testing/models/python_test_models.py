@@ -24,6 +24,10 @@ from ...models.matter_test_models import MatterTest, MatterTestType
 
 
 class PythonTestType(Enum):
+    # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
+    # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
+    #   but don't have a commissioning first step
+    # - PythonTestType.LEGACY: test cases that don't follow the expected template
     COMMISSIONING = 1
     NO_COMMISSIONING = 2
     LEGACY = 3
