@@ -31,6 +31,7 @@ from app import crud
 from app.core.config import settings
 from app.models import TestRunExecution
 from app.models.test_enums import TestStateEnum
+from app.schemas import SelectedTests
 from app.test_engine import (
     TEST_ENGINE_ABORTING_TESTING_MESSAGE,
     TEST_ENGINE_BUSY_MESSAGE,
@@ -41,7 +42,6 @@ from app.test_engine.test_runner import TestRunner, TestRunnerState
 from app.tests.test_engine.test_runner import load_test_run_for_test_cases
 from app.tests.utils.operator import create_random_operator
 from app.tests.utils.project import create_random_project
-from app.tests.utils.test_run_config import create_random_test_run_config
 from app.tests.utils.test_run_execution import (
     create_random_test_run_execution,
     create_random_test_run_execution_archived,
@@ -64,32 +64,44 @@ def test_create_test_run_execution_with_selected_tests_succeeds(
     """
     title = "Foo"
     description = random_lower_string()
+    selected_tests = {
+        "collections": [
+            {
+                "public_id": "sample_tests",
+                "test_suites": [
+                    {
+                        "public_id": "SampleTestSuite1",
+                        "test_cases": [
+                            {"public_id": "TCSS1001", "iterations": 1},
+                            {"public_id": "TCSS1002", "iterations": 2},
+                            {"public_id": "TCSS1003", "iterations": 2},
+                            {"public_id": "TCSS1004", "iterations": 5},
+                            {"public_id": "TCSS1005", "iterations": 8},
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
     json_data = {
         "test_run_execution_in": {
             "title": title,
             "description": description,
         },
-        "selected_tests": {
-            "sample_tests": {
-                "SampleTestSuite1": {
-                    "TCSS1001": 1,
-                    "TCSS1002": 2,
-                    "TCSS1003": 2,
-                    "TCSS1004": 5,
-                    "TCSS1005": 8,
-                },
-            },
-        },
+        "selected_tests": selected_tests,
     }
     response = client.post(
         f"{settings.API_V1_STR}/test_run_executions/",
         json=json_data,
     )
-    assert response.status_code == HTTPStatus.OK
-    content = response.json()
-    assert isinstance(content, dict)
-    assert content.get("title") == title
-    assert content.get("description") == description
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content={
+            "title": title,
+            "description": description,
+        },
+    )
 
 
 def test_create_test_run_execution_with_selected_tests_and_operator_succeeds(
@@ -166,51 +178,6 @@ def test_create_test_run_execution_with_selected_tests_project_operator_succeeds
     assert response_operator["name"] == operator.name
 
 
-def test_create_test_run_execution_with_test_run_config_and_selected_tests_succeeds(
-    client: TestClient, db: Session
-) -> None:
-    """This test will create a new test run execution. A success is expected.
-    The selected tests are passed directly by JSON payload.
-    Also, one reference to a test run config is also included, but this is ignored by
-    the API by assigning None.
-    """
-
-    test_run_config = create_random_test_run_config(db)
-    title = "TestRunExecutionFoo"
-    description = random_lower_string()
-    json_data = {
-        "test_run_execution_in": {
-            "title": title,
-            "description": description,
-            "test_run_config_id": test_run_config.id,
-        },
-        "selected_tests": {
-            "sample_tests": {
-                "SampleTestSuite1": {
-                    "TCSS1001": 1,
-                    "TCSS1002": 2,
-                    "TCSS1003": 4,
-                    "TCSS1004": 8,
-                    "TCSS1005": 16,
-                },
-            },
-        },
-    }
-    response = client.post(
-        f"{settings.API_V1_STR}/test_run_executions/",
-        json=json_data,
-    )
-    validate_json_response(
-        response=response,
-        expected_status_code=HTTPStatus.OK,
-        expected_content={
-            "title": title,
-            "description": description,
-            "test_run_config_id": None,
-        },
-    )
-
-
 def test_create_test_run_execution_with_selected_tests_with_two_suites_succeeds(
     client: TestClient,
 ) -> None:
@@ -221,29 +188,41 @@ def test_create_test_run_execution_with_selected_tests_with_two_suites_succeeds(
 
     title = "TestRunExecutionFoo"
     description = random_lower_string()
+    selected_tests = {
+        "collections": [
+            {
+                "public_id": "sample_tests",
+                "test_suites": [
+                    {
+                        "public_id": "SampleTestSuite1",
+                        "test_cases": [
+                            {"public_id": "TCSS1001", "iterations": 1},
+                            {"public_id": "TCSS1002", "iterations": 2},
+                            {"public_id": "TCSS1003", "iterations": 4},
+                            {"public_id": "TCSS1004", "iterations": 8},
+                            {"public_id": "TCSS1005", "iterations": 16},
+                        ],
+                    },
+                    {
+                        "public_id": "SampleTestSuite2",
+                        "test_cases": [
+                            {"public_id": "TCSS2001", "iterations": 1},
+                            {"public_id": "TCSS2002", "iterations": 2},
+                            {"public_id": "TCSS2003", "iterations": 4},
+                            {"public_id": "TCSS2004", "iterations": 8},
+                            {"public_id": "TCSS2005", "iterations": 16},
+                        ],
+                    },
+                ],
+            }
+        ]
+    }
     json_data = {
         "test_run_execution_in": {
             "title": title,
             "description": description,
         },
-        "selected_tests": {
-            "sample_tests": {
-                "SampleTestSuite1": {
-                    "TCSS1001": 1,
-                    "TCSS1002": 2,
-                    "TCSS1003": 4,
-                    "TCSS1004": 8,
-                    "TCSS1005": 16,
-                },
-                "SampleTestSuite2": {
-                    "TCSS2001": 1,
-                    "TCSS2002": 2,
-                    "TCSS2003": 4,
-                    "TCSS2004": 8,
-                    "TCSS2005": 16,
-                },
-            },
-        },
+        "selected_tests": selected_tests,
     }
     response = client.post(
         f"{settings.API_V1_STR}/test_run_executions/",
@@ -259,8 +238,10 @@ def test_create_test_run_execution_with_selected_tests_with_two_suites_succeeds(
     content = response.json()
     suites = content.get("test_suite_executions")
     returned_suites = [s["public_id"] for s in suites]
-    selected_tests = json_data["selected_tests"]["sample_tests"].keys()
-    for selected_suite in selected_tests:
+    selected_suites = [
+        s["public_id"] for s in selected_tests["collections"][0]["test_suites"]
+    ]
+    for selected_suite in selected_suites:
         assert selected_suite in returned_suites
 
 
@@ -301,13 +282,32 @@ def test_repeat_existing_test_run_execution_with_two_suites_succeeds(
     """
 
     selected_tests = {
-        "sample_tests": {
-            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3},
-            "SampleTestSuite2": {"TCSS2004": 4, "TCSS2005": 5, "TCSS2006": 6},
-        }
+        "collections": [
+            {
+                "public_id": "sample_tests",
+                "test_suites": [
+                    {
+                        "public_id": "SampleTestSuite1",
+                        "test_cases": [
+                            {"public_id": "TCSS1001", "iterations": 1},
+                            {"public_id": "TCSS1002", "iterations": 2},
+                            {"public_id": "TCSS1003", "iterations": 3},
+                        ],
+                    },
+                    {
+                        "public_id": "SampleTestSuite2",
+                        "test_cases": [
+                            {"public_id": "TCSS2004", "iterations": 4},
+                            {"public_id": "TCSS2005", "iterations": 5},
+                            {"public_id": "TCSS2006", "iterations": 6},
+                        ],
+                    },
+                ],
+            }
+        ]
     }
     test_run_execution = create_random_test_run_execution(
-        db=db, selected_tests=selected_tests
+        db=db, selected_tests=SelectedTests(**selected_tests)
     )
 
     base_title = remove_title_date(test_run_execution.title)
@@ -328,7 +328,11 @@ def test_repeat_existing_test_run_execution_with_two_suites_succeeds(
 
     suites = content.get("test_suite_executions")
     returned_suites = [s["public_id"] for s in suites]
-    for selected_suite in selected_tests["sample_tests"].keys():
+    selected_suites = [
+        s["public_id"] for s in selected_tests["collections"][0]["test_suites"]
+    ]
+
+    for selected_suite in selected_suites:
         assert selected_suite in returned_suites
 
 
@@ -341,12 +345,24 @@ def test_repeat_existing_test_run_execution_with_title_succeeds(
     """
     title = "TestRunExecutionFoo"
     selected_tests = {
-        "sample_tests": {
-            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3}
-        }
+        "collections": [
+            {
+                "public_id": "sample_tests",
+                "test_suites": [
+                    {
+                        "public_id": "SampleTestSuite1",
+                        "test_cases": [
+                            {"public_id": "TCSS1001", "iterations": 1},
+                            {"public_id": "TCSS1002", "iterations": 2},
+                            {"public_id": "TCSS1003", "iterations": 3},
+                        ],
+                    }
+                ],
+            }
+        ]
     }
     test_run_execution = create_random_test_run_execution(
-        db=db, selected_tests=selected_tests
+        db=db, selected_tests=SelectedTests(**selected_tests)
     )
     url = f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/repeat"
     response = client.post(url + f"?title={title}")
@@ -828,12 +844,24 @@ async def test_test_runner_status_running(
     async_client: AsyncClient, db: Session
 ) -> None:
     selected_tests = {
-        "tool_unit_tests": {
-            "TestSuiteExpected": {"TCTRExpectedPass": 1},
-        }
+        "collections": [
+            {
+                "public_id": "tool_unit_tests",
+                "test_suites": [
+                    {
+                        "public_id": "TestSuiteExpected",
+                        "test_cases": [
+                            {"public_id": "TCTRExpectedPass", "iterations": 1}
+                        ],
+                    }
+                ],
+            }
+        ]
     }
 
-    test_runner = load_test_run_for_test_cases(db=db, test_cases=selected_tests)
+    test_runner = load_test_run_for_test_cases(
+        db=db, test_cases=SelectedTests(**selected_tests)
+    )
 
     # Start running tests (async)
     run_task = asyncio.create_task(test_runner.run())

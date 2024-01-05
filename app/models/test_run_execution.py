@@ -31,7 +31,6 @@ from .test_suite_execution import TestSuiteExecution
 if TYPE_CHECKING:
     from .operator import Operator  # noqa: F401
     from .project import Project  # noqa: F401
-    from .test_run_config import TestRunConfig  # noqa: F401
 
 
 class TestRunExecution(Base):
@@ -53,12 +52,6 @@ class TestRunExecution(Base):
 
     description: Mapped[Optional[str]] = mapped_column(default=None, nullable=True)
 
-    test_run_config_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("testrunconfig.id"), nullable=True
-    )
-    test_run_config: Mapped["TestRunConfig"] = relationship(
-        "TestRunConfig", back_populates="test_run_executions"
-    )
     log: Mapped[list[TestRunLogEntry]] = mapped_column(
         MutableList.as_mutable(PydanticListType(TestRunLogEntry)),
         default=[],
