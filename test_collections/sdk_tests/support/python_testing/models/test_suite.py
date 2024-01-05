@@ -19,10 +19,10 @@ from typing import Type, TypeVar
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.sdk_tests.support.chip import ChipTool
 from test_collections.sdk_tests.support.python_testing.models.utils import (
     commission_device,
 )
+from test_collections.sdk_tests.support.sdk_container import SDKContainer
 from test_collections.sdk_tests.support.utils import prompt_for_commissioning_mode
 
 
@@ -45,7 +45,7 @@ class PythonTestSuite(TestSuite):
 
     python_test_version: str
     suite_name: str
-    chip_tool: ChipTool = ChipTool(logger)
+    sdk_container: SDKContainer = SDKContainer(logger)
 
     @classmethod
     def class_factory(
@@ -89,20 +89,20 @@ class PythonTestSuite(TestSuite):
         logger.info("Suite Setup")
         logger.info(f"Python Test Version: {self.python_test_version}")
 
-        logger.info("Starting SDK container")
-        await self.chip_tool.start_container()
+        logger.info("Setting up SDK container")
+        await self.sdk_container.start()
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
-            self.chip_tool.set_pics(pics=self.pics, in_container=True)
+            self.sdk_container.set_pics(pics=self.pics)
         else:
-            self.chip_tool.reset_pics_state()
+            self.sdk_container.reset_pics_state()
 
     async def cleanup(self) -> None:
         logger.info("Suite Cleanup")
 
         logger.info("Stopping SDK container")
-        await self.chip_tool.destroy_device()
+        self.sdk_container.destroy()
 
 
 class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
