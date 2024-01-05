@@ -17,19 +17,19 @@ from app.default_environment_config import default_environment_config
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestStep
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
-from test_collections.sdk_tests.support.chip_tool.test_case import ChipToolTest
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.test_case import ChipTest
 
 
-class TCTRChipToolLogParsing(ChipToolTest):
+class TCTRChipLogParsing(ChipTest):
     metadata = {
-        "public_id": " TCTRChipToolLogParsing",
+        "public_id": " TCTRChipLogParsing",
         "version": "1.2.3",
-        "title": "This is Test Case tctr_chip_tool_log_parsing",
+        "title": "This is Test Case tctr_chip_log_parsing",
         "description": "This Test Case is built to test the chip-tool log parser",
     }
-    test_type = ChipToolTestType.CHIP_APP
-    chip_tool_test_identifier = "Test ID"
+    test_type = ChipTestType.CHIP_APP
+    chip_test_identifier = "Test ID"
 
     # The config() defined in the "TestCase" base class is unable to return a valid
     # value because the attributes - test_suite_execution, test_run_execution and

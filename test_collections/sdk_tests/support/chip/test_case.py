@@ -34,14 +34,14 @@ from app.user_prompt_support.prompt_request import MessagePromptRequest
 from app.user_prompt_support.uploaded_file_support import UploadFile
 from app.user_prompt_support.user_prompt_manager import user_prompt_manager
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.sdk_tests.support.chip_tool import ChipTool
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
+from test_collections.sdk_tests.support.chip import ChipTool
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
 
 CHIP_TOOL_DEFAULT_PROMPT_TIMEOUT_S = 60  # seconds
 OUTCOME_TIMEOUT_S = 60 * 10  # Seconds
 
 
-class ChipToolPromptTypeEnum(str, Enum):
+class ChipPromptTypeEnum(str, Enum):
     CHIP_APP_WAIT_FOR_PROMPT = "Wait for"
     CHIP_APP_QUERY_PROMPT = "Query"
     CHIP_APP_USER_PROMPT = "USER_PROMPT"
@@ -59,10 +59,10 @@ class TestError(Exception):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
 
 
-class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
+class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
     chip_tool: ChipTool
-    chip_tool_test_identifier: str
-    test_type: ChipToolTestType
+    chip_test_identifier: str
+    test_type: ChipTestType
 
     def __init__(self, test_case_execution: TestCaseExecution):
         self.__show_adapter_logs = False
@@ -74,7 +74,7 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
         self.__runned = 0
         self.__skipped = 0
         self.__current_prompt = None
-        super(ChipToolTest, self).__init__(test_case_execution)
+        super(ChipTest, self).__init__(test_case_execution)
 
     # TestParserHooks methods
 
@@ -125,7 +125,7 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
 
     def step_start(self, request: TestStep) -> None:
         if (
-            self.test_type == ChipToolTestType.CHIP_APP
+            self.test_type == ChipTestType.CHIP_APP
             and
             # Manual steps will be handled by step_manual function.
             not isinstance(self.current_test_step, ManualVerificationTestStep)
@@ -215,13 +215,10 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
                     self.current_test_step.append_failure(log_entry.message)
 
     async def setup(self) -> None:
-        if (
-            self.chip_tool_test_identifier is None
-            or len(self.chip_tool_test_identifier) == 0
-        ):
+        if self.chip_test_identifier is None or len(self.chip_test_identifier) == 0:
             raise TestError(
-                "Invalid chip-tool test identifier: "
-                f"'{self.chip_tool_test_identifier}'. Expected non-empty string."
+                "Invalid chip test identifier: "
+                f"'{self.chip_test_identifier}'. Expected non-empty string."
             )
 
         self.chip_tool = ChipTool()
@@ -229,10 +226,10 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
         # Use test engine logger to log all events to test run.
         self.chip_tool.logger = test_engine_logger
         if not self.chip_tool.is_running():
-            raise TestError("Unable to execute test as chip-tool is not available")
+            raise TestError("Unable to execute test as SDK container is not available")
 
     async def execute(self) -> None:
-        test_name = f"Test_{self.chip_tool_test_identifier}"
+        test_name = f"Test_{self.chip_test_identifier}"
         await self.chip_tool.run_test(
             test_step_interface=self,
             test_parser_hooks=self,
@@ -270,7 +267,7 @@ class ChipToolTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks
             )
 
 
-class ChipToolManualPromptTest(ChipToolTest):
+class ChipManualPromptTest(ChipTest):
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
         self.__inject_log_prompt_step()

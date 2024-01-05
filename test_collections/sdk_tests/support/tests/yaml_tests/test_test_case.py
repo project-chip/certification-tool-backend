@@ -22,17 +22,17 @@ import pytest
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
 from app.test_engine.models.manual_test_case import ManualVerificationTestStep
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
-from test_collections.sdk_tests.support.chip_tool.test_case import TestError
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.test_case import TestError
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
 )
 from test_collections.sdk_tests.support.yaml_tests.models import YamlTestCase
 from test_collections.sdk_tests.support.yaml_tests.models.test_case import (
-    YamlChipToolTestCase,
+    YamlChipTestCase,
     YamlManualTestCase,
-    YamlSemiAutomatedChipToolTestCase,
+    YamlSemiAutomatedChipTestCase,
     YamlSimulatedTestCase,
 )
 from test_collections.sdk_tests.support.yaml_tests.models.yaml_test_models import (
@@ -139,22 +139,22 @@ def test_manual_test_case_class_factory_subclass_mapping() -> None:
 
 def test_automated_test_case_class_factory_subclass_mapping() -> None:
     """Test Automated tests are created as a subclass of
-    YamlChipToolTestCase."""
+    YamlChipTestCase."""
     test = yaml_test_instance(type=MatterTestType.AUTOMATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
-    assert issubclass(case_class, YamlChipToolTestCase)
+    assert issubclass(case_class, YamlChipTestCase)
 
 
 def test_semi_automated_test_case_class_factory_subclass_mapping() -> None:
     """Test Semi-Automated tests are created as a subclass of
-    YamlSemiAutomatedChipToolTestCase."""
+    YamlSemiAutomatedChipTestCase."""
     test = yaml_test_instance(type=MatterTestType.SEMI_AUTOMATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
-    assert issubclass(case_class, YamlSemiAutomatedChipToolTestCase)
+    assert issubclass(case_class, YamlSemiAutomatedChipTestCase)
 
 
 def test_simulated_test_case_class_factory_subclass_mapping() -> None:
@@ -287,9 +287,9 @@ def test_test_type_for_automated_tests() -> None:
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
     )
-    assert issubclass(case_class, YamlChipToolTestCase)
+    assert issubclass(case_class, YamlChipTestCase)
     instance = case_class(TestCaseExecution())
-    assert instance.test_type == ChipToolTestType.CHIP_TOOL
+    assert instance.test_type == ChipTestType.CHIP_TOOL
 
 
 def test_test_type_for_simulated_tests() -> None:
@@ -300,14 +300,14 @@ def test_test_type_for_simulated_tests() -> None:
     )
     assert issubclass(case_class, YamlSimulatedTestCase)
     instance = case_class(TestCaseExecution())
-    assert instance.test_type == ChipToolTestType.CHIP_APP
+    assert instance.test_type == ChipTestType.CHIP_APP
 
 
 @pytest.mark.asyncio
 async def test_yaml_version_logging() -> None:
     """Test that all YAML tests will log YAML version to test_engine_logger.
 
-    Note that since `chip-tool` is not setup, we except the TestError raised.
+    Note that since the SDK container is not setup, we expect the TestError raised.
     """
     for type in list(MatterTestType):
         test = yaml_test_instance(type=type)
@@ -328,7 +328,7 @@ async def test_yaml_version_logging() -> None:
             logger_info.assert_any_call(f"YAML Version: {test_yaml_version}")
 
 
-def test_default_first_steps_for_yaml_chip_tool_test_case() -> None:
+def test_default_first_steps_for_yaml_chip_test_case() -> None:
     test = yaml_test_instance(type=MatterTestType.AUTOMATED, tests=[])
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
         test=test, yaml_version="version"
@@ -398,7 +398,7 @@ def test_multiple_steps_for_non_manual() -> None:
         assert len(steps_from_yaml) == no_steps
 
 
-def test_prompt_steps_for_yaml_chip_tool_test_case() -> None:
+def test_prompt_steps_for_yaml_chip_test_case() -> None:
     test_step = MatterTestStep(
         label="Step1",
         command="UserPrompt",
