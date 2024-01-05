@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .tctr_chip_tool_log_parsing import TCTRChipToolLogParsing
+from .test_suite_chip import TestSuiteChip

@@ -24,10 +24,10 @@ from app.test_engine.models import (
     TestStep,
 )
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipToolTestType
-from test_collections.sdk_tests.support.chip_tool.test_case import (
-    ChipToolManualPromptTest,
-    ChipToolTest,
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.test_case import (
+    ChipManualPromptTest,
+    ChipTest,
 )
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
@@ -87,11 +87,11 @@ class YamlTestCase(TestCase):
         if test.type == MatterTestType.MANUAL:
             case_class = YamlManualTestCase
         elif test.type == MatterTestType.SEMI_AUTOMATED:
-            case_class = YamlSemiAutomatedChipToolTestCase
+            case_class = YamlSemiAutomatedChipTestCase
         elif test.type == MatterTestType.SIMULATED:
             case_class = YamlSimulatedTestCase
         else:  # Automated
-            case_class = YamlChipToolTestCase
+            case_class = YamlChipTestCase
 
         return case_class.__class_factory(test=test, yaml_version=yaml_version)
 
@@ -108,7 +108,7 @@ class YamlTestCase(TestCase):
             {
                 "yaml_test": test,
                 "yaml_version": yaml_version,
-                "chip_tool_test_identifier": class_name,
+                "chip_test_identifier": class_name,
                 "metadata": {
                     "public_id": identifier
                     if yaml_version != CUSTOM_TEST_IDENTIFIER
@@ -198,10 +198,10 @@ class YamlManualTestCase(YamlTestCase, ManualTestCase):
             )
 
 
-class YamlChipToolTestCase(YamlTestCase, ChipToolTest):
+class YamlChipTestCase(YamlTestCase, ChipTest):
     """Automated test cases using chip-tool."""
 
-    test_type = ChipToolTestType.CHIP_TOOL
+    test_type = ChipTestType.CHIP_TOOL
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start chip-tool test")]
@@ -209,16 +209,16 @@ class YamlChipToolTestCase(YamlTestCase, ChipToolTest):
             self._append_automated_test_step(step)
 
 
-class YamlSemiAutomatedChipToolTestCase(YamlChipToolTestCase, ChipToolManualPromptTest):
+class YamlSemiAutomatedChipTestCase(YamlChipTestCase, ChipManualPromptTest):
     """Semi-Automated test cases, need special step for users to attach logs
-    for manual steps, so inheriting from ChipToolManualPromptTest.
+    for manual steps, so inheriting from ChipManualPromptTest.
     """
 
 
-class YamlSimulatedTestCase(YamlTestCase, ChipToolTest):
+class YamlSimulatedTestCase(YamlTestCase, ChipTest):
     """Simulated test cases using chip-app"""
 
-    test_type = ChipToolTestType.CHIP_APP
+    test_type = ChipTestType.CHIP_APP
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start chip-app test")]

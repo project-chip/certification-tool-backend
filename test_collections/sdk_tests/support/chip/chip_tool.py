@@ -140,7 +140,7 @@ class ChipToolUnknownTestType(Exception):
     supported"""
 
 
-class ChipToolTestType(str, Enum):
+class ChipTestType(str, Enum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
 
@@ -214,7 +214,7 @@ class ChipTool(metaclass=Singleton):
         self.__server_started = False
         self.__server_logs: Union[Generator, bytes, tuple]
         self.__use_paa_certs = False
-        self.__test_type: ChipToolTestType = ChipToolTestType.CHIP_TOOL
+        self.__test_type: ChipTestType = ChipTestType.CHIP_TOOL
         # TODO: Need to dynamically select the specs based on clusters in test.
         specifications_paths = [f"{XML_SPEC_DEFINITION_PATH}/*.xml"]
         self.pseudo_clusters = get_default_pseudo_clusters()
@@ -273,7 +273,7 @@ class ChipTool(metaclass=Singleton):
             return False
 
     async def start_chip_server(
-        self, test_type: ChipToolTestType, use_paa_certs: bool = False
+        self, test_type: ChipTestType, use_paa_certs: bool = False
     ) -> Generator:
         # Start ChipTool Interactive Server
         self.__use_paa_certs = use_paa_certs
@@ -282,10 +282,10 @@ class ChipTool(metaclass=Singleton):
         if self.__server_started:
             return cast(Generator, self.__server_logs)
 
-        if test_type == ChipToolTestType.CHIP_TOOL:
+        if test_type == ChipTestType.CHIP_TOOL:
             prefix = CHIP_TOOL_EXE
             command = ["interactive", "server"]
-        elif test_type == ChipToolTestType.CHIP_APP:
+        elif test_type == ChipTestType.CHIP_APP:
             prefix = CHIP_APP_EXE
             command = ["--interactive", "--port 9002"]
         else:
@@ -403,7 +403,7 @@ class ChipTool(metaclass=Singleton):
         self.__server_started = False
 
     async def start_server(
-        self, test_type: ChipToolTestType, use_paa_certs: bool = False
+        self, test_type: ChipTestType, use_paa_certs: bool = False
     ) -> None:
         """Creates the chip-tool container.
 
@@ -578,7 +578,7 @@ class ChipTool(metaclass=Singleton):
         test_step_interface: TestRunnerHooks,
         test_parser_hooks: TestParserHooks,
         test_id: str,
-        test_type: ChipToolTestType,
+        test_type: ChipTestType,
         timeout: Optional[str] = None,
         test_parameters: Optional[dict[str, Any]] = None,
     ) -> bool:
@@ -586,7 +586,7 @@ class ChipTool(metaclass=Singleton):
 
         Args:
             test_id (str): Test Id to be run, must be available on the particular binary
-            test_type (ChipToolTestType): Type of the binary that needs to be run
+            test_type (ChipTestType): Type of the binary that needs to be run
 
         Raises:
             ChipToolUnknownTestType: Unsupported type of test binary
@@ -623,7 +623,7 @@ class ChipTool(metaclass=Singleton):
             pics_path = f"{PICS_FILE_PATH}"
             self.logger.info(f"Using PICS file: {pics_path}")
 
-        if test_type == ChipToolTestType.CHIP_TOOL:
+        if test_type == ChipTestType.CHIP_TOOL:
             test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
         else:
             test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
@@ -633,9 +633,9 @@ class ChipTool(metaclass=Singleton):
             [test_path], parser_config, test_parser_hooks
         )
 
-        if test_type == ChipToolTestType.CHIP_TOOL:
+        if test_type == ChipTestType.CHIP_TOOL:
             adapter = ChipToolAdapter.Adapter(parser_config.definitions)
-        elif test_type == ChipToolTestType.CHIP_APP:
+        elif test_type == ChipTestType.CHIP_APP:
             adapter = ChipAppAdapter.Adapter(parser_config.definitions)
         else:
             raise ChipToolUnknownTestType(f"Unsupported Test Type: {test_type}")

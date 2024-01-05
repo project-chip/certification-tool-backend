@@ -22,7 +22,7 @@ import loguru
 
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
-from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip import ChipTool
 
 # Command line params
 RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/test_harness_client.py"

@@ -60,8 +60,8 @@ class DutConfig(BaseModel):
     discriminator: str
     setup_code: str
     pairing_mode: DutPairingModeEnum
-    chip_tool_timeout: Optional[str]
-    chip_tool_use_paa_certs: bool = False
+    chip_timeout: Optional[str]
+    chip_use_paa_certs: bool = False
 
 
 class TestEnvironmentConfig(BaseModel):

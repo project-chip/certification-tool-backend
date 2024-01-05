@@ -19,7 +19,7 @@ from typing import Type, TypeVar
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.sdk_tests.support.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip import ChipTool
 from test_collections.sdk_tests.support.python_testing.models.utils import (
     commission_device,
 )

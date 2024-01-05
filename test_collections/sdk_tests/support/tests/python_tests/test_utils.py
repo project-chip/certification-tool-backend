@@ -20,8 +20,8 @@ import pytest
 from app.default_environment_config import default_environment_config
 from app.schemas.test_environment_config import DutConfig, DutPairingModeEnum
 from app.test_engine.logger import test_engine_logger
-from test_collections.sdk_tests.support.chip_tool.chip_tool import ChipTool
-from test_collections.sdk_tests.support.chip_tool.exec_run_in_container import (
+from test_collections.sdk_tests.support.chip.chip_tool import ChipTool
+from test_collections.sdk_tests.support.chip.exec_run_in_container import (
     ExecResultExtended,
 )
 from test_collections.sdk_tests.support.python_testing.models.utils import (
