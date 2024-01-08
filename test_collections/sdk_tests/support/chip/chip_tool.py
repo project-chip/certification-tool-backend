@@ -24,7 +24,6 @@ from random import randrange
 from typing import Any, Generator, Optional, Union, cast
 
 import loguru
-from docker.models.containers import Container
 from matter_chip_tool_adapter import adapter as ChipToolAdapter
 from matter_chip_tool_adapter.decoder import MatterLog
 from matter_placeholder_adapter import adapter as ChipAppAdapter
@@ -38,7 +37,6 @@ from matter_yamltests.pseudo_clusters.pseudo_clusters import get_default_pseudo_
 from matter_yamltests.runner import TestRunnerConfig, TestRunnerOptions
 from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
-from app.container_manager import container_manager
 from app.container_manager.backend_container import backend_container
 from app.core.config import settings
 from app.schemas.pics import PICS, PICSError
@@ -46,8 +44,12 @@ from app.singleton import Singleton
 from app.test_engine.logger import CHIP_LOG_FORMAT, CHIPTOOL_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from test_collections.sdk_tests.support.paths import SDK_CHECKOUT_PATH
-
-from .exec_run_in_container import ExecResultExtended, exec_run_in_container
+from test_collections.sdk_tests.support.pics import PICS_FILE_PATH, set_pics_command
+from test_collections.sdk_tests.support.sdk_container import (
+    DOCKER_LOGS_PATH,
+    DOCKER_PAA_CERTS_PATH,
+    SDKContainer,
+)
 
 # Chip Tool Parameters
 CHIP_TOOL_EXE = "./chip-tool"
@@ -76,48 +78,10 @@ CHIP_APP_PORT_ARG = "--secured-device-port"
 CHIP_APP_DEFAULT_PORT = 5540
 CHIP_APP_TEST_CMD_ARG = "--command"
 
-# PICS parameters
-SHELL_PATH = "/bin/sh"
-SHELL_OPTION = "-c"
-PICS_FILE_PATH = "/var/tmp/pics"
-ECHO_COMMAND = "echo"
-# List of default PICS which needs to set specifically in TH are added here.
-# These PICS are applicable for CI / Chip tool testing purposes only.
-# These PICS are unknown / not visible to external users.
-DEFAULT_PICS = ["PICS_SDK_CI_ONLY=0", "PICS_SKIP_SAMPLE_APP=1", "PICS_USER_PROMPT=1"]
-
-# Trace mount
-LOCAL_LOGS_PATH = Path("/var/tmp")
-DOCKER_LOGS_PATH = "/logs"
-
-# PAA Cert mount
-LOCAL_PAA_CERTS_PATH = Path("/var/paa-root-certs")
-DOCKER_PAA_CERTS_PATH = "/paa-root-certs"
-
-# Credentials Development mount
-LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
-DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
-
 # Websocket runner
 YAML_TESTS_PATH_BASE = SDK_CHECKOUT_PATH / Path("yaml_tests/")
 YAML_TESTS_PATH = YAML_TESTS_PATH_BASE / Path("yaml/sdk")
 XML_SPEC_DEFINITION_PATH = SDK_CHECKOUT_PATH / Path("sdk_runner/specifications/chip/")
-
-# Python Testing Folder
-LOCAL_TEST_COLLECTIONS_PATH = "/home/ubuntu/certification-tool/backend/test_collections"
-LOCAL_PYTHON_TESTING_PATH = Path(
-    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/sdk_checkout/python_testing"
-)
-DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
-
-# RPC Client Running on SDK Container
-LOCAL_RPC_PYTHON_TESTING_PATH = Path(
-    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/python_testing/models/rpc_client/"
-    "test_harness_client.py"
-)
-DOCKER_RPC_PYTHON_TESTING_PATH = (
-    "/root/python_testing/scripts/sdk/test_harness_client.py"
-)
 
 
 # Docker Network
@@ -154,43 +118,7 @@ class ChipTool(metaclass=Singleton):
     calling start_device and when done cleanup by calling destroy_device
     """
 
-    container_name = settings.CHIP_TOOL_CONTAINER_NAME
-    image_tag = f"{settings.SDK_DOCKER_IMAGE}:{settings.SDK_DOCKER_TAG}"
-    run_parameters = {
-        "privileged": True,
-        "detach": True,
-        "network": "host",
-        "name": container_name,
-        "command": "tail -f /dev/null",  # while true
-        "volumes": {
-            "/var/run/dbus/system_bus_socket": {
-                "bind": "/var/run/dbus/system_bus_socket",
-                "mode": "rw",
-            },
-            LOCAL_LOGS_PATH: {
-                "bind": DOCKER_LOGS_PATH,
-                "mode": "rw",
-            },
-            LOCAL_PAA_CERTS_PATH: {
-                "bind": DOCKER_PAA_CERTS_PATH,
-                "mode": "ro",
-            },
-            LOCAL_CREDENTIALS_DEVELOPMENT_PATH: {
-                "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
-                "mode": "ro",
-            },
-            LOCAL_PYTHON_TESTING_PATH: {
-                "bind": DOCKER_PYTHON_TESTING_PATH,
-                "mode": "rw",
-            },
-            LOCAL_RPC_PYTHON_TESTING_PATH: {
-                "bind": DOCKER_RPC_PYTHON_TESTING_PATH,
-                "mode": "rw",
-            },
-        },
-    }
-
-    __node_id: Optional[int]  # will be reset every time the container is started
+    __node_id: Optional[int] = None
     __pics_file_created: bool  # Flag that is set if PICS needs to be passed to chiptool
 
     def __init__(
@@ -203,14 +131,11 @@ class ChipTool(metaclass=Singleton):
             logger (Logger, optional): Optional logger injection. Defaults to standard
             self.logger.
         """
-        self.__chip_tool_container: Optional[Container] = None
 
-        # Last execution id is updated every time a command is executed
-        # This is used to retrieve the exit code of a command when streaming the logs.
-        self.__last_exec_id: Optional[str] = None
-        self.__pics_file_created = False
         self.logger = logger
-        self.__chip_tool_server_id: Optional[str] = None
+        self.sdk_container: SDKContainer = SDKContainer(logger)
+        self.__pics_file_created = False
+        self.__chip_server_id: Optional[str] = None
         self.__server_started = False
         self.__server_logs: Union[Generator, bytes, tuple]
         self.__use_paa_certs = False
@@ -243,22 +168,8 @@ class ChipTool(metaclass=Singleton):
         """Resets node_id to a random uint64."""
         max_uint_64 = (1 << 64) - 1
         self.__node_id = randrange(max_uint_64)
+        self.logger.info(f"New Node Id generated: {hex(self.__node_id)}")
         return self.__node_id
-
-    def __destroy_existing_container(self) -> None:
-        """This will kill and remove any existing container using the same name."""
-        existing_container = container_manager.get_container(self.container_name)
-        if existing_container is not None:
-            logger.info(
-                f'Existing container named "{self.container_name}" found. Destroying.'
-            )
-            container_manager.destroy(existing_container)
-
-    def is_running(self) -> bool:
-        if self.__chip_tool_container is None:
-            return False
-        else:
-            return container_manager.is_running(self.__chip_tool_container)
 
     async def __wait_for_server_start(self, log_generator: Generator) -> bool:
         for chunk in log_generator:
@@ -266,19 +177,20 @@ class ChipTool(metaclass=Singleton):
             log_lines = decoded_log.splitlines()
             for line in log_lines:
                 if "LWS_CALLBACK_PROTOCOL_INIT" in line:
-                    logger.log(CHIPTOOL_LEVEL, line)
+                    self.logger.log(CHIPTOOL_LEVEL, line)
                     return True
-                logger.log(CHIPTOOL_LEVEL, line)
+                self.logger.log(CHIPTOOL_LEVEL, line)
         else:
             return False
 
     async def start_chip_server(
         self, test_type: ChipTestType, use_paa_certs: bool = False
     ) -> Generator:
-        # Start ChipTool Interactive Server
+        # Start chip interactive server
         self.__use_paa_certs = use_paa_certs
         self.__test_type = test_type
-        self.logger.info("Starting Chip Tool Server")
+
+        self.logger.info("Starting chip server")
         if self.__server_started:
             return cast(Generator, self.__server_logs)
 
@@ -299,13 +211,15 @@ class ChipTool(metaclass=Singleton):
             paa_cert_params = f"{CHIP_TOOL_ARG_PAA_CERTS_PATH} {DOCKER_PAA_CERTS_PATH}"
             command.append(paa_cert_params)
 
-        self.__server_logs = self.send_command(
+        exec_result = self.sdk_container.send_command(
             command,
             prefix=prefix,
             is_stream=True,
             is_socket=False,
-        ).output
-        self.__chip_tool_server_id = self.__last_exec_id
+        )
+        self.__server_logs = exec_result.output
+        self.__chip_server_id = exec_result.exec_id
+
         wait_result = await self.__wait_for_server_start(
             cast(Generator, self.__server_logs)
         )
@@ -315,42 +229,27 @@ class ChipTool(metaclass=Singleton):
         return cast(Generator, self.__server_logs)
 
     def __wait_for_server_exit(self) -> Optional[int]:
-        exit_code = None
-        if self.__chip_tool_container is None:
+        if self.__chip_server_id is None:
             self.logger.info(
-                "No chip-tool container, cannot return last command exit code."
+                "Server execution id not found, cannot wait for server exit."
             )
             return None
 
-        if self.__chip_tool_server_id is None:
-            self.logger.info(
-                "Last execution id not found, cannot return last command exit code."
-            )
-            return None
-
-        while True:
-            exec_data = self.__chip_tool_container.client.api.exec_inspect(
-                self.__chip_tool_server_id
-            )
-            if exec_data is None:
-                self.logger.error(
-                    "Docker didn't return any execution metadata,"
-                    " cannot return last command exit code."
-                )
-                return None
-            exit_code = exec_data.get("ExitCode")
-            if exit_code is not None:
-                break
+        exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
+        while not exit_code:
+            exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
 
         return exit_code
 
-    async def stop_chip_tool_server(self) -> None:
-        if self.__server_started:
-            await self.start_runner()
-            await self.__test_harness_runner._client.send("quit()")
-            self.__wait_for_server_exit()
-            await self.stop_runner()
-            self.__server_started = False
+    async def stop_chip_server(self) -> None:
+        if not self.__server_started:
+            return
+
+        await self.start_runner()
+        await self.__test_harness_runner._client.send("quit()")
+        self.__wait_for_server_exit()
+        await self.stop_runner()
+        self.__server_started = False
 
     def __get_gateway_ip(self) -> str:
         """
@@ -370,46 +269,15 @@ class ChipTool(metaclass=Singleton):
             .get(DOCKER_GATEWAY_KEY, "")
         )
 
-    async def start_container(self) -> None:
-        """
-        Creates the chip-tool container without any server running
-        (ChipTool or ChipApp).
-        """
-        if self.is_running():
-            self.logger.info(
-                "chip-tool container already running, no need to start a new container"
-            )
-            return
-
-        # Ensure there's no existing container running using the same name.
-        self.__destroy_existing_container()
-        # Async return when the container is running
-        self.__chip_tool_container = await container_manager.create_container(
-            self.image_tag, self.run_parameters
-        )
-        # Reset any previous states
-        self.__last_exec_id = None
-        self.__pics_file_created = False
-        # Generate new random node id for the DUT
-        self.__reset_node_id()
-        self.logger.info(f"New Node Id generated: {hex(self.node_id)}")
-        self.logger.info(
-            f"""
-            chip-tool started: {self.container_name}
-            with configuration: {self.run_parameters}
-            """
-        )
-        # Server started is false after spinning up a new container.
-        self.__server_started = False
-
     async def start_server(
         self, test_type: ChipTestType, use_paa_certs: bool = False
     ) -> None:
-        """Creates the chip-tool container.
-
-        Returns only when the container is created and all chip-tool services start.
-        """
-        await self.start_container()
+        # Reset any previous states
+        self.__pics_file_created = False
+        # Generate new random node id for the DUT
+        self.__reset_node_id()
+        # Server started is false after spinning up a new container.
+        self.__server_started = False
 
         web_socket_config = WebSocketRunnerConfig()
         web_socket_config.server_address = self.__get_gateway_ip()
@@ -417,97 +285,12 @@ class ChipTool(metaclass=Singleton):
 
         self.__chip_tool_log = await self.start_chip_server(test_type, use_paa_certs)
 
-    async def destroy_device(self) -> None:
-        """Destroy the device container."""
-        if self.__chip_tool_container is not None:
-            container_manager.destroy(self.__chip_tool_container)
-        self.__chip_tool_container = None
-
     async def start_runner(self) -> None:
         if not self.__test_harness_runner.is_connected:
             await self.__test_harness_runner.start()
 
     async def stop_runner(self) -> None:
         await self.__test_harness_runner.stop()
-
-    def send_command(
-        self,
-        command: Union[str, list],
-        prefix: str,
-        is_stream: bool = False,
-        is_socket: bool = False,
-    ) -> ExecResultExtended:
-        if self.__chip_tool_container is None:
-            raise ChipToolNotRunning()
-
-        full_cmd = [prefix]
-        if isinstance(command, list):
-            full_cmd += command
-        else:
-            full_cmd.append(str(command))
-
-        self.logger.info("Sending command to chip-tool: " + " ".join(full_cmd))
-
-        result = exec_run_in_container(
-            self.__chip_tool_container,
-            " ".join(full_cmd),
-            socket=is_socket,
-            stream=is_stream,
-            stdin=True,
-        )
-
-        # When streaming logs, the exit code is not directly available.
-        # By storing the execution id, the exit code can be fetched from docker later.
-        self.__last_exec_id = result.exec_id
-
-        return result
-
-    def last_command_exit_code(self) -> Optional[int]:
-        """Get the exit code of the last run command.
-
-        When streaming logs from chip-tool in docker, the exit code is not directly
-        available. Using the id of the execution, the exit code is fetched from docker.
-
-        Returns:
-            Optional[int]: exit code of the last run command
-        """
-        if self.__last_exec_id is None:
-            self.logger.info(
-                "Last execution id not found, cannot return last command exit code."
-            )
-            return None
-
-        if self.__chip_tool_container is None:
-            self.logger.info(
-                "No chip-tool container, cannot return last command exit code."
-            )
-            return None
-
-        exec_data = self.__chip_tool_container.client.api.exec_inspect(
-            self.__last_exec_id
-        )
-        if exec_data is None:
-            self.logger.error(
-                "Docker didn't return any execution metadata,"
-                " cannot return last command exit code."
-            )
-            return None
-
-        exit_code = exec_data.get("ExitCode")
-        return exit_code
-
-    def exec_exit_code(self, exec_id: str) -> Optional[int]:
-        if self.__chip_tool_container is None:
-            self.logger.info("No SDK container, cannot get execution exit code")
-            return None
-
-        exec_data = self.__chip_tool_container.client.api.exec_inspect(exec_id)
-
-        if exec_data is None:
-            self.logger.error("Docker didn't return any execution metadata")
-            return None
-
-        return exec_data.get("ExitCode")
 
     async def send_websocket_command(self, cmd: str) -> Union[str, bytes, bytearray]:
         await self.start_runner()
@@ -698,14 +481,11 @@ class ChipTool(metaclass=Singleton):
         path = Path(DOCKER_LOGS_PATH) / filename
         return f'--trace_file "{path}" --trace_decode 1'
 
-    def set_pics(self, pics: PICS, in_container: bool) -> None:
+    def set_pics(self, pics: PICS) -> None:
         """Sends command to create pics file.
 
         Args:
             pics (PICS): PICS that contains all the pics codes
-            in_container (bool): Whether the file should be created in the SDK container
-                                or not. YAML tests run directly in the backend and
-                                python tests run in the SDK container.
 
         Raises:
             PICSError: If creating PICS file inside the container fails.
@@ -714,21 +494,13 @@ class ChipTool(metaclass=Singleton):
         # These PICS are applicable for CI / Chip tool testing purposes only.
         # These PICS are unknown / not visible to external users.
 
-        pics_codes = self.__pics_file_content(pics) + "\n".join(DEFAULT_PICS)
+        prefix, cmd = set_pics_command(pics)
 
-        prefix = f"{SHELL_PATH} {SHELL_OPTION}"
-        cmd = f"\"{ECHO_COMMAND} '{pics_codes}' > {PICS_FILE_PATH}\""
+        full_cmd = f"{prefix} {cmd}"
+        self.logger.info(f"Sending command: {full_cmd}")
+        result = subprocess.run(full_cmd, shell=True)
 
-        if in_container:
-            exec_result = self.send_command(cmd, prefix=prefix)
-            success = exec_result.exit_code == 0
-        else:
-            full_cmd = f"{prefix} {cmd}"
-            self.logger.info(f"Sending command: {full_cmd}")
-            result = subprocess.run(full_cmd, shell=True)
-            success = result.returncode == 0
-
-        if not success:
+        if result.returncode != 0:
             raise PICSError("Creating PICS file failed")
 
         self.__pics_file_created = True
@@ -736,74 +508,8 @@ class ChipTool(metaclass=Singleton):
     def reset_pics_state(self) -> None:
         self.__pics_file_created = False
 
-    def __pics_file_content(self, pics: PICS) -> str:
-        """Generates PICS file content in the below format:
-           PICS_CODE1=1
-           PICS_CODE2=1
-           PICS_CODE3=0
-           .....
-
-        Args:
-            pics (PICS): PICS that contains all the pics codes
-
-        Returns:
-            str: Returns a string in this format PICS_CODE1=1\nPICS_CODE1=2\n"
-        """
-        pics_str: str = ""
-
-        for cluster in pics.clusters.values():
-            for pi in cluster.items.values():
-                if pi.enabled:
-                    pics_str += pi.number + "=1" + "\n"
-                else:
-                    pics_str += pi.number + "=0" + "\n"
-
-        return pics_str
-
     async def restart_server(self) -> None:
-        await self.stop_chip_tool_server()
+        await self.stop_chip_server()
         self.__chip_tool_log = await self.start_chip_server(
             self.__test_type, self.__use_paa_certs
         )
-
-    # TODO(#490): Need to be refactored to support real PIXIT format
-    def __test_parameters_arguments(
-        self, test_parameters: Optional[dict[str, Any]]
-    ) -> list:
-        """Generate cli arguments for chip-tool based on test_parameters.
-
-        Note:
-         - Currently `nodeID` is managed by this class, and should not be overridden
-        by test_parameters.
-         - chip-tool allows users to configure `cluster` via cli, but this should not
-           be used.
-
-        This method is ignoring `nodeID` and `cluster` from input argument
-        `test_parameters`.
-
-        chip-tool is expecting test_parameter arguments as
-        `--<config-key> value`
-
-        Args:
-            test_parameters (Optional[dict[str, Any]]): dictionary of test parameters
-
-        Returns:
-            list: list of chip-tool arguments.
-        """
-        if test_parameters is None:
-            return []
-
-        arguments = []
-        for name, value in test_parameters.items():
-            # skip nodeId, as it is passed separately
-            # skip cluster, as we don't allow to override this
-            if name in ["nodeId", "cluster"]:
-                continue
-
-            if str(value) != "":
-                # TODO: does this work for all formats, string, number etc?
-                arguments.append(f"--{name} {str(value)}")
-            else:
-                arguments.append(f'--{name} ""')
-
-        return arguments

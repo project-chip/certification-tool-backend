@@ -25,7 +25,8 @@ from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.sdk_tests.support.chip.chip_tool import PICS_FILE_PATH, ChipTool
+from test_collections.sdk_tests.support.chip.chip_tool import PICS_FILE_PATH
+from test_collections.sdk_tests.support.sdk_container import SDKContainer
 from test_collections.sdk_tests.support.utils import prompt_for_commissioning_mode
 
 from .python_test_models import PythonTest, PythonTestType
@@ -65,12 +66,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
     in all instances of such subclass.
     """
 
+    sdk_container: SDKContainer = SDKContainer(logger)
     python_test: PythonTest
     python_test_version: str
 
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
-        self.chip_tool: ChipTool = ChipTool(logger)
         self.__runned = 0
         self.test_stop_called = False
 
@@ -221,10 +222,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
             )
             command.extend(command_arguments)
 
-            if self.chip_tool.pics_file_created:
+            if self.sdk_container.pics_file_created:
                 command.append(f" --PICS {PICS_FILE_PATH}")
 
-            exec_result = self.chip_tool.send_command(
+            exec_result = self.sdk_container.send_command(
                 command,
                 prefix=EXECUTABLE,
                 is_stream=True,

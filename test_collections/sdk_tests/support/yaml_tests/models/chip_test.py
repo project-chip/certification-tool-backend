@@ -36,6 +36,7 @@ from app.user_prompt_support.user_prompt_manager import user_prompt_manager
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.sdk_tests.support.chip import ChipTool
 from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.sdk_container import SDKContainer
 
 CHIP_TOOL_DEFAULT_PROMPT_TIMEOUT_S = 60  # seconds
 OUTCOME_TIMEOUT_S = 60 * 10  # Seconds
@@ -60,7 +61,7 @@ class TestError(Exception):
 
 
 class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
-    chip_tool: ChipTool
+    chip_tool: ChipTool = ChipTool(test_engine_logger)
     chip_test_identifier: str
     test_type: ChipTestType
 
@@ -221,11 +222,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
                 f"'{self.chip_test_identifier}'. Expected non-empty string."
             )
 
-        self.chip_tool = ChipTool()
-
-        # Use test engine logger to log all events to test run.
-        self.chip_tool.logger = test_engine_logger
-        if not self.chip_tool.is_running():
+        if not SDKContainer().is_running():
             raise TestError("Unable to execute test as SDK container is not available")
 
     async def execute(self) -> None:

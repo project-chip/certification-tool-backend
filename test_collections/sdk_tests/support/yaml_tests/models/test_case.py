@@ -25,13 +25,13 @@ from app.test_engine.models import (
 )
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
-from test_collections.sdk_tests.support.chip.test_case import (
-    ChipManualPromptTest,
-    ChipTest,
-)
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
+)
+from test_collections.sdk_tests.support.yaml_tests.models.chip_test import (
+    ChipManualPromptTest,
+    ChipTest,
 )
 
 from .yaml_test_models import YamlTest

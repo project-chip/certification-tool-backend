@@ -109,7 +109,7 @@ class Settings(BaseSettings):
 
     # Test Engine Config
     CHIP_TOOL_TRACE: bool = True
-    CHIP_TOOL_CONTAINER_NAME: str = "th-chip-tool"
+    SDK_CONTAINER_NAME: str = "th-sdk"
 
     # SDK Docker Image
     SDK_DOCKER_IMAGE: str = "connectedhomeip/chip-cert-bins"

@@ -107,7 +107,8 @@ async def test_suite_setup_log_yaml_version() -> None:
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
         ) as logger_info, mock.patch(
-            "test_collections.sdk_tests.support.chip.test_suite.ChipSuite.setup"
+            "test_collections.sdk_tests.support.yaml_tests.models.chip_suite.ChipSuite"
+            ".setup"
         ) as _:
             await suite_instance.setup()
             logger_info.assert_called()
@@ -159,7 +160,8 @@ async def test_chip_suite_setup() -> None:
             "test_collections.sdk_tests.support.yaml_tests.models."
             "test_suite.YamlTestSuite.setup"
         ) as yaml_suite_setup, mock.patch(
-            "test_collections.sdk_tests.support.chip.test_suite.ChipSuite.setup"
+            "test_collections.sdk_tests.support.yaml_tests.models.chip_suite.ChipSuite"
+            ".setup"
         ) as chip_suite_setup:
             await suite_instance.setup()
             yaml_suite_setup.assert_called_once()

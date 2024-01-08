@@ -16,7 +16,7 @@
 from typing import Generator
 
 from app.tests.utils.docker import make_fake_container
-from test_collections.sdk_tests.support.chip.exec_run_in_container import (
+from test_collections.sdk_tests.support.exec_run_in_container import (
     exec_run_in_container,
 )
 

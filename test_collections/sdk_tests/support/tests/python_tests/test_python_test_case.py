@@ -23,7 +23,6 @@ import pytest
 
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
-from test_collections.sdk_tests.support.chip.test_case import TestError
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
