@@ -105,7 +105,7 @@ def _parse_all_yaml(
             # ignored and the loop will continue with the next yaml file
             logger.error(f"Error while parsing YAML File: {yaml_file}")
 
-    return list(suites.values())
+    return [s for s in list(suites.values()) if len(s.test_cases) != 0]
 
 
 def sdk_yaml_test_collection(
