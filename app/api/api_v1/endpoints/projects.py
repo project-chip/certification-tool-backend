@@ -16,7 +16,7 @@
 from http import HTTPStatus
 from typing import List, Sequence
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -61,6 +61,7 @@ def create_project(
     *,
     db: Session = Depends(get_db),
     project_in: schemas.ProjectCreate,
+    request: Request,
 ) -> models.Project:
     """Create new project
 
@@ -70,6 +71,9 @@ def create_project(
     Returns:
         Project: newly created project record
     """
+    # Validade dut config informed arguments
+    __validate_dut_config(request=request)
+
     return crud.project.create(db=db, obj_in=project_in)
 
 
@@ -83,12 +87,34 @@ def default_config() -> schemas.TestEnvironmentConfig:
     return default_environment_config
 
 
+def __validate_dut_config(request: Request) -> None:
+    if "config" in request._json and "dut_config" in request._json["config"]:
+        dut_config = request._json["config"]["dut_config"]
+
+        valid_fields = [
+            "discriminator",
+            "setup_code",
+            "pairing_mode",
+            "chip_timeout",
+            "chip_use_paa_certs",
+        ]
+
+        for field, _ in dut_config.items():
+            if field not in valid_fields:
+                raise HTTPException(
+                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                    detail="Dut config has invalid configuration informed."
+                    f" The valid configuration are: {valid_fields}",
+                )
+
+
 @router.put("/{id}", response_model=schemas.Project)
 def update_project(
     *,
     db: Session = Depends(get_db),
     id: int,
     project_in: schemas.ProjectUpdate,
+    request: Request,
 ) -> models.Project:
     """Update an existing project
 
@@ -102,6 +128,8 @@ def update_project(
     Returns:
         Project: updated project record
     """
+    # Validade dut config informed arguments
+    __validate_dut_config(request=request)
 
     return crud.project.update(db=db, db_obj=__project(db=db, id=id), obj_in=project_in)
 
