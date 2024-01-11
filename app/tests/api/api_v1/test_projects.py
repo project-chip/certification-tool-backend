@@ -111,7 +111,7 @@ def test_create_project_invalid_dut_config(client: TestClient) -> None:
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": "Dut config has invalid configuration informed. The valid configuration are: ['discriminator', 'setup_code', 'pairing_mode', 'chip_timeout', 'chip_use_paa_certs']"
+            "detail": "Dut config section has invalid property informed. The valid properties are: ['discriminator', 'setup_code', 'pairing_mode', 'chip_timeout', 'chip_use_paa_certs']"
         },
         expected_keys=["detail"],
     )
@@ -210,7 +210,7 @@ def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> N
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": "Dut config has invalid configuration informed. The valid configuration are: ['discriminator', 'setup_code', 'pairing_mode', 'chip_timeout', 'chip_use_paa_certs']"
+            "detail": "Dut config section has invalid property informed. The valid properties are: ['discriminator', 'setup_code', 'pairing_mode', 'chip_timeout', 'chip_use_paa_certs']"
         },
         expected_keys=["detail"],
     )

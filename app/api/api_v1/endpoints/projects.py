@@ -71,7 +71,7 @@ def create_project(
     Returns:
         Project: newly created project record
     """
-    # Validade dut config informed arguments
+    # Validate dut config properties
     __validate_dut_config(request=request)
 
     return crud.project.create(db=db, obj_in=project_in)
@@ -88,23 +88,23 @@ def default_config() -> schemas.TestEnvironmentConfig:
 
 
 def __validate_dut_config(request: Request) -> None:
+    valid_properties = [
+        "discriminator",
+        "setup_code",
+        "pairing_mode",
+        "chip_timeout",
+        "chip_use_paa_certs",
+    ]
+
     if "config" in request._json and "dut_config" in request._json["config"]:
         dut_config = request._json["config"]["dut_config"]
 
-        valid_fields = [
-            "discriminator",
-            "setup_code",
-            "pairing_mode",
-            "chip_timeout",
-            "chip_use_paa_certs",
-        ]
-
         for field, _ in dut_config.items():
-            if field not in valid_fields:
+            if field not in valid_properties:
                 raise HTTPException(
                     status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-                    detail="Dut config has invalid configuration informed."
-                    f" The valid configuration are: {valid_fields}",
+                    detail="Dut config section has invalid property informed."
+                    f" The valid properties are: {valid_properties}",
                 )
 
 
@@ -128,7 +128,7 @@ def update_project(
     Returns:
         Project: updated project record
     """
-    # Validade dut config informed arguments
+    # Validate dut config properties
     __validate_dut_config(request=request)
 
     return crud.project.update(db=db, db_obj=__project(db=db, id=id), obj_in=project_in)
