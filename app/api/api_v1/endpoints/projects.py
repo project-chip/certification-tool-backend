@@ -28,8 +28,7 @@ from app.pics.pics_parser import PICSParser
 from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
-
-# from app.schemas.project import ProjectPICSUpdate
+from app.schemas.test_environment_config import DutConfig
 
 router = APIRouter()
 
@@ -88,13 +87,7 @@ def default_config() -> schemas.TestEnvironmentConfig:
 
 
 def __validate_dut_config(request: Request) -> None:
-    valid_properties = [
-        "discriminator",
-        "setup_code",
-        "pairing_mode",
-        "chip_timeout",
-        "chip_use_paa_certs",
-    ]
+    valid_properties = list(DutConfig.__annotations__.keys())
 
     if "config" in request._json and "dut_config" in request._json["config"]:
         dut_config = request._json["config"]["dut_config"]
