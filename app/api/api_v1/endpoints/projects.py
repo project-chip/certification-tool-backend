@@ -96,7 +96,8 @@ def __validate_dut_config(request: Request) -> None:
             if field not in valid_properties:
                 raise HTTPException(
                     status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-                    detail="Dut config section has invalid property informed."
+                    detail="The DUT config section has one or more invalid properties"
+                    " informed."
                     f" The valid properties are: {valid_properties}",
                 )
 
