@@ -27,7 +27,7 @@ from app import crud
 from app.core.config import settings
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
-from app.schemas.test_environment_config import DutPairingModeEnum
+from app.schemas.test_environment_config import DutConfig, DutPairingModeEnum
 from app.tests.utils.project import (
     create_random_project,
     create_random_project_archived,
@@ -107,11 +107,13 @@ def test_create_project_invalid_dut_config(client: TestClient) -> None:
         json=invalid_dut_config,
     )
 
+    valid_fields = list(DutConfig.__annotations__.keys())
+
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": "The DUT config section has one or more invalid properties informed. The valid properties are: ['discriminator', 'setup_code', 'pairing_mode', 'chip_timeout', 'chip_use_paa_certs']"
+            f"detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
         },
         expected_keys=["detail"],
     )
@@ -206,11 +208,13 @@ def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> N
         json=invalid_dut_config,
     )
 
+    valid_fields = list(DutConfig.__annotations__.keys())
+
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": "The DUT config section has one or more invalid properties informed. The valid properties are: ['discriminator', 'setup_code', 'pairing_mode', 'chip_timeout', 'chip_use_paa_certs']"
+            "detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
         },
         expected_keys=["detail"],
     )
