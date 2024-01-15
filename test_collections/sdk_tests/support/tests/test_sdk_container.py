@@ -24,7 +24,6 @@ import pytest
 from app.container_manager import container_manager
 from app.core.config import settings
 from app.tests.utils.docker import make_fake_container
-from test_collections.sdk_tests.support.chip.chip_tool import CHIP_TOOL_EXE
 from test_collections.sdk_tests.support.exec_run_in_container import ExecResultExtended
 from test_collections.sdk_tests.support.sdk_container import (
     SDKContainer,
@@ -136,7 +135,7 @@ def test_send_command_without_starting() -> None:
     sdk_container: SDKContainer = SDKContainer()
 
     with pytest.raises(SDKContainerNotRunning):
-        sdk_container.send_command("--help", prefix=CHIP_TOOL_EXE)
+        sdk_container.send_command("--help", prefix="cmd-prefix")
 
 
 @pytest.mark.asyncio
@@ -144,7 +143,7 @@ async def test_send_command_default_prefix() -> None:
     sdk_container: SDKContainer = SDKContainer()
     fake_container = make_fake_container()
     cmd = "--help"
-    chip_tool_prefix = CHIP_TOOL_EXE
+    cmd_prefix = "cmd-prefix"
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     with mock.patch.object(
@@ -161,11 +160,11 @@ async def test_send_command_default_prefix() -> None:
     ) as mock_exec_run:
         await sdk_container.start()
 
-        result = sdk_container.send_command(cmd, prefix=chip_tool_prefix)
+        result = sdk_container.send_command(cmd, prefix=cmd_prefix)
 
     mock_exec_run.assert_called_once_with(
         fake_container,
-        f"{chip_tool_prefix} {cmd}",
+        f"{cmd_prefix} {cmd}",
         socket=False,
         stream=False,
         stdin=True,
@@ -182,7 +181,7 @@ async def test_send_command_custom_prefix() -> None:
     sdk_container: SDKContainer = SDKContainer()
     fake_container = make_fake_container()
     cmd = "--help"
-    chip_tool_prefix = "cat"
+    cmd_prefix = "cat"
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     with mock.patch.object(
@@ -199,11 +198,11 @@ async def test_send_command_custom_prefix() -> None:
     ) as mock_exec_run:
         await sdk_container.start()
 
-        result = sdk_container.send_command(cmd, prefix=chip_tool_prefix)
+        result = sdk_container.send_command(cmd, prefix=cmd_prefix)
 
     mock_exec_run.assert_called_once_with(
         fake_container,
-        f"{chip_tool_prefix} {cmd}",
+        f"{cmd_prefix} {cmd}",
         socket=False,
         stream=False,
         stdin=True,
