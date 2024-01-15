@@ -22,7 +22,7 @@ import pytest
 from app.models.test_case_execution import TestCaseExecution
 from app.test_engine.logger import test_engine_logger
 from app.test_engine.models.manual_test_case import ManualVerificationTestStep
-from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.chip_server import ChipServerType
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
@@ -289,7 +289,7 @@ def test_test_type_for_automated_tests() -> None:
     )
     assert issubclass(case_class, YamlChipTestCase)
     instance = case_class(TestCaseExecution())
-    assert instance.test_type == ChipTestType.CHIP_TOOL
+    assert instance.test_type == ChipServerType.CHIP_TOOL
 
 
 def test_test_type_for_simulated_tests() -> None:
@@ -300,7 +300,7 @@ def test_test_type_for_simulated_tests() -> None:
     )
     assert issubclass(case_class, YamlSimulatedTestCase)
     instance = case_class(TestCaseExecution())
-    assert instance.test_type == ChipTestType.CHIP_APP
+    assert instance.test_type == ChipServerType.CHIP_APP
 
 
 @pytest.mark.asyncio

@@ -25,7 +25,7 @@ from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.sdk_tests.support.chip.chip_tool import PICS_FILE_PATH
+from test_collections.sdk_tests.support.pics import PICS_FILE_PATH
 from test_collections.sdk_tests.support.sdk_container import SDKContainer
 from test_collections.sdk_tests.support.utils import prompt_for_commissioning_mode
 

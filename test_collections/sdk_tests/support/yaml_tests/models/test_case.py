@@ -24,7 +24,7 @@ from app.test_engine.models import (
     TestStep,
 )
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
-from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.chip_server import ChipServerType
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
     MatterTestType,
@@ -201,7 +201,7 @@ class YamlManualTestCase(YamlTestCase, ManualTestCase):
 class YamlChipTestCase(YamlTestCase, ChipTest):
     """Automated test cases using chip-tool."""
 
-    test_type = ChipTestType.CHIP_TOOL
+    test_type = ChipServerType.CHIP_TOOL
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start chip-tool test")]
@@ -218,7 +218,7 @@ class YamlSemiAutomatedChipTestCase(YamlChipTestCase, ChipManualPromptTest):
 class YamlSimulatedTestCase(YamlTestCase, ChipTest):
     """Simulated test cases using chip-app"""
 
-    test_type = ChipTestType.CHIP_APP
+    test_type = ChipServerType.CHIP_APP
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start chip-app test")]

@@ -20,7 +20,7 @@ import pytest
 
 from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger
-from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.sdk_tests.support.chip.chip_server import ChipServerType
 from test_collections.sdk_tests.support.yaml_tests.models.test_suite import (
     ChipYamlTestSuite,
     ManualYamlTestSuite,
@@ -76,7 +76,7 @@ def test_automated_suite_subclass() -> None:
         suite_type=type, name="SomeSuite", yaml_version="some_version"
     )
     assert issubclass(suite_class, ChipYamlTestSuite)
-    assert suite_class.test_type == ChipTestType.CHIP_TOOL
+    assert suite_class.test_type == ChipServerType.CHIP_TOOL
 
 
 def test_simulated_suite_subclass() -> None:
@@ -88,7 +88,7 @@ def test_simulated_suite_subclass() -> None:
         suite_type=type, name="SomeSuite", yaml_version="some_version"
     )
     assert issubclass(suite_class, SimulatedYamlTestSuite)
-    assert suite_class.test_type == ChipTestType.CHIP_APP
+    assert suite_class.test_type == ChipServerType.CHIP_APP
 
 
 @pytest.mark.asyncio
