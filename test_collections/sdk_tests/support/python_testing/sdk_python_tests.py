@@ -104,7 +104,7 @@ def _parse_all_sdk_python_tests(
             else:
                 suites[SuiteType.LEGACY].add_test_case(test_case)
 
-    return list(suites.values())
+    return [s for s in list(suites.values()) if len(s.test_cases) != 0]
 
 
 def sdk_python_test_collection(
