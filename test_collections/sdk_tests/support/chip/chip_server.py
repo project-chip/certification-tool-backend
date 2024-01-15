@@ -166,7 +166,7 @@ class ChipServer(metaclass=Singleton):
             return None
 
         exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
-        while not exit_code:
+        while exit_code is None:
             exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
 
         return exit_code
