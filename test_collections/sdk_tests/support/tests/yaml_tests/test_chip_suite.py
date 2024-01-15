@@ -23,12 +23,12 @@ import pytest
 from app.models.test_suite_execution import TestSuiteExecution
 from app.user_prompt_support.constants import UserResponseStatusEnum
 from app.user_prompt_support.prompt_response import PromptResponse
-from test_collections.sdk_tests.support.chip.test_case import PromptOption
-from test_collections.sdk_tests.support.chip.test_suite import (
+from test_collections.sdk_tests.support.yaml_tests.models.chip_suite import (
     ChipSuite,
     DUTCommissioningError,
     SuiteSetupError,
 )
+from test_collections.sdk_tests.support.yaml_tests.models.chip_test import PromptOption
 
 RETRY_PROMPT_RESPONSE = PromptResponse(
     response=PromptOption.RETRY, status_code=UserResponseStatusEnum.OKAY

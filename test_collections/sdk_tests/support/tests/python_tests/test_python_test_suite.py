@@ -25,12 +25,12 @@ from app.models.test_suite_execution import TestSuiteExecution
 from app.schemas import PICS
 from app.test_engine.logger import test_engine_logger
 from app.tests.utils.test_pics_data import create_random_pics
-from test_collections.sdk_tests.support.chip.chip_tool import ChipTool
 from test_collections.sdk_tests.support.python_testing.models.test_suite import (
     CommissioningPythonTestSuite,
     PythonTestSuite,
     SuiteType,
 )
+from test_collections.sdk_tests.support.sdk_container import SDKContainer
 
 
 def test_python_suite_class_factory_name() -> None:
@@ -75,7 +75,7 @@ def test_commissioning_suite_subclass() -> None:
 @pytest.mark.asyncio
 async def test_suite_setup_log_python_version() -> None:
     """Test that test suite python version is logged to test engine logger in setup."""
-    chip_tool: ChipTool = ChipTool()
+    sdk_container: SDKContainer = SDKContainer()
 
     for type in list(SuiteType):
         python_test_version = "best_version"
@@ -89,7 +89,7 @@ async def test_suite_setup_log_python_version() -> None:
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
         ) as logger_info, mock.patch.object(
-            target=chip_tool, attribute="start_container"
+            target=sdk_container, attribute="start"
         ), mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
@@ -114,7 +114,7 @@ async def test_suite_setup_log_python_version() -> None:
 
 @pytest.mark.asyncio
 async def test_suite_setup_without_pics() -> None:
-    chip_tool: ChipTool = ChipTool()
+    sdk_container: SDKContainer = SDKContainer()
 
     for type in list(SuiteType):
         python_test_version = "best_version"
@@ -125,16 +125,14 @@ async def test_suite_setup_without_pics() -> None:
 
         suite_instance = suite_class(TestSuiteExecution())
 
-        with mock.patch(
-            "test_collections.sdk_tests.support.chip.test_suite.ChipSuite.setup"
-        ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
+        with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
             new_callable=PICS,
         ), mock.patch.object(
-            target=chip_tool, attribute="set_pics"
+            target=sdk_container, attribute="set_pics"
         ) as mock_set_pics, mock.patch.object(
-            target=chip_tool, attribute="reset_pics_state"
+            target=sdk_container, attribute="reset_pics_state"
         ) as mock_reset_pics_state, mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".prompt_for_commissioning_mode",
@@ -155,7 +153,7 @@ async def test_suite_setup_without_pics() -> None:
 
 @pytest.mark.asyncio
 async def test_suite_setup_with_pics() -> None:
-    chip_tool: ChipTool = ChipTool()
+    sdk_container: SDKContainer = SDKContainer()
 
     for type in list(SuiteType):
         python_test_version = "best_version"
@@ -166,16 +164,14 @@ async def test_suite_setup_with_pics() -> None:
 
         suite_instance = suite_class(TestSuiteExecution())
 
-        with mock.patch(
-            "test_collections.sdk_tests.support.chip.test_suite.ChipSuite.setup"
-        ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
+        with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
             new_callable=create_random_pics,
         ), mock.patch.object(
-            target=chip_tool, attribute="set_pics"
+            target=sdk_container, attribute="set_pics"
         ) as mock_set_pics, mock.patch.object(
-            target=chip_tool, attribute="reset_pics_state"
+            target=sdk_container, attribute="reset_pics_state"
         ) as mock_reset_pics_state, mock.patch(
             target="test_collections.sdk_tests.support.python_testing.models.test_suite"
             ".prompt_for_commissioning_mode",
@@ -196,7 +192,7 @@ async def test_suite_setup_with_pics() -> None:
 
 @pytest.mark.asyncio
 async def test_commissioning_suite_setup_with_pics() -> None:
-    chip_tool: ChipTool = ChipTool()
+    sdk_container: SDKContainer = SDKContainer()
 
     python_test_version = "best_version"
     # Create a subclass of PythonTestSuite
@@ -208,15 +204,11 @@ async def test_commissioning_suite_setup_with_pics() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
-    with mock.patch(
-        "test_collections.sdk_tests.support.chip.test_suite.ChipSuite.setup"
-    ), mock.patch.object(target=chip_tool, attribute="start_container"), mock.patch(
+    with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
         target="test_collections.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.pics",
         new_callable=PICS,
-    ), mock.patch.object(
-        target=chip_tool, attribute="reset_pics_state"
-    ), mock.patch(
+    ), mock.patch.object(target=sdk_container, attribute="set_pics"), mock.patch(
         target="test_collections.sdk_tests.support.python_testing.models.test_suite"
         ".prompt_for_commissioning_mode",
     ) as mock_prompt_for_commissioning_mode, mock.patch(

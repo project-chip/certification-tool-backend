@@ -18,7 +18,7 @@ from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestStep
 from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
-from test_collections.sdk_tests.support.chip.test_case import ChipTest
+from test_collections.sdk_tests.support.yaml_tests.models.chip_test import ChipTest
 
 
 class TCTRChipLogParsing(ChipTest):
