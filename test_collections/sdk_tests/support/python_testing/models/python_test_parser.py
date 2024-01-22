@@ -16,7 +16,7 @@
 import ast
 import re
 from pathlib import Path
-from typing import List, Optional, Union, Any
+from typing import Any, List, Optional, Union
 
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
