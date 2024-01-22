@@ -200,7 +200,7 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
     if not steps_body:
         return []
 
-    for step in steps_body.value.elts:  # type: ignore
+    for step in steps_body.value.elts:
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
         arg_is_commissioning = False
         if (
@@ -224,7 +224,7 @@ def __retrieve_pics(method: FunctionDefType) -> list:
     if not pics_body:
         return []
 
-    for pics in pics_body.value.elts:  # type: ignore
+    for pics in pics_body.value.elts:
         pics_list.append(pics.value)
 
     return pics_list
@@ -244,7 +244,7 @@ def __retrieve_return_body(
 def __retrieve_description(method: FunctionDefType) -> str:
     description = ""
     for body in method.body:
-        if type(body) is ast.Return:  # type: ignore
+        if type(body) is ast.Return:
             description = body.value.value  # type: ignore
 
     return description
