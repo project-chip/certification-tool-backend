@@ -106,19 +106,17 @@ def discover_test_collections(
     Note that disabled_test_cases and disabled_collections can be used to disable both
     entire collections or individual test cases.
     """
+    disabled_collections = disabled_collections or []
     collections: Dict[str, TestCollectionDeclaration] = {}
 
     names = __test_collection_folder_names()
-
-    # Apply filter if needed
-    if disabled_collections:
-        names = [n for n in names if n not in disabled_collections]
 
     for name in names:
         # Don't add collection if it doesn't have any suites
         if found_collections := __find_test_collections(name, disabled_test_cases):
             for collection in found_collections:
-                collections[collection.name] = collection
+                if collection.name not in disabled_collections:
+                    collections[collection.name] = collection
 
     return collections
 
@@ -201,48 +199,57 @@ def __find_test_collections(
     - TestSuites cannot be nested, i.e. one  root TestSuite for a set of test cases.
     - TestCases are nested within a TestSuite.
     """
-    collection_path = f"{COLLECTIONS_PATH}/{folder_name}"
     collection_module_name = f"{COLLECTIONS_DIRNAME}.{folder_name}"
 
-    # If Collection defines a TestCollectionDeclarations return them
-    if test_collections := __declared_collection_declarations(collection_module_name):
-        if disabled_test_cases:
-            # Remove disabled test cases from collections
-            for collection in test_collections:
-                for _, suite_decl in collection.test_suites.items():
-                    suite_decl.test_cases = {
-                        k: v
-                        for k, v in suite_decl.test_cases.items()
-                        if v.public_id not in disabled_test_cases
-                    }
-        return test_collections
+    test_collections = __declared_collection_declarations(collection_module_name)
 
-    # Return value place holder
-    test_collection = TestCollectionDeclaration(path=collection_path, name=folder_name)
+    # Remove disabled test cases from collections
+    if disabled_test_cases:
+        __remove_disabled_test_cases(test_collections, disabled_test_cases)
 
-    test_suites: List[Type[TestSuite]] = __find_classes_of_type(
-        module_name=collection_module_name, classtype=TestSuite
-    )
+    return test_collections
 
-    for suite in test_suites:
-        suite_declaration = __find_test_suite(
-            suite=suite,
-            disabled_test_cases=disabled_test_cases,
-        )
 
-        if suite_declaration:
-            test_collection.test_suites[suite.public_id()] = suite_declaration
+def __remove_disabled_test_cases(
+    test_collections: list[TestCollectionDeclaration],
+    disabled_test_cases: list[str],
+) -> None:
+    """Remove the disabled test cases from a list of test collections.
 
-    # Don't include empty test collections
-    if not test_collection.test_suites:
-        return None
+    If all test cases from a test suite are disabled, the test suite is removed from the
+    test collection. If all test suites from a test collection are removed, then the
+    collection itself is also removed form the list.
 
-    return [test_collection]
+    Args:
+        test_collections (list[TestCollectionDeclaration]): The test collections list.
+        disabled_test_cases (list[str]): The list of the disabled test cases.
+    """
+    emptied_collections = []
+
+    for index, collection in enumerate(test_collections):
+        emptied_suites = []
+
+        for key, suite_decl in collection.test_suites.items():
+            suite_decl.test_cases = {
+                k: v
+                for k, v in suite_decl.test_cases.items()
+                if v.public_id not in disabled_test_cases
+            }
+            if not suite_decl.test_cases:
+                emptied_suites.append(key)
+
+        for emptied_suite in emptied_suites:
+            del collection.test_suites[emptied_suite]
+
+        if not collection.test_suites:
+            emptied_collections.append(index)
+
+    for emptied_collection in emptied_collections:
+        del test_collections[emptied_collection]
 
 
 def __find_test_suite(
     suite: Type[TestSuite],
-    disabled_test_cases: Optional[list[str]],
 ) -> Optional[TestSuiteDeclaration]:
     """Dynamically finds TestCases in the specified suite.
 
@@ -255,10 +262,6 @@ def __find_test_suite(
         module_name=suite.__module__, classtype=TestCase
     )
 
-    # Apply filter if needed
-    if disabled_test_cases:
-        test_cases = [x for x in test_cases if x.public_id() not in disabled_test_cases]
-
     # Don't include empty test suites
     if not test_cases:
         return None
@@ -269,6 +272,50 @@ def __find_test_suite(
         suite_declaration.test_cases[test.public_id()] = test_declaration
 
     return suite_declaration
+
+
+def test_collection_declaration(
+    collection_path: Path, name: str
+) -> Optional[TestCollectionDeclaration]:
+    """Declare a new collection of test suites."""
+    collection = TestCollectionDeclaration(path=str(collection_path), name=name)
+
+    collection_module_name = __collection_module_name(collection_path)
+    suite_types = __find_classes_of_type(
+        module_name=collection_module_name, classtype=TestSuite
+    )
+
+    for suite_type in suite_types:
+        if suite := __find_test_suite(suite_type):
+            collection.add_test_suite(suite)
+
+    return collection if collection.test_suites else None
+
+
+def __collection_module_name(path: Path) -> str:
+    """Get the name of the module that should be searched for the collection's test
+    suites.
+
+    The module name is extracted from the collection folder path. This function iterates
+    over the parts of the path until it finds COLLECTIONS_DIRNAME. Then it creates the
+    module name string with the remaining parts.
+
+    Args:
+        path (Path): Collection folder path.
+
+    Returns:
+        str: Collection module name starting w
+    """
+    found_collections_directory = False
+    collection_module_name = COLLECTIONS_DIRNAME
+
+    for part in path.parts:
+        if found_collections_directory:
+            collection_module_name += f".{part}"
+        elif part == COLLECTIONS_DIRNAME:
+            found_collections_directory = True
+
+    return collection_module_name
 
 
 def __test_collection_folder_names() -> List[str]:
