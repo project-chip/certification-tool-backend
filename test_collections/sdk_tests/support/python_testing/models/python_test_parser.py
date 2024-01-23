@@ -16,7 +16,7 @@
 import ast
 import re
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from test_collections.sdk_tests.support.models.matter_test_models import (
     MatterTestStep,
@@ -27,7 +27,6 @@ from .python_test_models import PythonTest, PythonTestType
 
 ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
-BODY_INDEX = 0
 
 TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
 TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
@@ -150,7 +149,7 @@ def __parse_test_case(
 
     desc_method = __get_method_by_name(desc_method_name, methods)
     if desc_method:
-        tc_desc = desc_method.body[BODY_INDEX].value.value  # type: ignore
+        tc_desc = __retrieve_description(desc_method)
 
     # If the python test does not implement the steps template method,
     # the test case will be presented in UI and the whole test case will be
@@ -196,7 +195,12 @@ def __get_method_by_name(
 
 def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
     python_steps: List[MatterTestStep] = []
-    for step in method.body[BODY_INDEX].value.elts:  # type: ignore
+
+    steps_body = __retrieve_return_body(method, ast.List)
+    if not steps_body:
+        return []
+
+    for step in steps_body.value.elts:
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
         arg_is_commissioning = False
         if (
@@ -215,8 +219,32 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
 
 
 def __retrieve_pics(method: FunctionDefType) -> list:
-    python_steps: list = []
-    for step in method.body[BODY_INDEX].value.elts:  # type: ignore
-        python_steps.append(step.value)
+    pics_list: list = []
+    pics_body = __retrieve_return_body(method, ast.List)
+    if not pics_body:
+        return []
 
-    return python_steps
+    for pics in pics_body.value.elts:
+        pics_list.append(pics.value)
+
+    return pics_list
+
+
+def __retrieve_return_body(
+    method: FunctionDefType, instance_type: Any
+) -> Union[Any, None]:
+    if method.body and len(method.body) > 0:
+        for body in method.body:
+            if isinstance(body.value, instance_type):  # type: ignore
+                return body
+
+    return None
+
+
+def __retrieve_description(method: FunctionDefType) -> str:
+    description = ""
+    for body in method.body:
+        if type(body) is ast.Return:
+            description = body.value.value  # type: ignore
+
+    return description
