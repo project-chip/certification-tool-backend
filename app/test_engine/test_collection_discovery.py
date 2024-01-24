@@ -161,7 +161,6 @@ def __find_classes_of_type(module_name: str, classtype: Type[T]) -> List[Type[T]
 
             except Exception:
                 logger.error(traceback.format_exc())
-                continue
 
             for _, obj in getmembers(submodule):
                 if isclass(obj) and issubclass(obj, classtype):

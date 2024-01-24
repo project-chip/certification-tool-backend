@@ -27,9 +27,15 @@ python ./app/initial_data.py
 # Run Prestart scripts in test collections
 for dir in ./test_collections/*
 do
-    prestart=$dir/prestart.sh
-    # Only run prestart.sh if present/
-    [ -x $prestart ] && $prestart
+    if [ -d $dir ]; then 
+        prestart=$dir/prestart.sh
+
+        # Only run prestart.sh if present and it's exacutable
+        if [ -x $prestart ]; then 
+            echo "Running prestart script: $prestart"
+            $prestart
+        fi
+    fi
 done
 
 # We echo "complete" to ensure this scripts last command has exit code 0.

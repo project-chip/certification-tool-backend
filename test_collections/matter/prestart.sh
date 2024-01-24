@@ -16,8 +16,10 @@
  # limitations under the License.
 
  # Paths
-SDK_TESTS_DIR=$(dirname "$0")
+SDK_TESTS_DIR=$(dirname "$0")/sdk_tests
+
 cd $SDK_TESTS_DIR
 
 # Fetch code from SDK
 ./scripts/fetch_sdk_tests_and_runner.sh
+
