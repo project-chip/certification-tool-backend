@@ -22,8 +22,8 @@ set -e
 # Otherwise a temporary checkout of matter sdk will be made.
 
 # Paths
-ROOT_DIR=$(realpath $(dirname "$0")/../../..)
-TEST_YAML_LOCK_PATH="$ROOT_DIR/.lock-test-yaml"
+ROOT_DIR=$(realpath $(dirname "$0")/../..)
+
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
 
@@ -35,11 +35,7 @@ SDK_EXAMPLE_CHIP_TOOL_PATH="examples/chip-tool"
 SDK_EXAMPLE_PLACEHOLDER_PATH="examples/placeholder"
 SDK_DATA_MODEL_PATH="src/app/zap-templates/zcl/data-model/chip"
 
-ENV_FILE="$ROOT_DIR/.env"
-
-TEST_COLLECTIONS_PATH="$ROOT_DIR/matter"
-TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$TEST_COLLECTIONS_PATH/sdk_tests/sdk_checkout"
-
+TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$ROOT_DIR/sdk_tests/sdk_checkout"
 
 # YAML Files
 YAML_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/yaml_tests"
@@ -85,10 +81,6 @@ else
     then 
         echo "Update is forced."
         SDK_CHECKOUT_VERSION=$SDK_SHA
-    elif [ -f "$TEST_YAML_LOCK_PATH" ]
-    then 
-        echo "Test yaml are locked by '.lock-test-yaml', remove file to update."
-        exit 0
     elif [ ! -f "$CURRENT_SDK_CHECKOUT_VERSION" ] || [[ $(< "$CURRENT_SDK_CHECKOUT_VERSION") != "$SDK_SHA" ]]
     then    echo "Current version of test yaml needs to be updated to SDK: $SDK_SHA"
         SDK_CHECKOUT_VERSION=$SDK_SHA
@@ -142,11 +134,6 @@ cp -R * "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH/"
 cd "$SDK_PATH/$SDK_PYTHON_DATA_MODEL_PATH"
 mkdir -p "$PYTHON_TESTING_TEST_COLLECTION_PATH/data_model"
 cp -R * "$PYTHON_TESTING_TEST_COLLECTION_PATH/data_model"
-
-# Delete deprecated codegenerated python wrappers for yaml 
-rm -Rf "$TEST_COLLECTIONS_PATH/manual_tests"
-rm -Rf "$TEST_COLLECTIONS_PATH/automated_and_semi_automated"
-rm -Rf "$TEST_COLLECTIONS_PATH/app1_tests"
 
 ###
 # Extract sdk runner and dependencies
