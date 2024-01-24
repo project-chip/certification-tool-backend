@@ -51,7 +51,7 @@ def test_discover_test_collections_disable_one_test_case() -> None:
     disabled_test_cases = ["TC_Blocklist_2_1"]
 
     collections = discover_test_collections(
-        disabled_collections=None, disabled_test_cases=disabled_test_cases
+        disabled_collections=[], disabled_test_cases=disabled_test_cases
     )
 
     test_collection_names = []
@@ -76,7 +76,7 @@ def test_discover_test_collections_disable_all_test_cases_in_suite() -> None:
     disabled_test_cases = ["TC_Blocklist_2_1", "TC_Blocklist_2_2"]
 
     collections = discover_test_collections(
-        disabled_collections=None, disabled_test_cases=disabled_test_cases
+        disabled_collections=[], disabled_test_cases=disabled_test_cases
     )
 
     test_collection_names = []
@@ -101,7 +101,7 @@ def test_discover_test_collections_disable_all_test_cases_in_collection() -> Non
     disabled_test_cases = ["TC_Blocklist_1_1", "TC_Blocklist_2_1", "TC_Blocklist_2_2"]
 
     collections = discover_test_collections(
-        disabled_collections=None, disabled_test_cases=disabled_test_cases
+        disabled_collections=[], disabled_test_cases=disabled_test_cases
     )
 
     test_collection_names = []

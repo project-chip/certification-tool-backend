@@ -42,7 +42,7 @@ DISABLED_COLLECTIONS_FILEPATH = COLLECTIONS_PATH / DISABLED_COLLECTIONS_FILENAME
 DISABLED_TEST_CASES_FILEPATH = COLLECTIONS_PATH / DISABLED_TEST_CASES_FILENAME
 
 
-def disabled_test_collections() -> Optional[List[str]]:
+def disabled_test_collections() -> List[str]:
     """Returns a list of collection names that should be disabled.
 
     Each line in the file at DISABLED_COLLECTIONS_FILEPATH corresponds to a
@@ -57,7 +57,7 @@ def disabled_test_collections() -> Optional[List[str]]:
     return __extract_lines_from_file(DISABLED_COLLECTIONS_FILEPATH)
 
 
-def disabled_test_cases() -> Optional[List[str]]:
+def disabled_test_cases() -> List[str]:
     """Returns a list of public ids from test cases that should be disabled.
 
     Each line in the file at DISABLED_TEST_CASES_FILEPATH corresponds to a test case
@@ -72,7 +72,7 @@ def disabled_test_cases() -> Optional[List[str]]:
     return __extract_lines_from_file(DISABLED_TEST_CASES_FILEPATH)
 
 
-def __extract_lines_from_file(file_path: Path) -> Optional[List[str]]:
+def __extract_lines_from_file(file_path: Path) -> List[str]:
     """Returns a list of strings extracted from a file.
 
     Each line in the file corresponds to a item in the list.
@@ -82,7 +82,7 @@ def __extract_lines_from_file(file_path: Path) -> Optional[List[str]]:
     """
     if not file_path.exists():
         logger.warning(f"No file found at #{file_path}")
-        return None
+        return []
 
     # Load the config from file as a dictionary.
     with open(file_path) as file:
@@ -90,8 +90,8 @@ def __extract_lines_from_file(file_path: Path) -> Optional[List[str]]:
 
 
 def discover_test_collections(
-    disabled_collections: Optional[list[str]] = disabled_test_collections(),
-    disabled_test_cases: Optional[list[str]] = disabled_test_cases(),
+    disabled_collections: list[str] = disabled_test_collections(),
+    disabled_test_cases: list[str] = disabled_test_cases(),
 ) -> Dict[str, TestCollectionDeclaration]:
     """Dynamically discover test_collection modules in `test_collections` folder.
 
@@ -106,7 +106,6 @@ def discover_test_collections(
     Note that disabled_test_cases and disabled_collections can be used to disable both
     entire collections or individual test cases.
     """
-    disabled_collections = disabled_collections or []
     collections: Dict[str, TestCollectionDeclaration] = {}
 
     names = __test_collection_folder_names()
