@@ -43,7 +43,9 @@ LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
 DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
 # Python Testing Folder
-LOCAL_TEST_COLLECTIONS_PATH = "/home/ubuntu/certification-tool/backend/test_collections/matter"
+LOCAL_TEST_COLLECTIONS_PATH = Path(
+    "/home/ubuntu/certification-tool/backend/test_collections/matter"
+)
 LOCAL_PYTHON_TESTING_PATH = Path(
     LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/sdk_checkout/python_testing"
 )
