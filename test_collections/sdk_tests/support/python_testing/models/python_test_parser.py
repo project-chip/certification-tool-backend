@@ -29,10 +29,10 @@ ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
 
 TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
-# This constante is a temporary fix for TE2
+# This constant is a temporary fix for TE2
 TC_FUNCTION_PATTERN_WORKAROUND = re.compile(r"[\S]+_[\S]+")
 TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
-# This constante is a temporary fix for TE2
+# This constant is a temporary fix for TE2
 TC_TEST_FUNCTION_PATTERN_WORKAROUND = re.compile(r"test_(?P<title>[\S]+_[0-9]+_[0-9]+)")
 
 
