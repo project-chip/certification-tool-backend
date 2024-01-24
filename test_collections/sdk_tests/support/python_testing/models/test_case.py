@@ -210,6 +210,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 )
 
             # THIS IS A WORKAROUND CODE for TE2
+            # Issue: https://github.com/project-chip/certification-tool-backend/pull/61
             test_name = self.python_test.name
             if test_name == "TC_DGGEN_2_4":
                 test_name = "TC_GEN_2_4"
@@ -220,6 +221,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 "TC_DESC_2_2",
             ]:
                 test_name = test_name[3:]
+            test_name = "any"
 
             command = [
                 f"{RUNNER_CLASS_PATH} {self.python_test.path.stem}"
