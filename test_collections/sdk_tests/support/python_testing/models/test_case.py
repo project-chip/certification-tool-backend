@@ -212,7 +212,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # THIS IS A WORKAROUND CODE for TE2
             # Issue: https://github.com/project-chip/certification-tool/issues/152
             test_name = self.python_test.name
-            if test_name == "TC_DGGEN_2_4":
+            if test_name == "TC_DGGEN_2_4":  # spell-checker: disable
                 test_name = "TC_GEN_2_4"
             elif test_name in [
                 "TC_DT_1_1",
