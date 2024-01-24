@@ -197,7 +197,7 @@ def __parse_test_case(
         python_test_type = PythonTestType.NO_COMMISSIONING
 
     # THIS IS A WORKAROUND CODE for TE2
-    # The TC_DGGEN_2_4 test case is not following the test method template # spell-checker: disable
+    # The TC_DGGEN_2_4 test case is not following the test method template
     if tc_name == "TC_GEN_2_4":
         tc_name = "TC_DGGEN_2_4"  # spell-checker: disable
         tc_desc = "TC_DGGEN_2_4"  # spell-checker: disable
