@@ -113,9 +113,9 @@ def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
     for m in methods:
         if isinstance(m.name, str):
             # THIS IS A WORKAROUND CODE for TE2
-            # Some Python tests written in SDK repo are not following the test method 
+            # Some Python tests written in SDK repo are not following the test method
             # template, test_TC_[TC_name]
-            # So this code temporaly code to consider other methods signature as a 
+            # So this code temporaly code to consider other methods signature as a
             # python test script.
             if re.match(TC_FUNCTION_PATTERN_WORKAROUND, m.name):
                 all_methods.append(m)
@@ -140,9 +140,9 @@ def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
                 if name := match["title"]:
                     test_names.append(name)
             # THIS IS A WORKAROUND CODE for TE2
-            # Some Python tests written in SDK repo are not following the test method 
+            # Some Python tests written in SDK repo are not following the test method
             # template, test_TC_[TC_name]
-            # So this code temporaly code to consider other methods signature as a 
+            # So this code temporaly code to consider other methods signature as a
             # python test script.
             elif match := re.match(TC_TEST_FUNCTION_PATTERN_WORKAROUND, m.name):
                 if name := match["title"]:

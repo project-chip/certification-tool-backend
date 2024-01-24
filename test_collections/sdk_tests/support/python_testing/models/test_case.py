@@ -213,9 +213,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
             test_name = self.python_test.name
             if test_name == "TC_DGGEN_2_4":
                 test_name = "TC_GEN_2_4"
-            elif test_name in ["TC_DT_1_1", "TC_IDM_10_1", "TC_IDM_11_1", "TC_DESC_2_2"]:
+            elif test_name in [
+                "TC_DT_1_1",
+                "TC_IDM_10_1",
+                "TC_IDM_11_1",
+                "TC_DESC_2_2",
+            ]:
                 test_name = test_name[3:]
-
 
             command = [
                 f"{RUNNER_CLASS_PATH} {self.python_test.path.stem}"
