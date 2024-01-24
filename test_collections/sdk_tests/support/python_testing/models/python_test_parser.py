@@ -30,11 +30,11 @@ KEYWORD_IS_COMISSIONING_INDEX = 0
 
 TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
 # This constant is a temporary fix for TE2
-# Issue: https://github.com/project-chip/certification-tool-backend/pull/61
+# Issue: https://github.com/project-chip/certification-tool/issues/152
 TC_FUNCTION_PATTERN_WORKAROUND = re.compile(r"[\S]+_[\S]+")
 TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
 # This constant is a temporary fix for TE2
-# Issue: https://github.com/project-chip/certification-tool-backend/pull/61
+# Issue: https://github.com/project-chip/certification-tool/issues/152
 TC_TEST_FUNCTION_PATTERN_WORKAROUND = re.compile(r"test_(?P<title>[\S]+_[0-9]+_[0-9]+)")
 
 
@@ -119,7 +119,7 @@ def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
             # template, test_TC_[TC_name]
             # So this code temporaly code to consider other methods signature as a
             # python test script.
-            # Issue: https://github.com/project-chip/certification-tool-backend/pull/61
+            # Issue: https://github.com/project-chip/certification-tool/issues/152
             if re.match(TC_FUNCTION_PATTERN_WORKAROUND, m.name):
                 all_methods.append(m)
 
@@ -147,7 +147,7 @@ def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
             # template, test_TC_[TC_name]
             # So this code temporaly code to consider other methods signature as a
             # python test script.
-            # Issue: https://github.com/project-chip/certification-tool-backend/pull/61
+            # Issue: https://github.com/project-chip/certification-tool/issues/152
             elif match := re.match(TC_TEST_FUNCTION_PATTERN_WORKAROUND, m.name):
                 if name := match["title"]:
                     test_names.append("TC_" + name)
