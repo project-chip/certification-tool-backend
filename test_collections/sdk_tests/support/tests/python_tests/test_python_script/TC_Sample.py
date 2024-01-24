@@ -36,11 +36,11 @@ It should not compile or run.
 """
 
 
-class TC_Sample(MatterBaseTest):
-    def desc_TC_Sample(self) -> str:
-        return "Sample TC Description"
+class TC_Commissioning_Sample(MatterBaseTest):
+    def desc_TC_Commissioning_Sample(self) -> str:
+        return "Commissioning Sample TC Description"
 
-    def steps_TC_Sample(self) -> list[TestStep]:
+    def steps_TC_Commissioning_Sample(self) -> list[TestStep]:
         steps = [
             TestStep(1, "Commissioning, already done", is_commissioning=True),
             TestStep(2, "Second step"),
@@ -48,8 +48,32 @@ class TC_Sample(MatterBaseTest):
         ]
         return steps
 
-    def test_TC_Sample(self):
+    def test_TC_Commissioning_Sample(self):
         print("Test execution")
 
-    def pics_TC_Sample(self):
+    def pics_TC_Commissioning_Sample(self):
         pics = ["PICS"]
+
+
+class TC_No_Commissioning_Sample(MatterBaseTest):
+    def desc_TC_No_Commissioning_Sample(self) -> str:
+        return "No Commissioning Sample TC Description"
+
+    def steps_TC_No_Commissioning_Sample(self) -> list[TestStep]:
+        steps = [
+            TestStep(1, "First step"),
+            TestStep(2, "Second step"),
+            TestStep(3, "Third step"),
+        ]
+        return steps
+
+    def test_TC_No_Commissioning_Sample(self):
+        print("Test execution")
+
+    def pics_TC_No_Commissioning_Sample(self):
+        pics = ["PICS"]
+
+
+class TC_Legacy_Sample(MatterBaseTest):
+    def test_TC_Legacy_Sample(self):
+        print("Test execution")

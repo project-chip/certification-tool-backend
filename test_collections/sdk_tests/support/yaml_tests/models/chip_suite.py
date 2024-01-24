@@ -28,7 +28,8 @@ from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.sdk_tests.support.chip import ChipTool
 from test_collections.sdk_tests.support.chip.chip_tool import ChipTestType
-from test_collections.sdk_tests.support.chip.test_case import PromptOption
+from test_collections.sdk_tests.support.sdk_container import SDKContainer
+from test_collections.sdk_tests.support.yaml_tests.models.chip_test import PromptOption
 
 CHIP_APP_PAIRING_CODE = "CHIP:SVR: Manual pairing code:"
 
@@ -42,7 +43,8 @@ class DUTCommissioningError(Exception):
 
 
 class ChipSuite(TestSuite, UserPromptSupport):
-    chip_tool = ChipTool()
+    chip_tool = ChipTool(logger)
+    sdk_container: SDKContainer = SDKContainer(logger)
     border_router: Optional[ThreadBorderRouter] = None
     test_type: ChipTestType = ChipTestType.CHIP_TOOL
     __dut_commissioned_successfully: bool = False
@@ -51,16 +53,17 @@ class ChipSuite(TestSuite, UserPromptSupport):
         super().__init__(test_suite_execution)
 
     async def setup(self) -> None:
-        logger.info("Setting up container")
-        # Use test engine logger to log all events to test run.
-        self.chip_tool.logger = logger
+        logger.info("Setting up SDK container")
+        await self.sdk_container.start()
+
+        logger.info("Starting chip server")
         await self.chip_tool.start_server(
             self.test_type, self.config.dut_config.chip_use_paa_certs
         )
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
-            self.chip_tool.set_pics(pics=self.pics, in_container=False)
+            self.chip_tool.set_pics(pics=self.pics)
         else:
             # Disable sending "-PICS" option when running chip server
             self.chip_tool.reset_pics_state()
@@ -158,16 +161,13 @@ class ChipSuite(TestSuite, UserPromptSupport):
             if self.test_type == ChipTestType.CHIP_TOOL:
                 logger.info("Unpairing chip_tool from device")
                 await self.chip_tool.unpair()
-            # Need a better way to trigger unpair for chip-app.
-            # Currently the runner is being stopped automatically once
-            # the test completes. So we need to start it again to
-            # perform decommissioning
             elif self.test_type == ChipTestType.CHIP_APP:
                 logger.info("Prompt user to perform decommissioning")
                 await self.__prompt_user_to_perform_decommission()
 
         logger.info("Stopping SDK container")
-        await self.chip_tool.destroy_device()
+        self.sdk_container.destroy()
+
         if self.border_router is not None:
             logger.info("Stopping border router container")
             self.border_router.destroy_device()

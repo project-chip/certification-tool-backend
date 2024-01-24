@@ -16,7 +16,7 @@
 from http import HTTPStatus
 from typing import List, Sequence
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -28,8 +28,7 @@ from app.pics.pics_parser import PICSParser
 from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
-
-# from app.schemas.project import ProjectPICSUpdate
+from app.schemas.test_environment_config import DutConfig
 
 router = APIRouter()
 
@@ -61,6 +60,7 @@ def create_project(
     *,
     db: Session = Depends(get_db),
     project_in: schemas.ProjectCreate,
+    request: Request,
 ) -> models.Project:
     """Create new project
 
@@ -70,6 +70,9 @@ def create_project(
     Returns:
         Project: newly created project record
     """
+    # Validate dut config properties
+    __validate_dut_config(request=request)
+
     return crud.project.create(db=db, obj_in=project_in)
 
 
@@ -83,12 +86,29 @@ def default_config() -> schemas.TestEnvironmentConfig:
     return default_environment_config
 
 
+def __validate_dut_config(request: Request) -> None:
+    valid_properties = list(DutConfig.__annotations__.keys())
+
+    if "config" in request._json and "dut_config" in request._json["config"]:
+        dut_config = request._json["config"]["dut_config"]
+
+        for field, _ in dut_config.items():
+            if field not in valid_properties:
+                raise HTTPException(
+                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                    detail="The DUT config section has one or more invalid properties"
+                    " informed."
+                    f" The valid properties are: {valid_properties}",
+                )
+
+
 @router.put("/{id}", response_model=schemas.Project)
 def update_project(
     *,
     db: Session = Depends(get_db),
     id: int,
     project_in: schemas.ProjectUpdate,
+    request: Request,
 ) -> models.Project:
     """Update an existing project
 
@@ -102,6 +122,8 @@ def update_project(
     Returns:
         Project: updated project record
     """
+    # Validate dut config properties
+    __validate_dut_config(request=request)
 
     return crud.project.update(db=db, db_obj=__project(db=db, id=id), obj_in=project_in)
 
