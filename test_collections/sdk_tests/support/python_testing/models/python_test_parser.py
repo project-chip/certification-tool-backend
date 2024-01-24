@@ -29,11 +29,11 @@ ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
 
 TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
-# This constant is a temporary fix for TE2
+# This constant is a temporarily fix for TE2
 # Issue: https://github.com/project-chip/certification-tool/issues/152
 TC_FUNCTION_PATTERN_WORKAROUND = re.compile(r"[\S]+_[\S]+")
 TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
-# This constant is a temporary fix for TE2
+# This constant is a temporarily fix for TE2
 # Issue: https://github.com/project-chip/certification-tool/issues/152
 TC_TEST_FUNCTION_PATTERN_WORKAROUND = re.compile(r"test_(?P<title>[\S]+_[0-9]+_[0-9]+)")
 
@@ -117,7 +117,7 @@ def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
             # THIS IS A WORKAROUND CODE for TE2
             # Some Python tests written in SDK repo are not following the test method
             # template, test_TC_[TC_name]
-            # So this code temporaly code to consider other methods signature as a
+            # So this code temporarily code to consider other methods signature as a
             # python test script.
             # Issue: https://github.com/project-chip/certification-tool/issues/152
             if re.match(TC_FUNCTION_PATTERN_WORKAROUND, m.name):
@@ -145,7 +145,7 @@ def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
             # THIS IS A WORKAROUND CODE for TE2
             # Some Python tests written in SDK repo are not following the test method
             # template, test_TC_[TC_name]
-            # So this code temporaly code to consider other methods signature as a
+            # So this code temporarily code to consider other methods signature as a
             # python test script.
             # Issue: https://github.com/project-chip/certification-tool/issues/152
             elif match := re.match(TC_TEST_FUNCTION_PATTERN_WORKAROUND, m.name):
@@ -199,8 +199,8 @@ def __parse_test_case(
     # THIS IS A WORKAROUND CODE for TE2
     # The TC_DGGEN_2_4 test case is not following the test method template
     if tc_name == "TC_GEN_2_4":
-        tc_name = "TC_DGGEN_2_4"
-        tc_desc = "TC_DGGEN_2_4"
+        tc_name = "TC_DGGEN_2_4"  # spell-checker: disable
+        tc_desc = "TC_DGGEN_2_4"  # spell-checker: disable
 
     return PythonTest(
         name=tc_name,
