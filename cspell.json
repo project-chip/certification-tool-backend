@@ -66,6 +66,7 @@
         "asgi",
         "c0ffee",
         "cond",
+        "DGGEN",
         "gunicorn",
         "httpx",
         "nodeid",
