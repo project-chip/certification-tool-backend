@@ -69,26 +69,26 @@ def test_manual_suite_subclass() -> None:
 
 def test_automated_suite_subclass() -> None:
     """Test that for suite type automated class factory creates a subclass of
-    ChipYamlTestSuite, and that test_type is set to CHIP_TOOL"""
+    ChipYamlTestSuite, and that server_type is set to CHIP_TOOL"""
     type = SuiteType.AUTOMATED
     # Create a subclass of YamlTestSuite
     suite_class: Type[YamlTestSuite] = YamlTestSuite.class_factory(
         suite_type=type, name="SomeSuite", yaml_version="some_version"
     )
     assert issubclass(suite_class, ChipYamlTestSuite)
-    assert suite_class.test_type == ChipServerType.CHIP_TOOL
+    assert suite_class.server_type == ChipServerType.CHIP_TOOL
 
 
 def test_simulated_suite_subclass() -> None:
     """Test that for suite type simulated class factory creates a subclass of
-    SimulatedYamlTestSuite, and that test_type is set to CHIP_APP"""
+    SimulatedYamlTestSuite, and that server_type is set to CHIP_APP"""
     type = SuiteType.SIMULATED
     # Create a subclass of YamlTestSuite
     suite_class: Type[YamlTestSuite] = YamlTestSuite.class_factory(
         suite_type=type, name="SomeSuite", yaml_version="some_version"
     )
     assert issubclass(suite_class, SimulatedYamlTestSuite)
-    assert suite_class.test_type == ChipServerType.CHIP_APP
+    assert suite_class.server_type == ChipServerType.CHIP_APP
 
 
 @pytest.mark.asyncio

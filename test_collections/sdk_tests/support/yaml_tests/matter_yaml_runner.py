@@ -79,8 +79,8 @@ class ContainerNotRunning(Exception):
     """Raised when we attempt to use a docker container but it's not running"""
 
 
-class UnsupportedChipTestType(Exception):
-    """Raised when we attempt to use a chip binary, but the test type is not
+class UnsupportedChipServerType(Exception):
+    """Raised when we attempt to use a chip binary, but the server type is not
     supported"""
 
 
@@ -107,7 +107,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         )
 
     async def setup(
-        self, test_type: ChipServerType, use_paa_certs: bool = False
+        self, server_type: ChipServerType, use_paa_certs: bool = False
     ) -> None:
         self.__pics_file_created = False
 
@@ -115,7 +115,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         web_socket_config.server_address = self.__get_gateway_ip()
         self.__test_harness_runner = WebSocketRunner(config=web_socket_config)
 
-        self.__chip_tool_log = await self.chip_server.start(test_type, use_paa_certs)
+        self.__chip_tool_log = await self.chip_server.start(server_type, use_paa_certs)
 
     async def stop(self) -> None:
         await self.stop_runner()
@@ -187,7 +187,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         test_step_interface: TestRunnerHooks,
         test_parser_hooks: TestParserHooks,
         test_id: str,
-        test_type: ChipServerType,
+        server_type: ChipServerType,
         timeout: Optional[str] = None,
         test_parameters: Optional[dict[str, Any]] = None,
     ) -> bool:
@@ -195,10 +195,10 @@ class MatterYAMLRunner(metaclass=Singleton):
 
         Args:
             test_id (str): Test Id to be run
-            test_type (ChipServerType): Type of the binary that needs to be run
+            server_type (ChipServerType): Type of the binary that needs to be run
 
         Raises:
-            UnsupportedChipTestType: Unsupported type of test binary
+            UnsupportedChipServerType: Unsupported type of test binary
 
         Returns:
             A boolean indicating if the run has succeeded
@@ -229,7 +229,7 @@ class MatterYAMLRunner(metaclass=Singleton):
             pics_path = f"{PICS_FILE_PATH}"
             self.logger.info(f"Using PICS file: {pics_path}")
 
-        if test_type == ChipServerType.CHIP_TOOL:
+        if server_type == ChipServerType.CHIP_TOOL:
             test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
         else:
             test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
@@ -239,12 +239,12 @@ class MatterYAMLRunner(metaclass=Singleton):
             [test_path], parser_config, test_parser_hooks
         )
 
-        if test_type == ChipServerType.CHIP_TOOL:
+        if server_type == ChipServerType.CHIP_TOOL:
             adapter = ChipToolAdapter.Adapter(parser_config.definitions)
-        elif test_type == ChipServerType.CHIP_APP:
+        elif server_type == ChipServerType.CHIP_APP:
             adapter = ChipAppAdapter.Adapter(parser_config.definitions)
         else:
-            raise UnsupportedChipTestType(f"Unsupported Test Type: {test_type}")
+            raise UnsupportedChipServerType(f"Unsupported Server Type: {server_type}")
 
         runner_config = TestRunnerConfig(
             adapter,

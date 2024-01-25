@@ -40,14 +40,14 @@ from test_collections.sdk_tests.support.sdk_container import SDKContainer
 async def test_start_already_started() -> None:
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     chip_server._ChipServer__server_logs = "log output".encode()
     chip_server._ChipServer__server_started = True
 
     with mock.patch.object(
         target=sdk_container, attribute="send_command"
     ) as mock_send_command:
-        await chip_server.start(test_type, use_paa_certs=False)
+        await chip_server.start(server_type, use_paa_certs=False)
 
     mock_send_command.assert_not_called()
 
@@ -57,15 +57,15 @@ async def test_start_already_started() -> None:
 
 
 @pytest.mark.asyncio
-async def test_start_unsupported_test_type() -> None:
+async def test_start_unsupported_server_type() -> None:
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
-    test_type = "unsupported"
+    server_type = "unsupported"
 
     with mock.patch.object(
         target=sdk_container, attribute="send_command"
     ) as mock_send_command, pytest.raises(UnsupportedChipServerType):
-        await chip_server.start(test_type, use_paa_certs=False)
+        await chip_server.start(server_type, use_paa_certs=False)
 
     mock_send_command.assert_not_called()
 
@@ -81,7 +81,7 @@ async def test_start_waiting_failure() -> None:
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     expected_command = ["interactive", "server"]
@@ -96,7 +96,7 @@ async def test_start_waiting_failure() -> None:
     ), pytest.raises(
         ChipServerStartingError
     ):
-        await chip_server.start(test_type)
+        await chip_server.start(server_type)
 
     mock_send_command.assert_called_once_with(
         expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
@@ -119,7 +119,7 @@ async def test_start_chip_tool() -> None:
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     expected_command = ["interactive", "server"]
@@ -132,7 +132,7 @@ async def test_start_chip_tool() -> None:
         attribute="_ChipServer__wait_for_server_start",
         return_value=True,
     ):
-        await chip_server.start(test_type, use_paa_certs=False)
+        await chip_server.start(server_type, use_paa_certs=False)
 
     mock_send_command.assert_called_once_with(
         expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
@@ -156,7 +156,7 @@ async def test_start_chip_tool_using_paa_certs() -> None:
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     expected_command = [
@@ -173,7 +173,7 @@ async def test_start_chip_tool_using_paa_certs() -> None:
         attribute="_ChipServer__wait_for_server_start",
         return_value=True,
     ):
-        await chip_server.start(test_type, use_paa_certs=True)
+        await chip_server.start(server_type, use_paa_certs=True)
 
     mock_send_command.assert_called_once_with(
         expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
@@ -197,7 +197,7 @@ async def test_start_chip_app() -> None:
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
-    test_type = ChipServerType.CHIP_APP
+    server_type = ChipServerType.CHIP_APP
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     expected_command = ["--interactive", "--port 9002"]
@@ -210,7 +210,7 @@ async def test_start_chip_app() -> None:
         attribute="_ChipServer__wait_for_server_start",
         return_value=True,
     ):
-        await chip_server.start(test_type, use_paa_certs=False)
+        await chip_server.start(server_type, use_paa_certs=False)
 
     mock_send_command.assert_called_once_with(
         expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
@@ -234,7 +234,7 @@ async def test_start_chip_app_using_paa_certs() -> None:
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
-    test_type = ChipServerType.CHIP_APP
+    server_type = ChipServerType.CHIP_APP
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     expected_command = [
@@ -251,7 +251,7 @@ async def test_start_chip_app_using_paa_certs() -> None:
         attribute="_ChipServer__wait_for_server_start",
         return_value=True,
     ):
-        await chip_server.start(test_type, use_paa_certs=True)
+        await chip_server.start(server_type, use_paa_certs=True)
 
     mock_send_command.assert_called_once_with(
         expected_command, prefix=expected_prefix, is_stream=True, is_socket=False

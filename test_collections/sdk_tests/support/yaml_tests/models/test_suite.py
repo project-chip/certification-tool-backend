@@ -96,7 +96,7 @@ class ManualYamlTestSuite(YamlTestSuite):
 
 
 class ChipYamlTestSuite(YamlTestSuite, ChipSuite):
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
 
     async def setup(self) -> None:
         """Due top multi inheritance, we need to call setup on both super classes."""
@@ -105,4 +105,4 @@ class ChipYamlTestSuite(YamlTestSuite, ChipSuite):
 
 
 class SimulatedYamlTestSuite(ChipYamlTestSuite):
-    test_type = ChipServerType.CHIP_APP
+    server_type = ChipServerType.CHIP_APP

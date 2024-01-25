@@ -69,7 +69,7 @@ class ChipServer(metaclass=Singleton):
         self.__server_started = False
         self.__server_logs: Union[Generator, bytes, tuple]
         self.__use_paa_certs = False
-        self.__test_type: ChipServerType = ChipServerType.CHIP_TOOL
+        self.__server_type: ChipServerType = ChipServerType.CHIP_TOOL
 
     @property
     def node_id(self) -> int:
@@ -104,7 +104,7 @@ class ChipServer(metaclass=Singleton):
             return False
 
     async def start(
-        self, test_type: ChipServerType, use_paa_certs: bool = False
+        self, server_type: ChipServerType, use_paa_certs: bool = False
     ) -> Generator:
         if self.__server_started:
             self.logger.info("Chip server is already started")
@@ -117,16 +117,16 @@ class ChipServer(metaclass=Singleton):
 
         # Start chip interactive server
         self.__use_paa_certs = use_paa_certs
-        self.__test_type = test_type
+        self.__server_type = server_type
 
-        if test_type == ChipServerType.CHIP_TOOL:
+        if server_type == ChipServerType.CHIP_TOOL:
             prefix = CHIP_TOOL_EXE
             command = ["interactive", "server"]
-        elif test_type == ChipServerType.CHIP_APP:
+        elif server_type == ChipServerType.CHIP_APP:
             prefix = CHIP_APP_EXE
             command = ["--interactive", "--port 9002"]
         else:
-            raise UnsupportedChipServerType(f"Unsupported server type: {test_type}")
+            raise UnsupportedChipServerType(f"Unsupported server type: {server_type}")
 
         if settings.CHIP_TOOL_TRACE:
             topic = "CHIP_WEBSOCKET_SERVER"
@@ -190,4 +190,4 @@ class ChipServer(metaclass=Singleton):
 
     async def restart(self) -> None:
         await self.stop()
-        await self.start(self.__test_type, self.__use_paa_certs)
+        await self.start(self.__server_type, self.__use_paa_certs)

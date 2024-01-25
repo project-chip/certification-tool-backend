@@ -49,15 +49,15 @@ from test_collections.sdk_tests.support.yaml_tests.matter_yaml_runner import (
 async def test_setup() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     chip_server: ChipServer = ChipServer()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
 
     with mock.patch(
         target="test_collections.sdk_tests.support.yaml_tests.matter_yaml_runner"
         ".backend_container"
     ), mock.patch.object(target=chip_server, attribute="start") as mock_start:
-        await runner.setup(test_type, False)
+        await runner.setup(server_type, False)
 
-    mock_start.assert_awaited_once_with(test_type, False)
+    mock_start.assert_awaited_once_with(server_type, False)
     assert runner._MatterYAMLRunner__test_harness_runner is not None
 
     # clean up:
@@ -69,15 +69,15 @@ async def test_setup() -> None:
 async def test_setup_using_paa_certs() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     chip_server: ChipServer = ChipServer()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
 
     with mock.patch(
         target="test_collections.sdk_tests.support.yaml_tests.matter_yaml_runner"
         ".backend_container"
     ), mock.patch.object(target=chip_server, attribute="start") as mock_start:
-        await runner.setup(test_type, use_paa_certs=True)
+        await runner.setup(server_type, use_paa_certs=True)
 
-    mock_start.assert_awaited_once_with(test_type, True)
+    mock_start.assert_awaited_once_with(server_type, True)
     assert runner._MatterYAMLRunner__test_harness_runner is not None
 
     # clean up:
@@ -134,7 +134,7 @@ def test_set_pics_with_error() -> None:
 async def test_run_test_default_config() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     chip_server: ChipServer = ChipServer()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     test_id = "TC_TEST_ID"
     runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
         WebSocketRunnerConfig()
@@ -155,7 +155,7 @@ async def test_run_test_default_config() -> None:
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
             test_id=test_id,
-            test_type=test_type,
+            server_type=server_type,
         )
 
     mock_run.assert_called_once()
@@ -179,7 +179,7 @@ async def test_run_test_default_config() -> None:
 @pytest.mark.asyncio
 async def test_run_test_custom_timeout() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     test_id = "TC_TEST_ID"
     test_timeout = "10"
     runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
@@ -201,7 +201,7 @@ async def test_run_test_custom_timeout() -> None:
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
             test_id=test_id,
-            test_type=test_type,
+            server_type=server_type,
             timeout=test_timeout,
         )
 
@@ -220,7 +220,7 @@ async def test_run_test_custom_timeout() -> None:
 @pytest.mark.asyncio
 async def test_run_test_with_custom_parameter() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     test_id = "TC_TEST_ID"
     test_param_name = "param1"
     test_param_value = "value"
@@ -243,7 +243,7 @@ async def test_run_test_with_custom_parameter() -> None:
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
             test_id=test_id,
-            test_type=test_type,
+            server_type=server_type,
             test_parameters={test_param_name: test_param_value},
         )
 
@@ -263,7 +263,7 @@ async def test_run_test_with_custom_parameter() -> None:
 @pytest.mark.asyncio
 async def test_run_test_with_endpoint_parameter() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     test_id = "TC_TEST_ID"
     test_param_name = "endpoint"
     test_param_value = 1
@@ -286,7 +286,7 @@ async def test_run_test_with_endpoint_parameter() -> None:
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
             test_id=test_id,
-            test_type=test_type,
+            server_type=server_type,
             test_parameters={test_param_name: test_param_value},
         )
 
@@ -305,7 +305,7 @@ async def test_run_test_with_endpoint_parameter() -> None:
 @pytest.mark.asyncio
 async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
-    test_type = ChipServerType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
     test_id = "TC_TEST_ID"
     test_param_name = "endpoint"
     test_param_value = 1
@@ -328,7 +328,7 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
             test_id=test_id,
-            test_type=test_type,
+            server_type=server_type,
             test_parameters={
                 test_param_name: test_param_value,
                 "nodeId": "custom",

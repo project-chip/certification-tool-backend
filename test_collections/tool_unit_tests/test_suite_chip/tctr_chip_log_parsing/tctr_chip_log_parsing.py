@@ -28,7 +28,7 @@ class TCTRChipLogParsing(ChipTest):
         "title": "This is Test Case tctr_chip_log_parsing",
         "description": "This Test Case is built to test the chip-tool log parser",
     }
-    test_type = ChipServerType.CHIP_APP
+    server_type = ChipServerType.CHIP_APP
     chip_test_identifier = "Test ID"
 
     # The config() defined in the "TestCase" base class is unable to return a valid

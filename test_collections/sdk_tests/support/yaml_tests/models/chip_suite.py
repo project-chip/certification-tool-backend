@@ -48,7 +48,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
     sdk_container: SDKContainer = SDKContainer(logger)
     runner: MatterYAMLRunner = MatterYAMLRunner(logger=logger)
     border_router: Optional[ThreadBorderRouter] = None
-    test_type: ChipServerType = ChipServerType.CHIP_TOOL
+    server_type: ChipServerType = ChipServerType.CHIP_TOOL
     __dut_commissioned_successfully: bool = False
 
     def __init__(self, test_suite_execution: TestSuiteExecution):
@@ -60,7 +60,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         logger.info("Setting up test runner")
         await self.runner.setup(
-            self.test_type, self.config.dut_config.chip_use_paa_certs
+            self.server_type, self.config.dut_config.chip_use_paa_certs
         )
 
         if len(self.pics.clusters) > 0:
@@ -71,10 +71,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
             self.runner.reset_pics_state()
 
         self.__dut_commissioned_successfully = False
-        if self.test_type == ChipServerType.CHIP_TOOL:
+        if self.server_type == ChipServerType.CHIP_TOOL:
             logger.info("Commission DUT")
             await self.__commission_dut_allowing_retries()
-        elif self.test_type == ChipServerType.CHIP_APP:
+        elif self.server_type == ChipServerType.CHIP_APP:
             logger.info("Verify Test suite prerequisites")
             await self.__verify_test_suite_prerequisites()
 
@@ -160,10 +160,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
         # Only unpair if commissioning was successfull during setup
         if self.__dut_commissioned_successfully:
             # Unpair is not applicable for simulated apps case
-            if self.test_type == ChipServerType.CHIP_TOOL:
+            if self.server_type == ChipServerType.CHIP_TOOL:
                 logger.info("Unpairing DUT from server")
                 await self.runner.unpair()
-            elif self.test_type == ChipServerType.CHIP_APP:
+            elif self.server_type == ChipServerType.CHIP_APP:
                 logger.info("Prompt user to perform decommissioning")
                 await self.__prompt_user_to_perform_decommission()
 
@@ -179,7 +179,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     async def __verify_test_suite_prerequisites(self) -> None:
         # prerequisites apply for CHIP_APP only.
-        if self.test_type == ChipServerType.CHIP_APP:
+        if self.server_type == ChipServerType.CHIP_APP:
             logger.info("Prompt user to perform commissioning")
             await self.__prompt_user_to_perform_commission()
 

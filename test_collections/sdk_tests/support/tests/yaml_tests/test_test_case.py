@@ -281,7 +281,7 @@ def test_steps_in_manual_yaml_test_case() -> None:
         assert step_instance.verification == step.verification
 
 
-def test_test_type_for_automated_tests() -> None:
+def test_server_type_for_automated_tests() -> None:
     """Test that automated tests are set to use chip-tool"""
     test = yaml_test_instance(type=MatterTestType.AUTOMATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
@@ -289,10 +289,10 @@ def test_test_type_for_automated_tests() -> None:
     )
     assert issubclass(case_class, YamlChipTestCase)
     instance = case_class(TestCaseExecution())
-    assert instance.test_type == ChipServerType.CHIP_TOOL
+    assert instance.server_type == ChipServerType.CHIP_TOOL
 
 
-def test_test_type_for_simulated_tests() -> None:
+def test_server_type_for_simulated_tests() -> None:
     """Test that simulated tests are set to use chip-app"""
     test = yaml_test_instance(type=MatterTestType.SIMULATED)
     case_class: Type[YamlTestCase] = YamlTestCase.class_factory(
@@ -300,7 +300,7 @@ def test_test_type_for_simulated_tests() -> None:
     )
     assert issubclass(case_class, YamlSimulatedTestCase)
     instance = case_class(TestCaseExecution())
-    assert instance.test_type == ChipServerType.CHIP_APP
+    assert instance.server_type == ChipServerType.CHIP_APP
 
 
 @pytest.mark.asyncio

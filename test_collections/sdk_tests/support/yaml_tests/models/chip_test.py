@@ -65,7 +65,7 @@ class TestError(Exception):
 class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
     runner: MatterYAMLRunner = MatterYAMLRunner(test_engine_logger)
     chip_test_identifier: str
-    test_type: ChipServerType
+    server_type: ChipServerType
 
     def __init__(self, test_case_execution: TestCaseExecution):
         self.__show_adapter_logs = False
@@ -128,7 +128,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
 
     def step_start(self, request: TestStep) -> None:
         if (
-            self.test_type == ChipServerType.CHIP_APP
+            self.server_type == ChipServerType.CHIP_APP
             and
             # Manual steps will be handled by step_manual function.
             not isinstance(self.current_test_step, ManualVerificationTestStep)
@@ -233,7 +233,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
             test_step_interface=self,
             test_parser_hooks=self,
             test_id=test_name,
-            test_type=self.test_type,
+            server_type=self.server_type,
             test_parameters=self.test_parameters,
         )
 
