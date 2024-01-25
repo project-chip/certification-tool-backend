@@ -38,13 +38,13 @@ def test_extract_lines_from_file_with_existing_file_returns_lines() -> None:
     assert result == file_lines
 
 
-def test_extract_lines_from_file_with_nonexisting_file_returns_none() -> None:
+def test_extract_lines_from_file_with_nonexisting_file_returns_empty() -> None:
     directory_path = Path(__file__).parent
     new_file_path = directory_path / f"tempFile_{uuid1()}"
 
     result = __extract_lines_from_file(new_file_path)
 
-    assert result is None
+    assert result == []
 
 
 def test_discover_test_collections_disable_one_test_case() -> None:
