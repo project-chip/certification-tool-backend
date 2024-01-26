@@ -97,7 +97,7 @@
     "allowCompoundWords": true,
     "ignorePaths": [
         "logs",
-        "test_collections/python_tests/onboarding_payload_test_suite/",
+        "test_collections/matter/python_tests/onboarding_payload_test_suite/",
         "app/otbr_manager/avahi/avahi-daemon.conf",
         "*.ini",
         "*.toml",

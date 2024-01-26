@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2024 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .python_tests import onboarding_payload_collection
-from .sdk_tests.support.python_testing import (
-    custom_python_collection,
-    sdk_python_collection,
+from pathlib import Path
+
+from app.test_engine.test_collection_discovery import test_collection_declaration
+
+COLLECTION_PATH = Path(__file__).parent
+
+tool_blocklist_unit_tests_collection = test_collection_declaration(
+    COLLECTION_PATH, "tool_blocklist_unit_tests"
 )
-from .sdk_tests.support.yaml_tests import custom_collection, sdk_collection

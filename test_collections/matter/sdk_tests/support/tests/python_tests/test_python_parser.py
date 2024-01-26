@@ -101,7 +101,7 @@ def test_single_test_python_file_parser() -> None:
     # We mock builtin `open` method to read sample python file content,
     # to avoid having to load a real file.
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
+        "test_collections.matter.sdk_tests.support.python_testing.models.python_test_parser."
         "open",
         new=mock.mock_open(read_data=sample_single_test_python_file_content),
     ) as file_open:
@@ -123,7 +123,7 @@ def test_multi_tests_single_class_python_file_parser() -> None:
     # We mock builtin `open` method to read sample python file content,
     # to avoid having to load a real file.
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
+        "test_collections.matter.sdk_tests.support.python_testing.models.python_test_parser."
         "open",
         new=mock.mock_open(
             read_data=sample_multi_tests_single_class_python_file_content
@@ -147,7 +147,7 @@ def test_multi_tests_multi_classes_python_file_parser() -> None:
     # We mock builtin `open` method to read sample python file content,
     # to avoid having to load a real file.
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.python_test_parser."
+        "test_collections.matter.sdk_tests.support.python_testing.models.python_test_parser."
         "open",
         new=mock.mock_open(
             read_data=sample_multi_tests_multi_classes_python_file_content

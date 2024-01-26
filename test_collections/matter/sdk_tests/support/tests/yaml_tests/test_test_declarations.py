@@ -29,7 +29,7 @@ def test_yaml_suite_declaration() -> None:
     version = "SomeVersionStr"
 
     with mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models."
+        "test_collections.matter.sdk_tests.support.yaml_tests.models."
         "test_suite.YamlTestSuite.class_factory"
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestSuiteDeclaration.__init__"
@@ -45,7 +45,7 @@ def test_yaml_case_declaration() -> None:
     test = YamlTest(name="TestTest", config={}, tests=[])
     version = "SomeVersionStr"
     with mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models."
+        "test_collections.matter.sdk_tests.support.yaml_tests.models."
         "test_case.YamlTestCase.class_factory"
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestCaseDeclaration.__init__"

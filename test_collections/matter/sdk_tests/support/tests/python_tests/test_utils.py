@@ -214,11 +214,11 @@ async def test_commission_device() -> None:
     with mock.patch.object(
         target=sdk_container, attribute="send_command", return_value=mock_result
     ) as mock_send_command, mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.utils"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
         ".generate_command_arguments",
         return_value=command_args,
     ), mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.utils"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
         ".handle_logs"
     ) as mock_handle_logs, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=0
@@ -243,11 +243,11 @@ async def test_commission_device_failure() -> None:
     with mock.patch.object(
         target=sdk_container, attribute="send_command", return_value=mock_result
     ) as mock_send_command, mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.utils"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
         ".generate_command_arguments",
         return_value=command_args,
     ), mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.utils"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
         ".handle_logs"
     ) as mock_handle_logs, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=1

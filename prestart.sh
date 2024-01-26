@@ -30,7 +30,7 @@ do
     if [ -d $dir ]; then 
         prestart=$dir/prestart.sh
 
-        # Only run prestart.sh if present and it's exacutable
+        # Only run prestart.sh if present and it's executable
         if [ -x $prestart ]; then 
             echo "Running prestart script: $prestart"
             $prestart

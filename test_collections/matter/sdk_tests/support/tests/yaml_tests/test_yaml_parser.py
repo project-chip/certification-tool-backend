@@ -57,7 +57,10 @@ def test_yaml_file_parser_throws_validationexception() -> None:
     mock_validation = ValidationError(errors=[mock.MagicMock()], model=mock.MagicMock())
 
     with mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models.yaml_test_parser.open",
+        (
+            "test_collections.matter.sdk_tests.support.yaml_tests.models"
+            ".yaml_test_parser.open"
+        ),
         new=mock.mock_open(read_data=sample_yaml_file_content),
     ), mock.patch(
         "loguru.logger",
@@ -84,7 +87,10 @@ def test_yaml_file_parser() -> None:
     # We mock builtin `open` method to read sample yaml file content,
     # to avoid having to load a real file.
     with mock.patch(
-        "test_collections.sdk_tests.support.yaml_tests.models.yaml_test_parser.open",
+        (
+            "test_collections.matter.sdk_tests.support.yaml_tests.models"
+            ".yaml_test_parser.open"
+        ),
         new=mock.mock_open(read_data=sample_yaml_file_content),
     ) as file_open:
         test = parse_yaml_test(file_path)

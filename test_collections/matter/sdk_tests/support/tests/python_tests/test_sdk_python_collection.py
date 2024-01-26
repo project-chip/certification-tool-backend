@@ -33,7 +33,7 @@ from ...python_testing.sdk_python_tests import sdk_python_test_collection
 def python_test_collection() -> PythonCollectionDeclaration:
     test_sdk_python_path = Path(__file__).parent / "test_python_script"
     with mock.patch.object(Path, "exists", return_value=True), mock.patch(
-        "test_collections.sdk_tests.support.models.sdk_test_folder.open",
+        "test_collections.matter.sdk_tests.support.models.sdk_test_folder.open",
         new=mock.mock_open(read_data="unit-test-python-version"),
     ):
         folder = SDKTestFolder(path=test_sdk_python_path, filename_pattern="TC_*")

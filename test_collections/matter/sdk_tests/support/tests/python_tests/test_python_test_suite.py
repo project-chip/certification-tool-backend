@@ -92,17 +92,17 @@ async def test_suite_setup_log_python_version() -> None:
         ) as logger_info, mock.patch.object(
             target=sdk_container, attribute="start"
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
             new_callable=PICS,
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".prompt_for_commissioning_mode",
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".commission_device",
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config,
@@ -127,7 +127,7 @@ async def test_suite_setup_without_pics() -> None:
         suite_instance = suite_class(TestSuiteExecution())
 
         with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
             new_callable=PICS,
         ), mock.patch.object(
@@ -135,13 +135,13 @@ async def test_suite_setup_without_pics() -> None:
         ) as mock_set_pics, mock.patch.object(
             target=sdk_container, attribute="reset_pics_state"
         ) as mock_reset_pics_state, mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".prompt_for_commissioning_mode",
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".commission_device",
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config,
@@ -166,7 +166,7 @@ async def test_suite_setup_with_pics() -> None:
         suite_instance = suite_class(TestSuiteExecution())
 
         with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
             new_callable=create_random_pics,
         ), mock.patch.object(
@@ -174,13 +174,13 @@ async def test_suite_setup_with_pics() -> None:
         ) as mock_set_pics, mock.patch.object(
             target=sdk_container, attribute="reset_pics_state"
         ) as mock_reset_pics_state, mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".prompt_for_commissioning_mode",
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".commission_device",
         ), mock.patch(
-            target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config,
@@ -206,17 +206,17 @@ async def test_commissioning_suite_setup_with_pics() -> None:
     suite_instance = suite_class(TestSuiteExecution())
 
     with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.pics",
         new_callable=PICS,
     ), mock.patch.object(target=sdk_container, attribute="set_pics"), mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".prompt_for_commissioning_mode",
     ) as mock_prompt_for_commissioning_mode, mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".commission_device",
     ) as mock_commission_device, mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config,
@@ -242,16 +242,16 @@ async def test_commissioning_suite_setup() -> None:
     suite_instance = suite_class(TestSuiteExecution())
 
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.test_suite"
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
     ) as python_suite_setup, mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".prompt_for_commissioning_mode",
     ), mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".commission_device",
     ), mock.patch(
-        target="test_collections.sdk_tests.support.python_testing.models.test_suite"
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config,

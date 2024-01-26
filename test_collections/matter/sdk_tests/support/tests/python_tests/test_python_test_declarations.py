@@ -31,7 +31,7 @@ def test_python_suite_declaration() -> None:
     version = "SomeVersionStr"
 
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.test_suite.PythonTestSuite.class_factory"
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite.PythonTestSuite.class_factory"
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestSuiteDeclaration.__init__"
     ) as declaration_init:
@@ -53,7 +53,7 @@ def test_python_case_declaration() -> None:
     )
     version = "SomeVersionStr"
     with mock.patch(
-        "test_collections.sdk_tests.support.python_testing.models.test_case.PythonTestCase.class_factory"
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case.PythonTestCase.class_factory"
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestCaseDeclaration.__init__"
     ) as declaration_init:

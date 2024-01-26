@@ -31,7 +31,7 @@ from ...yaml_tests.sdk_yaml_tests import sdk_yaml_test_collection
 def yaml_collection() -> YamlCollectionDeclaration:
     test_sdk_yaml_path = Path(__file__).parent / "test_yamls"
     with mock.patch.object(Path, "exists", return_value=True), mock.patch(
-        "test_collections.sdk_tests.support.models.sdk_test_folder.open",
+        "test_collections.matter.sdk_tests.support.models.sdk_test_folder.open",
         new=mock.mock_open(read_data="unit-test-yaml-version"),
     ):
         folder = SDKTestFolder(

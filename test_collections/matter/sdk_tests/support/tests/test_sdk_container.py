@@ -153,7 +153,10 @@ async def test_send_command_default_prefix() -> None:
         attribute="create_container",
         return_value=fake_container,
     ), mock.patch(
-        target="test_collections.sdk_tests.support.sdk_container.exec_run_in_container",
+        target=(
+            "test_collections.matter.sdk_tests.support.sdk_container"
+            ".exec_run_in_container"
+        ),
         return_value=mock_result,
     ) as mock_exec_run:
         await sdk_container.start()
@@ -191,7 +194,10 @@ async def test_send_command_custom_prefix() -> None:
         attribute="create_container",
         return_value=fake_container,
     ), mock.patch(
-        target="test_collections.sdk_tests.support.sdk_container.exec_run_in_container",
+        target=(
+            "test_collections.matter.sdk_tests.support.sdk_container"
+            ".exec_run_in_container"
+        ),
         return_value=mock_result,
     ) as mock_exec_run:
         await sdk_container.start()

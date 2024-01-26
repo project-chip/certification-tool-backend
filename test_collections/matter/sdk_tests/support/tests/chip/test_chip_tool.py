@@ -30,11 +30,8 @@ from app.core.config import settings
 from app.schemas.pics import PICSError
 from app.tests.utils.test_pics_data import create_random_pics
 
-from ...exec_run_in_container import ExecResultExtended
-from ...pics import PICS_FILE_PATH, SHELL_OPTION, SHELL_PATH
-from ...sdk_container import SDKContainer
-from ..chip import ChipTool
-from ..chip.chip_tool import (
+from ...chip import ChipTool
+from ...chip.chip_tool import (
     CHIP_APP_EXE,
     CHIP_TOOL_ARG_PAA_CERTS_PATH,
     CHIP_TOOL_CONTINUE_ON_FAILURE_VALUE,
@@ -46,6 +43,9 @@ from ..chip.chip_tool import (
     ChipToolStartingError,
     ChipToolUnknownTestType,
 )
+from ...exec_run_in_container import ExecResultExtended
+from ...pics import PICS_FILE_PATH, SHELL_OPTION, SHELL_PATH
+from ...sdk_container import SDKContainer
 
 
 @pytest.mark.asyncio
@@ -288,7 +288,9 @@ async def test_set_pics() -> None:
     )
 
     with mock.patch(
-        target="test_collections.sdk_tests.support.chip.chip_tool.subprocess.run",
+        target=(
+            "test_collections.matter.sdk_tests.support.chip.chip_tool.subprocess.run"
+        ),
         return_value=CompletedProcess(expected_command, 0),
     ) as mock_run:
         chip_tool.set_pics(pics)
@@ -305,7 +307,9 @@ def test_set_pics_with_error() -> None:
     pics = create_random_pics()
 
     with mock.patch(
-        target="test_collections.sdk_tests.support.chip.chip_tool.subprocess.run",
+        target=(
+            "test_collections.matter.sdk_tests.support.chip.chip_tool.subprocess.run"
+        ),
         return_value=CompletedProcess("", 1),
     ), pytest.raises(PICSError):
         chip_tool.set_pics(pics)
