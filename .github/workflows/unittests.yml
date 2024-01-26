@@ -35,6 +35,8 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Load .env file to job environent
         uses: cardinalby/export-env-action@v2
