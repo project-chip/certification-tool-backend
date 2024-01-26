@@ -121,5 +121,5 @@ By default, test_script_manager does not discover all test collections including
 unit tests. Make sure we discover all test collections here.
 """
 test_script_manager.test_script_manager.test_collections = discover_test_collections(
-    disabled_collections=None
+    disabled_collections=[]
 )

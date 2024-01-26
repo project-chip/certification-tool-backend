@@ -93,7 +93,7 @@ class ContainerManager(object, metaclass=Singleton):
             return self.__client.containers.run(docker_image_tag, **parameters)
         except DockerException as error:
             logger.error(
-                "Error ocurred while creating a container from image " + str(error)
+                "Error occurred while creating a container from image " + str(error)
             )
             raise error
 

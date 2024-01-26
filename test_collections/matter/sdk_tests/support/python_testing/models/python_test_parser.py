@@ -16,17 +16,23 @@
 import ast
 import re
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from .python_test_models import PythonTest, PythonTestType
 
 ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
-BODY_INDEX = 0
 
 TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
+# This constant is a temporarily fix for TE2
+# Issue: https://github.com/project-chip/certification-tool/issues/152
+TC_FUNCTION_PATTERN_WORKAROUND = re.compile(r"[\S]+_[\S]+")
 TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
+# This constant is a temporarily fix for TE2
+# Issue: https://github.com/project-chip/certification-tool/issues/152
+TC_TEST_FUNCTION_PATTERN_WORKAROUND = re.compile(r"test_(?P<title>[\S]+_[0-9]+_[0-9]+)")
+
 
 FunctionDefType = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
@@ -104,7 +110,13 @@ def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
     ]
     for m in methods:
         if isinstance(m.name, str):
-            if re.match(TC_FUNCTION_PATTERN, m.name):
+            # THIS IS A WORKAROUND CODE for TE2
+            # Some Python tests written in SDK repo are not following the test method
+            # template, test_TC_[TC_name]
+            # So this code temporarily code to consider other methods signature as a
+            # python test script.
+            # Issue: https://github.com/project-chip/certification-tool/issues/152
+            if re.match(TC_FUNCTION_PATTERN_WORKAROUND, m.name):
                 all_methods.append(m)
 
     return all_methods
@@ -126,6 +138,15 @@ def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
             if match := re.match(TC_TEST_FUNCTION_PATTERN, m.name):
                 if name := match["title"]:
                     test_names.append(name)
+            # THIS IS A WORKAROUND CODE for TE2
+            # Some Python tests written in SDK repo are not following the test method
+            # template, test_TC_[TC_name]
+            # So this code temporarily code to consider other methods signature as a
+            # python test script.
+            # Issue: https://github.com/project-chip/certification-tool/issues/152
+            elif match := re.match(TC_TEST_FUNCTION_PATTERN_WORKAROUND, m.name):
+                if name := match["title"]:
+                    test_names.append("TC_" + name)
 
     return test_names
 
@@ -146,7 +167,7 @@ def __parse_test_case(
 
     desc_method = __get_method_by_name(desc_method_name, methods)
     if desc_method:
-        tc_desc = desc_method.body[BODY_INDEX].value.value  # type: ignore
+        tc_desc = __retrieve_description(desc_method)
 
     # If the python test does not implement the steps template method,
     # the test case will be presented in UI and the whole test case will be
@@ -171,6 +192,12 @@ def __parse_test_case(
     elif desc_method:
         python_test_type = PythonTestType.NO_COMMISSIONING
 
+    # THIS IS A WORKAROUND CODE for TE2
+    # The TC_DGGEN_2_4 test case is not following the test method template
+    if tc_name == "TC_GEN_2_4":
+        tc_name = "TC_DGGEN_2_4"  # spell-checker: disable
+        tc_desc = "TC_DGGEN_2_4"  # spell-checker: disable
+
     return PythonTest(
         name=tc_name,
         description=tc_desc,
@@ -192,7 +219,12 @@ def __get_method_by_name(
 
 def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
     python_steps: List[MatterTestStep] = []
-    for step in method.body[BODY_INDEX].value.elts:  # type: ignore
+
+    steps_body = __retrieve_return_body(method, ast.List)
+    if not steps_body:
+        return []
+
+    for step in steps_body.value.elts:
         step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
         arg_is_commissioning = False
         if (
@@ -211,8 +243,32 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
 
 
 def __retrieve_pics(method: FunctionDefType) -> list:
-    python_steps: list = []
-    for step in method.body[BODY_INDEX].value.elts:  # type: ignore
-        python_steps.append(step.value)
+    pics_list: list = []
+    pics_body = __retrieve_return_body(method, ast.List)
+    if not pics_body:
+        return []
 
-    return python_steps
+    for pics in pics_body.value.elts:
+        pics_list.append(pics.value)
+
+    return pics_list
+
+
+def __retrieve_return_body(
+    method: FunctionDefType, instance_type: Any
+) -> Union[Any, None]:
+    if method.body and len(method.body) > 0:
+        for body in method.body:
+            if isinstance(body.value, instance_type):  # type: ignore
+                return body
+
+    return None
+
+
+def __retrieve_description(method: FunctionDefType) -> str:
+    description = ""
+    for body in method.body:
+        if type(body) is ast.Return:
+            description = body.value.value  # type: ignore
+
+    return description
