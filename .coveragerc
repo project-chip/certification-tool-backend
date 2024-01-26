@@ -1,4 +1,4 @@
 [run]
 omit =
         */app/tests/*
-        */test_collections/sdk_tests/support/tests/*
+        */test_collections/matter/sdk_tests/support/tests/*

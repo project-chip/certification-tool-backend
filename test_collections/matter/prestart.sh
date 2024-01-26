@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 
  #
  # Copyright (c) 2023 Project CHIP Authors
@@ -15,28 +15,11 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-# Let the DB start
-python ./app/backend_pre_start.py
+ # Paths
+SDK_TESTS_DIR=$(dirname "$0")/sdk_tests
 
-# Run migrations
-alembic upgrade head
+cd $SDK_TESTS_DIR
 
-# Create initial data in DB
-python ./app/initial_data.py
+# Fetch code from SDK
+./scripts/fetch_sdk_tests_and_runner.sh
 
-# Run Prestart scripts in test collections
-for dir in ./test_collections/*
-do
-    if [ -d $dir ]; then 
-        prestart=$dir/prestart.sh
-
-        # Only run prestart.sh if present and it's executable
-        if [ -x $prestart ]; then 
-            echo "Running prestart script: $prestart"
-            $prestart
-        fi
-    fi
-done
-
-# We echo "complete" to ensure this scripts last command has exit code 0.
-echo "Prestart Complete"

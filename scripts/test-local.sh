@@ -33,8 +33,8 @@ done
 
 if [[ $RUN_ALL_TESTS -eq 1 ]]; then
     echo "Running all tests"
-    pytest --cov-config=.coveragerc --cov=app --cov=test_collections --cov-report=term-missing app/tests test_collections/sdk_tests/support/tests "${@}"
+    pytest --cov-config=.coveragerc --cov=app --cov=test_collections --cov-report=term-missing app/tests test_collections/matter/sdk_tests/support/tests "${@}"
 else
     echo "Skipping platform dependant tests"
-    pytest --cov-config=.coveragerc --cov=app --cov=test_collections --cov-report=term-missing --ignore=app/tests/platform_dependent_tests app/tests test_collections/sdk_tests/support/tests "${@}"
+    pytest --cov-config=.coveragerc --cov=app --cov=test_collections --cov-report=term-missing --ignore=app/tests/platform_dependent_tests app/tests test_collections/matter/sdk_tests/support/tests "${@}"
 fi

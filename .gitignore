@@ -12,4 +12,4 @@ test_environment.config
 SerialTests.lock
 test_db_creation.lock
 .sha_information
-test_collections/sdk_tests/sdk_checkout
+test_collections/matter/sdk_tests/sdk_checkout

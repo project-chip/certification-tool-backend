@@ -35,10 +35,10 @@
     "python.testing.pytestPath": "/usr/local/bin/pytest",
     "python.testing.pytestArgs": [
         "app/tests",
-        "test_collections/sdk_tests/support/tests",
+        "test_collections/matter/sdk_tests/support/tests",
         "--no-cov"
     ],
     "python.linting.ignorePatterns": [
-        "test_collections/sdk_tests/sdk_checkout/**/*.py"
+        "test_collections/matter/sdk_tests/sdk_checkout/**/*.py"
     ]
 }
