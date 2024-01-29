@@ -57,13 +57,15 @@ def test_run_execution_history(
     id: Optional[int], skip: Optional[int], limit: Optional[int], json: Optional[bool]
 ) -> None:
     """Read test run execution history"""
-    if id is not None:
-        __test_run_execution_by_id(id, json)
-    elif skip is not None or limit is not None:
-        __test_run_execution_batch(json, skip, limit)
-    else:
-        __test_run_execution_batch(json)
-    client.close()
+    try:
+        if id is not None:
+            __test_run_execution_by_id(id, json)
+        elif skip is not None or limit is not None:
+            __test_run_execution_batch(json, skip, limit)
+        else:
+            __test_run_execution_batch(json)
+    finally:
+        client.close()
 
 
 def __test_run_execution_by_id(id: int, json: bool) -> None:

@@ -74,7 +74,7 @@ For JSON respond, add `--json` to the command.
 
 ### create-project
 
-Run `./cli.sh create-project --name {project name} --dut_type {dut type}` to create a new project. DUT Type must be one of `Controller, Accessory`.
+Run `./cli.sh create-project --name {project name} --config {config file}` to create a new project. Project name is required.
 
 ### list-projects
 

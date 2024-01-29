@@ -15,4 +15,6 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-poetry run python3 app/main.py $@
+#Using an array to store the arguments, to handle 'whitespaces' correctly
+args=("$@")
+poetry run python3 app/main.py "${args[@]}"

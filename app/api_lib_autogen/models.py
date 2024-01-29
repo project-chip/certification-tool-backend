@@ -25,16 +25,12 @@ class BodyCreateTestRunExecutionApiV1TestRunExecutionsPost(BaseModel):
     selected_tests: "Optional[Dict[str, Dict[str, Dict[str, int]]]]" = Field(None, alias="selected_tests")
 
 
-# class BodyUploadFileApiV1TestRunExecutionsFileUploadPost(BaseModel):
-# file: "IO[Any]" = Field(..., alias="file")
-
-
 class DutConfig(BaseModel):
     discriminator: "str" = Field(..., alias="discriminator")
     setup_code: "str" = Field(..., alias="setup_code")
     pairing_mode: "DutPairingModeEnum" = Field(..., alias="pairing_mode")
-    ip_address: "Optional[str]" = Field(None, alias="ip_address")
-    port: "Optional[str]" = Field(None, alias="port")
+    chip_timeout: "Optional[str]" = Field(None, alias="chip_timeout")
+    chip_use_paa_certs: "Optional[bool]" = Field(False, alias="chip_use_paa_certs")
 
 
 class DutPairingModeEnum(str, Enum):

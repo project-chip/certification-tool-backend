@@ -27,6 +27,7 @@ STATUS_CODE_KEY = "status_code"
 class MessageTypeEnum(str, Enum):
     PROMPT_REQUEST = "prompt_request"
     PROMPT_RESPONSE = "prompt_response"
+    OPTIONS_REQUEST = "options_request"
     TEST_UPDATE = "test_update"
     TIME_OUT_NOTIFICATION = "time_out_notification"
     TEST_LOG_RECORDS = "test_log_records"
@@ -63,15 +64,15 @@ class TestRunUpdate(TestUpdateBase):
 
 
 class TestSuiteUpdate(TestUpdateBase):
-    test_suite_execution_id: int
+    test_suite_execution_index: int
 
 
 class TestCaseUpdate(TestSuiteUpdate):
-    test_case_execution_id: int
+    test_case_execution_index: int
 
 
 class TestStepUpdate(TestCaseUpdate):
-    test_step_execution_id: int
+    test_step_execution_index: int
 
 
 class TestUpdate(BaseModel):

@@ -47,13 +47,14 @@ TABLE_FORMAT = "{:<5} {:20} {:40}"
 def create_project(name: str, config: Optional[str]) -> None:
     """Create a project"""
     try:
-        test_environment_config = None
+        test_environment_config = sync_apis.projects_api.default_config_api_v1_projects_default_config_get()
         if config is not None:
             file = open(config, "r")
             config_dict = json.load(file)
             test_environment_config = TestEnvironmentConfig(**config_dict)
         projectCreate = ProjectCreate(name=name, config=test_environment_config)
         response = sync_apis.projects_api.create_project_api_v1_projects_post(project_create=projectCreate)
+        click.echo(f"Project {response.name} created with id {response.id}.")
     except json.JSONDecodeError as e:
         click.echo(f"Failed to parse JSON parameter: {e.msg}", err=True)
         raise Exit(code=1)
@@ -66,9 +67,8 @@ def create_project(name: str, config: Optional[str]) -> None:
     except UnexpectedResponse as e:
         click.echo(f"Failed to create project {name}: {e.status_code} {e.content}", err=True)
         raise Exit(code=1)
-
-    click.echo(f"Project {response.name} created with id {response.id}.")
-    client.close()
+    finally:
+        client.close()
 
 
 @click.command()
@@ -82,11 +82,12 @@ def delete_project(id: int) -> None:
     """Delete a project"""
     try:
         sync_apis.projects_api.delete_project_api_v1_projects_id_delete(id=id)
+        click.echo(f"Project {id} is deleted.")
     except UnexpectedResponse as e:
         click.echo(f"Failed to delete project {id}: {e.status_code} {e.content}", err=True)
         raise Exit(code=1)
-    click.echo(f"Project {id} is deleted.")
-    client.close()
+    finally:
+        client.close()
 
 
 @click.command()
@@ -172,20 +173,22 @@ def list_projects(
             )
         )
 
-    if id is not None:
-        projects = __list_project_by_id(id)
-    else:
-        projects = __list_project_by_batch(archived, skip, limit)
+    try:
+        if id is not None:
+            projects = __list_project_by_id(id)
+        else:
+            projects = __list_project_by_batch(archived, skip, limit)
 
-    if projects is None or len(projects) == 0:
-        click.echo("Server did not return any project", err=True)
-        raise Exit(code=1)
+        if projects is None or (isinstance(projects, list) and len(projects) == 0):
+            click.echo("Server did not return any project", err=True)
+            raise Exit(code=1)
 
-    if json:
-        __print_json(projects)
-    else:
-        __print_table(projects)
-    client.close()
+        if json:
+            __print_json(projects)
+        else:
+            __print_table(projects)
+    finally:
+        client.close()
 
 
 @click.command()
@@ -209,7 +212,6 @@ def update_project(id: int, config: str):
         projectUpdate = ProjectUpdate(**config_dict)
         response = sync_apis.projects_api.update_project_api_v1_projects_id_put(id=id, project_update=projectUpdate)
         click.echo(f"Project {response.name} is updated with the new config.")
-        client.close()
     except json.JSONDecodeError as e:
         click.echo(f"Failed to parse JSON parameter: {e.msg}", err=True)
         raise Exit(code=1)
@@ -222,3 +224,5 @@ def update_project(id: int, config: str):
     except UnexpectedResponse as e:
         click.echo(f"Failed to update project {id}: {e.status_code} {e.content}", err=True)
         raise Exit(code=1)
+    finally:
+        client.close()

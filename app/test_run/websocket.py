@@ -104,20 +104,20 @@ class TestRunSocket:
         click.echo(f"Test Run [{str(update.state.name)}]")
 
     def __log_test_suite_update(self, update: TestSuiteUpdate) -> None:
-        suite = self.__suite(update.test_suite_execution_id)
+        suite = self.__suite(update.test_suite_execution_index)
         title = suite.test_suite_metadata.title
         click.echo(f"  - {title} [{str(update.state.name)}]")
 
     def __log_test_case_update(self, update: TestCaseUpdate) -> None:
-        case = self.__case(id=update.test_case_execution_id, suite_id=update.test_suite_execution_id)
+        case = self.__case(index=update.test_case_execution_index, suite_index=update.test_suite_execution_index)
         title = case.test_case_metadata.title
         click.echo(f"      - {title} [{str(update.state.name)}]")
 
     def __log_test_step_update(self, update: TestStepUpdate) -> None:
         step = self.__step(
-            id=update.test_step_execution_id,
-            case_id=update.test_case_execution_id,
-            suite_id=update.test_suite_execution_id,
+            index=update.test_step_execution_index,
+            case_index=update.test_case_execution_index,
+            suite_index=update.test_suite_execution_index,
         )
         if step is not None:
             title = step.title
@@ -127,13 +127,13 @@ class TestRunSocket:
         for record in records:
             logger.log(record.level, record.message)
 
-    def __suite(self, id: int) -> TestSuiteExecution:
-        return next((s for s in self.run.test_suite_executions if s.id == id))
+    def __suite(self, index: int) -> TestSuiteExecution:
+        return self.run.test_suite_executions[index]
 
-    def __case(self, id: int, suite_id: int) -> TestCaseExecution:
-        suite = self.__suite(suite_id)
-        return next((c for c in suite.test_case_executions if c.id == id))
+    def __case(self, index: int, suite_index: int) -> TestCaseExecution:
+        suite = self.__suite(suite_index)
+        return suite.test_case_executions[index]
 
-    def __step(self, id: int, case_id: int, suite_id: int) -> Optional[TestStepExecution]:
-        case = self.__case(id=case_id, suite_id=suite_id)
-        return next((s for s in case.test_step_executions if s.id == id), None)
+    def __step(self, index: int, case_index: int, suite_index: int) -> Optional[TestStepExecution]:
+        case = self.__case(index=case_index, suite_index=suite_index)
+        return case.test_step_executions[index]

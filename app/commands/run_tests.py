@@ -36,7 +36,8 @@ test_run_executions_api = async_apis.test_run_executions_api
     "--selected-tests",
     "-s",
     help="JSON string with selected tests. "
-    'Format: \'{"collection_name":{"test_suite_id":{"test_case_id": <iterations>}}}\'',
+    'Format: \'{"collection_name":{"test_suite_id":{"test_case_id": <iterations>}}}\' '
+    'For instance: \'{"SDK YAML Tests":{"FirstChipToolSuite":{"TC-ACE-1.1": 1}}}\'',
 )
 @click.option(
     "--title", default=lambda: str(datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")), show_default="timestamp"
@@ -54,16 +55,18 @@ async def run_tests(selected_tests: str, title: str, file: str, project_id: int)
     # Configure new log output for test.
     log_path = test_logging.configure_logger_for_run(title=title)
 
-    selected_tests_dict = __parse_selected_tests(selected_tests, file)
-
-    new_test_run = await __create_new_test_run(selected_tests=selected_tests_dict, title=title, project_id=project_id)
-    socket = TestRunSocket(new_test_run)
-    socket_task = asyncio.create_task(socket.connect_websocket())
-    new_test_run = await __start_test_run(new_test_run)
-    socket.run = new_test_run
-    await socket_task
-    await client.aclose()
-    click.echo(f"Log output in: '{log_path}'")
+    try:
+        selected_tests_dict = __parse_selected_tests(selected_tests, file)
+        new_test_run = await __create_new_test_run(selected_tests=selected_tests_dict, title=title, project_id=project_id)
+        socket = TestRunSocket(new_test_run)
+        socket_task = asyncio.create_task(socket.connect_websocket())
+        new_test_run = await __start_test_run(new_test_run)
+        socket.run = new_test_run
+        await socket_task
+        click.echo(f"Log output in: '{log_path}'")
+    finally:
+        await client.aclose()
+    
 
 
 async def __create_new_test_run(selected_tests: dict, title: str, project_id: int) -> None:
