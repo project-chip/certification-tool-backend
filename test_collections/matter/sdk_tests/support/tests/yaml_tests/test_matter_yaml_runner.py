@@ -30,15 +30,8 @@ from app.core.config import settings
 from app.schemas.pics import PICSError
 from app.tests.utils.test_pics_data import create_random_pics
 
-from ...chip.chip_server import (
-    ChipServer,
-    ChipServerType,
-)
-from ...pics import (
-    PICS_FILE_PATH,
-    SHELL_OPTION,
-    SHELL_PATH,
-)
+from ...chip.chip_server import ChipServer, ChipServerType
+from ...pics import PICS_FILE_PATH, SHELL_OPTION, SHELL_PATH
 from ...yaml_tests.matter_yaml_runner import (
     TEST_DEFAULT_TIMEOUT_IN_SEC,
     TEST_RUNNER_OPTIONS,

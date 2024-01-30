@@ -22,6 +22,7 @@ from unittest import mock
 import pytest
 
 from app.core.config import settings
+
 from ...chip.chip_server import (
     CHIP_APP_EXE,
     CHIP_TOOL_ARG_PAA_CERTS_PATH,
