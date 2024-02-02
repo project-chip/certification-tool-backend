@@ -35,9 +35,9 @@ from app.user_prompt_support.uploaded_file_support import UploadFile
 from app.user_prompt_support.user_prompt_manager import user_prompt_manager
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
-from ...chip import ChipTool
-from ...chip.chip_tool import ChipTestType
+from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
+from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
 
 CHIP_TOOL_DEFAULT_PROMPT_TIMEOUT_S = 60  # seconds
 OUTCOME_TIMEOUT_S = 60 * 10  # Seconds
@@ -62,9 +62,9 @@ class TestError(Exception):
 
 
 class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
-    chip_tool: ChipTool = ChipTool(test_engine_logger)
+    runner: MatterYAMLRunner = MatterYAMLRunner(test_engine_logger)
     chip_test_identifier: str
-    test_type: ChipTestType
+    server_type: ChipServerType
 
     def __init__(self, test_case_execution: TestCaseExecution):
         self.__show_adapter_logs = False
@@ -127,7 +127,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
 
     def step_start(self, request: TestStep) -> None:
         if (
-            self.test_type == ChipTestType.CHIP_APP
+            self.server_type == ChipServerType.CHIP_APP
             and
             # Manual steps will be handled by step_manual function.
             not isinstance(self.current_test_step, ManualVerificationTestStep)
@@ -228,11 +228,11 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
 
     async def execute(self) -> None:
         test_name = f"Test_{self.chip_test_identifier}"
-        await self.chip_tool.run_test(
+        await self.runner.run_test(
             test_step_interface=self,
             test_parser_hooks=self,
             test_id=test_name,
-            test_type=self.test_type,
+            server_type=self.server_type,
             test_parameters=self.test_parameters,
         )
 

@@ -17,7 +17,7 @@ from app.default_environment_config import default_environment_config
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestStep
-from test_collections.matter.sdk_tests.support.chip.chip_tool import ChipTestType
+from test_collections.matter.sdk_tests.support.chip.chip_server import ChipServerType
 from test_collections.matter.sdk_tests.support.yaml_tests.models.chip_test import (
     ChipTest,
 )
@@ -30,7 +30,7 @@ class TCTRChipLogParsing(ChipTest):
         "title": "This is Test Case tctr_chip_log_parsing",
         "description": "This Test Case is built to test the chip-tool log parser",
     }
-    test_type = ChipTestType.CHIP_APP
+    server_type = ChipServerType.CHIP_APP
     chip_test_identifier = "Test ID"
 
     # The config() defined in the "TestCase" base class is unable to return a valid

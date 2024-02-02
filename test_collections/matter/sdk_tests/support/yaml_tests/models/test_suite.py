@@ -19,7 +19,7 @@ from typing import Type, TypeVar
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 
-from ...chip.chip_tool import ChipTestType
+from ...chip.chip_server import ChipServerType
 from ...yaml_tests.models.chip_suite import ChipSuite
 
 
@@ -97,7 +97,7 @@ class ManualYamlTestSuite(YamlTestSuite):
 
 
 class ChipYamlTestSuite(YamlTestSuite, ChipSuite):
-    test_type = ChipTestType.CHIP_TOOL
+    server_type = ChipServerType.CHIP_TOOL
 
     async def setup(self) -> None:
         """Due top multi inheritance, we need to call setup on both super classes."""
@@ -106,4 +106,4 @@ class ChipYamlTestSuite(YamlTestSuite, ChipSuite):
 
 
 class SimulatedYamlTestSuite(ChipYamlTestSuite):
-    test_type = ChipTestType.CHIP_APP
+    server_type = ChipServerType.CHIP_APP

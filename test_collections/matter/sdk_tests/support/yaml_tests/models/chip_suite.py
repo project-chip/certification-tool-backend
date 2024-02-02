@@ -27,9 +27,9 @@ from app.test_engine.models import TestSuite
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
-from ...chip import ChipTool
-from ...chip.chip_tool import ChipTestType
+from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
+from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
 from ...yaml_tests.models.chip_test import PromptOption
 
 CHIP_APP_PAIRING_CODE = "CHIP:SVR: Manual pairing code:"
@@ -44,10 +44,10 @@ class DUTCommissioningError(Exception):
 
 
 class ChipSuite(TestSuite, UserPromptSupport):
-    chip_tool = ChipTool(logger)
     sdk_container: SDKContainer = SDKContainer(logger)
+    runner: MatterYAMLRunner = MatterYAMLRunner(logger=logger)
     border_router: Optional[ThreadBorderRouter] = None
-    test_type: ChipTestType = ChipTestType.CHIP_TOOL
+    server_type: ChipServerType = ChipServerType.CHIP_TOOL
     __dut_commissioned_successfully: bool = False
 
     def __init__(self, test_suite_execution: TestSuiteExecution):
@@ -57,23 +57,23 @@ class ChipSuite(TestSuite, UserPromptSupport):
         logger.info("Setting up SDK container")
         await self.sdk_container.start()
 
-        logger.info("Starting chip server")
-        await self.chip_tool.start_server(
-            self.test_type, self.config.dut_config.chip_use_paa_certs
+        logger.info("Setting up test runner")
+        await self.runner.setup(
+            self.server_type, self.config.dut_config.chip_use_paa_certs
         )
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
-            self.chip_tool.set_pics(pics=self.pics)
+            self.runner.set_pics(pics=self.pics)
         else:
-            # Disable sending "-PICS" option when running chip server
-            self.chip_tool.reset_pics_state()
+            # Disable sending "-PICS" option when running test
+            self.runner.reset_pics_state()
 
         self.__dut_commissioned_successfully = False
-        if self.test_type == ChipTestType.CHIP_TOOL:
+        if self.server_type == ChipServerType.CHIP_TOOL:
             logger.info("Commission DUT")
             await self.__commission_dut_allowing_retries()
-        elif self.test_type == ChipTestType.CHIP_APP:
+        elif self.server_type == ChipServerType.CHIP_APP:
             logger.info("Verify Test suite prerequisites")
             await self.__verify_test_suite_prerequisites()
 
@@ -105,7 +105,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
             raise DUTCommissioningError("Failed to pair with DUT")
 
     async def __pair_with_dut_onnetwork(self) -> bool:
-        return await self.chip_tool.pairing_on_network(
+        return await self.runner.pairing_on_network(
             setup_code=self.config.dut_config.setup_code,
             discriminator=self.config.dut_config.discriminator,
         )
@@ -114,7 +114,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         if self.config.network.wifi is None:
             raise DUTCommissioningError("Tool config is missing wifi config.")
 
-        return await self.chip_tool.pairing_ble_wifi(
+        return await self.runner.pairing_ble_wifi(
             ssid=self.config.network.wifi.ssid,
             password=self.config.network.wifi.password,
             setup_code=self.config.dut_config.setup_code,
@@ -135,7 +135,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         else:
             raise DUTCommissioningError("Invalid thread configuration")
 
-        return await self.chip_tool.pairing_ble_thread(
+        return await self.runner.pairing_ble_thread(
             hex_dataset=hex_dataset,
             setup_code=self.config.dut_config.setup_code,
             discriminator=self.config.dut_config.discriminator,
@@ -159,12 +159,15 @@ class ChipSuite(TestSuite, UserPromptSupport):
         # Only unpair if commissioning was successfull during setup
         if self.__dut_commissioned_successfully:
             # Unpair is not applicable for simulated apps case
-            if self.test_type == ChipTestType.CHIP_TOOL:
-                logger.info("Unpairing chip_tool from device")
-                await self.chip_tool.unpair()
-            elif self.test_type == ChipTestType.CHIP_APP:
+            if self.server_type == ChipServerType.CHIP_TOOL:
+                logger.info("Unpairing DUT from server")
+                await self.runner.unpair()
+            elif self.server_type == ChipServerType.CHIP_APP:
                 logger.info("Prompt user to perform decommissioning")
                 await self.__prompt_user_to_perform_decommission()
+
+        logger.info("Stopping test runner")
+        await self.runner.stop()
 
         logger.info("Stopping SDK container")
         self.sdk_container.destroy()
@@ -175,7 +178,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     async def __verify_test_suite_prerequisites(self) -> None:
         # prerequisites apply for CHIP_APP only.
-        if self.test_type == ChipTestType.CHIP_APP:
+        if self.server_type == ChipServerType.CHIP_APP:
             logger.info("Prompt user to perform commissioning")
             await self.__prompt_user_to_perform_commission()
 

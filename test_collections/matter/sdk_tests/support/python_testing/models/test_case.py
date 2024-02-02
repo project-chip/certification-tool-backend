@@ -26,7 +26,7 @@ from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
-from ...chip.chip_tool import PICS_FILE_PATH
+from ...pics import PICS_FILE_PATH
 from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
 from .python_test_models import PythonTest, PythonTestType
