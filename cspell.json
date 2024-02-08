@@ -106,6 +106,7 @@
         "*.pyc",
         ".vscode/*",
         "test_collections/matter/sdk_tests/sdk_checkout",
+        "test_collections/matter/python_tests/docs/common_test_failures/",
         "sdk_patch",
         ".devcontainer"
     ],
