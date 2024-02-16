@@ -52,6 +52,7 @@ async def test_generate_command_arguments_with_null_value_attribute() -> None:
     )
 
     assert [
+        "--trace-to json:log",
         "--discriminator 123",
         "--passcode 1234",
         "--commissioning-method on-network",
@@ -84,6 +85,7 @@ async def test_generate_command_arguments_on_network() -> None:
     )
 
     assert [
+        "--trace-to json:log",
         "--discriminator 123",
         "--passcode 1234",
         "--commissioning-method on-network",
@@ -115,6 +117,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
     )
 
     assert [
+        "--trace-to json:log",
         "--discriminator 147",
         "--passcode 357",
         "--commissioning-method ble-wifi",
@@ -145,6 +148,7 @@ async def test_generate_command_arguments_ble_thread() -> None:
         config=mock_config, omit_commissioning_method=False
     )
     assert [
+        "--trace-to json:log",
         "--discriminator 456",
         "--passcode 8765",
         "--commissioning-method ble-thread",
@@ -173,6 +177,7 @@ async def test_generate_command_arguments_no_test_parameter_informed() -> None:
     )
 
     assert [
+        "--trace-to json:log",
         "--discriminator 456",
         "--passcode 8765",
         "--commissioning-method ble-thread",
@@ -197,6 +202,7 @@ async def test_generate_command_arguments_omit_comissioning_method() -> None:
     )
 
     assert [
+        "--trace-to json:log",
         "--discriminator 456",
         "--passcode 8765",
     ] == arguments
