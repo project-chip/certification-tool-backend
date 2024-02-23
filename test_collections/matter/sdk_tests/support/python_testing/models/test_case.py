@@ -16,14 +16,19 @@
 import re
 from asyncio import sleep
 from enum import IntEnum
+from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
-from typing import Any, Generator, Type, TypeVar, cast
+from socket import SocketIO
+from typing import Any, Generator, Optional, Type, TypeVar, cast
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
-from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
+from app.user_prompt_support.prompt_request import (
+    OptionsSelectPromptRequest,
+    TextInputPromptRequest,
+)
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
 from ...pics import PICS_FILE_PATH
@@ -69,11 +74,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
     sdk_container: SDKContainer = SDKContainer(logger)
     python_test: PythonTest
     python_test_version: str
+    test_socket: Optional[SocketIO]
 
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
         self.__runned = 0
         self.test_stop_called = False
+        self.test_socket = None
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -126,6 +133,24 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     def step_unknown(self) -> None:
         self.__runned += 1
+
+    async def show_prompt(
+        self,
+        msg: str,
+        placeholder: Optional[str] = None,
+        default_value: Optional[str] = None,
+    ) -> None:
+        prompt_request = TextInputPromptRequest(
+            prompt=msg,
+            placeholder_text=placeholder,
+            default_value=default_value,
+        )
+
+        user_response = await self.send_prompt_request(prompt_request)
+
+        if self.test_socket and user_response.response_str:
+            response = f"{user_response.response_str}\n".encode()
+            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
     @classmethod
     def pics(cls) -> set[str]:
@@ -229,8 +254,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 command,
                 prefix=EXECUTABLE,
                 is_stream=True,
-                is_socket=False,
+                is_socket=True,
             )
+            self.test_socket = exec_result.socket
 
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
@@ -239,7 +265,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     await sleep(0.0001)
                     continue
 
-                self.__handle_update(update)
+                await self.__handle_update(update)
 
             # Step: Show test logs
 
@@ -264,16 +290,20 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.current_test_step_index = len(self.test_steps) - 1
         self.current_test_step.mark_as_executing()
 
-    def __handle_update(self, update: SDKPythonTestResultBase) -> None:
-        self.__call_function_from_name(update.type.value, update.params_dict())
+    async def __handle_update(self, update: SDKPythonTestResultBase) -> None:
+        await self.__call_function_from_name(update.type.value, update.params_dict())
 
-    def __call_function_from_name(self, func_name: str, kwargs: Any) -> None:
+    async def __call_function_from_name(self, func_name: str, kwargs: Any) -> None:
         func = getattr(self, func_name, None)
         if not func:
             raise AttributeError(f"{func_name} is not a method of {self}")
         if not callable(func):
             raise TypeError(f"{func_name} is not callable")
-        func(**kwargs)
+
+        if iscoroutinefunction(func):
+            await func(**kwargs)
+        else:
+            func(**kwargs)
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start Python test")]
