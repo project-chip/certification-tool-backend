@@ -44,7 +44,8 @@ def generate_command_arguments(
 
     arguments = []
     # Increase log level by adding trace log
-    arguments.append("--trace-to json:log")
+    if dut_config.trace_log:
+        arguments.append("--trace-to json:log")
     # Retrieve arguments from dut_config
     arguments.append(f"--discriminator {dut_config.discriminator}")
     arguments.append(f"--passcode {dut_config.setup_code}")

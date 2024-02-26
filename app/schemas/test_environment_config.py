@@ -62,6 +62,7 @@ class DutConfig(BaseModel):
     pairing_mode: DutPairingModeEnum
     chip_timeout: Optional[str]
     chip_use_paa_certs: bool = False
+    trace_log: bool = True
 
 
 class TestEnvironmentConfig(BaseModel):

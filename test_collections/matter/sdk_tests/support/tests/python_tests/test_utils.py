@@ -185,6 +185,33 @@ async def test_generate_command_arguments_no_test_parameter_informed() -> None:
 
 
 @pytest.mark.asyncio
+async def test_generate_command_arguments_trace_log_false_informed() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)
+
+    mock_config.test_parameters = None
+
+    mock_dut_config = DutConfig(
+        discriminator="456",
+        setup_code="8765",
+        pairing_mode=DutPairingModeEnum.BLE_THREAD,
+        trace_log=False,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    arguments = generate_command_arguments(
+        config=mock_config, omit_commissioning_method=False
+    )
+
+    assert [
+        "--discriminator 456",
+        "--passcode 8765",
+        "--commissioning-method ble-thread",
+    ] == arguments
+
+
+@pytest.mark.asyncio
 async def test_generate_command_arguments_omit_comissioning_method() -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)
