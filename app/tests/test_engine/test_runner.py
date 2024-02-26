@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from app import crud
 from app.models.test_enums import TestStateEnum
+from app.schemas import SelectedTests
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.test_engine.test_runner import (
     AbortError,
@@ -53,18 +54,34 @@ from test_collections.tool_unit_tests.test_suite_expected.tctr_expected_pass imp
 @pytest.mark.asyncio
 async def test_test_runner(db: Session) -> None:
     selected_tests = {
-        "sample_tests": {
-            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2},
-            "SampleTestSuite2": {"TCSS2003": 3},
-        }
+        "collections": [
+            {
+                "public_id": "sample_tests",
+                "test_suites": [
+                    {
+                        "public_id": "SampleTestSuite1",
+                        "test_cases": [
+                            {"public_id": "TCSS1001", "iterations": 1},
+                            {"public_id": "TCSS1002", "iterations": 2},
+                        ],
+                    },
+                    {
+                        "public_id": "SampleTestSuite2",
+                        "test_cases": [{"public_id": "TCSS2003", "iterations": 3}],
+                    },
+                ],
+            }
+        ]
     }
 
     # Prepare data for test_run_execution
     test_run_execution_title = "Test Execution title"
     test_run_execution_data = TestRunExecutionCreate(title=test_run_execution_title)
 
-    test_run_execution = crud.test_run_execution.create(
-        db=db, obj_in=test_run_execution_data, selected_tests=selected_tests
+    test_run_execution = crud.test_run_execution.create_with_selected_tests(
+        db=db,
+        obj_in=test_run_execution_data,
+        selected_tests=SelectedTests(**selected_tests),
     )
 
     assert test_run_execution is not None
@@ -99,16 +116,24 @@ async def test_test_runner(db: Session) -> None:
 @pytest.mark.asyncio
 async def test_test_runner_abort_in_memory(db: Session) -> None:
     selected_tests = {
-        "tool_unit_tests": {
-            "TestSuiteAsync": {
-                "TCTRNeverEnding": 1,
-                "TCTRInstantPass": 1,
-            },
-        }
+        "collections": [
+            {
+                "public_id": "tool_unit_tests",
+                "test_suites": [
+                    {
+                        "public_id": "TestSuiteAsync",
+                        "test_cases": [
+                            {"public_id": "TCTRNeverEnding", "iterations": 1},
+                            {"public_id": "TCTRInstantPass", "iterations": 2},
+                        ],
+                    }
+                ],
+            }
+        ]
     }
 
     test_run_execution = create_random_test_run_execution(
-        db=db, selected_tests=selected_tests
+        db=db, selected_tests=SelectedTests(**selected_tests)
     )
 
     assert test_run_execution is not None
@@ -169,16 +194,24 @@ async def test_test_runner_abort_in_memory(db: Session) -> None:
 @pytest.mark.asyncio
 async def test_test_runner_abort_db_sync(db: Session) -> None:
     selected_tests = {
-        "tool_unit_tests": {
-            "TestSuiteAsync": {
-                "TCTRNeverEnding": 1,
-                "TCTRInstantPass": 1,
-            },
-        }
+        "collections": [
+            {
+                "public_id": "tool_unit_tests",
+                "test_suites": [
+                    {
+                        "public_id": "TestSuiteAsync",
+                        "test_cases": [
+                            {"public_id": "TCTRNeverEnding", "iterations": 1},
+                            {"public_id": "TCTRInstantPass", "iterations": 1},
+                        ],
+                    }
+                ],
+            }
+        ]
     }
 
     test_run_execution = create_random_test_run_execution(
-        db=db, selected_tests=selected_tests
+        db=db, selected_tests=SelectedTests(**selected_tests)
     )
 
     assert test_run_execution is not None
@@ -341,17 +374,29 @@ async def test_test_runner_load__load_multiple_runs_simultaneously(db: Session) 
         db (Session): Database fixture for creating test data.
     """
     selected_tests = {
-        "tool_unit_tests": {
-            "TestSuiteExpected": {"TCTRExpectedPass": 1},
-        }
+        "collections": [
+            {
+                "public_id": "tool_unit_tests",
+                "test_suites": [
+                    {
+                        "public_id": "TestSuiteExpected",
+                        "test_cases": [
+                            {"public_id": "TCTRExpectedPass", "iterations": 1}
+                        ],
+                    }
+                ],
+            }
+        ]
     }
 
-    test_runner = load_test_run_for_test_cases(db=db, test_cases=selected_tests)
+    test_runner = load_test_run_for_test_cases(
+        db=db, test_cases=SelectedTests(**selected_tests)
+    )
     assert test_runner.state != TestRunnerState.IDLE
 
     # Create a 2nd test and attempt to load it
     test_run_execution = create_random_test_run_execution(
-        db=db, selected_tests=selected_tests
+        db=db, selected_tests=SelectedTests(**selected_tests)
     )
 
     with pytest.raises(LoadingError):
@@ -383,10 +428,18 @@ async def test_test_runner_non_existant_test_case(db: Session) -> None:
         db (Session): Database fixture for creating test data.
     """
     selected_tests = {
-        "tool_unit_tests": {
-            "TestSuiteExpected": {"TCNonExistant": 1},
-        }
+        "collections": [
+            {
+                "public_id": "tool_unit_tests",
+                "test_suites": [
+                    {
+                        "public_id": "TestSuiteExpected",
+                        "test_cases": [{"public_id": "TCNonExistant", "iterations": 1}],
+                    }
+                ],
+            }
+        ]
     }
 
     with pytest.raises(TestCaseNotFound):
-        load_test_run_for_test_cases(db=db, test_cases=selected_tests)
+        load_test_run_for_test_cases(db=db, test_cases=SelectedTests(**selected_tests))

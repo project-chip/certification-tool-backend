@@ -21,7 +21,6 @@ from pydantic import BaseModel
 from app.models.test_enums import TestStateEnum
 
 from .operator import Operator, OperatorToExport
-from .test_run_config import TestRunConfigToExport
 from .test_run_log_entry import TestRunLogEntry
 from .test_suite_execution import TestSuiteExecution, TestSuiteExecutionToExport
 
@@ -43,7 +42,6 @@ class TestRunExecutionBase(BaseModel):
 
 # Base + properties that represent relationhips
 class TestRunExecutionBaseWithRelationships(TestRunExecutionBase):
-    test_run_config_id: Optional[int]
     project_id: Optional[int]
 
 
@@ -105,7 +103,6 @@ class TestRunExecutionExportImportBase(TestRunExecutionBase):
 # Schema used to export test run executions
 class TestRunExecutionToExport(TestRunExecutionExportImportBase):
     operator: Optional[OperatorToExport]
-    test_run_config: Optional[TestRunConfigToExport]
 
 
 # Schema used to export test run executions
@@ -122,4 +119,3 @@ class TestRunExecutionToImport(TestRunExecutionExportImportBase):
     project_id: Optional[int]
     operator_id: Optional[int]
     imported_at: Optional[datetime]
-    test_run_config_id: Optional[int]

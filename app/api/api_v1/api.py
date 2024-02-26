@@ -21,7 +21,6 @@ from app.api.api_v1.endpoints import (
     projects,
     test_collections,
     test_harness_backend_version,
-    test_run_configs,
     test_run_executions,
     utils,
 )
@@ -38,9 +37,6 @@ api_router.include_router(
     test_run_executions.router,
     prefix="/test_run_executions",
     tags=["test_run_executions"],
-)
-api_router.include_router(
-    test_run_configs.router, prefix="/test_run_configs", tags=["test_run_configs"]
 )
 
 api_router.include_router(test_harness_backend_version.router, tags=["version"])
