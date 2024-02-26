@@ -30,7 +30,7 @@ RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/test_harness_client.py"
 EXECUTABLE = "python3"
 
 
-def generate_command_arguments(
+def     generate_command_arguments(
     config: TestEnvironmentConfig, omit_commissioning_method: bool = False
 ) -> list:
     dut_config = config.dut_config
@@ -44,7 +44,8 @@ def generate_command_arguments(
 
     arguments = []
     # Increase log level by adding trace log
-    arguments.append("--trace-to json:log")
+    if dut_config.trace_log:
+        arguments.append("--trace-to json:log")
     # Retrieve arguments from dut_config
     arguments.append(f"--discriminator {dut_config.discriminator}")
     arguments.append(f"--passcode {dut_config.setup_code}")
