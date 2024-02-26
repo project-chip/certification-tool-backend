@@ -15,7 +15,7 @@
 #
 import asyncio
 from enum import Enum, IntEnum
-from typing import Any
+from typing import Any, Optional
 
 # Websocket Test imports:
 from matter_chip_tool_adapter.decoder import MatterLog
@@ -180,6 +180,14 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         except asyncio.TimeoutError:
             self.current_test_step.append_failure("Prompt timed out.")
         self.next_step()
+
+    def show_prompt(
+        self,
+        msg: str,
+        placeholder: Optional[str] = None,
+        default_value: Optional[str] = None,
+    ) -> None:
+        pass
 
     # Other methods
 
