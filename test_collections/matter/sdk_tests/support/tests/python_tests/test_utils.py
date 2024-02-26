@@ -183,6 +183,7 @@ async def test_generate_command_arguments_no_test_parameter_informed() -> None:
         "--commissioning-method ble-thread",
     ] == arguments
 
+
 @pytest.mark.asyncio
 async def test_generate_command_arguments_trace_log_false_informed() -> None:
     # Mock config
@@ -194,7 +195,7 @@ async def test_generate_command_arguments_trace_log_false_informed() -> None:
         discriminator="456",
         setup_code="8765",
         pairing_mode=DutPairingModeEnum.BLE_THREAD,
-        trace_log=False
+        trace_log=False,
     )
 
     mock_config.dut_config = mock_dut_config

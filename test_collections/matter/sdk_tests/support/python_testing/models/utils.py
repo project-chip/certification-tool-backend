@@ -30,7 +30,7 @@ RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/test_harness_client.py"
 EXECUTABLE = "python3"
 
 
-def     generate_command_arguments(
+def generate_command_arguments(
     config: TestEnvironmentConfig, omit_commissioning_method: bool = False
 ) -> list:
     dut_config = config.dut_config
