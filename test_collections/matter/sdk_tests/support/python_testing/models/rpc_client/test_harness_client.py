@@ -19,6 +19,7 @@
 
 import importlib
 import sys
+from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 
 from matter_testing_support import (
@@ -38,13 +39,15 @@ def main() -> None:
     # script are located
     sys.path.append("/root/python_testing/scripts/sdk")
 
-    test_args = sys.argv[2:]
-    config = parse_matter_test_args(test_args)
+    with open('/root/python_testing/t.txt', 'w') as f:
+        with redirect_stdout(f):
+            test_args = sys.argv[2:]
+            config = parse_matter_test_args(test_args)
 
-    if sys.argv[1] == "commission":
-        commission(config)
-    else:
-        run_test(script_name=sys.argv[1], class_name=sys.argv[2], config=config)
+            if sys.argv[1] == "commission":
+                commission(config)
+            else:
+                run_test(script_name=sys.argv[1], class_name=sys.argv[2], config=config)
 
 
 def run_test(script_name: str, class_name: str, config: MatterTestConfig) -> None:

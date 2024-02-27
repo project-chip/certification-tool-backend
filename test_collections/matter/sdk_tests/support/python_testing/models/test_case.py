@@ -19,7 +19,8 @@ from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from socket import SocketIO
-from typing import Any, Generator, Optional, Type, TypeVar, cast
+from typing import Any, Generator, AsyncGenerator, Optional, Type, TypeVar, cast
+import loguru
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import test_engine_logger as logger
@@ -46,6 +47,8 @@ from .utils import (
     generate_command_arguments,
     handle_logs,
 )
+from app.test_engine.logger import PYTHON_TEST_LEVEL
+
 
 
 class PromptOption(IntEnum):
@@ -278,7 +281,17 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 self.next_step()
 
             logger.info("---- Start of Python test logs ----")
-            handle_logs(cast(Generator, exec_result.output), logger)
+
+            with open("/app/backend/test_collections/matter/sdk_tests/sdk_checkout/python_testing/t.txt") as f:
+            # lines = f.readlines()
+            while True:
+                # data = f.read(1024).splitlines()
+                data = f.readline()
+
+                if not data:
+                    break
+                logger.log(PYTHON_TEST_LEVEL, data)       
+
             logger.info("---- End of Python test logs ----")
 
             self.current_test_step.mark_as_completed()
