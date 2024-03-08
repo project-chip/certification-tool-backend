@@ -39,7 +39,7 @@ def main() -> None:
     # script are located
     sys.path.append("/root/python_testing/scripts/sdk")
 
-    with open('/root/python_testing/t.txt', 'w') as f:
+    with open("/root/python_testing/t.txt", "w") as f:
         with redirect_stdout(f):
             test_args = sys.argv[2:]
             config = parse_matter_test_args(test_args)

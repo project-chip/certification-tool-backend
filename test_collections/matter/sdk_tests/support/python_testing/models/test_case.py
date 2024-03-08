@@ -281,16 +281,19 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 self.next_step()
 
             logger.info("---- Start of Python test logs ----")
+            # handle_logs(cast(Generator, exec_result.output), logger)
 
             with open("/app/backend/test_collections/matter/sdk_tests/sdk_checkout/python_testing/t.txt") as f:
-            # lines = f.readlines()
-            while True:
-                # data = f.read(1024).splitlines()
-                data = f.readline()
+                lines = f.readlines()
+                logger.log(PYTHON_TEST_LEVEL, lines)       
 
-                if not data:
-                    break
-                logger.log(PYTHON_TEST_LEVEL, data)       
+            # while True:
+            #     # data = f.read(1024).splitlines()
+            #     data = f.readline()
+
+            #     if not data:
+            #         break
+            #     logger.log(PYTHON_TEST_LEVEL, data)       
 
             logger.info("---- End of Python test logs ----")
 

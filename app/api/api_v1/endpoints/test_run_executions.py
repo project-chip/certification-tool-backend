@@ -15,7 +15,7 @@
 #
 import json
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -295,6 +295,11 @@ def remove_test_run_execution(
     return test_run_execution
 
 
+# async def __log_generator(items: list) -> AsyncGenerator:
+#     for log_line in items:
+#         yield log_line + "\n"
+
+
 @router.get("/{id}/log", response_class=StreamingResponse)
 def download_log(
     *,
@@ -324,10 +329,12 @@ def download_log(
             "Content-Disposition": f'attachment; filename="{filename}"'
         }
 
+    output = log_utils.convert_execution_log_to_list(
+        log=test_run_execution.log, json_entries=json_entries
+    )
+
     return StreamingResponse(
-        log_utils.log_generator(
-            log_entries=test_run_execution.log, json_entries=json_entries
-        ),
+        log_utils.log_generator2(items=output),
         **options,
     )
 

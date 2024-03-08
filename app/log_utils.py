@@ -15,14 +15,37 @@
 #
 from datetime import datetime
 from functools import reduce
+import json
 from io import BytesIO
 from operator import add
-from typing import Generator, List, Optional
+from typing import AsyncGenerator, Generator, List, Optional
 from zipfile import ZipFile
 
 from app import models, schemas
 
 LOG_SECTION_TEMPLATE = "--------------------- {} ---------------------\n"
+
+
+def convert_execution_log_to_list(log: list, json_entries: bool) -> list:
+    log_entries = []
+
+    for log_line in log:
+        if json_entries:
+            log_entries.append(json.dumps(log_line.__dict__))
+        else:
+            # entry = schemas.TestRunLogEntry(**log_line)
+            entry = log_line
+            timestamp = datetime.fromtimestamp(entry.timestamp).strftime(
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+            log_entries.append(f"{entry.level:10} | {timestamp} | {entry.message}")
+
+    return log_entries
+
+
+async def log_generator2(items: list) -> AsyncGenerator:
+    for log_line in items:
+        yield log_line + "\n"
 
 
 def log_generator(
