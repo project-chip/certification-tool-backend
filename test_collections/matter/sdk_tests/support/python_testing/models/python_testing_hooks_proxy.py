@@ -150,7 +150,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
             )
         )
 
-    def SDKPythonTestResultStepSkipped(self, name: str, expression: str) -> None:
+    def step_skipped(self, name: str, expression: str) -> None:
         self.results.put(SDKPythonTestResultStepSkipped(expression=expression))
 
     def step_start(self, name: str) -> None:
