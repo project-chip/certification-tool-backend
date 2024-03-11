@@ -19,7 +19,7 @@ from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from socket import SocketIO
-from typing import Any, Generator, Optional, Type, TypeVar, cast
+from typing import Any, Optional, Type, TypeVar
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
