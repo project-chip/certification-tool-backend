@@ -22,6 +22,7 @@ from socket import SocketIO
 from typing import Any, Generator, Optional, Type, TypeVar, cast
 
 from app.models import TestCaseExecution
+from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
@@ -220,6 +221,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
 
+    def handle_logs_temp(self) -> None:
+        # This is a temporaly workaround since Python Test are generating a
+        # big amount of log
+        with open(
+            "/app/backend/test_collections/matter/sdk_tests/sdk_checkout/"
+            "python_testing/test_output.txt"
+        ) as f:
+            lines = f.read()
+            logger.log(PYTHON_TEST_LEVEL, lines)
+
     async def execute(self) -> None:
         try:
             logger.info("Running Python Test: " + self.python_test.name)
@@ -278,7 +289,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 self.next_step()
 
             logger.info("---- Start of Python test logs ----")
-            handle_logs(cast(Generator, exec_result.output), logger)
+            self.handle_logs_temp()
+            # Uncoment line bellow when the workaround has a definitive solution
+            # handle_logs(cast(Generator, exec_result.output), logger)
+
             logger.info("---- End of Python test logs ----")
 
             self.current_test_step.mark_as_completed()

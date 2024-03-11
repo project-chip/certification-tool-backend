@@ -19,6 +19,7 @@
 
 import importlib
 import sys
+from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 
 from matter_testing_support import (
@@ -41,10 +42,14 @@ def main() -> None:
     test_args = sys.argv[2:]
     config = parse_matter_test_args(test_args)
 
-    if sys.argv[1] == "commission":
-        commission(config)
-    else:
-        run_test(script_name=sys.argv[1], class_name=sys.argv[2], config=config)
+    # This is a temporaly workaround since Python Test are generating a
+    # big amount of log
+    with open("/root/python_testing/test_output.txt", "w") as f:
+        with redirect_stdout(f):
+            if sys.argv[1] == "commission":
+                commission(config)
+            else:
+                run_test(script_name=sys.argv[1], class_name=sys.argv[2], config=config)
 
 
 def run_test(script_name: str, class_name: str, config: MatterTestConfig) -> None:
