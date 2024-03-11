@@ -45,7 +45,6 @@ from .utils import (
     RUNNER_CLASS_PATH,
     commission_device,
     generate_command_arguments,
-    handle_logs,
 )
 
 
