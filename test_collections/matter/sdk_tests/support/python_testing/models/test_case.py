@@ -221,7 +221,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         logger.info("Test Cleanup")
 
     def handle_logs_temp(self) -> None:
-        # This is a temporaly workaround since Python Test are generating a
+        # This is a temporary workaround since Python Test are generating a
         # big amount of log
         with open(
             "/app/backend/test_collections/matter/sdk_tests/sdk_checkout/"
@@ -289,7 +289,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             logger.info("---- Start of Python test logs ----")
             self.handle_logs_temp()
-            # Uncoment line bellow when the workaround has a definitive solution
+            # Uncomment line bellow when the workaround has a definitive solution
             # handle_logs(cast(Generator, exec_result.output), logger)
 
             logger.info("---- End of Python test logs ----")
