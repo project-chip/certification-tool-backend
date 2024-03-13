@@ -42,7 +42,7 @@ def main() -> None:
     test_args = sys.argv[2:]
     config = parse_matter_test_args(test_args)
 
-    # This is a temporaly workaround since Python Test are generating a
+    # This is a temporary workaround since Python Test are generating a
     # big amount of log
     with open("/root/python_testing/test_output.txt", "w") as f:
         with redirect_stdout(f):
