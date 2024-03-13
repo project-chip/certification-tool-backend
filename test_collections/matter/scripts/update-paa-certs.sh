@@ -27,7 +27,7 @@ set -e
 # - SDK_SHA 
 
 # Paths
-MATTER_PROGRAM_DIR=$(dirname "$0")
+MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/..)
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
 SDK_CERT_PATH="credentials/development/paa-root-certs"
