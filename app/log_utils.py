@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 from datetime import datetime
 from functools import reduce
-import json
 from io import BytesIO
 from operator import add
 from typing import AsyncGenerator, Generator, List, Optional

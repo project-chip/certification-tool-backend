@@ -20,7 +20,7 @@ from sqlalchemy import Enum, ForeignKey, func, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.orm import deferred, Mapped, mapped_column, relationship, with_parent
+from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship, with_parent
 
 from app.db.base_class import Base
 from app.db.pydantic_data_type import PydanticListType
