@@ -31,4 +31,4 @@ class MatterSettings(BaseSettings):
         case_sensitive = True
 
 
-matterSettings = MatterSettings()
+matter_settings = MatterSettings()

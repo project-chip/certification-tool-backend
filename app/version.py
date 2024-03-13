@@ -13,17 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import importlib
 from pathlib import Path
 
 from loguru import logger
 
 from app import utils
-# TODO: MATTER_SETTINGS
-from test_collections.matter.config import matterSettings
 from app.schemas.test_harness_backend_version import TestHarnessBackendVersion
 
 VERSION_FILENAME = ".version_information"
 SHA_FILENAME = ".sha_information"
+MATTER_CONFIG_MODULE = "test_collections.mattsdsder.config"
 
 ROOT_PATH = Path(__file__).parent.parent
 
@@ -38,13 +38,18 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
     version_value = utils.read_information_from_file(VERSION_FILEPATH)
     sha_value = utils.read_information_from_file(SHA_FILEPATH)
     db_revision = utils.get_db_revision()
+    sdk_sha_value = ""
 
     # Retrieve short SDK SHA from settings (The information is kept in config.py file)
-    sdk_sha_value = matterSettings.SDK_SHA[:7]
+    if importlib.find_loader(MATTER_CONFIG_MODULE) is not None:
+        matter_config_module = importlib.import_module(MATTER_CONFIG_MODULE)
+        matter_settings = getattr(matter_config_module, "matter_settings")
+        sdk_sha_value = matter_config_module.matter_settings.SDK_SHA[:7]
 
     logger.info(f"Test Engine version is {version_value}")
     logger.info(f"Test Engine SHA is {sha_value}")
     logger.info(f"Test Engine SDK SHA is {sdk_sha_value}")
+
     return TestHarnessBackendVersion(
         version=version_value,
         sha=sha_value,

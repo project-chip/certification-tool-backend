@@ -18,5 +18,5 @@ set -e
  # limitations under the License.
 
 
-DOCKER_TAG=`python -c "from ..config import matterSettings; print(f'{matterSettings.SDK_DOCKER_IMAGE}:{matterSettings.SDK_DOCKER_TAG}')"`
+DOCKER_TAG=`python -c "from ..config import matter_settings; print(f'{matter_settings.SDK_DOCKER_IMAGE}:{matter_settings.SDK_DOCKER_TAG}')"`
 docker pull $DOCKER_TAG

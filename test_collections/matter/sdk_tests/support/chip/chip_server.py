@@ -23,7 +23,7 @@ from typing import Generator, Optional, Union, cast
 
 import loguru
 
-from ....config import matterSettings
+from ....config import matter_settings
 from app.singleton import Singleton
 from app.test_engine.logger import CHIPTOOL_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
@@ -128,7 +128,7 @@ class ChipServer(metaclass=Singleton):
         else:
             raise UnsupportedChipServerType(f"Unsupported server type: {server_type}")
 
-        if matterSettings.CHIP_TOOL_TRACE:
+        if matter_settings.CHIP_TOOL_TRACE:
             topic = "CHIP_WEBSOCKET_SERVER"
             command.append(self.trace_file_params(topic))
 

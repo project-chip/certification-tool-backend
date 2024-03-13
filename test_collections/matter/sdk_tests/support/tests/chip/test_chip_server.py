@@ -21,7 +21,7 @@ from unittest import mock
 
 import pytest
 
-from .....config import matterSettings
+from .....config import matter_settings
 
 from ...chip.chip_server import (
     CHIP_APP_EXE,
@@ -76,9 +76,9 @@ async def test_start_unsupported_server_type() -> None:
 
 @pytest.mark.asyncio
 async def test_start_waiting_failure() -> None:
-    original_trace_setting_value = matterSettings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        matterSettings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
@@ -109,14 +109,14 @@ async def test_start_waiting_failure() -> None:
     # clean up:
     chip_server._ChipServer__server_logs = None
     chip_server._ChipServer__chip_server_id = None
-    matterSettings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
 
 
 @pytest.mark.asyncio
 async def test_start_chip_tool() -> None:
-    original_trace_setting_value = matterSettings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        matterSettings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
@@ -146,14 +146,14 @@ async def test_start_chip_tool() -> None:
     chip_server._ChipServer__server_logs = None
     chip_server._ChipServer__chip_server_id = None
     chip_server._ChipServer__server_started = False
-    matterSettings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
 
 
 @pytest.mark.asyncio
 async def test_start_chip_tool_using_paa_certs() -> None:
-    original_trace_setting_value = matterSettings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        matterSettings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
@@ -187,14 +187,14 @@ async def test_start_chip_tool_using_paa_certs() -> None:
     chip_server._ChipServer__server_logs = None
     chip_server._ChipServer__chip_server_id = None
     chip_server._ChipServer__server_started = False
-    matterSettings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
 
 
 @pytest.mark.asyncio
 async def test_start_chip_app() -> None:
-    original_trace_setting_value = matterSettings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        matterSettings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
@@ -224,14 +224,14 @@ async def test_start_chip_app() -> None:
     chip_server._ChipServer__server_logs = None
     chip_server._ChipServer__chip_server_id = None
     chip_server._ChipServer__server_started = False
-    matterSettings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
 
 
 @pytest.mark.asyncio
 async def test_start_chip_app_using_paa_certs() -> None:
-    original_trace_setting_value = matterSettings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        matterSettings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     chip_server: ChipServer = ChipServer()
     sdk_container: SDKContainer = SDKContainer()
@@ -264,4 +264,4 @@ async def test_start_chip_app_using_paa_certs() -> None:
     chip_server._ChipServer__server_logs = None
     chip_server._ChipServer__chip_server_id = None
     chip_server._ChipServer__server_started = False
-    matterSettings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value

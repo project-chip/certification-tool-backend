@@ -35,7 +35,7 @@ from matter_yamltests.runner import TestRunnerConfig, TestRunnerOptions
 from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
 from app.container_manager.backend_container import backend_container
-from ....config import matterSettings
+from ....config import matter_settings
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import CHIP_LOG_FORMAT, CHIPTOOL_LEVEL
@@ -165,7 +165,7 @@ class MatterYAMLRunner(metaclass=Singleton):
     async def pairing(self, mode: str, *params: str) -> bool:
         command = [PAIRING_CMD, mode] + list(params)
 
-        if matterSettings.CHIP_TOOL_TRACE:
+        if matter_settings.CHIP_TOOL_TRACE:
             topic = f"PAIRING_{mode}"
             command.append(self.chip_server.trace_file_params(topic))
 

@@ -22,7 +22,7 @@ from unittest import mock
 import pytest
 
 from app.container_manager import container_manager
-from ....config import matterSettings
+from ....config import matter_settings
 from app.tests.utils.docker import make_fake_container
 
 from ..exec_run_in_container import ExecResultExtended
@@ -34,7 +34,7 @@ async def test_start() -> None:
     sdk_container: SDKContainer = SDKContainer()
 
     # Values to verify
-    docker_image = f"{matterSettings.SDK_DOCKER_IMAGE}:{matterSettings.SDK_DOCKER_TAG}"
+    docker_image = f"{matter_settings.SDK_DOCKER_IMAGE}:{matter_settings.SDK_DOCKER_TAG}"
 
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
