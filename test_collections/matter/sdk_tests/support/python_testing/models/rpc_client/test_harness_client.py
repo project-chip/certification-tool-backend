@@ -35,9 +35,9 @@ class TestRunnerHooks:
 
 
 def main() -> None:
-    # Load python_testing/scripts/sdk as a module. This folder is where all python
-    # script are located
-    sys.path.append("/root/python_testing/scripts/sdk")
+    # Load python_testing/scripts as a module. This folder is where all python scripts
+    # are located
+    sys.path.append("/root/python_testing/scripts")
 
     test_args = sys.argv[2:]
     config = parse_matter_test_args(test_args)
@@ -49,11 +49,12 @@ def main() -> None:
             if sys.argv[1] == "commission":
                 commission(config)
             else:
-                run_test(script_name=sys.argv[1], class_name=sys.argv[2], config=config)
+                run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
 
 
-def run_test(script_name: str, class_name: str, config: MatterTestConfig) -> None:
-    module = importlib.import_module(script_name)
+def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
+    # For a script_path like 'custom/TC_XYZ' the module is 'custom.TC_XYZ'
+    module = importlib.import_module(script_path.replace("/", "."))
     TestClassReference = getattr(module, class_name)
 
     BaseManager.register(TestRunnerHooks.__name__)
