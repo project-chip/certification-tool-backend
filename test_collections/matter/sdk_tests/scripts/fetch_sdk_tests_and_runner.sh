@@ -23,7 +23,7 @@ set -x
 set -e
 
 # Paths
-ROOT_DIR=$(realpath $(dirname "$0")/../..)
+MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/../..)
 
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
@@ -36,7 +36,7 @@ SDK_EXAMPLE_CHIP_TOOL_PATH="examples/chip-tool"
 SDK_EXAMPLE_PLACEHOLDER_PATH="examples/placeholder"
 SDK_DATA_MODEL_PATH="src/app/zap-templates/zcl/data-model/chip"
 
-TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$ROOT_DIR/sdk_tests/sdk_checkout"
+TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$MATTER_PROGRAM_DIR/sdk_tests/sdk_checkout"
 
 # YAML Files
 YAML_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/yaml_tests"
@@ -77,7 +77,7 @@ then
     SDK_CHECKOUT_VERSION="custom-sdk"
 else
     # Get configured SDK_SHA (will default to value in test_collection/matter/config.py)
-    SDK_SHA=`LOGGING_LEVEL=critical python3 -c "from ...config import matterSettings; print(matterSettings.SDK_SHA)"`
+    SDK_SHA=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
     if [[ $FORCE_UPDATE -eq 1 ]]
     then 
         echo "Update is forced."

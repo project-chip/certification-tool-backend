@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from pydantic import BaseSettings
+
 
 class MatterSettings(BaseSettings):
-
     # Test Engine Config
     CHIP_TOOL_TRACE: bool = True
     SDK_CONTAINER_NAME: str = "th-sdk"
