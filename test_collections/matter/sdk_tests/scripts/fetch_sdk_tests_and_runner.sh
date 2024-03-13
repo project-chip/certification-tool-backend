@@ -1,6 +1,5 @@
 #!/bin/bash -e
-set -x
-set -e
+
  #
  # Copyright (c) 2023 Project CHIP Authors
  #
@@ -20,6 +19,8 @@ set -e
 # 
 # When an SDK path is supplied, the SDK_SHA from .env is ignored.
 # Otherwise a temporary checkout of matter sdk will be made.
+set -x
+set -e
 
 # Paths
 ROOT_DIR=$(realpath $(dirname "$0")/../..)
@@ -75,8 +76,8 @@ then
     echo "Using custom SDK path: ${SDK_PATH}. Update required"
     SDK_CHECKOUT_VERSION="custom-sdk"
 else
-    # Get configured SDK_SHA (will default to value in app/core/config.py)
-    SDK_SHA=`LOGGING_LEVEL=critical python3 -c "from app.core.config import settings; print(settings.SDK_SHA)"`
+    # Get configured SDK_SHA (will default to value in test_collection/matter/config.py)
+    SDK_SHA=`LOGGING_LEVEL=critical python3 -c "from ...config import matterSettings; print(matterSettings.SDK_SHA)"`
     if [[ $FORCE_UPDATE -eq 1 ]]
     then 
         echo "Update is forced."

@@ -22,7 +22,7 @@ import loguru
 from docker.models.containers import Container
 
 from app.container_manager import container_manager
-from app.core.config import settings
+from ...config import matterSettings
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import test_engine_logger as logger
@@ -79,8 +79,8 @@ class SDKContainer(metaclass=Singleton):
     Create an instance by calling initializer. When ready to use, ...
     """
 
-    container_name = settings.SDK_CONTAINER_NAME
-    image_tag = f"{settings.SDK_DOCKER_IMAGE}:{settings.SDK_DOCKER_TAG}"
+    container_name = matterSettings.SDK_CONTAINER_NAME
+    image_tag = f"{matterSettings.SDK_DOCKER_IMAGE}:{matterSettings.SDK_DOCKER_TAG}"
     run_parameters = {
         "privileged": True,
         "detach": True,

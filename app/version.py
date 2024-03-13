@@ -18,7 +18,8 @@ from pathlib import Path
 from loguru import logger
 
 from app import utils
-from app.core.config import settings
+# TODO: MATTER_SETTINGS
+from test_collections.matter.config import matterSettings
 from app.schemas.test_harness_backend_version import TestHarnessBackendVersion
 
 VERSION_FILENAME = ".version_information"
@@ -39,7 +40,7 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
     db_revision = utils.get_db_revision()
 
     # Retrieve short SDK SHA from settings (The information is kept in config.py file)
-    sdk_sha_value = settings.SDK_SHA[:7]
+    sdk_sha_value = matterSettings.SDK_SHA[:7]
 
     logger.info(f"Test Engine version is {version_value}")
     logger.info(f"Test Engine SHA is {sha_value}")

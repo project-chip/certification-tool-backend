@@ -107,16 +107,6 @@ class Settings(BaseSettings):
     NOTIFIER_TO: str = "xiole.chip.test@gmail.com"
     NOTIFIER_SUBJECT: str = "CHIP Tool Crash Log"
 
-    # Test Engine Config
-    CHIP_TOOL_TRACE: bool = True
-    SDK_CONTAINER_NAME: str = "th-sdk"
-
-    # SDK Docker Image
-    SDK_DOCKER_IMAGE: str = "connectedhomeip/chip-cert-bins"
-    SDK_DOCKER_TAG: str = "9f6d627e0262e1d023986291948bb4e845be803e"
-    # SDK SHA: used to fetch test YAML from SDK.
-    SDK_SHA: str = "9f6d627e0262e1d023986291948bb4e845be803e"
-
     class Config:
         case_sensitive = True
 
