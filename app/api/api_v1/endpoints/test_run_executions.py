@@ -15,7 +15,7 @@
 #
 import json
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -324,10 +324,12 @@ def download_log(
             "Content-Disposition": f'attachment; filename="{filename}"'
         }
 
+    log_output = log_utils.convert_execution_log_to_list(
+        log=test_run_execution.log, json_entries=json_entries
+    )
+
     return StreamingResponse(
-        log_utils.log_generator(
-            log_entries=test_run_execution.log, json_entries=json_entries
-        ),
+        log_utils.async_log_generator(items=log_output),
         **options,
     )
 

@@ -20,7 +20,7 @@ from sqlalchemy import Enum, ForeignKey, func, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.orm import Mapped, mapped_column, relationship, with_parent
+from sqlalchemy.orm import deferred, Mapped, mapped_column, relationship, with_parent
 
 from app.db.base_class import Base
 from app.db.pydantic_data_type import PydanticListType
@@ -59,10 +59,12 @@ class TestRunExecution(Base):
     test_run_config: Mapped["TestRunConfig"] = relationship(
         "TestRunConfig", back_populates="test_run_executions"
     )
-    log: Mapped[list[TestRunLogEntry]] = mapped_column(
-        MutableList.as_mutable(PydanticListType(TestRunLogEntry)),
-        default=[],
-        nullable=False,
+    log: Mapped[list[TestRunLogEntry]] = deferred(
+        mapped_column(
+            MutableList.as_mutable(PydanticListType(TestRunLogEntry)),
+            default=[],
+            nullable=False,
+        )
     )
 
     test_suite_executions: Mapped[list["TestSuiteExecution"]] = relationship(
