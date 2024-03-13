@@ -35,7 +35,7 @@ from matter_yamltests.runner import TestRunnerConfig, TestRunnerOptions
 from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
 from app.container_manager.backend_container import backend_container
-from ....config import matter_settings
+from test_collections.matter.config import matter_settings
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import CHIP_LOG_FORMAT, CHIPTOOL_LEVEL

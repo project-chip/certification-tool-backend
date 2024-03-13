@@ -21,7 +21,7 @@ from unittest import mock
 
 import pytest
 
-from .....config import matter_settings
+from test_collections.matter.config import matter_settings
 
 from ...chip.chip_server import (
     CHIP_APP_EXE,

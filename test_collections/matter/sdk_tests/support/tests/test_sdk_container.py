@@ -22,7 +22,7 @@ from unittest import mock
 import pytest
 
 from app.container_manager import container_manager
-from ....config import matter_settings
+from test_collections.matter.config import matter_settings
 from app.tests.utils.docker import make_fake_container
 
 from ..exec_run_in_container import ExecResultExtended

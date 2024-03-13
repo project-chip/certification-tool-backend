@@ -23,10 +23,10 @@ from typing import Generator, Optional, Union, cast
 
 import loguru
 
-from ....config import matter_settings
 from app.singleton import Singleton
 from app.test_engine.logger import CHIPTOOL_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
+from test_collections.matter.config import matter_settings
 
 from ..sdk_container import DOCKER_LOGS_PATH, DOCKER_PAA_CERTS_PATH, SDKContainer
 

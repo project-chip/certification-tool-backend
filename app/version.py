@@ -23,7 +23,7 @@ from app.schemas.test_harness_backend_version import TestHarnessBackendVersion
 
 VERSION_FILENAME = ".version_information"
 SHA_FILENAME = ".sha_information"
-MATTER_CONFIG_MODULE = "test_collections.mattsdsder.config"
+MATTER_CONFIG_MODULE = "test_collections.matter.config"
 
 ROOT_PATH = Path(__file__).parent.parent
 
@@ -43,7 +43,6 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
     # Retrieve short SDK SHA from settings (The information is kept in config.py file)
     if importlib.find_loader(MATTER_CONFIG_MODULE) is not None:
         matter_config_module = importlib.import_module(MATTER_CONFIG_MODULE)
-        matter_settings = getattr(matter_config_module, "matter_settings")
         sdk_sha_value = matter_config_module.matter_settings.SDK_SHA[:7]
 
     logger.info(f"Test Engine version is {version_value}")

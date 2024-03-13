@@ -26,7 +26,7 @@ from matter_yamltests.parser_builder import TestParserBuilderConfig
 from matter_yamltests.runner import TestRunnerConfig
 from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
-from .....config import matter_settings
+from test_collections.matter.config import matter_settings
 from app.schemas.pics import PICSError
 from app.tests.utils.test_pics_data import create_random_pics
 
