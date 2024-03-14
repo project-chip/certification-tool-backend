@@ -15,6 +15,7 @@
 #
 import importlib
 from pathlib import Path
+from typing import Optional
 
 from loguru import logger
 
@@ -38,12 +39,7 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
     version_value = utils.read_information_from_file(VERSION_FILEPATH)
     sha_value = utils.read_information_from_file(SHA_FILEPATH)
     db_revision = utils.get_db_revision()
-    sdk_sha_value = ""
-
-    # Retrieve short SDK SHA from settings (The information is kept in config.py file)
-    if importlib.find_loader(MATTER_CONFIG_MODULE) is not None:
-        matter_config_module = importlib.import_module(MATTER_CONFIG_MODULE)
-        sdk_sha_value = matter_config_module.matter_settings.SDK_SHA[:7]
+    sdk_sha_value = read_matter_sdk_sha() or ""
 
     logger.info(f"Test Engine version is {version_value}")
     logger.info(f"Test Engine SHA is {sha_value}")
@@ -55,6 +51,17 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
         sdk_sha=sdk_sha_value,
         db_revision=db_revision,
     )
+
+
+def read_matter_sdk_sha() -> Optional[str]:
+    """
+    Retrieve short SDK SHA from settings (The information is kept in config.py file)
+    """
+    if importlib.find_loader(MATTER_CONFIG_MODULE) is None:
+        return None
+
+    matter_config_module = importlib.import_module(MATTER_CONFIG_MODULE)
+    return matter_config_module.matter_settings.SDK_SHA[:7]
 
 
 version_information = read_test_harness_backend_version()

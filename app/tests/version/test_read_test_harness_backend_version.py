@@ -20,12 +20,11 @@ from unittest import mock
 import pytest
 
 from app import utils
-# TODO: MATTER_SETTINGS
-from test_collections.matter.config import matter_settings
 from app.version import (
     SHA_FILEPATH,
     VERSION_FILEPATH,
     read_test_harness_backend_version,
+    read_matter_sdk_sha
 )
 
 
@@ -57,8 +56,10 @@ def test_read_test_harness_backend_version() -> None:
         backend_version = read_test_harness_backend_version()
         assert backend_version.version == expected_version_value
         assert backend_version.sha == expected_sha_value
-        assert backend_version.sdk_sha == matter_settings.SDK_SHA[:7]
         assert backend_version.db_revision == expected_db_revision
+        matter_sdk_sha = read_matter_sdk_sha()
+        if matter_sdk_sha is not None:
+            assert backend_version.sdk_sha == matter_sdk_sha
 
     mock_utils.assert_called_once()
 
@@ -74,7 +75,9 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
     backend_version = read_test_harness_backend_version()
     assert backend_version.version == expected_version_value
     assert backend_version.sha == expected_sha_value
-    assert backend_version.sdk_sha == matter_settings.SDK_SHA[:7]
+    matter_sdk_sha = read_matter_sdk_sha()
+    if matter_sdk_sha is not None:
+        assert backend_version.sdk_sha == matter_sdk_sha
 
 
 @pytest.mark.serial
@@ -89,4 +92,6 @@ def test_read_test_harness_backend_version_with_missing_files() -> None:
     backend_version = read_test_harness_backend_version()
     assert backend_version.version == expected_version_value
     assert backend_version.sha == expected_sha_value
-    assert backend_version.sdk_sha == matter_settings.SDK_SHA[:7]
+    matter_sdk_sha = read_matter_sdk_sha()
+    if matter_sdk_sha is not None:
+        assert backend_version.sdk_sha == matter_sdk_sha
