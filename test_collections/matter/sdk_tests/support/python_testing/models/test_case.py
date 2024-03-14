@@ -224,10 +224,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def handle_logs_temp(self) -> None:
         # This is a temporary workaround since Python Test are generating a
         # big amount of log
-        with open(
-            "/app/backend/test_collections/matter/sdk_tests/sdk_checkout/"
-            "python_testing/test_output.txt"
-        ) as f:
+        sdk_tests_path = Path(Path(__file__).parents[3])
+        file_output_path = (
+            sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
+        )
+        with open(file_output_path) as f:
             lines = f.read()
             logger.log(PYTHON_TEST_LEVEL, lines)
 
