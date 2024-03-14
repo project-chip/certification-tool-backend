@@ -18,7 +18,7 @@ set -x
 set -e
 
 
-# Usage: ./scripts/pi-setup/update-paa-certs.sh
+# Usage: ./test_collections/matter/scripts/update-paa-certs.sh
 #
 # Will copy PAA certificates from SDK repository
 #
@@ -39,7 +39,7 @@ DEVELOPMENT_PATH="/var/credentials/development"
 if [ -z "$SDK_PATH" ]
 then
 
-    # If SDK SHA is not present, then fetch from backend config
+    # If SDK SHA is not present, then fetch from Matter program config file
     if [ -z "$SDK_SHA" ]
     then
         cd $MATTER_PROGRAM_DIR
