@@ -18,6 +18,7 @@ from asyncio import sleep
 from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
+from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
@@ -244,8 +245,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     f"Missing file path for python test {self.python_test.name}"
                 )
 
+            # get script path including folder (sdk or custom) and excluding extension
+            test_script_relative_path = Path(
+                *self.python_test.path.parts[-2:]
+            ).with_suffix("")
+
             command = [
-                f"{RUNNER_CLASS_PATH} {self.python_test.path.stem}"
+                f"{RUNNER_CLASS_PATH} {test_script_relative_path}"
                 f" {self.python_test.class_name} --tests test_{self.python_test.name}"
             ]
 
