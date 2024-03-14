@@ -22,10 +22,10 @@ import loguru
 from docker.models.containers import Container
 
 from app.container_manager import container_manager
-from test_collections.matter.config import matter_settings
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import test_engine_logger as logger
+from test_collections.matter.config import matter_settings
 
 from .exec_run_in_container import ExecResultExtended, exec_run_in_container
 from .pics import set_pics_command
