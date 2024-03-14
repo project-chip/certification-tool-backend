@@ -225,10 +225,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
         # This is a temporaly workaround since Python Test are generating a
         # big amount of log
         sdk_tests_path = Path(Path(__file__).parents[3])
-        file_output_path = sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
-        with open(
-           file_output_path
-        ) as f:
+        file_output_path = (
+            sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
+        )
+        with open(file_output_path) as f:
             lines = f.read()
             logger.log(PYTHON_TEST_LEVEL, lines)
 
