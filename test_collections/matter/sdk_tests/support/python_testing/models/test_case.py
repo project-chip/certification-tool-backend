@@ -222,7 +222,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         logger.info("Test Cleanup")
 
     def handle_logs_temp(self) -> None:
-        # This is a temporaly workaround since Python Test are generating a
+        # This is a temporary workaround since Python Test are generating a
         # big amount of log
         sdk_tests_path = Path(Path(__file__).parents[3])
         file_output_path = (
