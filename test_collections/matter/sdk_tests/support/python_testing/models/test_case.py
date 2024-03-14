@@ -21,6 +21,9 @@ from multiprocessing.managers import BaseManager
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
+from pathlib import Path
+
+
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
@@ -223,9 +226,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def handle_logs_temp(self) -> None:
         # This is a temporaly workaround since Python Test are generating a
         # big amount of log
+        sdk_tests_path = Path(Path(__file__).parents[3])
+        file_output_path = sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
         with open(
-            "/app/backend/test_collections/matter/sdk_tests/sdk_checkout/"
-            "python_testing/test_output.txt"
+           file_output_path
         ) as f:
             lines = f.read()
             logger.log(PYTHON_TEST_LEVEL, lines)
