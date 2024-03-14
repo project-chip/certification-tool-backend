@@ -22,8 +22,8 @@ from unittest import mock
 import pytest
 
 from app.container_manager import container_manager
-from test_collections.matter.config import matter_settings
 from app.tests.utils.docker import make_fake_container
+from test_collections.matter.config import matter_settings
 
 from ..exec_run_in_container import ExecResultExtended
 from ..sdk_container import SDKContainer, SDKContainerNotRunning
@@ -34,7 +34,8 @@ async def test_start() -> None:
     sdk_container: SDKContainer = SDKContainer()
 
     # Values to verify
-    docker_image = f"{matter_settings.SDK_DOCKER_IMAGE}:{matter_settings.SDK_DOCKER_TAG}"
+    docker_image = f"{matter_settings.SDK_DOCKER_IMAGE}:\
+{matter_settings.SDK_DOCKER_TAG}"
 
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
@@ -142,7 +143,10 @@ async def test_send_command_default_prefix() -> None:
     fake_container = make_fake_container()
     cmd = "--help"
     cmd_prefix = "cmd-prefix"
-    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
+    mock_result = ExecResultExtended(0,
+                                     "log output".encode(),
+                                     "ID",
+                                     mock.MagicMock())
 
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
@@ -183,7 +187,12 @@ async def test_send_command_custom_prefix() -> None:
     fake_container = make_fake_container()
     cmd = "--help"
     cmd_prefix = "cat"
-    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
+    mock_result = ExecResultExtended(
+        0,
+        "log output".encode(),
+        "ID",
+        mock.MagicMock()
+    )
 
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
