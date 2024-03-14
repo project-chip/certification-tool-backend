@@ -24,7 +24,7 @@ from app.version import (
     SHA_FILEPATH,
     VERSION_FILEPATH,
     read_test_harness_backend_version,
-    read_matter_sdk_sha
+    read_matter_sdk_sha,
 )
 
 
