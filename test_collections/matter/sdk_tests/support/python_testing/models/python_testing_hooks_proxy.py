@@ -32,7 +32,8 @@ class SDKPythonTestResultEnum(str, Enum):
     STEP_FAILURE = "step_failure"
     STEP_UNKNOWN = "step_unknown"
     STEP_MANUAL = "step_manual"
-    SHOW_PROMPT = "show_prompt"
+    SHOW_INPUT_PROMPT = "show_input_prompt"
+    SHOW_MESSAGE_PROMPT = "show_message_prompt"
 
 
 class SDKPythonTestResultBase(BaseModel):
@@ -101,11 +102,16 @@ class SDKPythonTestResultStepManual(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.STEP_MANUAL
 
 
-class SDKPythonTestResultShowPrompt(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.SHOW_PROMPT
+class SDKPythonTestResultShowInputPrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_INPUT_PROMPT
     msg: str
     placeholder: Optional[str]
     default_value: Optional[str]
+
+
+class SDKPythonTestResultShowMessagePrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_MESSAGE_PROMPT
+    msg: str
 
 
 class SDKPythonTestRunnerHooks(TestRunnerHooks):
@@ -185,17 +191,20 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     def step_manual(self) -> None:
         self.results.put(SDKPythonTestResultStepManual())
 
-    def show_prompt(
+    def show_input_prompt(
         self,
         msg: str,
         placeholder: Optional[str] = None,
         default_value: Optional[str] = None,
     ) -> None:
         self.results.put(
-            SDKPythonTestResultShowPrompt(
+            SDKPythonTestResultShowInputPrompt(
                 msg=msg, placeholder=placeholder, default_value=default_value
             )
         )
+
+    def show_message_prompt(self, msg: str) -> None:
+        self.results.put(SDKPythonTestResultShowMessagePrompt(msg=msg))
 
     def step_start_list(self) -> None:
         pass

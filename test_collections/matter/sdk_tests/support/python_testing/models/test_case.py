@@ -28,6 +28,7 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import (
+    MessagePromptRequest,
     OptionsSelectPromptRequest,
     TextInputPromptRequest,
 )
@@ -136,7 +137,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def step_unknown(self) -> None:
         self.__runned += 1
 
-    async def show_prompt(
+    async def show_input_prompt(
         self,
         msg: str,
         placeholder: Optional[str] = None,
@@ -152,6 +153,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
+            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+
+    async def show_message_prompt(self, msg: str) -> None:
+        prompt_request = MessagePromptRequest(prompt=msg, ok_button=True)
+        await self.send_prompt_request(prompt_request)
+
+        if self.test_socket:
+            response = "\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
     @classmethod

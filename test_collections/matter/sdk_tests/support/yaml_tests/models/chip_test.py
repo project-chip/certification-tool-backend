@@ -259,7 +259,9 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         """
 
         prompt = f"Please do the following action on the Controller: {action}"
-        prompt_request = MessagePromptRequest(prompt=prompt, timeout=60)
+        prompt_request = MessagePromptRequest(
+            prompt=prompt, timeout=60, ok_button=False
+        )
         await self.send_prompt_request(prompt_request)
 
     def __handle_logs(self, logs: Any) -> None:
