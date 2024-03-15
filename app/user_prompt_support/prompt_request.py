@@ -58,6 +58,8 @@ class UploadFilePromptRequest(PromptRequest):
 
 
 class MessagePromptRequest(PromptRequest):
+    ok_button: bool = True
+
     @property
     def messageType(self) -> MessageTypeEnum:
         return MessageTypeEnum.MESSAGE_REQUEST
