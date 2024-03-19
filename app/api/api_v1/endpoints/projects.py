@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from http import HTTPStatus
-from typing import List, Sequence
+from typing import List, Sequence, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
@@ -76,13 +76,23 @@ def create_project(
     return crud.project.create(db=db, obj_in=project_in)
 
 
-@router.get("/default_config", response_model=schemas.TestEnvironmentConfig)
-def default_config() -> schemas.TestEnvironmentConfig:
+@router.get(
+    "/default_config", response_model=Union[dict, schemas.TestEnvironmentConfig]
+)
+def default_config() -> Union[dict, schemas.TestEnvironmentConfig]:
     """Return default configuration for projects.
 
     Returns:
         List[Project]: List of projects
     """
+    if not default_environment_config:
+        return {
+            "alert": "No program configuration file was found. "
+            "If you want default values for the project configuration, please, "
+            "create a default_project.config file inside "
+            "test_collections/{program} folder"
+        }
+
     return default_environment_config
 
 

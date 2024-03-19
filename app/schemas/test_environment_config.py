@@ -68,7 +68,7 @@ class DutConfig(BaseModel):
 class TestEnvironmentConfig(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
 
-    network: NetworkConfig
-    dut_config: DutConfig
+    network: Optional[NetworkConfig]
+    dut_config: Optional[DutConfig]
     # TODO(#490): Need to be refactored to support real PIXIT format
     test_parameters: Optional[dict[str, Any]]

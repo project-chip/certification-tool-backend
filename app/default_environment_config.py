@@ -13,29 +13,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 from pathlib import Path
 
 from app.schemas.test_environment_config import TestEnvironmentConfig
 
 PROJECT_ROOT = Path(__file__).parent.parent
 TEST_COLLECTIONS = "test_collections"
-TEST_ENVIRONMENT_CONFIG_NAME = "default_test_environment.config"
-TEST_ENVIRONMENT_CONFIG_PATH = (
-    PROJECT_ROOT / TEST_COLLECTIONS / TEST_ENVIRONMENT_CONFIG_NAME
-)
+TEST_ENVIRONMENT_CONFIG_NAME = "default_project.config"
 
-# TH  default project config file
-# This will be used only if the program does not provide a default project config file
-TEST_ENVIRONMENT_CONFIG_PATH_TH_DEFAULT = PROJECT_ROOT / TEST_ENVIRONMENT_CONFIG_NAME
+config_path = None
 
-config_path = TEST_ENVIRONMENT_CONFIG_PATH
+test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
 
-if not TEST_ENVIRONMENT_CONFIG_PATH.is_file():
-    # If the defult project config file is not find, use the TH default
-    config_path = TEST_ENVIRONMENT_CONFIG_PATH_TH_DEFAULT
-    if not TEST_ENVIRONMENT_CONFIG_PATH_TH_DEFAULT.is_file():
-        raise RuntimeError("No test environment config found. Recreating from example.")
+# Iterate through the folders inside test collections in order to find the first
+# occurence for the default_project.config file
+for program_folder in test_collection_folder:
+    test_folder_file_name = (
+        PROJECT_ROOT / TEST_COLLECTIONS / program_folder / TEST_ENVIRONMENT_CONFIG_NAME
+    )
+    # Currently, only one program is supported, so it should consider the first
+    # occurrency for default_project.config file.
+    if test_folder_file_name.is_file():
+        config_path = test_folder_file_name
+        break
 
-default_environment_config = TestEnvironmentConfig.parse_file(config_path)
+default_environment_config = None
 
-default_environment_config.__dict__
+# Check if the default project config file was found
+# otherwise, the default_environment_config must be None
+if config_path:
+    default_environment_config = TestEnvironmentConfig.parse_file(config_path)
+    default_environment_config.__dict__
