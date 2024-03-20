@@ -28,6 +28,8 @@ test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
 
 # Iterate through the folders inside test collections in order to find the first
 # occurence for the default_project.config file
+default_environment_config = None
+
 for program_folder in test_collection_folder:
     test_folder_file_name = (
         PROJECT_ROOT / TEST_COLLECTIONS / program_folder / TEST_ENVIRONMENT_CONFIG_NAME
@@ -35,13 +37,6 @@ for program_folder in test_collection_folder:
     # Currently, only one program is supported, so it should consider the first
     # occurrency for default_project.config file.
     if test_folder_file_name.is_file():
-        config_path = test_folder_file_name
+        default_environment_config = TestEnvironmentConfig.parse_file(config_path)
+        default_environment_config.__dict__
         break
-
-default_environment_config = None
-
-# Check if the default project config file was found
-# otherwise, the default_environment_config must be None
-if config_path:
-    default_environment_config = TestEnvironmentConfig.parse_file(config_path)
-    default_environment_config.__dict__
