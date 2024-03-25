@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .python_tests import onboarding_payload_collection
-from .sdk_tests.support.python_testing import (
-    custom_python_collection,
-    sdk_python_collection,
-)
-from .sdk_tests.support.yaml_tests import custom_collection, sdk_collection
-from .sdk_tests.support.performance_tests import (
-    sdk_performance_collection,
-)
+from typing import Optional
+
+from app.test_engine.models.test_declarations import TestCollectionDeclaration
+
+from .sdk_performance_tests import sdk_performance_test_collection
+
+# Test engine will auto load TestCollectionDeclarations declared inside the package
+# initializer
+sdk_performance_collection: TestCollectionDeclaration = sdk_performance_test_collection()
