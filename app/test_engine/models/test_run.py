@@ -55,7 +55,7 @@ class TestRun(TestObservable):
     @property
     def config(self) -> TestEnvironmentConfig:
         """Convenience getter to access project config."""
-        return self.project.config  # type: ignore
+        return self.project.config
 
     @property
     def state(self) -> TestStateEnum:

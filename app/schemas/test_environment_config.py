@@ -17,6 +17,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
+
 # TODO The Thread classes will be moved in a new PR
 class ThreadDataset(BaseModel):
     channel: str

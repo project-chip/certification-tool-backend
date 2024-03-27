@@ -88,7 +88,7 @@ class TestCase(TestObservable):
 
     @property
     def config(self) -> TestEnvironmentConfig:
-        return self.project.config  # type: ignore
+        return self.project.config
 
     @property
     def state(self) -> TestStateEnum:

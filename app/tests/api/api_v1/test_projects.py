@@ -88,7 +88,7 @@ def test_create_project_default_config(client: TestClient) -> None:
 
 
 def test_create_project_custom_config(client: TestClient) -> None:
-    custom_config = default_environment_config.copy(deep=True)
+    custom_config = default_environment_config.copy(deep=True)  # type: ignore
     custom_config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
     data: dict[str, Any] = {"name": "Foo", "config": custom_config.dict()}
     response = client.post(
@@ -130,7 +130,7 @@ def test_default_project_config(client: TestClient) -> None:
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
-        expected_content=default_environment_config.dict(),
+        expected_content=default_environment_config.dict(),  # type: ignore
     )
 
 
@@ -204,23 +204,23 @@ def test_update_project(client: TestClient, db: Session) -> None:
     )
 
 
-# def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> None:
-#     project = create_random_project(db)
-#     response = client.put(
-#         f"{settings.API_V1_STR}/projects/{project.id}",
-#         json=invalid_dut_config,
-#     )
+def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> None:
+    project = create_random_project(db)
+    response = client.put(
+        f"{settings.API_V1_STR}/projects/{project.id}",
+        json=invalid_dut_config,
+    )
 
-#     valid_fields = list(DutConfig.__annotations__.keys())
+    valid_fields = list(DutConfig.__annotations__.keys())
 
-#     validate_json_response(
-#         response=response,
-#         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-#         expected_content={
-#             "detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
-#         },
-#         expected_keys=["detail"],
-#     )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+        expected_content={
+            "detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
+        },
+        expected_keys=["detail"],
+    )
 
 
 def test_delete_project(client: TestClient, db: Session) -> None:
