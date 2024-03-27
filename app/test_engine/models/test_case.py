@@ -54,7 +54,7 @@ class TestCase(TestObservable):
         else:
             all_test_parameters = self.default_test_parameters() | config_dict.get(
                 "test_parameters"
-            )
+            )  # type: ignore
 
         # filter test_parameters to only contain relevant test_parameters from
         # default_test_parameters
