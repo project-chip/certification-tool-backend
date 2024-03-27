@@ -52,7 +52,7 @@ class TestCase(TestObservable):
         if config_dict and config_dict.get("test_parameters") is None:
             return self.default_test_parameters()
         else:
-            all_test_parameters = self.default_test_parameters() | config_dict.get(  # type: ignore
+            all_test_parameters = self.default_test_parameters() | config_dict.get(
                 "test_parameters"
             )
 
