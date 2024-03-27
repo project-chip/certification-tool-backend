@@ -58,7 +58,7 @@ class TestSuite(TestObservable):
 
     @property
     def config(self) -> TestEnvironmentConfig:
-        return self.project.config
+        return self.project.config  # type: ignore
 
     @property
     def pics(self) -> PICS:

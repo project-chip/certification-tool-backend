@@ -163,7 +163,7 @@ class ThreadBorderRouter(metaclass=Singleton):
             delay=3,
             backoff=2,
             max_delay=10,
-            logger=logger,
+            logger=logger,  # type: ignore
         )
         def _otbr_status() -> None:
             service_status = self._send_command(

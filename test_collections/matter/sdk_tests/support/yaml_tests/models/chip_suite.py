@@ -17,15 +17,16 @@ from typing import Optional
 
 from app.models import TestSuiteExecution
 from app.otbr_manager.otbr_manager import ThreadBorderRouter
-from app.schemas.test_environment_config import (
-    DutPairingModeEnum,
-    ThreadAutoConfig,
-    ThreadExternalConfig,
-)
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+from test_collections.matter.test_environment_config import (
+    DutPairingModeEnum,
+    TestEnvironmentConfigMatter,
+    ThreadAutoConfig,
+    ThreadExternalConfig,
+)
 
 from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
@@ -52,6 +53,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     def __init__(self, test_suite_execution: TestSuiteExecution):
         super().__init__(test_suite_execution)
+        self.config_matter = TestEnvironmentConfigMatter(**self.config)  # type: ignore
 
     async def setup(self) -> None:
         logger.info("Setting up SDK container")
@@ -59,7 +61,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         logger.info("Setting up test runner")
         await self.runner.setup(
-            self.server_type, self.config.dut_config.chip_use_paa_certs
+            self.server_type, self.config_matter.dut_config.chip_use_paa_certs
         )
 
         if len(self.pics.clusters) > 0:
@@ -92,11 +94,13 @@ class ChipSuite(TestSuite, UserPromptSupport):
                 await self.__prompt_for_commissioning_retry(e)
 
     async def __pair_with_dut(self) -> None:
-        if self.config.dut_config.pairing_mode is DutPairingModeEnum.ON_NETWORK:
+        if self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.ON_NETWORK:
             pair_result = await self.__pair_with_dut_onnetwork()
-        elif self.config.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
+        elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
             pair_result = await self.__pair_with_dut_ble_wifi()
-        elif self.config.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD:
+        elif (
+            self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
+        ):
             pair_result = await self.__pair_with_dut_ble_thread()
         else:
             raise DUTCommissioningError("Unsupported DUT pairing mode")
@@ -106,27 +110,27 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     async def __pair_with_dut_onnetwork(self) -> bool:
         return await self.runner.pairing_on_network(
-            setup_code=self.config.dut_config.setup_code,
-            discriminator=self.config.dut_config.discriminator,
+            setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,
         )
 
     async def __pair_with_dut_ble_wifi(self) -> bool:
-        if self.config.network.wifi is None:
+        if self.config_matter.network.wifi is None:
             raise DUTCommissioningError("Tool config is missing wifi config.")
 
         return await self.runner.pairing_ble_wifi(
-            ssid=self.config.network.wifi.ssid,
-            password=self.config.network.wifi.password,
-            setup_code=self.config.dut_config.setup_code,
-            discriminator=self.config.dut_config.discriminator,
+            ssid=self.config_matter.network.wifi.ssid,
+            password=self.config_matter.network.wifi.password,
+            setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,
         )
 
     async def __pair_with_dut_ble_thread(self) -> bool:
-        if self.config.network.thread is None:
+        if self.config_matter.network.thread is None:
             raise DUTCommissioningError("Tool config is missing thread config.")
 
         # if thread has ThreadAutoConfig, bring up border router
-        thread_config = self.config.network.thread
+        thread_config = self.config_matter.network.thread
         if isinstance(thread_config, ThreadExternalConfig):
             hex_dataset = thread_config.operational_dataset_hex
         elif isinstance(thread_config, ThreadAutoConfig):
@@ -137,8 +141,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         return await self.runner.pairing_ble_thread(
             hex_dataset=hex_dataset,
-            setup_code=self.config.dut_config.setup_code,
-            discriminator=self.config.dut_config.discriminator,
+            setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,
         )
 
     async def __start_border_router(

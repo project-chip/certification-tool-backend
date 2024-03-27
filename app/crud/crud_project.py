@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from datetime import datetime
-from typing import Optional, Sequence
+from typing import Any, Dict, Optional, Sequence, Union
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -23,6 +23,7 @@ from app.crud.base import CRUDBaseDelete, CRUDBaseRead, CRUDBaseUpdate
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate
+from app.utils import program_class
 
 
 class CRUDProject(
@@ -61,12 +62,59 @@ class CRUDProject(
     def unarchive(self, db: Session, db_obj: Project) -> Project:
         return self.update(db=db, db_obj=db_obj, obj_in={"archived_at": None})
 
+    def __validate_model(self, obj_in: dict) -> bool:
+        func_name = "validate_model"
+        func_validate_model = getattr(program_class, func_name, None)
+
+        if not func_validate_model:
+            raise AttributeError(f"{func_name} is not a method of {self}")
+        if not callable(func_validate_model):
+            raise TypeError(f"{func_name} is not callable")
+
+        return func_validate_model(program_class, jsonable_encoder(obj_in))
+
     # We use a custom create method, to add default config if config is missing
+    # and validate de project configuration
     def create(self, db: Session, *, obj_in: ProjectCreate) -> Project:
+        json_obj_in = jsonable_encoder(obj_in)
+
+        if not self.__validate_model(json_obj_in):
+            raise Exception(
+                "The informed project config has one or more invalid properties."
+            )
+
         if obj_in.config is None:
             obj_in.config = default_environment_config
-        obj_in_data = jsonable_encoder(obj_in)
+        obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+    # We use a custom create update, to add default config if config is missing
+    # and validate de project configuration
+    def update(
+        self,
+        db: Session,
+        *,
+        db_obj: Project,
+        obj_in: Union[ProjectUpdate, Dict[str, Any]],
+    ) -> Project:
+        obj_data = jsonable_encoder(db_obj)
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.dict(exclude_unset=True)
+
+        if not self.__validate_model(jsonable_encoder(update_data)):
+            raise Exception(
+                "The informed project config has one or more invalid properties."
+            )
+
+        for field in obj_data:
+            if field in update_data:
+                setattr(db_obj, field, update_data[field])
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

@@ -28,7 +28,7 @@ from app.pics.pics_parser import PICSParser
 from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
-from app.schemas.test_environment_config import DutConfig
+from app.utils import TEST_ENVIRONMENT_CONFIG_NAME
 
 router = APIRouter()
 
@@ -70,10 +70,13 @@ def create_project(
     Returns:
         Project: newly created project record
     """
-    # Validate dut config properties
-    __validate_dut_config(request=request)
-
-    return crud.project.create(db=db, obj_in=project_in)
+    try:
+        return crud.project.create(db=db, obj_in=project_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
 
 
 @router.get(
@@ -89,27 +92,11 @@ def default_config() -> Union[dict, schemas.TestEnvironmentConfig]:
         return {
             "alert": "No program configuration file was found. "
             "If you want default values for the project configuration, please, "
-            "create a default_project.config file inside "
+            f"create a {TEST_ENVIRONMENT_CONFIG_NAME} file inside "
             "test_collections/{program} folder"
         }
 
     return default_environment_config
-
-
-def __validate_dut_config(request: Request) -> None:
-    valid_properties = list(DutConfig.__annotations__.keys())
-
-    if "config" in request._json and "dut_config" in request._json["config"]:
-        dut_config = request._json["config"]["dut_config"]
-
-        for field, _ in dut_config.items():
-            if field not in valid_properties:
-                raise HTTPException(
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-                    detail="The DUT config section has one or more invalid properties"
-                    " informed."
-                    f" The valid properties are: {valid_properties}",
-                )
 
 
 @router.put("/{id}", response_model=schemas.Project)
@@ -132,10 +119,15 @@ def update_project(
     Returns:
         Project: updated project record
     """
-    # Validate dut config properties
-    __validate_dut_config(request=request)
-
-    return crud.project.update(db=db, db_obj=__project(db=db, id=id), obj_in=project_in)
+    try:
+        return crud.project.update(
+            db=db, db_obj=__project(db=db, id=id), obj_in=project_in
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
 
 
 @router.get("/{id}", response_model=schemas.Project)

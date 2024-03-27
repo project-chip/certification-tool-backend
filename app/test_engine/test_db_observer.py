@@ -132,7 +132,7 @@ class TestDBObserver(Observer):
         # We get the session from the model it self to avoid overriding values when
         # using a different session
         insp = inspect(execution_obj)
-        if insp is None or (session := insp.session) is None:
+        if insp is None or (session := insp.session) is None:  # type: ignore
             logger.error(
                 f"No Database session found for execution object: {execution_obj}."
             )

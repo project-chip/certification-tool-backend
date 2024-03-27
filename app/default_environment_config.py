@@ -16,27 +16,21 @@
 import os
 from pathlib import Path
 
-from app.schemas.test_environment_config import TestEnvironmentConfig
+from app.utils import TEST_COLLECTIONS, program_class, program_config_path
 
 PROJECT_ROOT = Path(__file__).parent.parent
-TEST_COLLECTIONS = "test_collections"
-TEST_ENVIRONMENT_CONFIG_NAME = "default_project.config"
-
-config_path = None
 
 test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
 
-# Iterate through the folders inside test collections in order to find the first
-# occurence for the default_project.config file
-default_environment_config = None
+func_name = "parse_file"
+func = getattr(program_class, func_name, None)
 
-for program_folder in test_collection_folder:
-    test_folder_file_name = (
-        PROJECT_ROOT / TEST_COLLECTIONS / program_folder / TEST_ENVIRONMENT_CONFIG_NAME
-    )
-    # Currently, only one program is supported, so it should consider the first
-    # occurrency for default_project.config file.
-    if test_folder_file_name.is_file():
-        default_environment_config = TestEnvironmentConfig.parse_file(config_path)
-        default_environment_config.__dict__
-        break
+if not func:
+    raise AttributeError(f"{func_name} is not a method of {program_class}")
+if not callable(func):
+    raise TypeError(f"{func_name} is not callable")
+
+default_environment_config = None
+if program_config_path:
+    default_environment_config = func(program_config_path)
+    default_environment_config.__dict__

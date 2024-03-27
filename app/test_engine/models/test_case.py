@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from asyncio import CancelledError
-from typing import Any, List
+from typing import Any, List, cast
 
 from app.models import Project, TestCaseExecution
 from app.models.test_enums import TestStateEnum
@@ -47,11 +47,13 @@ class TestCase(TestObservable):
 
     @property
     def test_parameters(self) -> dict[str, Any]:
-        if self.config.test_parameters is None:
+        config_dict = cast(dict, self.config)
+
+        if config_dict and config_dict.get("test_parameters") is None:
             return self.default_test_parameters()
         else:
-            all_test_parameters = (
-                self.default_test_parameters() | self.config.test_parameters
+            all_test_parameters = self.default_test_parameters() | config_dict.get(  # type: ignore
+                "test_parameters"
             )
 
         # filter test_parameters to only contain relevant test_parameters from
@@ -86,7 +88,7 @@ class TestCase(TestObservable):
 
     @property
     def config(self) -> TestEnvironmentConfig:
-        return self.project.config
+        return self.project.config  # type: ignore
 
     @property
     def state(self) -> TestStateEnum:

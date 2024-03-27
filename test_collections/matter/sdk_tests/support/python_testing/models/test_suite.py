@@ -19,6 +19,7 @@ from typing import Type, TypeVar
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
@@ -111,4 +112,6 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         await prompt_for_commissioning_mode(self, logger, None, self.cancel)
 
         logger.info("Commission DUT")
-        commission_device(self.config, logger)
+        commission_device(
+            TestEnvironmentConfigMatter(**self.config), logger  # type: ignore
+        )
