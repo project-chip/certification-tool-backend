@@ -27,13 +27,16 @@ from app import crud
 from app.core.config import settings
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
-from app.schemas.test_environment_config import DutConfig, DutPairingModeEnum
 from app.tests.utils.project import (
     create_random_project,
     create_random_project_archived,
 )
 from app.tests.utils.test_pics_data import create_random_project_with_pics
 from app.tests.utils.validate_json_response import validate_json_response
+from test_collections.matter.test_environment_config import (
+    DutConfig,
+    DutPairingModeEnum,
+)
 
 invalid_dut_config = {
     "name": "foo",
@@ -85,7 +88,7 @@ def test_create_project_default_config(client: TestClient) -> None:
 
 
 def test_create_project_custom_config(client: TestClient) -> None:
-    custom_config = default_environment_config.copy(deep=True)
+    custom_config = default_environment_config.copy(deep=True)  # type: ignore
     custom_config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
     data: dict[str, Any] = {"name": "Foo", "config": custom_config.dict()}
     response = client.post(
@@ -107,13 +110,11 @@ def test_create_project_invalid_dut_config(client: TestClient) -> None:
         json=invalid_dut_config,
     )
 
-    valid_fields = list(DutConfig.__annotations__.keys())
-
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            f"detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
+            f"detail": "The informed project config has one or more invalid properties."
         },
         expected_keys=["detail"],
     )
@@ -127,7 +128,7 @@ def test_default_project_config(client: TestClient) -> None:
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
-        expected_content=default_environment_config.dict(),
+        expected_content=default_environment_config.dict(),  # type: ignore
     )
 
 
@@ -214,7 +215,7 @@ def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> N
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
+            "detail": "The informed project config has one or more invalid properties."
         },
         expected_keys=["detail"],
     )

@@ -22,11 +22,41 @@ from app.schemas.pics import PICS
 from app.schemas.project import ProjectCreate
 from app.tests.utils.utils import random_lower_string
 
+default_config = {
+    "network": {
+        "fabric_id": "0",
+        "thread": {
+            "dataset": {
+                "channel": "15",
+                "panid": "0x1234",
+                "extpanid": "1111111122222222",
+                "networkkey": "00112233445566778899aabbccddeeff",
+                "networkname": "DEMO",
+            },
+            "rcp_serial_path": "/dev/ttyACM0",
+            "rcp_baudrate": 115200,
+            "on_mesh_prefix": "fd11:22::/64",
+            "network_interface": "eth0",
+        },
+        "wifi": {"ssid": "testharness", "password": "wifi-password"},
+    },
+    "dut_config": {
+        "pairing_mode": "onnetwork",
+        "setup_code": "20202021",
+        "discriminator": "3840",
+        "chip_use_paa_certs": False,
+        "trace_log": True,
+    },
+    "test_parameters": None,
+}
+
 
 def create_random_project(db: Session, pics: Optional[PICS] = PICS()) -> models.Project:
     name = random_lower_string()
     wifi_ssid = random_lower_string()
     project_in = ProjectCreate(name=name, wifi_ssid=wifi_ssid, pics=pics)
+    project_in.config = default_config
+
     return crud.project.create(db=db, obj_in=project_in)
 
 

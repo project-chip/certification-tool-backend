@@ -16,12 +16,12 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 from app.db.pydantic_data_type import PydanticModelType
 from app.schemas.pics import PICS
-from app.schemas.test_environment_config import TestEnvironmentConfig
 
 if TYPE_CHECKING:
     from .test_run_execution import TestRunExecution  # noqa: F401
@@ -31,10 +31,7 @@ class Project(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(nullable=False)
 
-    config: Mapped[TestEnvironmentConfig] = mapped_column(
-        PydanticModelType(TestEnvironmentConfig),
-        nullable=False,
-    )
+    config: Mapped[dict] = mapped_column(JSON, default={}, nullable=False)
 
     pics: Mapped[PICS] = mapped_column(
         PydanticModelType(PICS), default=PICS(), nullable=False

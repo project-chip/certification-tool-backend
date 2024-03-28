@@ -69,7 +69,7 @@ def test_test_case_test_params_merged() -> None:
     are merged.
     """
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
     mock_config.test_parameters = {
         TEST_PARAMETER_NAME_1: 11,
         TEST_PARAMETER_NAME_3: 333,
@@ -102,7 +102,7 @@ def test_test_case_no_test_parameters() -> None:
     """Test that a TestCase without default test parameters will not have runtime test
     parameters.
     """
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
     mock_config.test_parameters = {
         TEST_PARAMETER_NAME_1: 11,
         TEST_PARAMETER_NAME_3: 333,
@@ -124,7 +124,7 @@ def test_test_case_cancel_test_case() -> None:
     test step states
     """
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
     mock_config.test_parameters = {
         TEST_PARAMETER_NAME_1: 11,
         TEST_PARAMETER_NAME_3: 333,
