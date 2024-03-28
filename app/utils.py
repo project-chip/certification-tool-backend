@@ -250,9 +250,6 @@ def __retrieve_program_conf() -> Tuple[Type, Path]:
 
     test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
 
-    default_config_file = None
-    ProgramConfigClassReference = None
-
     # Iterate through the folders inside test_collections in order to find the first
     # occurency for the default_project.config file
     for program_folder in test_collection_folder:
@@ -275,12 +272,10 @@ def __retrieve_program_conf() -> Tuple[Type, Path]:
                 / program_folder
                 / TEST_ENVIRONMENT_CONFIG_NAME
             )
-            break
 
-    if not default_config_file or not default_config_file.is_file():
-        raise InvalidProgramConfigurationError("The program configuration is invalid")
+            return ProgramConfigClassReference, default_config_file
 
-    return ProgramConfigClassReference, default_config_file
+    raise InvalidProgramConfigurationError("The program configuration is invalid")
 
 
 program_class, program_config_path = __retrieve_program_conf()
