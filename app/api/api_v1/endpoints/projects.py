@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import crud, models, schemas
+from app.crud.crud_project import ProjectError
 from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
@@ -72,7 +73,7 @@ def create_project(
     """
     try:
         return crud.project.create(db=db, obj_in=project_in)
-    except Exception as e:
+    except ProjectError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(e),
@@ -125,7 +126,7 @@ def update_project(
         )
     except HTTPException:
         raise
-    except Exception as e:
+    except ProjectError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(e),

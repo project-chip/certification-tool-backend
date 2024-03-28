@@ -47,7 +47,7 @@ class TestCase(TestObservable):
 
     @property
     def test_parameters(self) -> dict[str, Any]:
-        config_dict = self.config
+        config_dict = cast(dict, self.config)
         if not isinstance(self.config, dict):
             config_dict = cast(dict, self.config.__dict__)
 
@@ -56,7 +56,7 @@ class TestCase(TestObservable):
         else:
             all_test_parameters = self.default_test_parameters() | config_dict.get(  # type: ignore
                 "test_parameters"
-            )
+            )  # flake8: noqa
 
         # filter test_parameters to only contain relevant test_parameters from
         # default_test_parameters

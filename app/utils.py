@@ -232,6 +232,8 @@ def __retrieve_program_class(test_folder_file_name: Path) -> str:
         ]
 
     # It should have only one occurrence for a class that extends TestEnvironmentConfig
+    if not classes or len(classes) == 0:
+        raise Exception("At least one class definition is required")
     return classes[0].name
 
 

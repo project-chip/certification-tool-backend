@@ -26,6 +26,14 @@ from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.utils import program_class
 
 
+class ProjectError(Exception):
+    """
+    Exception raised for errors while handling Projects
+    """
+
+    pass
+
+
 class CRUDProject(
     CRUDBaseRead[Project],
     CRUDBaseDelete[Project],
@@ -79,7 +87,7 @@ class CRUDProject(
         json_obj_in = jsonable_encoder(obj_in)
 
         if not self.__validate_model(json_obj_in):
-            raise Exception(
+            raise ProjectError(
                 "The informed project config has one or more invalid properties."
             )
 
@@ -109,7 +117,7 @@ class CRUDProject(
             update_data = obj_in.dict(exclude_unset=True)
 
         if not self.__validate_model(jsonable_encoder(update_data)):
-            raise Exception(
+            raise ProjectError(
                 "The informed project config has one or more invalid properties."
             )
 

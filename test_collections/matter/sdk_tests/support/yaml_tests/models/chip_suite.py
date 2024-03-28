@@ -58,7 +58,9 @@ class ChipSuite(TestSuite, UserPromptSupport):
     @property
     def config_matter(self) -> TestEnvironmentConfigMatter:
         if not self.__config_matter:
-            self.__config_matter = TestEnvironmentConfigMatter(**self.config)  # type: ignore
+            self.__config_matter = TestEnvironmentConfigMatter(
+                **self.config  # type: ignore
+            )
 
         return self.__config_matter
 
