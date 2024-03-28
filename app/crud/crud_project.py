@@ -101,7 +101,7 @@ class CRUDProject(
         db.refresh(db_obj)
         return db_obj
 
-    # We use a custom create update, to add default config if config is missing
+    # We use a custom update method, to add default config if config is missing
     # and validate de project configuration
     def update(
         self,

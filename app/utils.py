@@ -215,7 +215,7 @@ def __retrieve_program_module(test_folder_file_name: Path) -> ModuleType:
 
 
 def __retrieve_program_class(test_folder_file_name: Path) -> str:
-    """Looking the a class, inside the given path, that extends TestEnvironmentConfig"""
+    """Looking for a class, inside the given path, that extends TestEnvironmentConfig"""
     with open(test_folder_file_name, "r") as python_file:
         parsed_python_file = ast.parse(python_file.read())
 

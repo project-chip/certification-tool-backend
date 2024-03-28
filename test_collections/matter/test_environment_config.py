@@ -71,7 +71,7 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                 if field not in valid_properties:
                     return False
 
-            # All Dut fields are mandatory, check if all fields were informed
+            # All DutConfig fields but chip_timeout are mandatory, check if they were informed
             mandatory_fields = valid_properties.copy()
             mandatory_fields.remove("chip_timeout")
             for field in mandatory_fields:
