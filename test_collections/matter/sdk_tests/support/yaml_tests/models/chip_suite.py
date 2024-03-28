@@ -53,7 +53,14 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     def __init__(self, test_suite_execution: TestSuiteExecution):
         super().__init__(test_suite_execution)
-        self.config_matter = TestEnvironmentConfigMatter(**self.config)  # type: ignore
+        self.__config_matter = None
+
+    @property
+    def config_matter(self) -> TestEnvironmentConfigMatter:
+        if not self.__config_matter:
+            self.__config_matter = TestEnvironmentConfigMatter(**self.config)  # type: ignore
+
+        return self.__config_matter
 
     async def setup(self) -> None:
         logger.info("Setting up SDK container")

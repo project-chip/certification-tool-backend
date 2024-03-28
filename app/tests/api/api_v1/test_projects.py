@@ -110,13 +110,11 @@ def test_create_project_invalid_dut_config(client: TestClient) -> None:
         json=invalid_dut_config,
     )
 
-    valid_fields = list(DutConfig.__annotations__.keys())
-
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            f"detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
+            f"detail": "The informed project config has one or more invalid properties."
         },
         expected_keys=["detail"],
     )
@@ -217,7 +215,7 @@ def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> N
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": f"The DUT config section has one or more invalid properties informed. The valid properties are: {valid_fields}"
+            "detail": "The informed project config has one or more invalid properties."
         },
         expected_keys=["detail"],
     )

@@ -123,6 +123,8 @@ def update_project(
         return crud.project.update(
             db=db, db_obj=__project(db=db, id=id), obj_in=project_in
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,

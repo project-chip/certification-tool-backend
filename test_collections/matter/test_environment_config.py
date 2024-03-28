@@ -59,15 +59,22 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
     def validate_model(self, dict_model: dict) -> bool:
         valid_properties = list(DutConfig.__annotations__.keys())
 
-        if (
-            dict_model
-            and "config" in dict_model
-            and "dut_config" in dict_model.get("config")  # type: ignore
-        ):
+        if dict_model and "config" in dict_model and dict_model.get("config"):
             dut_config = dict_model.get("config").get("dut_config")  # type: ignore
 
+            if not dut_config:
+                return False
+
+            # Check if the informed field in dut_config is valid
             for field, _ in dut_config.items():
                 if field not in valid_properties:
+                    return False
+
+            # All Dut fields are mandatory, check if all fields were informed
+            mandatory_fields = valid_properties.copy()
+            mandatory_fields.remove("chip_timeout")
+            for field in mandatory_fields:
+                if field not in dut_config:
                     return False
 
         return True

@@ -47,14 +47,16 @@ class TestCase(TestObservable):
 
     @property
     def test_parameters(self) -> dict[str, Any]:
-        config_dict = cast(dict, self.config)
+        config_dict = self.config
+        if not isinstance(self.config, dict):
+            config_dict = cast(dict, self.config.__dict__)
 
         if config_dict and config_dict.get("test_parameters") is None:
             return self.default_test_parameters()
         else:
-            all_test_parameters = self.default_test_parameters() | config_dict.get(
+            all_test_parameters = self.default_test_parameters() | config_dict.get(  # type: ignore
                 "test_parameters"
-            )  # type: ignore
+            )
 
         # filter test_parameters to only contain relevant test_parameters from
         # default_test_parameters

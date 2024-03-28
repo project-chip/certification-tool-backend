@@ -83,8 +83,9 @@ class CRUDProject(
                 "The informed project config has one or more invalid properties."
             )
 
-        if obj_in.config is None:
-            obj_in.config = default_environment_config
+        if obj_in.config is None or len(obj_in.config) == 0:
+            obj_in.config = default_environment_config.__dict__
+            json_obj_in = jsonable_encoder(obj_in)
         obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
         db.add(db_obj)

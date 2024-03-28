@@ -112,6 +112,10 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         await prompt_for_commissioning_mode(self, logger, None, self.cancel)
 
         logger.info("Commission DUT")
-        commission_device(
-            TestEnvironmentConfigMatter(**self.config), logger  # type: ignore
-        )
+
+        if isinstance(self.config, TestEnvironmentConfigMatter):
+            commission_device(self.config, logger)
+        else:
+            commission_device(
+                TestEnvironmentConfigMatter(**self.config), logger  # type: ignore
+            )
