@@ -20,7 +20,7 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple, Type
 
 import emails
 from emails.template import JinjaTemplate
@@ -237,10 +237,13 @@ def __retrieve_program_class(test_folder_file_name: Path) -> str:
     return classes[0].name
 
 
-def __retrieve_program_conf() -> Any:
+def __retrieve_program_conf() -> Tuple[Type, Path]:
     PROJECT_ROOT = Path(__file__).parent.parents[1]
 
     test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
+
+    default_config_file = None
+    ProgramConfigClassReference = None
 
     # Iterate through the folders inside test_collections in order to find the first
     # occurency for the default_project.config file
@@ -266,8 +269,8 @@ def __retrieve_program_conf() -> Any:
             )
             break
 
-    if not default_config_file.is_file():
-        return ProgramConfigClassReference, None
+    if not default_config_file or not default_config_file.is_file():
+        return None, None
 
     return ProgramConfigClassReference, default_config_file
 

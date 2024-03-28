@@ -61,8 +61,9 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
 
         if dict_model and "config" in dict_model and dict_model.get("config"):
             dut_config = dict_model.get("config").get("dut_config")  # type: ignore
+            network = dict_model.get("config").get("network")  # type: ignore
 
-            if not dut_config:
+            if not dut_config or not network:
                 return False
 
             # Check if the informed field in dut_config is valid

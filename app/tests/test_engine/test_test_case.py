@@ -70,7 +70,8 @@ def test_test_case_test_params_merged() -> None:
     """
     # Mock config
     mock_config = default_environment_config.copy(deep=True)  # type: ignore
-    mock_config.test_parameters = {
+    mock_config = mock_config.__dict__
+    mock_config["test_parameters"] = {
         TEST_PARAMETER_NAME_1: 11,
         TEST_PARAMETER_NAME_3: 333,
     }
@@ -103,7 +104,8 @@ def test_test_case_no_test_parameters() -> None:
     parameters.
     """
     mock_config = default_environment_config.copy(deep=True)  # type: ignore
-    mock_config.test_parameters = {
+    mock_config = mock_config.__dict__
+    mock_config["test_parameters"] = {
         TEST_PARAMETER_NAME_1: 11,
         TEST_PARAMETER_NAME_3: 333,
     }

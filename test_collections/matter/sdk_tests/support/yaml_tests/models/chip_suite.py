@@ -62,7 +62,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
                 **self.config  # type: ignore
             )
 
-        return self.__config_matter
+        return self.__config_matter  # type: ignore
 
     async def setup(self) -> None:
         logger.info("Setting up SDK container")

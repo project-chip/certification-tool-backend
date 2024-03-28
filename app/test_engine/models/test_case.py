@@ -48,8 +48,6 @@ class TestCase(TestObservable):
     @property
     def test_parameters(self) -> dict[str, Any]:
         config_dict = cast(dict, self.config)
-        if not isinstance(self.config, dict):
-            config_dict = cast(dict, self.config.__dict__)
 
         if config_dict and config_dict.get("test_parameters") is None:
             return self.default_test_parameters()

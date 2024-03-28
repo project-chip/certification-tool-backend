@@ -75,11 +75,11 @@ class CRUDProject(
         func_validate_model = getattr(program_class, func_name, None)
 
         if not func_validate_model:
-            raise AttributeError(f"{func_name} is not a method of {self}")
+            raise AttributeError(f"{func_name} is not a method of {program_class}")
         if not callable(func_validate_model):
             raise TypeError(f"{func_name} is not callable")
 
-        return func_validate_model(program_class, jsonable_encoder(obj_in))
+        return func_validate_model(program_class, obj_in)
 
     # We use a custom create method, to add default config if config is missing
     # and validate de project configuration
@@ -116,7 +116,7 @@ class CRUDProject(
         else:
             update_data = obj_in.dict(exclude_unset=True)
 
-        if not self.__validate_model(jsonable_encoder(update_data)):
+        if not self.__validate_model(update_data):
             raise ProjectError(
                 "The informed project config has one or more invalid properties."
             )
