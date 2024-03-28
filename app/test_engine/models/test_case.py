@@ -52,9 +52,8 @@ class TestCase(TestObservable):
         if config_dict and config_dict.get("test_parameters") is None:
             return self.default_test_parameters()
         else:
-            all_test_parameters = self.default_test_parameters() | config_dict.get(  # type: ignore
-                "test_parameters"
-            )  # flake8: noqa
+            test_parameters = config_dict.get("test_parameters") # type: ignore
+            all_test_parameters = self.default_test_parameters() | test_parameters
 
         # filter test_parameters to only contain relevant test_parameters from
         # default_test_parameters

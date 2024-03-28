@@ -40,6 +40,12 @@ TEST_ENVIRONMENT_CONFIG_MODULE = "test_environment_config"
 TEST_ENVIRONMENT_CONFIG_BASE_CLASS_NAME = "TestEnvironmentConfig"
 
 
+class InvalidProgramConfigurationError(Exception):
+    """'Exception raised when the program configuration is invalid"""
+
+    pass
+
+
 def send_email(
     email_to: str,
     subject_template: str = "",
@@ -233,7 +239,9 @@ def __retrieve_program_class(test_folder_file_name: Path) -> str:
 
     # It should have only one occurrence for a class that extends TestEnvironmentConfig
     if not classes or len(classes) == 0:
-        raise Exception("At least one class definition is required")
+        raise InvalidProgramConfigurationError(
+            "At least one class definition is required"
+        )
     return classes[0].name
 
 
@@ -270,7 +278,7 @@ def __retrieve_program_conf() -> Tuple[Type, Path]:
             break
 
     if not default_config_file or not default_config_file.is_file():
-        return None, None
+        raise InvalidProgramConfigurationError("The program configuration is invalid")
 
     return ProgramConfigClassReference, default_config_file
 
