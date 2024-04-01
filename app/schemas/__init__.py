@@ -30,12 +30,6 @@ from .test_case_metadata import TestCaseMetadata, TestCaseMetadataBase
 from .test_collections import TestCollections
 from .test_environment_config import TestEnvironmentConfig
 from .test_harness_backend_version import TestHarnessBackendVersion
-from .test_run_config import (
-    TestRunConfig,
-    TestRunConfigCreate,
-    TestRunConfigInDB,
-    TestRunConfigUpdate,
-)
 from .test_run_execution import (
     ExportedTestRunExecution,
     TestRunExecution,
@@ -48,7 +42,12 @@ from .test_run_execution import (
 )
 from .test_run_log_entry import TestRunLogEntry
 from .test_runner_status import TestRunnerStatus
-from .test_selection import TestSelection
+from .test_selection import (
+    SelectedCollection,
+    SelectedTestCase,
+    SelectedTests,
+    SelectedTestSuite,
+)
 from .test_step_execution import TestStepExecution, TestStepExecutionToExport
 from .test_suite_execution import TestSuiteExecution, TestSuiteExecutionToExport
 from .test_suite_metadata import TestSuiteMetadata, TestSuiteMetadataBase
