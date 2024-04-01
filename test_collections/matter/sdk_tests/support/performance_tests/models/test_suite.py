@@ -101,7 +101,10 @@ class PythonTestSuite(TestSuite):
         logger.info("Suite Cleanup")
 
         logger.info("Stopping SDK container")
-        self.sdk_container.destroy()
+        try:
+            self.sdk_container.destroy()
+        except Exception:
+            pass
 
 
 class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):

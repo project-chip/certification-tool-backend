@@ -1,4 +1,3 @@
-
 #
 #    Copyright (c) 2023 Project CHIP Authors
 #    All rights reserved.
@@ -42,111 +41,26 @@ kConfigureDSTOffset = 8
 kConfigureDefaultNTP = 9
 kConfigureTrustedTimeSource = 19
 
-# class PayloadInfo:
-#     filter_type: discovery.FilterType = discovery.FilterType.LONG_DISCRIMINATOR
-#     filter_value: int = 0
-#     passcode: int = 0
 
 class TC_COMMISSIONING_1_0(MatterBaseTest):
     def setup_class(self):
         self.commissioner = None
         self.commissioned = False
+        self.discriminator = 3842
         return super().setup_class()
 
     def desc_TC_COMMISSIONING_1_0(self) -> str:
         return "[TC-COMMISSIONING-1.0] Performance"
 
     def steps_TC_COMMISSIONING_1_0(self) -> list[TestStep]:
-        steps = [TestStep(1, "Loop Commissioning 1..."),
-                 TestStep(2, "Loop commissioning 2..."),
-                 TestStep(3, "Loop commissioning 3..."),
-                 TestStep(4, "Loop commissioning 4..."),
-                 TestStep(5, "Loop commissioning 5..."),
-                 TestStep(6, "Loop commissioning 6..."),
-                 TestStep(7, "Loop commissioning 7..."),
-                 TestStep(8, "Loop commissioning 8..."),
-                 TestStep(9, "Loop commissioning 9..."),
-                 TestStep(10, "Loop commissioning 10...")]
-        # steps = [TestStep(1, "Commissioning", is_commissioning=True)]
+        steps = [TestStep(1, "Loop Commissioning ...")]
         return steps
-
-    async def destroy_current_commissioner(self):
-        print("======> destroy_current_commissioner")
-        # if self.commissioner:
-        #     if self.commissioned:
-        #         fabricidx = await self.read_single_attribute_check_success(
-        #             dev_ctrl=self.commissioner,
-        #             cluster=Clusters.OperationalCredentials,
-        #             attribute=Clusters.OperationalCredentials.Attributes.CurrentFabricIndex,
-        #         )
-        #         cmd = Clusters.OperationalCredentials.Commands.RemoveFabric(
-        #             fabricIndex=fabricidx
-        #         )
-        #         await self.send_single_cmd(cmd=cmd)
-        #     self.commissioner.Shutdown()
-        # self.commissioner = None
-        # self.commissioned = False
 
     @async_test_body
     async def teardown_test(self):
-        print("======> teardown_test")
-        await self.destroy_current_commissioner()
         return super().teardown_test()
-    
-    # def _commission_device(self, i) -> bool:
-    #     dev_ctrl = self.default_controller
-    #     conf = self.matter_test_config
-
-    #     # TODO: qr code and manual code aren't lists
-
-    #     if conf.qr_code_content or conf.manual_code:
-    #         info = self.get_setup_payload_info()
-    #     else:
-    #         info = PayloadInfo()
-    #         info.passcode = conf.setup_passcodes[i]
-    #         info.filter_type = ChipDeviceCtrl.DiscoveryFilterType.LONG_DISCRIMINATOR
-    #         info.filter_value = conf.discriminators[i]
-
-    #     if conf.commissioning_method == "on-network":
-    #         return dev_ctrl.CommissionOnNetwork(
-    #             nodeId=conf.dut_node_ids[i],
-    #             setupPinCode=info.passcode,
-    #             filterType=info.filter_type,
-    #             filter=info.filter_value
-    #         )
-    #     elif conf.commissioning_method == "ble-wifi":
-    #         return dev_ctrl.CommissionWiFi(
-    #             info.filter_value,
-    #             info.passcode,
-    #             conf.dut_node_ids[i],
-    #             conf.wifi_ssid,
-    #             conf.wifi_passphrase
-    #         )
-    #     elif conf.commissioning_method == "ble-thread":
-    #         return dev_ctrl.CommissionThread(
-    #             info.filter_value,
-    #             info.passcode,
-    #             conf.dut_node_ids[i],
-    #             conf.thread_operational_dataset
-    #         )
-    #     elif conf.commissioning_method == "on-network-ip":
-    #         logging.warning("==== USING A DIRECT IP COMMISSIONING METHOD NOT SUPPORTED IN THE LONG TERM ====")
-    #         return dev_ctrl.CommissionIP(
-    #             ipaddr=conf.commissionee_ip_address_just_for_testing,
-    #             setupPinCode=info.passcode, nodeid=conf.dut_node_ids[i]
-    #         )
-    #     else:
-    #         raise ValueError("Invalid commissioning method %s!" % conf.commissioning_method)
-
 
     async def commission_and_base_checks(self):
-        # params = self.default_controller.OpenCommissioningWindow(
-        #     nodeid=self.dut_node_id,
-        #     timeout=600,
-        #     iteration=10000,
-        #     discriminator=3842,
-        #     option=1,
-        # )
         errcode = self.commissioner.CommissionOnNetwork(
             nodeId=self.dut_node_id,
             setupPinCode=20202021,
@@ -159,8 +73,6 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         self.commissioned = True
 
     async def create_commissioner(self):
-        if self.commissioner:
-            await self.destroy_current_commissioner()
         new_certificate_authority = (
             self.certificate_authority_manager.NewCertificateAuthority()
         )
@@ -176,43 +88,49 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
 
     @async_test_body
     async def test_TC_COMMISSIONING_1_0(self):
-
         simulatedAppManager = SimulatedAppManager("/root/chip-all-clusters-app")
-
+        print(f"INFO Internal Controll ===========Test Commission Loop=============")
         self.clean_chip_tool_kvs()
+        await self.create_commissioner()
+        conf = self.matter_test_config
 
-        for i in range(1, 11):
-            
-            self.step(i)
-            print(f"======> STEP {i}")
+        interactions = 5
 
+        try:
+            interactions = conf.global_test_params["interactions"]
+        except Exception:
+            pass
 
-            # self.clean_chip_tool_kvs()
+        self.step(1)
+        for i in range(1, interactions + 1):
+            print(
+                f"INFO Internal Controll ===========Begin Commission {i}============="
+            )
 
-            print("======> clean_chip_tool_kvs")
+            print("INFO Internal Controll reset simulated app ")
             simulatedAppManager.clean()
-            print("======> simulatedAppManager.clean")
 
-
+            print("INFO Internal Controll start simulated app ")
             simulatedAppManager.start()
-            print("======> simulatedAppManager.start")
 
-            await self.create_commissioner()
-            print("======> AFTER Commissioner creation")
+            print("INFO Internal Controll start commissioning")
+
             await self.commission_and_base_checks()
-            print("======> AFTER Commission completed")
 
+            print("INFO Internal Controll Waiting 0.5 secs before killing simulator app")
+            time.sleep(0.5)
+            print("INFO Internal Controll stop simulated app")
             simulatedAppManager.stop()
-
-            print("======> AFTER simulatedAppManager.stop")
+            simulatedAppManager.clean()
+            print(f"INFO Internal Controll ===========End Commission {i}=============")
 
     def clean_chip_tool_kvs(self):
         try:
-            subprocess.check_call('rm -f /root/admin_storage.json', shell=True)
+            subprocess.check_call("rm -f /root/admin_storage.json", shell=True)
             print(f"KVS info deleted.")
         except subprocess.CalledProcessError as e:
             print(f"Error deleting KVS info: {e}")
-            sys.exit(1)
+
 
 class SimulatedAppManager:
     def __init__(self, simulatedAppPath):
@@ -222,15 +140,13 @@ class SimulatedAppManager:
     def start(self):
         if self.process is None:
             # # Arguments to pass to the binary
-            arguments = ['--discriminator', '3842', '--KVS', 'kvs1', '--trace_decode', '1']
+            arguments = ["--discriminator", "3842", "--KVS", "kvs1"]
 
             # # Combine the binary path and arguments
             command = ["/root/chip-all-clusters-app"] + arguments
 
             # # Running the binary with the specified arguments
             self.process = subprocess.Popen(command)
-            # self.process = subprocess.Popen(['/root/chip-all-clusters-app'])
-            # self.process = subprocess.Popen(f"{self.simulatedAppPath} --discriminator 3842 --KVS kvs1 --trace_decode 1", shell=True)
             print("Simulated App started.")
         else:
             print("Simulated App already running.")
@@ -239,7 +155,6 @@ class SimulatedAppManager:
         if self.process is not None:
             self.process.send_signal(signal.SIGTERM)
             self.process.wait()  # Wait for the process to exit
-            print("Simulated App stopped.")
             self.process = None
         else:
             print("Simulated App is not running.")
@@ -248,12 +163,18 @@ class SimulatedAppManager:
         if self.process is not None:
             self.stop()  # Simulate App still running?
         try:
-            subprocess.check_call('rm -rf /root/kvs1', shell=True)
-            subprocess.check_call('rm -rf /tmp/chip_*', shell=True)
+            subprocess.check_call("rm -rf /root/kvs1", shell=True)
+            subprocess.check_call("rm -rf /tmp/chip_*", shell=True)
             print(f"KVS info deleted.")
         except subprocess.CalledProcessError as e:
             print(f"Error deleting KVS info: {e}")
+        try:
+            subprocess.check_call("kill -9 $(pidof  chip-all-clusters-app)", shell=True)
+        except subprocess.CalledProcessError as e:
+            print(
+                f"Error while trying to remove possible simulator ghost instances: {e}"
+            )
+
 
 if __name__ == "__main__":
     default_matter_test_main()
-

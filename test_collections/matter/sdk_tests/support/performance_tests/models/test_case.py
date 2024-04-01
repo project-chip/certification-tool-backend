@@ -20,7 +20,7 @@ from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
 from socket import SocketIO
-from typing import Any, Optional, Type, TypeVar
+from typing import Any, Optional, Type, TypeVar, Generator, cast
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
@@ -46,6 +46,7 @@ from .utils import (
     RUNNER_CLASS_PATH,
     commission_device,
     generate_command_arguments,
+    handle_logs,
 )
 
 
@@ -220,8 +221,23 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
+        try:
+            self.sdk_container.destroy()
+        except Exception:
+            pass
 
     def handle_logs_temp(self) -> None:
+        sdk_tests_path = Path(Path(__file__).parents[3])
+        file_output_path = (
+            sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
+        )
+
+        filter_entries = [
+            "INFO Successfully",
+            "INFO Performing next",
+            "INFO Internal Controll",
+        ]
+
         # This is a temporary workaround since Python Test are generating a
         # big amount of log
         sdk_tests_path = Path(Path(__file__).parents[3])
@@ -229,8 +245,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
             sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
         )
         with open(file_output_path) as f:
-            lines = f.read()
-            logger.log(PYTHON_TEST_LEVEL, lines)
+            for line in f:
+                if any(specific_string in line for specific_string in filter_entries):
+                    logger.log(PYTHON_TEST_LEVEL, line)
+            # lines = f.read()
+            # logger.log(PYTHON_TEST_LEVEL, lines)
 
     async def execute(self) -> None:
         try:
@@ -294,12 +313,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
             if len(self.test_steps) == 2:
                 self.next_step()
 
-            logger.info("---- Start of Python test logs ----")
+            logger.info("---- Start of Performance test logs ----")
             self.handle_logs_temp()
             # Uncomment line bellow when the workaround has a definitive solution
             # handle_logs(cast(Generator, exec_result.output), logger)
 
-            logger.info("---- End of Python test logs ----")
+            logger.info("---- End of Performance test logs ----")
 
             self.current_test_step.mark_as_completed()
         finally:
@@ -326,7 +345,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             func(**kwargs)
 
     def create_test_steps(self) -> None:
-        self.test_steps = [TestStep("Start Python test")]
+        self.test_steps = [TestStep("Start Performance test")]
         for step in self.python_test.steps:
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
@@ -336,7 +355,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 class NoCommissioningPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+        # await prompt_for_commissioning_mode(self, logger, None, self.cancel)
 
 
 class LegacyPythonTestCase(PythonTestCase):

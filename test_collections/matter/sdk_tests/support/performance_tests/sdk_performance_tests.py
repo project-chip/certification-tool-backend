@@ -59,12 +59,12 @@ def _init_test_suites(
             version=python_test_version,
         ),
         SuiteType.NO_COMMISSIONING: PythonSuiteDeclaration(
-            name="Performance Test Suite - No commissioning",
+            name="Performance Test Suite",
             suite_type=SuiteType.NO_COMMISSIONING,
             version=python_test_version,
         ),
         SuiteType.LEGACY: PythonSuiteDeclaration(
-            name="Performance Test Suite - Legacy",
+            name="Performance Test Suite",
             suite_type=SuiteType.LEGACY,
             version=python_test_version,
         ),

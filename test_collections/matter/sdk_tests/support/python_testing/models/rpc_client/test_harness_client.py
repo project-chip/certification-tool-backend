@@ -21,12 +21,16 @@ import importlib
 import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
+import subprocess
+
 
 try:
     from matter_yamltests.hooks import TestRunnerHooks
 except ImportError:
+
     class TestRunnerHooks:
         pass
+
 
 sys.path.append("/root/python_testing")
 from matter_testing_support import (
@@ -39,7 +43,6 @@ from matter_testing_support import (
 
 
 class TestRunnerHooks:
-
     def start(self, count: int):
         print("=====> hooks.start")
 
@@ -71,35 +74,51 @@ class TestRunnerHooks:
         print("=====> hooks.step_manual")
 
 
-
-
 def main() -> None:
     # Load python_testing/scripts as a module. This folder is where all python scripts
     # are located
     sys.path.append("/root/python_testing/scripts")
 
-    test_args = sys.argv[2:]
+    test_args1 = sys.argv[2:]
+
+    test_args = configure_interactions(test_args1)
+
+    print(test_args)
+
     config = parse_matter_test_args(test_args)
-
-
-    # run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
 
     # This is a temporary workaround since Python Test are generating a
     # big amount of log
-    # with open("/root/python_testing/test_output.txt", "w") as f:
-    #     with redirect_stdout(f):
-    #         if sys.argv[1] == "commission":
-    #             commission(config)
-    #         else:
-    #             run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
+    with open("/root/python_testing/test_output.txt", "w") as f:
+        with redirect_stdout(f):
+            if sys.argv[1] == "commission":
+                commission(config)
+            else:
+                config.commission_only = False
+                config.commissioning_method = None
+                run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
 
-    config.commission_only = False
-    config.commissioning_method = None
-    run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
+    try:
+        subprocess.check_call("kill $(pidof  chip-all-clusters-app)", shell=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error while trying to remove rogue simulators: {e}")
+    # config.commission_only = False
+    # config.commissioning_method = None
+    # run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
     # with open("/root/python_testing/test_output.txt", "w") as f:
     #     with redirect_stdout(f):
     #         run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
 
+
+def configure_interactions(args) -> []:
+    result = args
+    try:
+        position = sys.argv.index("--interactions")
+        interactions_value = sys.argv[position + 1]
+        result = args + ["--int-arg", f"interactions:{interactions_value}"]
+    except ValueError:
+        pass
+    return result
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
@@ -107,11 +126,22 @@ def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> Non
     module = importlib.import_module(script_path.replace("/", "."))
     TestClassReference = getattr(module, class_name)
 
-    # BaseManager.register(TestRunnerHooks.__name__)
-    # manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
-    # manager.connect()
-    # test_runner_hooks = manager.TestRunnerHooks()  # shared object proxy # type: ignore
-    test_runner_hooks = TestRunnerHooks()
+    manual_execution = 0  # false
+
+    try:
+        manual_execution = sys.argv.index("--cmd-line")
+    except ValueError:
+        pass
+
+    if manual_execution:
+        test_runner_hooks = TestRunnerHooks()
+    else:
+        BaseManager.register(TestRunnerHooks.__name__)
+        manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
+        manager.connect()
+        test_runner_hooks = (
+            manager.TestRunnerHooks()
+        )  # shared object proxy # type: ignore
 
     run_tests(TestClassReference, config, test_runner_hooks)
 
