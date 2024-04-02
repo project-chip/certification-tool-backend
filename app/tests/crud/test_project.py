@@ -20,10 +20,9 @@ from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.tests.utils.project import (
     create_random_project,
     create_random_project_archived,
-    default_config,
 )
 from app.tests.utils.test_run_execution import create_random_test_run_execution
-from app.tests.utils.utils import random_lower_string
+from app.tests.utils.utils import default_matter_config, random_lower_string
 
 
 def test_create_project(db: Session) -> None:
@@ -31,13 +30,22 @@ def test_create_project(db: Session) -> None:
     wifi_ssid = random_lower_string()
     project_in = ProjectCreate(name=name, wifi_ssid=wifi_ssid)
 
-    project_in.config = default_config
+    project_in.config = default_matter_config
+    project = crud.project.create(db=db, obj_in=project_in)
+    assert project.name == name
+
+
+def test_create_project_no_config_informed(db: Session) -> None:
+    name = random_lower_string()
+    wifi_ssid = random_lower_string()
+    project_in = ProjectCreate(name=name, wifi_ssid=wifi_ssid)
+
     project = crud.project.create(db=db, obj_in=project_in)
     assert project.name == name
 
 
 def test_get_project(db: Session) -> None:
-    project = create_random_project(db=db)
+    project = create_random_project(db=db, config=default_matter_config)
 
     stored_project = crud.project.get(db=db, id=project.id)
     assert stored_project
@@ -46,7 +54,7 @@ def test_get_project(db: Session) -> None:
 
 
 def test_project_archive(db: Session) -> None:
-    project = create_random_project(db=db)
+    project = create_random_project(db=db, config=default_matter_config)
     assert project.archived_at is None
 
     archived_project = crud.project.archive(db=db, db_obj=project)
@@ -56,7 +64,7 @@ def test_project_archive(db: Session) -> None:
 
 
 def test_project_unarchive(db: Session) -> None:
-    archived_project = create_random_project_archived(db)
+    archived_project = create_random_project_archived(db, config=default_matter_config)
 
     assert archived_project
     assert archived_project.archived_at is not None
@@ -68,9 +76,9 @@ def test_project_unarchive(db: Session) -> None:
 
 
 def test_get_multi_project(db: Session) -> None:
-    project1 = create_random_project(db)
-    project2 = create_random_project(db)
-    project_archived = create_random_project_archived(db)
+    project1 = create_random_project(db, config=default_matter_config)
+    project2 = create_random_project(db, config=default_matter_config)
+    project_archived = create_random_project_archived(db, config=default_matter_config)
 
     # disable skip and limit, do disable default pagination
     projects = crud.project.get_multi(db=db, skip=None, limit=None)
@@ -83,9 +91,9 @@ def test_get_multi_project(db: Session) -> None:
 
 
 def test_get_multi_project_archived(db: Session) -> None:
-    project1 = create_random_project_archived(db)
-    project2 = create_random_project_archived(db)
-    project_not_archived = create_random_project(db)
+    project1 = create_random_project_archived(db, config=default_matter_config)
+    project2 = create_random_project_archived(db, config=default_matter_config)
+    project_not_archived = create_random_project(db, config=default_matter_config)
 
     # disable skip and limit, do disable default pagination
     projects = crud.project.get_multi(db=db, archived=True, skip=None, limit=None)
@@ -97,7 +105,7 @@ def test_get_multi_project_archived(db: Session) -> None:
 
 
 def test_update_project(db: Session) -> None:
-    project = create_random_project(db=db)
+    project = create_random_project(db=db, config=default_matter_config)
 
     new_name = random_lower_string()
     project_update = ProjectUpdate(name=new_name)
@@ -110,7 +118,7 @@ def test_update_project(db: Session) -> None:
 
 
 def test_delete_project(db: Session) -> None:
-    project = create_random_project(db=db)
+    project = create_random_project(db=db, config=default_matter_config)
 
     project2 = crud.project.remove(db=db, id=project.id)
     assert project2 is not None

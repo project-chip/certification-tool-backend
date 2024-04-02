@@ -26,14 +26,6 @@ from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.utils import program_class
 
 
-class ProjectError(Exception):
-    """
-    Exception raised for errors while handling Projects
-    """
-
-    pass
-
-
 class CRUDProject(
     CRUDBaseRead[Project],
     CRUDBaseDelete[Project],
@@ -70,30 +62,17 @@ class CRUDProject(
     def unarchive(self, db: Session, db_obj: Project) -> Project:
         return self.update(db=db, db_obj=db_obj, obj_in={"archived_at": None})
 
-    def __validate_model(self, obj_in: dict) -> bool:
-        func_name = "validate_model"
-        func_validate_model = getattr(program_class, func_name, None)
-
-        if not func_validate_model:
-            raise AttributeError(f"{func_name} is not a method of {program_class}")
-        if not callable(func_validate_model):
-            raise TypeError(f"{func_name} is not callable")
-
-        return func_validate_model(program_class, obj_in)
-
     # We use a custom create method, to add default config if config is missing
     # and validate de project configuration
     def create(self, db: Session, *, obj_in: ProjectCreate) -> Project:
         json_obj_in = jsonable_encoder(obj_in)
 
-        if not self.__validate_model(json_obj_in):
-            raise ProjectError(
-                "The informed project config has one or more invalid properties."
-            )
-
         if obj_in.config is None or len(obj_in.config) == 0:
             obj_in.config = default_environment_config.__dict__
             json_obj_in = jsonable_encoder(obj_in)
+        # Try to instanciate the program class in order to validate the input date
+        program_class(**json_obj_in["config"])
+
         obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
         db.add(db_obj)
@@ -116,14 +95,13 @@ class CRUDProject(
         else:
             update_data = obj_in.dict(exclude_unset=True)
 
-        if not self.__validate_model(update_data):
-            raise ProjectError(
-                "The informed project config has one or more invalid properties."
-            )
-
         for field in obj_data:
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
+
+        # Try to instanciate the program class in order to validate the input date
+        program_class(**jsonable_encoder(db_obj)["config"])
+
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

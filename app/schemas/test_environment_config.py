@@ -36,14 +36,29 @@ class ThreadAutoConfig(BaseModel):
     otbr_docker_image: Optional[str]
 
 
+class TestEnvironmentConfigError(Exception):
+    """
+    Exception raised while creating new subclass of TestEnvironmentConfig
+    and the validate_model fails.
+    All subclasses of TestEnvironmentConfig must implement validate_model method,
+    and raise TestEnvironmentConfigError exception when the model is not in accordance
+    """
+
+
 class TestEnvironmentConfig(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
 
     # TODO(#490): Need to be refactored to support real PIXIT format
     test_parameters: Optional[dict[str, Any]]
 
-    def validate_model(self, dict_model: dict) -> bool:
-        raise NotImplementedError  # Must be overridden by subclass
+    def __init__(self, **kwargs: Any):
+        try:
+            super().__init__(**kwargs)
+            self.validate_model(dict_model=kwargs)
+        except:
+            raise TestEnvironmentConfigError(
+                "The informed configuration has one or more invalid properties."
+            )
 
-    def program_name(self) -> str:
+    def validate_model(self, dict_model: dict) -> None:
         raise NotImplementedError  # Must be overridden by subclass
