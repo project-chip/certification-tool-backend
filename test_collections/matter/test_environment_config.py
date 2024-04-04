@@ -20,7 +20,6 @@ from pydantic import BaseModel
 
 from app.schemas.test_environment_config import (
     TestEnvironmentConfig,
-    TestEnvironmentConfigError,
     ThreadAutoConfig,
 )
 

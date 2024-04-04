@@ -62,6 +62,17 @@ class CRUDProject(
     def unarchive(self, db: Session, db_obj: Project) -> Project:
         return self.update(db=db, db_obj=db_obj, obj_in={"archived_at": None})
 
+    def __validate_model(self, obj_in: dict) -> bool:
+        func_name = "validate_model"
+        func_validate_model = getattr(program_class, func_name, None)
+
+        if not func_validate_model:
+            raise AttributeError(f"{func_name} is not a method of {program_class}")
+        if not callable(func_validate_model):
+            raise TypeError(f"{func_name} is not callable")
+
+        return func_validate_model(program_class, obj_in)
+
     # We use a custom create method, to add default config if config is missing
     # and validate de project configuration
     def create(self, db: Session, *, obj_in: ProjectCreate) -> Project:

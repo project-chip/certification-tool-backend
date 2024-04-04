@@ -20,6 +20,7 @@ from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.tests.utils.project import (
     create_random_project,
     create_random_project_archived,
+    default_config,
 )
 from app.tests.utils.test_run_execution import create_random_test_run_execution
 from app.tests.utils.utils import default_matter_config, random_lower_string
