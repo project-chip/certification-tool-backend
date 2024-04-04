@@ -18,8 +18,11 @@ from unittest import mock
 import pytest
 
 from app.default_environment_config import default_environment_config
-from app.schemas.test_environment_config import DutConfig, DutPairingModeEnum
 from app.test_engine.logger import test_engine_logger
+from test_collections.matter.test_environment_config import (
+    DutConfig,
+    DutPairingModeEnum,
+)
 
 from ...exec_run_in_container import ExecResultExtended
 from ...python_testing.models.utils import (
@@ -35,7 +38,7 @@ from ...sdk_container import SDKContainer
 @pytest.mark.asyncio
 async def test_generate_command_arguments_with_null_value_attribute() -> None:
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
     mock_config.test_parameters = {"test-argument": None}
 
@@ -63,7 +66,7 @@ async def test_generate_command_arguments_with_null_value_attribute() -> None:
 @pytest.mark.asyncio
 async def test_generate_command_arguments_on_network() -> None:
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
     # Using attributes with both - and _ word separators in test_parameters
     # Both must be considered as python test arguments the way it was configured
@@ -97,7 +100,7 @@ async def test_generate_command_arguments_on_network() -> None:
 @pytest.mark.asyncio
 async def test_generate_command_arguments_ble_wifi() -> None:
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
     mock_config.test_parameters = {
         "paa-trust-store-path": "/paa-root-certs",
@@ -129,7 +132,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
 @pytest.mark.asyncio
 async def test_generate_command_arguments_ble_thread() -> None:
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
     mock_config.test_parameters = {
         "paa-trust-store-path": "/paa-root-certs",
@@ -160,7 +163,7 @@ async def test_generate_command_arguments_ble_thread() -> None:
 @pytest.mark.asyncio
 async def test_generate_command_arguments_no_test_parameter_informed() -> None:
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
     mock_config.test_parameters = None
 
@@ -187,7 +190,7 @@ async def test_generate_command_arguments_no_test_parameter_informed() -> None:
 @pytest.mark.asyncio
 async def test_generate_command_arguments_trace_log_false_informed() -> None:
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
     mock_config.test_parameters = None
 
@@ -214,7 +217,7 @@ async def test_generate_command_arguments_trace_log_false_informed() -> None:
 @pytest.mark.asyncio
 async def test_generate_command_arguments_omit_comissioning_method() -> None:
     # Mock config
-    mock_config = default_environment_config.copy(deep=True)
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
     mock_dut_config = DutConfig(
         discriminator="456",
@@ -256,7 +259,9 @@ async def test_commission_device() -> None:
     ) as mock_handle_logs, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=0
     ):
-        commission_device(default_environment_config, test_engine_logger)
+        commission_device(
+            default_environment_config, test_engine_logger  # type: ignore
+        )
 
     mock_send_command.assert_called_once_with(
         expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
@@ -287,7 +292,9 @@ async def test_commission_device_failure() -> None:
     ), pytest.raises(
         DUTCommissioningError
     ):
-        commission_device(default_environment_config, test_engine_logger)
+        commission_device(
+            default_environment_config, test_engine_logger  # type: ignore
+        )
 
     mock_send_command.assert_called_once_with(
         expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False

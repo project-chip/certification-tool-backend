@@ -14,13 +14,14 @@
 # limitations under the License.
 #
 from http import HTTPStatus
-from typing import List, Sequence
+from typing import List, Sequence, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import crud, models, schemas
+from app.crud.crud_project import ProjectError
 from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
@@ -28,7 +29,7 @@ from app.pics.pics_parser import PICSParser
 from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
-from app.schemas.test_environment_config import DutConfig
+from app.utils import TEST_ENVIRONMENT_CONFIG_NAME
 
 router = APIRouter()
 
@@ -70,36 +71,33 @@ def create_project(
     Returns:
         Project: newly created project record
     """
-    # Validate dut config properties
-    __validate_dut_config(request=request)
+    try:
+        return crud.project.create(db=db, obj_in=project_in)
+    except ProjectError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
 
-    return crud.project.create(db=db, obj_in=project_in)
 
-
-@router.get("/default_config", response_model=schemas.TestEnvironmentConfig)
-def default_config() -> schemas.TestEnvironmentConfig:
+@router.get(
+    "/default_config", response_model=Union[dict, schemas.TestEnvironmentConfig]
+)
+def default_config() -> Union[dict, schemas.TestEnvironmentConfig]:
     """Return default configuration for projects.
 
     Returns:
         List[Project]: List of projects
     """
+    if not default_environment_config:
+        return {
+            "alert": "No program configuration file was found. "
+            "If you want default values for the project configuration, please, "
+            f"create a {TEST_ENVIRONMENT_CONFIG_NAME} file inside "
+            "test_collections/{program} folder"
+        }
+
     return default_environment_config
-
-
-def __validate_dut_config(request: Request) -> None:
-    valid_properties = list(DutConfig.__annotations__.keys())
-
-    if "config" in request._json and "dut_config" in request._json["config"]:
-        dut_config = request._json["config"]["dut_config"]
-
-        for field, _ in dut_config.items():
-            if field not in valid_properties:
-                raise HTTPException(
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-                    detail="The DUT config section has one or more invalid properties"
-                    " informed."
-                    f" The valid properties are: {valid_properties}",
-                )
 
 
 @router.put("/{id}", response_model=schemas.Project)
@@ -122,10 +120,17 @@ def update_project(
     Returns:
         Project: updated project record
     """
-    # Validate dut config properties
-    __validate_dut_config(request=request)
-
-    return crud.project.update(db=db, db_obj=__project(db=db, id=id), obj_in=project_in)
+    try:
+        return crud.project.update(
+            db=db, db_obj=__project(db=db, id=id), obj_in=project_in
+        )
+    except HTTPException:
+        raise
+    except ProjectError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
 
 
 @router.get("/{id}", response_model=schemas.Project)
