@@ -20,8 +20,8 @@ from typing import Generator, cast
 
 import loguru
 
-from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...sdk_container import SDKContainer
 
@@ -31,7 +31,7 @@ EXECUTABLE = "python3"
 
 
 def generate_command_arguments(
-    config: TestEnvironmentConfig, omit_commissioning_method: bool = False
+    config: TestEnvironmentConfigMatter, omit_commissioning_method: bool = False
 ) -> list:
     dut_config = config.dut_config
     test_parameters = config.test_parameters
@@ -74,7 +74,7 @@ class DUTCommissioningError(Exception):
 
 
 def commission_device(
-    config: TestEnvironmentConfig,
+    config: TestEnvironmentConfigMatter,
     logger: loguru.Logger,
 ) -> None:
     sdk_container = SDKContainer(logger)

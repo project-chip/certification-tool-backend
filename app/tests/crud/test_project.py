@@ -20,6 +20,7 @@ from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.tests.utils.project import (
     create_random_project,
     create_random_project_archived,
+    default_config,
 )
 from app.tests.utils.test_run_execution import create_random_test_run_execution
 from app.tests.utils.utils import random_lower_string
@@ -29,6 +30,8 @@ def test_create_project(db: Session) -> None:
     name = random_lower_string()
     wifi_ssid = random_lower_string()
     project_in = ProjectCreate(name=name, wifi_ssid=wifi_ssid)
+
+    project_in.config = default_config
     project = crud.project.create(db=db, obj_in=project_in)
     assert project.name == name
 

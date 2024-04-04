@@ -13,19 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 from pathlib import Path
 
-from app.schemas.test_environment_config import TestEnvironmentConfig
+from app.utils import TEST_COLLECTIONS, program_class, program_config_path
 
 PROJECT_ROOT = Path(__file__).parent.parent
-TEST_ENVIRONMENT_CONFIG_NAME = "default_test_environment.config"
-TEST_ENVIRONMENT_CONFIG_PATH = PROJECT_ROOT / TEST_ENVIRONMENT_CONFIG_NAME
 
-if not TEST_ENVIRONMENT_CONFIG_PATH.is_file():
-    raise RuntimeError("No test environment config found. Recreating from example.")
+test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
 
-default_environment_config = TestEnvironmentConfig.parse_file(
-    TEST_ENVIRONMENT_CONFIG_PATH
-)
+func_name = "parse_file"
+func = getattr(program_class, func_name, None)
 
-default_environment_config.__dict__
+if not func:
+    raise AttributeError(f"{func_name} is not a method of {program_class}")
+if not callable(func):
+    raise TypeError(f"{func_name} is not callable")
+
+default_environment_config = None
+if program_config_path:
+    default_environment_config = func(program_config_path)
+    default_environment_config.__dict__
