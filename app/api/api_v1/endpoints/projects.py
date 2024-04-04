@@ -21,7 +21,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import crud, models, schemas
-from app.crud.crud_project import ProjectError
 from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
