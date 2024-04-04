@@ -18,10 +18,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from app.schemas.test_environment_config import (
-    TestEnvironmentConfig,
-    ThreadAutoConfig,
-)
+from app.schemas.test_environment_config import TestEnvironmentConfig, ThreadAutoConfig
 
 
 class DutPairingModeEnum(str, Enum):
@@ -63,8 +60,8 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
         valid_properties = list(DutConfig.__annotations__.keys())
 
         if dict_model:
-            dut_config = dict_model.get("dut_config")  # type: ignore
-            network = dict_model.get("network")  # type: ignore
+            dut_config = dict_model.get("dut_config")
+            network = dict_model.get("network")
 
             if not dut_config or not network:
                 raise

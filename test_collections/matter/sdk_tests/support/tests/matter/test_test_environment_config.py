@@ -27,12 +27,12 @@ from test_collections.matter.test_environment_config import TestEnvironmentConfi
 def test_create_config_matter_with_valid_config_suceess() -> None:
     config_matter = TestEnvironmentConfigMatter(**default_matter_config)
 
-    assert None != config_matter
+    assert config_matter is not None
 
 
 def test_create_config_matter_with_no_config_fails() -> None:
     try:
-        TestEnvironmentConfigMatter()
+        TestEnvironmentConfigMatter()  # type: ignore
     except TestEnvironmentConfigError as e:
         assert "The informed configuration has one or more invalid properties." == str(
             e
