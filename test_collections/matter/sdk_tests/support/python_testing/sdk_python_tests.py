@@ -64,7 +64,7 @@ def _init_test_suites(
             version=python_test_version,
         ),
         SuiteType.LEGACY: PythonSuiteDeclaration(
-            name="Python Testing Suite - Legacy",
+            name="Python Testing Suite - Old script format",
             suite_type=SuiteType.LEGACY,
             version=python_test_version,
         ),
