@@ -48,7 +48,7 @@ from app.tests.utils.test_run_execution import (
     create_random_test_run_execution_with_test_case_states,
     create_test_run_execution_with_some_test_cases,
 )
-from app.tests.utils.utils import default_matter_config, random_lower_string
+from app.tests.utils.utils import default_th_config, random_lower_string
 from app.tests.utils.validate_json_response import validate_json_response
 from app.utils import remove_title_date
 
@@ -135,7 +135,7 @@ def test_create_test_run_execution_with_selected_tests_project_operator_succeeds
     """
 
     title = "TestRunExecutionFoo"
-    project = create_random_project(db, config=default_matter_config)
+    project = create_random_project(db, config=default_th_config)
     operator = create_random_operator(db)
     json_data = {
         "test_run_execution_in": {
@@ -459,7 +459,7 @@ def test_read_multiple_test_run_executions_by_archived(
 def test_read_multiple_test_run_executions_by_project(
     client: TestClient, db: Session
 ) -> None:
-    project = create_random_project(db, config=default_matter_config)
+    project = create_random_project(db, config=default_th_config)
     test_run_execution = create_random_test_run_execution(db, project_id=project.id)
 
     response = client.get(
@@ -470,7 +470,7 @@ def test_read_multiple_test_run_executions_by_project(
     assert isinstance(content, list)
     assert any(test_run.get("id") == test_run_execution.id for test_run in content)
 
-    project2 = create_random_project(db, config=default_matter_config)
+    project2 = create_random_project(db, config=default_th_config)
     response = client.get(
         f"{settings.API_V1_STR}/test_run_executions?project_id={project2.id}",
     )

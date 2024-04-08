@@ -46,7 +46,7 @@ from app.tests.utils.test_run_execution import (
     random_test_run_execution_dict,
     test_run_execution_base_dict,
 )
-from app.tests.utils.utils import default_matter_config, random_lower_string
+from app.tests.utils.utils import default_th_config, random_lower_string
 
 faker = Faker()
 
@@ -234,7 +234,7 @@ def test_get_test_run_execution_with_state_stats(db: Session) -> None:
 
 
 def test_get_test_run_executions_by_project(db: Session) -> None:
-    project = create_random_project(db, config=default_matter_config)
+    project = create_random_project(db, config=default_th_config)
     test_run_execution = create_random_test_run_execution(db, project_id=project.id)
     archived_test_run_execution = create_random_test_run_execution_archived(
         db, project_id=project.id
@@ -247,7 +247,7 @@ def test_get_test_run_executions_by_project(db: Session) -> None:
     assert any(t.id == test_run_execution.id for t in test_run_executions)
     assert not any(t.id == archived_test_run_execution.id for t in test_run_executions)
 
-    project2 = create_random_project(db, config=default_matter_config)
+    project2 = create_random_project(db, config=default_th_config)
     test_run_executions = crud.test_run_execution.get_multi_with_stats(
         db, project_id=project2.id
     )
@@ -256,7 +256,7 @@ def test_get_test_run_executions_by_project(db: Session) -> None:
 
 
 def test_get_test_run_executions_archived_by_project(db: Session) -> None:
-    project = create_random_project(db, config=default_matter_config)
+    project = create_random_project(db, config=default_th_config)
     test_run_execution = create_random_test_run_execution(db, project_id=project.id)
     archived_test_run_execution = create_random_test_run_execution_archived(
         db, project_id=project.id
@@ -269,7 +269,7 @@ def test_get_test_run_executions_archived_by_project(db: Session) -> None:
     assert not any(t.id == test_run_execution.id for t in test_run_executions)
     assert any(t.id == archived_test_run_execution.id for t in test_run_executions)
 
-    project2 = create_random_project(db, config=default_matter_config)
+    project2 = create_random_project(db, config=default_th_config)
     test_run_executions = crud.test_run_execution.get_multi_with_stats(
         db, project_id=project2.id, archived=True
     )
@@ -449,7 +449,7 @@ def test_get_test_run_executions_by_search_query_archived(db: Session) -> None:
 def test_get_test_run_executions_by_search_query_and_project_id(db: Session) -> None:
     title = "Test Title"
     description = "test description"
-    project = create_random_project(db, config=default_matter_config)
+    project = create_random_project(db, config=default_th_config)
     test_run_execution = create_random_test_run_execution(
         db, title=title, description=description, project_id=project.id
     )

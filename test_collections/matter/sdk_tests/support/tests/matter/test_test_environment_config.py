@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import pytest
+
 from app.schemas.test_environment_config import TestEnvironmentConfigError
-from app.tests.utils.utils import (
+from test_collections.matter.sdk_tests.support.tests.utils.utils import (
     default_config_invalid_dut_added_property,
     default_config_invalid_dut_renamed_property,
     default_config_no_dut,
@@ -31,45 +33,40 @@ def test_create_config_matter_with_valid_config_suceess() -> None:
 
 
 def test_create_config_matter_with_no_config_fails() -> None:
-    try:
+    with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter()  # type: ignore
-    except TestEnvironmentConfigError as e:
         assert "The informed configuration has one or more invalid properties." == str(
             e
         )
 
 
 def test_create_config_matter_with_no_dut_config_fails() -> None:
-    try:
+    with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter(**default_config_no_dut)
-    except TestEnvironmentConfigError as e:
         assert "The informed configuration has one or more invalid properties." == str(
             e
         )
 
 
 def test_create_config_matter_with_invalid_dut_config_renamed_property_fails() -> None:
-    try:
+    with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter(**default_config_invalid_dut_renamed_property)
-    except TestEnvironmentConfigError as e:
         assert "The informed configuration has one or more invalid properties." == str(
             e
         )
 
 
 def test_create_config_matter_with_invalid_dut_config_added_property_fails() -> None:
-    try:
+    with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter(**default_config_invalid_dut_added_property)
-    except TestEnvironmentConfigError as e:
         assert "The informed configuration has one or more invalid properties." == str(
             e
         )
 
 
 def test_create_config_matter_with_no_network_config_fails() -> None:
-    try:
+    with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter(**default_config_no_network)
-    except TestEnvironmentConfigError as e:
         assert "The informed configuration has one or more invalid properties." == str(
             e
         )
