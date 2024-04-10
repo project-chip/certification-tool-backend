@@ -89,7 +89,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
     @async_test_body
     async def test_TC_COMMISSIONING_1_0(self):
         simulatedAppManager = SimulatedAppManager("/root/chip-all-clusters-app")
-        print(f"INFO Internal Controll ===========Test Commission Loop=============")
+        # print(f"INFO Internal Control ===========Test Commission Loop=============")
         self.clean_chip_tool_kvs()
         await self.create_commissioner()
         conf = self.matter_test_config
@@ -103,26 +103,29 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
 
         self.step(1)
         for i in range(1, interactions + 1):
-            print(
-                f"INFO Internal Controll ===========Begin Commission {i}============="
+            logging.info(
+                f"|============== Begin Commission {i} =========================|"
             )
 
-            print("INFO Internal Controll reset simulated app ")
+            logging.info("|============== Accessory LifeCycle =========================|")
+
+            logging.info("INFO Internal Control reset simulated app ")
             simulatedAppManager.clean()
 
-            print("INFO Internal Controll start simulated app ")
+            logging.info("INFO Internal Control start simulated app ")
             simulatedAppManager.start()
 
-            print("INFO Internal Controll start commissioning")
+            logging.info("|============== Commissioning Steps =========================|")
 
             await self.commission_and_base_checks()
 
-            print("INFO Internal Controll Waiting 0.5 secs before killing simulator app")
+            # print("INFO Internal Control Waiting 0.5 secs before killing simulator app")
             time.sleep(0.5)
-            print("INFO Internal Controll stop simulated app")
+            logging.info("|============== Accessory LifeCycle =========================|")
+            logging.info("INFO Internal Control stop simulated app")
             simulatedAppManager.stop()
             simulatedAppManager.clean()
-            print(f"INFO Internal Controll ===========End Commission {i}=============")
+            # print(f"INFO Internal Control ===========End Commission {i}=============")
 
     def clean_chip_tool_kvs(self):
         try:
@@ -178,3 +181,4 @@ class SimulatedAppManager:
 
 if __name__ == "__main__":
     default_matter_test_main()
+

@@ -235,7 +235,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
         filter_entries = [
             "INFO Successfully",
             "INFO Performing next",
-            "INFO Internal Controll",
+            "INFO Internal Control",
+            "'kEstablishing' --> 'kActive'",
+            "Discovered Device:",
+            "|====="
         ]
 
         # This is a temporary workaround since Python Test are generating a
@@ -289,8 +292,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
             exec_result = self.sdk_container.send_command(
                 command,
                 prefix=EXECUTABLE,
-                is_stream=True,
-                is_socket=True,
+                is_stream=False,
+                is_socket=False,
             )
             self.test_socket = exec_result.socket
 
@@ -394,3 +397,4 @@ class LegacyPythonTestCase(PythonTestCase):
                     f"Received unknown prompt option for \
                         commissioning step: {prompt_response.response}"
                 )
+
