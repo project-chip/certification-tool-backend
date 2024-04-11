@@ -22,15 +22,17 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
 
-func_name = "parse_file"
-func = getattr(program_class, func_name, None)
-
-if not func:
-    raise AttributeError(f"{func_name} is not a method of {program_class}")
-if not callable(func):
-    raise TypeError(f"{func_name} is not callable")
-
 default_environment_config = None
-if program_config_path:
-    default_environment_config = func(program_config_path)
-    default_environment_config.__dict__
+
+if program_class:
+    func_name = "parse_file"
+    func = getattr(program_class, func_name, None)
+
+    if not func:
+        raise AttributeError(f"{func_name} is not a method of {program_class}")
+    if not callable(func):
+        raise TypeError(f"{func_name} is not callable")
+
+    if program_config_path:
+        default_environment_config = func(program_config_path)
+        default_environment_config.__dict__

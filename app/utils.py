@@ -275,7 +275,7 @@ def __retrieve_program_conf() -> Tuple[Type, Path]:
 
             return ProgramConfigClassReference, default_config_file
 
-    raise InvalidProgramConfigurationError("The program configuration is invalid")
+    return None, None
 
 
 program_class, program_config_path = __retrieve_program_conf()
