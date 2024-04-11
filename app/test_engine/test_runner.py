@@ -147,7 +147,6 @@ class TestRunner(object, metaclass=Singleton):
             )
 
     async def run(self) -> None:
-        # TODO: Better error handling
         if self.state != TestRunnerState.READY:
             logger.error("Test Runner not ready to run")
             return
@@ -171,7 +170,10 @@ class TestRunner(object, metaclass=Singleton):
 
         self.test_run.subscribe([ui_observer, db_observer])
 
-        await self.test_run.run()
+        try:
+            await self.test_run.run()
+        except Exception as e:
+            logger.error(e)
 
         # Ensure all log messages are sent out
         await log_handler.finish()
