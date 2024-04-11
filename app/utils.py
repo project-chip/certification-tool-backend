@@ -26,9 +26,7 @@ import emails
 from emails.template import JinjaTemplate
 from jose import jwt
 from loguru import logger
-from sqlalchemy import create_engine
 
-from alembic.migration import MigrationContext
 from app.core.config import settings
 from app.models import TestRunExecution
 from app.schemas import TestSelection
@@ -162,24 +160,6 @@ def read_information_from_file(filepath: Path) -> str:
         logger.debug(f"Read #{filepath} file contents")
         with open(filepath) as f:
             return f.readline().rstrip()
-
-
-def get_db_url() -> str:
-    user = os.getenv("POSTGRES_USER", "postgres")
-    password = os.getenv("POSTGRES_PASSWORD", "")
-    server = os.getenv("POSTGRES_SERVER", "db")
-    db = os.getenv("POSTGRES_DB", "app")
-    return f"postgresql://{user}:{password}@{server}/{db}"
-
-
-def get_db_revision() -> str:
-    engine = create_engine(get_db_url())
-    conn = engine.connect()
-
-    context = MigrationContext.configure(conn)
-    current_rev = context.get_current_revision() or "Unknown"
-
-    return current_rev
 
 
 def selected_tests_from_execution(run: TestRunExecution) -> TestSelection:

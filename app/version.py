@@ -19,7 +19,7 @@ from typing import Optional
 
 from loguru import logger
 
-from app import utils
+from app import utils, utils_db
 from app.schemas.test_harness_backend_version import TestHarnessBackendVersion
 
 VERSION_FILENAME = ".version_information"
@@ -38,7 +38,7 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
     """
     version_value = utils.read_information_from_file(VERSION_FILEPATH)
     sha_value = utils.read_information_from_file(SHA_FILEPATH)
-    db_revision = utils.get_db_revision()
+    db_revision = utils_db.get_db_revision()
     sdk_sha_value = read_matter_sdk_sha() or ""
 
     logger.info(f"Test Engine version is {version_value}")
