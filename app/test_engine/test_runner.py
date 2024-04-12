@@ -147,42 +147,44 @@ class TestRunner(object, metaclass=Singleton):
             )
 
     async def run(self) -> None:
-        # TODO: Better error handling
-        if self.state != TestRunnerState.READY:
-            logger.error("Test Runner not ready to run")
-            return
+        try:
+            if self.state != TestRunnerState.READY:
+                logger.error("Test Runner not ready to run")
+                return
 
-        if self.test_run is None:
-            logger.error("Test Run is not loaded")
-            return
+            if self.test_run is None:
+                logger.error("Test Run is not loaded")
+                return
 
-        log_handler = TestLogHandler(self.test_run)
-        test_engine_logger.info("Run Test Runner is Ready")
-        test_engine_logger.info(f"TH Version: {version_information.version}")
-        test_engine_logger.info(f"TH SHA: {version_information.sha}")
-        test_engine_logger.info(f"TH SDK SHA: {version_information.sdk_sha}")
+            log_handler = TestLogHandler(self.test_run)
+            test_engine_logger.info("Run Test Runner is Ready")
+            test_engine_logger.info(f"TH Version: {version_information.version}")
+            test_engine_logger.info(f"TH SHA: {version_information.sha}")
+            test_engine_logger.info(f"TH SDK SHA: {version_information.sdk_sha}")
 
-        # Execute each test suite asynchronously
-        self.__state = TestRunnerState.RUNNING
+            # Execute each test suite asynchronously
+            self.__state = TestRunnerState.RUNNING
 
-        # Init new observers
-        ui_observer = TestUIObserver()
-        db_observer = TestDBObserver(self.__db_generator)
+            # Init new observers
+            ui_observer = TestUIObserver()
+            db_observer = TestDBObserver(self.__db_generator)
 
-        self.test_run.subscribe([ui_observer, db_observer])
+            self.test_run.subscribe([ui_observer, db_observer])
 
-        await self.test_run.run()
+            await self.test_run.run()
 
-        # Ensure all log messages are sent out
-        await log_handler.finish()
+            # Ensure all log messages are sent out
+            await log_handler.finish()
 
-        self.test_run.unsubscribe([ui_observer, db_observer])
+            self.test_run.unsubscribe([ui_observer, db_observer])
 
-        # Flush all pending DB updates
-        db_observer.apply_updates()
+            # Flush all pending DB updates
+            db_observer.apply_updates()
 
-        # Ensure all state updates are sent to the frontend
-        await ui_observer.complete_tasks()
+            # Ensure all state updates are sent to the frontend
+            await ui_observer.complete_tasks()
+        except Exception as e:
+            logger.error(e)
 
         self.__cleanup_run()
 
