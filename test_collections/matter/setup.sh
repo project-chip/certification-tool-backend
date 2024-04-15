@@ -21,7 +21,7 @@ printf "\n\n**********"
 printf "\n*** Installing Matter Dependencies ***\n"
 # TODO Comment on what dependency is required for:
 packagelist=(
-    "apt-transport-https (=2.4.11)"
+    "apt-transport-https (>=2.4.11)"
     "avahi-utils (>=0.8-5ubuntu5.2)"                 # Matter uses Avahi
     "ca-certificates (=20230311ubuntu0.22.04.1)"
     "figlet (=2.2.5-3)"
