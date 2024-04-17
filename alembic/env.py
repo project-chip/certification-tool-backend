@@ -21,7 +21,7 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.db.base import Base  # noqa
-from app import utils
+from app import utils_db
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -58,7 +58,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = utils.get_db_url()
+    url = utils_db.get_db_url()
     context.configure(
         url=url, target_metadata=target_metadata, literal_binds=True, compare_type=True
     )
@@ -75,7 +75,7 @@ def run_migrations_online():
 
     """
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = utils.get_db_url()
+    configuration["sqlalchemy.url"] = utils_db.get_db_url()
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",

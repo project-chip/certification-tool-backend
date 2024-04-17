@@ -16,11 +16,13 @@
 from typing import Optional
 
 from app.models import TestSuiteExecution
-from app.otbr_manager.otbr_manager import ThreadBorderRouter
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
+    ThreadBorderRouter,
+)
 from test_collections.matter.test_environment_config import (
     DutPairingModeEnum,
     TestEnvironmentConfigMatter,
