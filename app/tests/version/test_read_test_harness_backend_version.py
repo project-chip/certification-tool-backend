@@ -19,7 +19,7 @@ from unittest import mock
 
 import pytest
 
-from app import utils
+from app import utils_db
 from app.version import (
     SHA_FILEPATH,
     VERSION_FILEPATH,
@@ -49,7 +49,7 @@ def test_read_test_harness_backend_version() -> None:
     _write_contents_to_file(SHA_FILEPATH, expected_sha_value)
 
     with mock.patch.object(
-        target=utils,
+        target=utils_db,
         attribute="get_db_revision",
         return_value=expected_db_revision,
     ) as mock_utils:
