@@ -116,7 +116,10 @@ def test_create_project_invalid_dut_config(client: TestClient) -> None:
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            f"detail": "The informed configuration has one or more invalid properties."
+            "detail": "The informed configuration has one or more invalid properties. "
+            "Exception message: The field invalid_arg is not a valid dut_config "
+            "configuration: ['discriminator', 'setup_code', 'pairing_mode', "
+            "'chip_timeout', 'chip_use_paa_certs', 'trace_log']"
         },
         expected_keys=["detail"],
     )
@@ -213,13 +216,14 @@ def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> N
         json=invalid_dut_config,
     )
 
-    valid_fields = list(DutConfig.__annotations__.keys())
-
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": "The informed configuration has one or more invalid properties."
+            "detail": "The informed configuration has one or more invalid properties. "
+            "Exception message: The field invalid_arg is not a valid dut_config "
+            "configuration: ['discriminator', 'setup_code', 'pairing_mode', "
+            "'chip_timeout', 'chip_use_paa_certs', 'trace_log']"
         },
         expected_keys=["detail"],
     )
