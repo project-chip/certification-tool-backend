@@ -82,7 +82,8 @@ class CRUDProject(
             obj_in.config = default_environment_config.__dict__
             json_obj_in = jsonable_encoder(obj_in)
         # Try to instanciate the program class in order to validate the input data
-        program_class(**json_obj_in["config"])
+        if program_class:
+            program_class(**json_obj_in["config"])
 
         obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
@@ -111,7 +112,8 @@ class CRUDProject(
                 setattr(db_obj, field, update_data[field])
 
         # Try to instanciate the program class in order to validate the input data
-        program_class(**jsonable_encoder(db_obj)["config"])
+        if program_class:
+            program_class(**jsonable_encoder(db_obj)["config"])
 
         db.add(db_obj)
         db.commit()
