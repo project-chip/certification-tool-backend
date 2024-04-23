@@ -225,7 +225,7 @@ def __retrieve_program_class(test_folder_file_name: Path) -> str:
     return classes[0].name
 
 
-def __retrieve_program_conf() -> Tuple[Type, Path]:
+def __retrieve_program_conf() -> Tuple[Optional[Type], Optional[Path]]:
     PROJECT_ROOT = Path(__file__).parent.parents[0]
 
     test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
