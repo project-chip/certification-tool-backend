@@ -21,6 +21,10 @@ from pydantic import BaseModel
 from app.schemas.test_environment_config import TestEnvironmentConfig, ThreadAutoConfig
 
 
+class TestEnvironmentConfigMatterError(Exception):
+    """Raised when the validation for the matter config fails"""
+
+
 class DutPairingModeEnum(str, Enum):
     ON_NETWORK = "onnetwork"
     BLE_WIFI = "ble-wifi"
@@ -64,16 +68,23 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
             network = dict_model.get("network")
 
             if not dut_config or not network:
-                raise
+                raise TestEnvironmentConfigMatterError(
+                    "The dut_config and network configuration are mandatories"
+                )
 
             # Check if the informed field in dut_config is valid
             for field, _ in dut_config.items():
                 if field not in valid_properties:
-                    raise
+                    raise TestEnvironmentConfigMatterError(
+                        f"The field {field} is not a valid dut_config configuration:"
+                        f" {valid_properties}"
+                    )
 
             # All DutConfig fields but chip_timeout are mandatory
             mandatory_fields = valid_properties.copy()
             mandatory_fields.remove("chip_timeout")
             for field in mandatory_fields:
                 if field not in dut_config:
-                    raise
+                    raise TestEnvironmentConfigMatterError(
+                        f"The field {field} is required for dut_config configuration"
+                    )

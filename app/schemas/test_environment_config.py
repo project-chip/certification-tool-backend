@@ -55,9 +55,10 @@ class TestEnvironmentConfig(BaseModel):
         try:
             super().__init__(**kwargs)
             self.validate_model(dict_model=kwargs)
-        except Exception:
+        except Exception as e:
             raise TestEnvironmentConfigError(
                 "The informed configuration has one or more invalid properties."
+                f" Exception message: {str(e)}"
             )
 
     def validate_model(self, dict_model: dict) -> None:
