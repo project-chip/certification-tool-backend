@@ -21,7 +21,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import crud, models, schemas
-from app.crud.crud_project import ProjectError
 from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
@@ -29,6 +28,7 @@ from app.pics.pics_parser import PICSParser
 from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
+from app.schemas.test_environment_config import TestEnvironmentConfigError
 from app.utils import TEST_ENVIRONMENT_CONFIG_NAME
 
 router = APIRouter()
@@ -73,7 +73,7 @@ def create_project(
     """
     try:
         return crud.project.create(db=db, obj_in=project_in)
-    except ProjectError as e:
+    except TestEnvironmentConfigError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(e),
@@ -126,7 +126,7 @@ def update_project(
         )
     except HTTPException:
         raise
-    except ProjectError as e:
+    except TestEnvironmentConfigError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(e),
