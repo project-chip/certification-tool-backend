@@ -98,7 +98,7 @@
     "ignorePaths": [
         "logs",
         "test_collections/matter/python_tests/onboarding_payload_test_suite/",
-        "app/otbr_manager/avahi/avahi-daemon.conf",
+        "test_collections/matter/sdk_tests/support/otbr_manager/avahi/avahi-daemon.conf",
         "*.ini",
         "*.toml",
         "docker-compose*",
