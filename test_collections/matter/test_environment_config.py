@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2024 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ from typing import Optional, Union
 from pydantic import BaseModel
 
 from app.schemas.test_environment_config import TestEnvironmentConfig, ThreadAutoConfig
+
+
+class TestEnvironmentConfigMatterError(Exception):
+    """Raised when the validation for the matter config fails"""
 
 
 class DutPairingModeEnum(str, Enum):
@@ -56,29 +60,31 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
     network: NetworkConfig
     dut_config: DutConfig
 
-    def validate_model(self, dict_model: dict) -> bool:
+    def validate_model(self, dict_model: dict) -> None:
         valid_properties = list(DutConfig.__annotations__.keys())
 
-        if dict_model and dict_model.get("config"):
-            dut_config = dict_model.get("config").get("dut_config")  # type: ignore
-            network = dict_model.get("config").get("network")  # type: ignore
+        if dict_model:
+            dut_config = dict_model.get("dut_config")
+            network = dict_model.get("network")
 
             if not dut_config or not network:
-                return False
+                raise TestEnvironmentConfigMatterError(
+                    "The dut_config and network configuration are mandatories"
+                )
 
             # Check if the informed field in dut_config is valid
             for field, _ in dut_config.items():
                 if field not in valid_properties:
-                    return False
+                    raise TestEnvironmentConfigMatterError(
+                        f"The field {field} is not a valid dut_config configuration:"
+                        f" {valid_properties}"
+                    )
 
             # All DutConfig fields but chip_timeout are mandatory
             mandatory_fields = valid_properties.copy()
             mandatory_fields.remove("chip_timeout")
             for field in mandatory_fields:
                 if field not in dut_config:
-                    return False
-
-        return True
-
-    def program_name(self) -> str:
-        return "Matter"
+                    raise TestEnvironmentConfigMatterError(
+                        f"The field {field} is required for dut_config configuration"
+                    )

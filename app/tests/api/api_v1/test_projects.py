@@ -19,6 +19,7 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any
 
+from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -32,6 +33,7 @@ from app.tests.utils.project import (
     create_random_project_archived,
 )
 from app.tests.utils.test_pics_data import create_random_project_with_pics
+from app.tests.utils.utils import default_th_config
 from app.tests.utils.validate_json_response import validate_json_response
 from test_collections.matter.test_environment_config import (
     DutConfig,
@@ -114,7 +116,10 @@ def test_create_project_invalid_dut_config(client: TestClient) -> None:
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            f"detail": "The informed project config has one or more invalid properties."
+            "detail": "The informed configuration has one or more invalid properties. "
+            "Exception message: The field invalid_arg is not a valid dut_config "
+            "configuration: ['discriminator', 'setup_code', 'pairing_mode', "
+            "'chip_timeout', 'chip_use_paa_certs', 'trace_log']"
         },
         expected_keys=["detail"],
     )
@@ -133,7 +138,7 @@ def test_default_project_config(client: TestClient) -> None:
 
 
 def test_read_project(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config=default_th_config)
     response = client.get(
         f"{settings.API_V1_STR}/projects/{project.id}",
     )
@@ -150,8 +155,8 @@ def test_read_project(client: TestClient, db: Session) -> None:
 
 
 def test_read_multiple_project(client: TestClient, db: Session) -> None:
-    project1 = create_random_project(db)
-    project2 = create_random_project(db)
+    project1 = create_random_project(db, config=default_th_config)
+    project2 = create_random_project(db, config=default_th_config)
     limit = db.scalar(select(func.count(Project.id))) or 0
     response = client.get(
         f"{settings.API_V1_STR}/projects?limit={limit}",
@@ -164,7 +169,7 @@ def test_read_multiple_project(client: TestClient, db: Session) -> None:
 
 
 def test_read_multiple_project_by_archived(client: TestClient, db: Session) -> None:
-    archived = create_random_project_archived(db)
+    archived = create_random_project_archived(db, config=default_th_config)
     limit = db.scalar(select(func.count(Project.id))) or 0
 
     response = client.get(
@@ -185,8 +190,10 @@ def test_read_multiple_project_by_archived(client: TestClient, db: Session) -> N
 
 
 def test_update_project(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
-    data = {"name": "Updated Name"}
+    project = create_random_project(db, config=default_th_config)
+    data = jsonable_encoder(project)
+    data["name"] = "Updated Name"
+
     response = client.put(
         f"{settings.API_V1_STR}/projects/{project.id}",
         json=data,
@@ -203,26 +210,27 @@ def test_update_project(client: TestClient, db: Session) -> None:
 
 
 def test_update_project_invalid_dut_config(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config=default_th_config)
     response = client.put(
         f"{settings.API_V1_STR}/projects/{project.id}",
         json=invalid_dut_config,
     )
 
-    valid_fields = list(DutConfig.__annotations__.keys())
-
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
         expected_content={
-            "detail": "The informed project config has one or more invalid properties."
+            "detail": "The informed configuration has one or more invalid properties. "
+            "Exception message: The field invalid_arg is not a valid dut_config "
+            "configuration: ['discriminator', 'setup_code', 'pairing_mode', "
+            "'chip_timeout', 'chip_use_paa_certs', 'trace_log']"
         },
         expected_keys=["detail"],
     )
 
 
 def test_delete_project(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config=default_th_config)
     response = client.delete(f"{settings.API_V1_STR}/projects/{project.id}")
     validate_json_response(
         response=response,
@@ -235,7 +243,7 @@ def test_delete_project(client: TestClient, db: Session) -> None:
 
 
 def test_archive_project(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config=default_th_config)
     response = client.post(f"{settings.API_V1_STR}/projects/{project.id}/archive")
     validate_json_response(
         response=response,
@@ -249,7 +257,7 @@ def test_archive_project(client: TestClient, db: Session) -> None:
 
 
 def test_unarchive_project(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config=default_th_config)
     response = client.post(f"{settings.API_V1_STR}/projects/{project.id}/unarchive")
     validate_json_response(
         response=response,
@@ -266,7 +274,7 @@ def test_operations_missing_test_run(client: TestClient, db: Session) -> None:
     """Test HTTP errors when attempting operations on an invalid record id.
 
     Will create and delete a project, to ensure the id is invalid."""
-    test_run = create_random_project(db)
+    test_run = create_random_project(db, config=default_th_config)
     id = test_run.id
     crud.project.remove(db=db, id=id)
 
@@ -315,7 +323,7 @@ def test_operations_missing_test_run(client: TestClient, db: Session) -> None:
 
 
 def test_upload_pics(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config=default_th_config)
     pics_file = Path(__file__).parent.parent.parent / "utils" / "test_pics.xml"
     upload_files = {"file": pics_file.read_text()}
     response = client.put(
@@ -328,7 +336,7 @@ def test_upload_pics(client: TestClient, db: Session) -> None:
 
 
 def test_pics_cluster_type(client: TestClient, db: Session) -> None:
-    project = create_random_project_with_pics(db=db)
+    project = create_random_project_with_pics(db=db, config=default_th_config)
 
     cluster_name = "On/Off"
     pics_cluster_type_url = (
@@ -344,7 +352,7 @@ def test_pics_cluster_type(client: TestClient, db: Session) -> None:
 
 
 def test_applicable_test_cases(client: TestClient, db: Session) -> None:
-    project = create_random_project_with_pics(db=db)
+    project = create_random_project_with_pics(db=db, config=default_th_config)
     # retrieve applicable test cases
     response = client.get(
         f"{settings.API_V1_STR}/projects/{project.id}/applicable_test_cases",
@@ -357,7 +365,7 @@ def test_applicable_test_cases(client: TestClient, db: Session) -> None:
 
 
 def test_applicable_test_cases_empty_pics(client: TestClient, db: Session) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config=default_th_config)
 
     # retrieve applicable test cases
     response2 = client.get(
