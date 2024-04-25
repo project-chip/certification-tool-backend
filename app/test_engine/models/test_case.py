@@ -49,7 +49,7 @@ class TestCase(TestObservable):
     def test_parameters(self) -> dict[str, Any]:
         config_dict = cast(dict, self.config)
 
-        if config_dict and config_dict.get("test_parameters") is None:
+        if not config_dict or config_dict.get("test_parameters") is None:
             return self.default_test_parameters()
         else:
             test_parameters = config_dict.get("test_parameters")
