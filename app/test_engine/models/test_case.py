@@ -266,14 +266,14 @@ class TestCase(TestObservable):
 
     def mark_step_failure(self, msg: Union[str, Exception]) -> None:
         if isinstance(msg, str):
-            message: str = msg    
-        if isinstance(msg, Exception):
+            message: str = msg
+        elif isinstance(msg, Exception):
             message: str = str(msg)
         else:
             # We need to guarantee the type of msg.
             # Otherwise it will fail to register in the database.
             message = "mark_step_failure(): \
-                The failure message must be of type 'str'"
+                The failure message parameter must be of type 'str' or 'Exception'"
             logger.error(message)
 
         self.current_test_step.append_failure(message)
