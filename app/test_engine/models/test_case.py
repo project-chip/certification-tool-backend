@@ -266,7 +266,7 @@ class TestCase(TestObservable):
 
     def mark_step_failure(self, msg: str) -> None:
         message: str = msg
-        
+
         # We need to guarantee the type of msg. 
         # Otherwise it will fail to register in the database.
         if not isinstance(msg, str):
