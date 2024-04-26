@@ -272,7 +272,6 @@ class TestCase(TestObservable):
         if not isinstance(msg, str):
             message = f"mark_step_failure(): The failure message must be of type 'str'"
             logger.error(message)
-            return
         
         self.current_test_step.append_failure(message)
 
