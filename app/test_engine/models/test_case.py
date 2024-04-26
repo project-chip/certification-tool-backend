@@ -265,7 +265,19 @@ class TestCase(TestObservable):
     ###
 
     def mark_step_failure(self, msg: str) -> None:
-        self.current_test_step.append_failure(msg)
+        message: str = msg
+        
+        # We need to guarantee the type of msg. 
+        # Otherwise it will fail to register in the database.
+        if not isinstance(msg, str):
+            message = f"mark_step_failure(): The failure message must be of type 'str'"
+            logger.error(message)
+            return
+        
+        self.current_test_step.append_failure(message)
+
+    def mark_step_failure(self, error: Exception) -> None:
+        self.mark_step_failure(msg=str(error))
 
     def next_step(self) -> None:
         if self.current_test_step_index + 1 >= len(self.test_steps):
