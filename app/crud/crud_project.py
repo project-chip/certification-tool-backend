@@ -81,7 +81,7 @@ class CRUDProject(
         if obj_in.config is None or len(obj_in.config) == 0:
             obj_in.config = default_environment_config.__dict__
             json_obj_in = jsonable_encoder(obj_in)
-        # Try to instanciate the program class in order to validate the input data
+        # Try to instantiate the program class in order to validate the input data
         if program_class:
             program_class(**json_obj_in["config"])
 
@@ -111,7 +111,7 @@ class CRUDProject(
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
 
-        # Try to instanciate the program class in order to validate the input data
+        # Try to instantiate the program class in order to validate the input data
         if program_class:
             program_class(**jsonable_encoder(db_obj)["config"])
 

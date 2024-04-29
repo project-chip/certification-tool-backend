@@ -26,7 +26,7 @@ from test_collections.matter.sdk_tests.support.tests.utils.utils import (
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 
-def test_create_config_matter_with_valid_config_suceess() -> None:
+def test_create_config_matter_with_valid_config_success() -> None:
     config_matter = TestEnvironmentConfigMatter(**default_matter_config)
 
     assert config_matter is not None
