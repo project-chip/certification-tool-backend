@@ -69,7 +69,7 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
 
             if not dut_config or not network:
                 raise TestEnvironmentConfigMatterError(
-                    "The dut_config and network configuration are mandatories"
+                    "The dut_config and network configuration are mandatory"
                 )
 
             # Check if the informed field in dut_config is valid
