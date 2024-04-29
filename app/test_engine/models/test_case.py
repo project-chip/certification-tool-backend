@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from asyncio import CancelledError
-from typing import Any, List, cast
+from typing import Any, List, Union, cast
 
 from app.models import Project, TestCaseExecution
 from app.models.test_enums import TestStateEnum
@@ -264,8 +264,15 @@ class TestCase(TestObservable):
     # Helpers
     ###
 
-    def mark_step_failure(self, msg: str) -> None:
-        self.current_test_step.append_failure(msg)
+    def mark_step_failure(self, msg: Union[str, Exception]) -> None:
+        message = "The failure message parameter \
+            must be of type 'str' or 'Exception'"
+        if isinstance(msg, str):
+            message = msg
+        elif isinstance(msg, Exception):
+            message = str(msg)
+
+        self.current_test_step.append_failure(message)
 
     def next_step(self) -> None:
         if self.current_test_step_index + 1 >= len(self.test_steps):
