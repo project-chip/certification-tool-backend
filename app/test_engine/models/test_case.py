@@ -49,20 +49,16 @@ class TestCase(TestObservable):
     def test_parameters(self) -> dict[str, Any]:
         config_dict = cast(dict, self.config)
 
-        if not config_dict or config_dict.get("test_parameters") is None:
-            return self.default_test_parameters()
-        else:
-            test_parameters = config_dict.get("test_parameters")
-            all_test_parameters = (
-                self.default_test_parameters() | test_parameters  # type: ignore
-            )
+        default_test_parameters = self.default_test_parameters()
 
-        # filter test_parameters to only contain relevant test_parameters from
-        # default_test_parameters
-        return {
-            name: all_test_parameters[name]
-            for name in self.default_test_parameters().keys()
-        }
+        if config_dict and config_dict.get("test_parameters"):
+            test_parameters = default_test_parameters | config_dict.get(
+                "test_parameters"
+            )  # type: ignore
+        else:
+            test_parameters = default_test_parameters
+
+        return test_parameters
 
     def __init__(self, test_case_execution: TestCaseExecution):
         super().__init__()

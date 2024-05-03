@@ -95,12 +95,12 @@ def test_test_case_test_params_merged() -> None:
             == DEFAULT_TEST_PARAMETERS[TEST_PARAMETER_NAME_2]
         )
 
-        # Assert parameter 3 is NOT present as it is not in default test parameters
-        assert TEST_PARAMETER_NAME_3 not in case.test_parameters
+        # Assert parameter 3 is present even it is not in default test parameters
+        assert TEST_PARAMETER_NAME_3 in case.test_parameters
 
 
 def test_test_case_no_test_parameters() -> None:
-    """Test that a TestCase without default test parameters will not have runtime test
+    """Test that a TestCase without default test parameters will have runtime test
     parameters.
     """
     mock_config = default_environment_config.copy(deep=True)  # type: ignore
@@ -118,7 +118,8 @@ def test_test_case_no_test_parameters() -> None:
         case = NoDefaultTestParamsTestCase(
             test_case_execution=MagicMock(spec=TestCaseExecution)
         )
-        assert case.test_parameters == {}
+        assert case.test_parameters[TEST_PARAMETER_NAME_1] == 11
+        assert case.test_parameters[TEST_PARAMETER_NAME_3] == 333
 
 
 def test_test_case_cancel_test_case() -> None:
