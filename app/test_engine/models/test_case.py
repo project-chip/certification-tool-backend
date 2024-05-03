@@ -52,10 +52,7 @@ class TestCase(TestObservable):
         test_parameters = self.default_test_parameters()
 
         if config_dict and config_dict.get("test_parameters"):
-            test_parameters |= config_dict.get(  # type: ignore
-                "test_parameters"
-            )
-
+            test_parameters |= config_dict.get("test_parameters")  # type: ignore
 
         return test_parameters
 
