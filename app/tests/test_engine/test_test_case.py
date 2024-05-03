@@ -95,7 +95,7 @@ def test_test_case_test_params_merged() -> None:
             == DEFAULT_TEST_PARAMETERS[TEST_PARAMETER_NAME_2]
         )
 
-        # Assert parameter 3 is present even it is not in default test parameters
+        # Assert parameter 3 is present even if it is not in default test parameters
         assert TEST_PARAMETER_NAME_3 in case.test_parameters
 
 

@@ -49,14 +49,13 @@ class TestCase(TestObservable):
     def test_parameters(self) -> dict[str, Any]:
         config_dict = cast(dict, self.config)
 
-        default_test_parameters = self.default_test_parameters()
+        test_parameters = self.default_test_parameters()
 
         if config_dict and config_dict.get("test_parameters"):
-            test_parameters = default_test_parameters | config_dict.get(  # type: ignore
+            test_parameters |= config_dict.get(  # type: ignore
                 "test_parameters"
             )
-        else:
-            test_parameters = default_test_parameters
+
 
         return test_parameters
 
