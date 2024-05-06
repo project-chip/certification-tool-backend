@@ -25,7 +25,6 @@ from app.models.test_enums import TestStateEnum
 from app.schemas import TestSelection
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.tests.utils.project import create_random_project
-from app.tests.utils.utils import default_th_config
 
 fake = Faker()
 
@@ -86,7 +85,7 @@ def create_random_test_run_execution(
     test_run_execution_dict = random_test_run_execution_dict(**kwargs)
 
     if test_run_execution_dict.get("project_id") is None:
-        project = create_random_project(db, config=default_th_config)
+        project = create_random_project(db, config={})
         test_run_execution_dict["project_id"] = project.id
 
     test_run_execution_in = TestRunExecutionCreate(**test_run_execution_dict)
