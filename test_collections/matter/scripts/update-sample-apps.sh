@@ -16,7 +16,6 @@
  # limitations under the License.
 MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/..)
 
-printf "\n\n**********"
 printf "\n*** Update Matter Sample Apps ***\n"
 
 # We are fetching SDK docker image and tag name from backend
