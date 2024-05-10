@@ -22,7 +22,7 @@ set -e
 #
 # Will copy PAA certificates from SDK repository
 #
-# Environment variables can be used to override behavior 
+# Environment variables can be used to override behaviour 
 # - SDK_PATH (When set, SDK_SHA is ignored)
 # - SDK_SHA 
 

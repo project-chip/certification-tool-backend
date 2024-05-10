@@ -16,9 +16,6 @@
  # limitations under the License.
 MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/..)
 
-printf "\n\n**********"
-printf "\n*** Update Matter Sample Apps ***\n"
-
 # We are fetching SDK docker image and tag name from backend
 # This is done to minimize the places the SDK version is tracked.
 SDK_DOCKER_IMAGE=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_DOCKER_IMAGE | cut -d'"' -f 2 | cut -d"'" -f 2)
