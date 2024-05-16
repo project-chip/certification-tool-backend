@@ -43,6 +43,11 @@ kConfigureTrustedTimeSource = 19
 
 
 class TC_COMMISSIONING_1_0(MatterBaseTest):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.additional_steps = []
+
     def setup_class(self):
         self.commissioner = None
         self.commissioned = False
@@ -53,8 +58,12 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         return "[TC-COMMISSIONING-1.0] Performance"
 
     def steps_TC_COMMISSIONING_1_0(self) -> list[TestStep]:
-        steps = [TestStep(1, "Loop Commissioning ...")]
-        return steps
+        steps = [TestStep(1, "Loop Commissioning ... 1")]
+
+        if len(self.additional_steps) > 0:
+            return self.additional_steps
+        else:
+            return steps
 
     @async_test_body
     async def teardown_test(self):
@@ -98,11 +107,17 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
 
         try:
             interactions = conf.global_test_params["interactions"]
+            logging.info(f"INFO Internal Control Interaction: {interactions} ")
         except Exception:
             pass
 
-        self.step(1)
+        for i in range(1, interactions+1):
+            self.additional_steps.insert(i,TestStep(i, f"Loop Commissioning ... {i}"))
+
+
         for i in range(1, interactions + 1):
+            self.step(i)
+
             logging.info(
                 f"|============== Begin Commission {i} =========================|"
             )
@@ -126,7 +141,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
             simulatedAppManager.stop()
             simulatedAppManager.clean()
             # print(f"INFO Internal Control ===========End Commission {i}=============")
-
+            
     def clean_chip_tool_kvs(self):
         try:
             subprocess.check_call("rm -f /root/admin_storage.json", shell=True)

@@ -31,6 +31,8 @@ class TestCaseMetadata(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     public_id: Mapped[str] = mapped_column(nullable=False)
 
+    count: Mapped[str] = mapped_column(Text, nullable=True)
+
     title: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     version: Mapped[str] = mapped_column(nullable=False)
