@@ -122,15 +122,22 @@ class TestSuite(TestObservable):
         logger.info(
             f"Test Suite Completed [{self.state.name}]: {self.metadata['title']}"
         )
+        self.__print_log_separator()
 
     def mark_as_executing(self) -> None:
         self.state = TestStateEnum.EXECUTING
+        self.__print_log_separator()
         logger.info(f"Test Suite Executing: {self.metadata['title']}")
 
     def record_error(self, msg: str) -> None:
         self.errors.append(msg)
         logger.error(f"Test Suite Error: {msg}")
         self.notify()
+
+    def __print_log_separator(self) -> None:
+        logger.info(
+            "##########################################################################"
+        )
 
     #######
     # Running with error handling

@@ -59,6 +59,7 @@ class TestStep(TestObservable):
         # TODO: Do we need to check state before? as a precondition, and raise an
         # exception if not met?
         self.state = TestStateEnum.EXECUTING
+        self.__print_log_separator()
         logger.info(f"Executing Test Step: {self.name}")
 
     def mark_as_not_applicable(self, msg: str) -> None:
@@ -87,3 +88,9 @@ class TestStep(TestObservable):
             self.state = TestStateEnum.PASSED
 
         logger.info(f"Test Step Completed [{self.state.name}]: {self.name}")
+        self.__print_log_separator()
+
+    def __print_log_separator(self) -> None:
+        logger.info(
+            "--------------------------------------------------------------------------"
+        )

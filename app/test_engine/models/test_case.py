@@ -171,9 +171,11 @@ class TestCase(TestObservable):
             return
         self.state = self.__compute_state()
         logger.info(f"Test Case Completed[{self.state.name}]: {self.metadata['title']}")
+        self.__print_log_separator()
 
     def mark_as_executing(self) -> None:
         self.state = TestStateEnum.EXECUTING
+        self.__print_log_separator()
         logger.info(f"Executing Test Case: {self.metadata['title']}")
 
     ###
@@ -278,6 +280,11 @@ class TestCase(TestObservable):
         # update current step
         self.current_test_step_index += 1
         self.current_test_step.mark_as_executing()
+
+    def __print_log_separator(self) -> None:
+        logger.info(
+            "=========================================================================="
+        )
 
     ###
     # Below is expected to be overridden by each test script
