@@ -18,6 +18,7 @@ from typing import List, Optional
 from app.models.test_enums import TestStateEnum
 from app.models.test_step_execution import TestStepExecution
 from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
 
 
@@ -91,4 +92,4 @@ class TestStep(TestObservable):
         self.__print_log_separator()
 
     def __print_log_separator(self) -> None:
-        logger.info("-" * 80)
+        logger.info(LogSeparator.TEST_STEP.value)

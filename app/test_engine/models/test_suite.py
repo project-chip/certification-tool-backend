@@ -21,6 +21,7 @@ from app.models.test_enums import TestStateEnum
 from app.schemas.pics import PICS
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
 from app.test_engine.test_observer import Observer
 
@@ -135,7 +136,7 @@ class TestSuite(TestObservable):
         self.notify()
 
     def __print_log_separator(self) -> None:
-        logger.info("#" * 80)
+        logger.info(LogSeparator.TEST_SUITE.value)
 
     #######
     # Running with error handling

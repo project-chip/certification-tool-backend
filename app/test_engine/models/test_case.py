@@ -20,6 +20,7 @@ from app.models import Project, TestCaseExecution
 from app.models.test_enums import TestStateEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
 from app.test_engine.test_observer import Observer
 
@@ -282,7 +283,7 @@ class TestCase(TestObservable):
         self.current_test_step.mark_as_executing()
 
     def __print_log_separator(self) -> None:
-        logger.info("=" * 80)
+        logger.info(LogSeparator.TEST_CASE.value)
 
     ###
     # Below is expected to be overridden by each test script
