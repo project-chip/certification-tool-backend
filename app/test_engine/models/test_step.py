@@ -18,6 +18,7 @@ from typing import List, Optional
 from app.models.test_enums import TestStateEnum
 from app.models.test_step_execution import TestStepExecution
 from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
 
 
@@ -59,6 +60,7 @@ class TestStep(TestObservable):
         # TODO: Do we need to check state before? as a precondition, and raise an
         # exception if not met?
         self.state = TestStateEnum.EXECUTING
+        self.__print_log_separator()
         logger.info(f"Executing Test Step: {self.name}")
 
     def mark_as_not_applicable(self, msg: str) -> None:
@@ -87,3 +89,7 @@ class TestStep(TestObservable):
             self.state = TestStateEnum.PASSED
 
         logger.info(f"Test Step Completed [{self.state.name}]: {self.name}")
+        self.__print_log_separator()
+
+    def __print_log_separator(self) -> None:
+        logger.info(LogSeparator.TEST_STEP.value)

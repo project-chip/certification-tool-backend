@@ -20,6 +20,7 @@ from app.models import Project, TestCaseExecution
 from app.models.test_enums import TestStateEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
 from app.test_engine.test_observer import Observer
 
@@ -171,9 +172,11 @@ class TestCase(TestObservable):
             return
         self.state = self.__compute_state()
         logger.info(f"Test Case Completed[{self.state.name}]: {self.metadata['title']}")
+        self.__print_log_separator()
 
     def mark_as_executing(self) -> None:
         self.state = TestStateEnum.EXECUTING
+        self.__print_log_separator()
         logger.info(f"Executing Test Case: {self.metadata['title']}")
 
     ###
@@ -278,6 +281,9 @@ class TestCase(TestObservable):
         # update current step
         self.current_test_step_index += 1
         self.current_test_step.mark_as_executing()
+
+    def __print_log_separator(self) -> None:
+        logger.info(LogSeparator.TEST_CASE.value)
 
     ###
     # Below is expected to be overridden by each test script
