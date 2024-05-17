@@ -135,9 +135,7 @@ class TestSuite(TestObservable):
         self.notify()
 
     def __print_log_separator(self) -> None:
-        logger.info(
-            "##########################################################################"
-        )
+        logger.info("#" * 80)
 
     #######
     # Running with error handling

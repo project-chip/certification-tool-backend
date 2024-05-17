@@ -282,9 +282,7 @@ class TestCase(TestObservable):
         self.current_test_step.mark_as_executing()
 
     def __print_log_separator(self) -> None:
-        logger.info(
-            "=========================================================================="
-        )
+        logger.info("=" * 80)
 
     ###
     # Below is expected to be overridden by each test script

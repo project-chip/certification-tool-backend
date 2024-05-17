@@ -91,6 +91,4 @@ class TestStep(TestObservable):
         self.__print_log_separator()
 
     def __print_log_separator(self) -> None:
-        logger.info(
-            "--------------------------------------------------------------------------"
-        )
+        logger.info("-" * 80)
