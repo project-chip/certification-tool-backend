@@ -77,12 +77,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
     python_test: PythonTest
     python_test_version: str
     test_socket: Optional[SocketIO]
+    
 
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
         self.__runned = 0
         self.test_stop_called = False
         self.test_socket = None
+        self.step_execution_times = []
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -116,6 +118,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         pass
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
+        duration_ms = int(duration/1000)
+        self.step_execution_times.append(duration_ms)
+        self.analytics = self.generate_analytics_data()
         self.step_over()
 
     def step_failure(
@@ -153,6 +158,23 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+
+    def generate_analytics_data(self)-> dict[str:str]:
+        print(self.step_execution_times)
+        self.step_execution_times.sort()
+        print(self.step_execution_times)
+        sorted_list_size = len(self.step_execution_times)
+        p50_index = int(sorted_list_size * (50/100))
+        p95_index = int(sorted_list_size * (95/100))
+        p99_index = int(sorted_list_size * (99/100))
+
+        try:
+            return {'p50': f'{self.step_execution_times[p50_index]}', 'p95': f'{self.step_execution_times[p95_index]}', 'p99': f'{self.step_execution_times[p99_index]}', 'unit': 'ms'}
+        except:
+            logger.info("Error generating analytics data for step execution times.")
+        return {'p50':'0', 'p95': '0', 'p99': '0', 'unit':'ms'}
+
+
 
     @classmethod
     def pics(cls) -> set[str]:
@@ -292,13 +314,15 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             command.append(f" --interactions {(len(self.test_steps) - 2)}")
 
-            exec_result = self.sdk_container.send_command(
+            # exec_result = 
+            self.sdk_container.send_command(
                 command,
                 prefix=EXECUTABLE,
                 is_stream=False,
                 is_socket=False,
+                is_detach=True,
             )
-            self.test_socket = exec_result.socket
+            # self.test_socket = exec_result.socket
 
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
@@ -306,7 +330,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 if not update:
                     await sleep(0.0001)
                     continue
-
+                
                 await self.__handle_update(update)
 
             # Step: Show test logs

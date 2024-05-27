@@ -19,6 +19,7 @@ from typing import Any, Optional, Union
 
 from matter_yamltests.hooks import TestRunnerHooks
 from pydantic import BaseModel
+from app.test_engine.logger import test_engine_logger as logger
 
 
 class SDKPythonTestResultEnum(str, Enum):

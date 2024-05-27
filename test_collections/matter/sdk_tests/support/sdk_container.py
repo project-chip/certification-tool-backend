@@ -185,6 +185,7 @@ class SDKContainer(metaclass=Singleton):
         prefix: str,
         is_stream: bool = False,
         is_socket: bool = False,
+        is_detach: bool = False,
     ) -> ExecResultExtended:
         if self.__container is None:
             raise SDKContainerNotRunning()
@@ -203,6 +204,7 @@ class SDKContainer(metaclass=Singleton):
             socket=is_socket,
             stream=is_stream,
             stdin=True,
+            detach =is_detach,
         )
 
         return result
