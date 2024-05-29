@@ -904,6 +904,4 @@ def generate_summary(execution_logs, execution_status,
     print(f"Copy gerenated content to matter-qa: {matter_qa_out_folder}")
     shutil.copytree(execution_time_folder, matter_qa_out_folder+"/" +folder_name)
 
-    time.sleep(5)
     print(f"generate_summary process completed!!!")
-
