@@ -52,6 +52,8 @@ date_pattern_out_folder = "%d-%m-%Y_%H-%M-%S-%f"
 
 date_pattern_out_file = "%Y_%m_%d_%H_%M_%S"
 
+datetime_json_pattern = "%Y-%m-%dT%H:%M:%S.%f"
+
 
 class Commissioning:
     stages = {
@@ -606,7 +608,9 @@ def generate_summary_log(
 
     commissioning_list = []
 
-    execution_time = []
+    execution_begin_time = []
+    execution_end_time = []
+
     execution_logs = []
     execution_status = []
 
@@ -614,6 +618,7 @@ def generate_summary_log(
         file_path = os.path.join(directory_path, file_name)
         commissioning_obj: Commissioning = None
         file_execution_time = None
+        file_execution_end_time = None
         tc_name = None
         tc_suite = None
         tc_result = None
@@ -630,7 +635,7 @@ def generate_summary_log(
 
                     if not file_execution_time:
                         file_execution_time = extract_datetime(line)
-                        execution_time.append(file_execution_time)
+                        # execution_begin_time.append(file_execution_time)
 
                     if not tc_suite:
                         if line.find("Test Suite Executing:") > 0:
@@ -642,6 +647,9 @@ def generate_summary_log(
 
                     if not tc_result:
                         if line.find("Test Case Completed[") > 0:
+                            file_execution_end_time = extract_datetime(line)
+                            # execution_end_time.append(end_execution_time)
+
                             m = re.search(r"\[([A-Za-z0-9_]+)\]", line)
                             if m:
                                 tc_result = m.group(1)
@@ -668,16 +676,14 @@ def generate_summary_log(
                             commissioning_list.append(commissioning_obj)
                             execution_logs.append(file_path)
                             tc_execution_in_file = tc_execution_in_file + 1
+
+                            # execution_begin_time.append(file_execution_time)
                         continue
 
                     elif commissioning_obj is not None:
                         commissioning_obj.add_event(line)
 
-    print(f"TEST CASE {tc_name}")
-
-    print(f"Print tempos {execution_time}")
-    execution_time.sort()
-    print(f"Print tempos ordenados {execution_time}")
+    # execution_end_time = [file_execution_end_time]* len(execution_begin_time)
 
     durations = []
     read_durations = []
@@ -686,6 +692,9 @@ def generate_summary_log(
     for commissioning in commissioning_list:
         begin = int(commissioning.commissioning["begin"].timestamp() * 1000000)
         end = int(commissioning.commissioning["end"].timestamp() * 1000000)
+
+        execution_begin_time.append(commissioning.commissioning["begin"])
+        execution_end_time.append(commissioning.commissioning["end"])
 
         read_begin = int(
             commissioning.commissioning["readCommissioningInfo"]["begin"].timestamp()
@@ -734,12 +743,16 @@ def generate_summary_log(
     # print(f"Read Commissioning Info Latency 99-percentile: {reads_99p}")
     # print(f"Pase Latency 99-percentile: {pases_99p}\n")
 
-    execution_time_folder = execution_time[0].strftime(date_pattern_out_folder)[:-3]
+    execution_time_folder = execution_begin_time[0].strftime(date_pattern_out_folder)[
+        :-3
+    ]
 
     generate_summary(
         execution_logs,
         execution_status,
         execution_time_folder,
+        execution_begin_time,
+        execution_end_time,
         tc_suite,
         tc_name,
         commissioning_method,
@@ -800,6 +813,8 @@ def generate_summary(
     execution_logs,
     execution_status,
     folder_name,
+    execution_begin_time,
+    execution_end_time,
     tc_suite,
     tc_name,
     commissioning_method,
@@ -818,14 +833,14 @@ def generate_summary(
 
     summary_dict["test_summary_record"]["test_case_name"] = tc_name
     summary_dict["test_summary_record"]["test_case_id"] = "stress_1_1"
-    summary_dict["test_summary_record"]["test_case_class"] = "TC_Pair"
+    summary_dict["test_summary_record"]["test_case_class"] = tc_name
     summary_dict["test_summary_record"]["test_case_description"]: None
-    summary_dict["test_summary_record"][
-        "test_case_begined_at"
-    ] = "2024-05-21T21:19:48.281187"
-    summary_dict["test_summary_record"][
-        "test_case_ended_at"
-    ] = "2024-05-21T21:23:22.694843"
+    summary_dict["test_summary_record"]["test_case_begined_at"] = execution_begin_time[
+        0
+    ].strftime(datetime_json_pattern)
+    summary_dict["test_summary_record"]["test_case_ended_at"] = execution_end_time[
+        len(execution_end_time) - 1
+    ].strftime(datetime_json_pattern)
     summary_dict["test_summary_record"]["test_case_status"] = "Test Completed"
     summary_dict["test_summary_record"]["test_case_result"] = compute_state(
         execution_status
@@ -895,10 +910,12 @@ def generate_summary(
         iteration_data = {}
 
         iteration_tc_execution_data = {}
-        iteration_tc_execution_data[
-            "iteration_begin_time"
-        ] = "2024-05-21T21:19:54.980997"
-        iteration_tc_execution_data["iteration_end_time"] = "2024-05-21T21:20:10.406147"
+        iteration_tc_execution_data["iteration_begin_time"] = execution_begin_time[
+            x
+        ].strftime(datetime_json_pattern)
+        iteration_tc_execution_data["iteration_end_time"] = execution_end_time[
+            x
+        ].strftime(datetime_json_pattern)
         iteration_tc_execution_data["iteration_result"] = execution_status[x]
         iteration_tc_execution_data["exception"] = None
 
@@ -945,6 +962,3 @@ def generate_summary(
     shutil.rmtree(out_folder)
 
     print(f"generate_summary process completed!!!")
-
-
-
