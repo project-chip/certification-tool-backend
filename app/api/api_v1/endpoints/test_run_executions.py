@@ -14,6 +14,11 @@
 # limitations under the License.
 #
 import json
+import os
+import shutil
+import re
+from datetime import datetime
+# import numpy as np
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
@@ -40,6 +45,63 @@ from app.version import version_information
 
 router = APIRouter()
 
+date_pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+"
+
+date_pattern_out_folder = "%d-%m-%Y_%H-%M-%S-%f"
+
+date_pattern_out_file = "%Y_%m_%d_%H_%M_%S"
+
+class Commissioning:
+
+    stages = {
+        "discovery": {
+            "begin": "(?=.*Internal\\ Control\\ start\\ simulated\\ app)",
+            "end": "(?=.*Discovered\\ Device)",
+        },
+        "readCommissioningInfo": {
+            "begin": "(?=.*ReadCommissioningInfo)(?=.*Performing)",
+            "end": "(?=.*ReadCommissioningInfo)(?=.*Successfully)",
+        },
+        "PASE": {
+            "begin": "(?=.*PBKDFParamRequest)",
+            "end": "(?=.*'kEstablishing'\\ \\-\\->\\ 'kActive')",
+        },
+        "cleanup": {
+            "begin": "(?=.*Cleanup)(?=.*Performing)",
+            "end": "(?=.*Cleanup)(?=.*Successfully)",
+        },
+    }
+
+    def __init__(self):
+        self.commissioning = {}
+
+    def __repr__(self):
+        return self.commissioning.__repr__()
+
+    def add_event(self, line: str):
+        for stage, patterns in self.stages.items():
+            begin = None
+            end = None
+            if not (stage in self.commissioning):
+                self.commissioning[stage] = {}
+
+            # pattern_begin = f"(?=.*{re.escape(stage)})(?=.*{re.escape(self.step_type[0])})"
+            if re.search(patterns["begin"], line) is not None:
+                match = re.findall(date_pattern, line)
+                if match[0]:
+                    begin = datetime.strptime(match[0], "%Y-%m-%d %H:%M:%S.%f")
+                    if stage == "discovery":
+                        self.commissioning["begin"] = begin
+                    self.commissioning[stage]["begin"] = begin
+
+            # pattern_end = f"(?=.*{re.escape(stage)})(?=.*{re.escape(self.step_type[1])})"
+            if re.search(patterns["end"], line) is not None:
+                match = re.findall(date_pattern, line)
+                if match[0]:
+                    end = datetime.strptime(match[0], "%Y-%m-%d %H:%M:%S.%f")
+                    if stage == "cleanup":
+                        self.commissioning["end"] = end
+                    self.commissioning[stage]["end"] = end
 
 @router.get("/", response_model=List[schemas.TestRunExecutionWithStats])
 def read_test_run_executions(
@@ -474,3 +536,374 @@ def import_test_run_execution(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(error),
         )
+
+def extract_datetime(line:str) -> Optional[datetime]:
+    line_datetime = None
+    match = re.findall(date_pattern, line)
+    if match[0]:
+        line_datetime = datetime.strptime(match[0], "%Y-%m-%d %H:%M:%S.%f")
+
+    return line_datetime
+
+@router.post("/{id}/performance_summary")
+def generate_summary_log(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    project_id:int,
+    # import_file: UploadFile = File(...),
+):
+    """
+    Imports a test run execution to the the given project_id.
+    """
+
+    project = crud.project.get(db=db, id=project_id)
+    matter_qa_out_folder = None
+    if "matter_qa_log_folder" in project.config.test_parameters:
+        matter_qa_out_folder = project.config.test_parameters["matter_qa_log_folder"]
+    else:
+        raise HTTPException(
+                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                    detail="No matter-qa output folder configured",
+                )
+
+    commissioning_method = project.config.dut_config.pairing_mode
+
+    # project.config.test_parameters
+    # matter_qa_log_folder
+
+    test_run_execution = crud.test_run_execution.get(db=db, id=id)
+    if not test_run_execution:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
+        )
+
+    log_lines = log_utils.convert_execution_log_to_text(
+        log=test_run_execution.log
+    )
+
+# UI_Test_Run_2024_05_16_07_34_23.log
+
+
+    directory_path = "/app/backend/app/api/api_v1/endpoints/logs"
+    if os.path.exists(directory_path):
+        shutil.rmtree(directory_path)
+        os.mkdir(directory_path)
+
+    out_datetime = test_run_execution.started_at.strftime(date_pattern_out_file)
+
+    with open(directory_path + f"/UI_Test_Run_{out_datetime}.log", "w") as f:
+        f.write(str(log_lines))
+
+    files = os.listdir(directory_path)
+
+    commissioning_list = []
+
+    execution_time = []
+    execution_logs = []
+    execution_status = []
+
+    for file_name in files:
+        file_path = os.path.join(directory_path, file_name)
+        commissioning_obj: Commissioning = None
+        file_execution_time = None
+        tc_name = None
+        tc_suite = None
+        tc_result = None
+        tc_execution_in_file = 0
+
+        if os.path.isfile(file_path):
+            # execution_logs.append(file_path)
+            with open(file_path, "r") as file:
+                
+                for line in file:
+                    line = line.strip()
+
+                    if not line:
+                        continue
+
+                    if not file_execution_time:
+                        file_execution_time = extract_datetime(line)
+                        execution_time.append(file_execution_time)
+
+                    if not tc_suite:
+                        if line.find("Test Suite Executing:") > 0:
+                            tc_suite = line.split(': ')[1]
+
+                    if not tc_name:
+                        if line.find("Executing Test Case:") > 0:
+                            tc_name = line.split(': ')[1]
+
+                    if not tc_result:
+                        if line.find("Test Case Completed[") > 0:
+                            m = re.search(r"\[([A-Za-z0-9_]+)\]", line)
+                            if m:
+                                tc_result = m.group(1)
+
+                                # Add TC result
+                                for x in range(0, tc_execution_in_file):
+                                    if tc_result=="PASSED":
+                                        tc_result="PASS"
+                                    elif tc_result=="FAILED":
+                                        tc_result="FAIL"
+
+                                    execution_status.append(tc_result)
+
+
+                    pattern_begin = f"(?=.*{re.escape('Begin Commission')})"
+                    pattern_end = (
+                        f"(?=.*{re.escape('Internal Control stop simulated app')})"
+                    )
+                    if re.search(pattern_begin, line) is not None:
+                        commissioning_obj = Commissioning()
+                        continue
+
+                    elif re.search(pattern_end, line) is not None:
+                        if commissioning_obj is not None:
+                            commissioning_list.append(commissioning_obj)
+                            execution_logs.append(file_path)
+                            tc_execution_in_file = tc_execution_in_file +1
+                        continue
+
+                    elif commissioning_obj is not None:
+                        commissioning_obj.add_event(line)
+
+
+
+    print(f"TEST CASE {tc_name}")
+
+    print(f"Print tempos {execution_time}")
+    execution_time.sort()
+    print(f"Print tempos ordenados {execution_time}")
+
+
+    durations = []
+    read_durations = []
+    discovery_durations = []
+    PASE_durations = []
+    for commissioning in commissioning_list:
+        begin = int(commissioning.commissioning["begin"].timestamp() * 1000000)
+        end = int(commissioning.commissioning["end"].timestamp() * 1000000)
+
+        read_begin = int(
+            commissioning.commissioning["readCommissioningInfo"]["begin"].timestamp()
+            * 1000000
+        )
+        read_end = int(
+            commissioning.commissioning["readCommissioningInfo"]["end"].timestamp()
+            * 1000000
+        )
+
+        discovery_begin = int(
+            commissioning.commissioning["discovery"]["begin"].timestamp() * 1000000
+        )
+        discovery_end = int(
+            commissioning.commissioning["discovery"]["end"].timestamp() * 1000000
+        )
+
+        PASE_begin = int(
+            commissioning.commissioning["PASE"]["begin"].timestamp() * 1000000
+        )
+        PASE_end = int(commissioning.commissioning["PASE"]["end"].timestamp() * 1000000)
+
+        duration = end - begin  # + random.randint(1, 20)
+        read_duration = read_end - read_begin
+        discovery_duration = discovery_end - discovery_begin
+        PASE_duration = PASE_end - PASE_begin
+        # print(f"Commission duration: {duration}")
+        # print(f"ReadCommissioningInfo duration: {read_duration}")
+        # break # Just get  one sample
+        durations.append(duration)
+        read_durations.append(read_duration)
+        discovery_durations.append(discovery_duration)
+        PASE_durations.append(PASE_duration)
+        read_durations += read_duration
+
+    # np_durations = np.array(durations)
+    # durations_99p = np.percentile(np_durations, 99)
+    # np_discoveries = np.array(discovery_durations)
+    # discoveries_99p = np.percentile(np_discoveries, 99)
+    # np_reads = np.array(read_durations)
+    # reads_99p = np.percentile(np_reads, 99)
+    # np_pases = np.array(PASE_durations)
+    # pases_99p = np.percentile(np_pases, 99)
+    # print(f"Total Commissioning 99-percentile: {durations_99p}")
+    # print(f"Discovery Latency 99-percentile: {discoveries_99p}")
+    # print(f"Read Commissioning Info Latency 99-percentile: {reads_99p}")
+    # print(f"Pase Latency 99-percentile: {pases_99p}\n")
+
+    generate_summary(
+        execution_logs,
+        execution_status,
+        execution_time[0].strftime(date_pattern_out_folder)[:-3],
+        tc_suite,
+        tc_name,
+        commissioning_method,
+        durations,
+        discovery_durations,
+        read_durations,
+        PASE_durations,matter_qa_out_folder
+    )
+
+def compute_state(execution_status) -> str: 
+    if any(tc for tc in execution_status if tc == "CANCELLED"):
+        return "FAIL"
+
+    if any(tc for tc in execution_status if tc == "ERROR"):
+        return "FAIL"
+
+    if any(tc for tc in execution_status if tc == "FAIL"):
+        return "FAIL"
+
+    if any(tc for tc in execution_status if tc == "PENDING"):
+        return "FAIL"
+
+    return "PASS"
+
+def compute_count_state(execution_status, passed = True) -> str:
+    # """
+    # State is computed based test_suite errors and on on test case states.
+    # """
+    # if self.errors is not None and len(self.errors) > 0:
+    #     return "ERROR"
+
+    # Note: These loops cannot be easily coalesced as we need to iterate through
+    # and assign Test Suite State in order.
+    count = 0
+    for tc in execution_status:
+        if tc == "PASS" and passed or (tc != "PASS" and not passed):
+            count = count+1
+
+    
+    return count
+
+
+def generate_summary(execution_logs, execution_status,
+    folder_name, tc_suite, tc_name, commissioning_method, durations, discovery_durations, read_durations, PASE_durations, matter_qa_out_folder
+) -> None:
+    out_folder = "/app/backend/app/api/api_v1/endpoints/out"
+
+    summary_dict = {}
+    summary_dict["run_set_id"] = "d"
+    summary_dict["test_summary_record"] = {}
+    summary_dict["test_summary_record"]["test_suite_name"] = tc_suite
+
+    summary_dict["test_summary_record"]["test_case_name"] = tc_name
+    summary_dict["test_summary_record"]["test_case_id"] = "stress_1_1"
+    summary_dict["test_summary_record"]["test_case_class"] = "TC_Pair"
+    summary_dict["test_summary_record"]["test_case_description"]: None
+    summary_dict["test_summary_record"][
+        "test_case_begined_at"
+    ] = "2024-05-21T21:19:48.281187"
+    summary_dict["test_summary_record"][
+        "test_case_ended_at"
+    ] = "2024-05-21T21:23:22.694843"
+    summary_dict["test_summary_record"]["test_case_status"] = "Test Completed"
+    summary_dict["test_summary_record"]["test_case_result"] = compute_state(execution_status)
+    summary_dict["test_summary_record"]["total_number_of_iterations"] = len(durations)
+    summary_dict["test_summary_record"]["number_of_iterations_completed"] = len(durations)
+    summary_dict["test_summary_record"]["number_of_iterations_passed"] = compute_count_state(execution_status, True)
+    summary_dict["test_summary_record"]["number_of_iterations_failed"] = compute_count_state(execution_status, False)
+    summary_dict["test_summary_record"]["platform"] = "rpi"
+    summary_dict["test_summary_record"]["commissioning_method"] = commissioning_method
+    summary_dict["test_summary_record"]["list_of_iterations_failed"] = []
+    summary_dict["test_summary_record"]["analytics_parameters"] = [
+        "durations",
+        "discovery_durations",
+        "read_durations",
+        "PASE_durations",
+    ]
+
+    dut_information_record = {}
+    dut_information_record["vendor_name"] = "TEST_VENDOR"
+    dut_information_record["product_name"] = "TEST_PRODUCT"
+    dut_information_record["product_id"] = 32769
+    dut_information_record["vendor_id"] = 65521
+    dut_information_record["software_version"] = "1.0"
+    dut_information_record["hardware_version"] = "TEST_VERSION"
+    dut_information_record["serial_number"] = "TEST_SN"
+
+    summary_dict["dut_information_record"] = dut_information_record
+
+    host_information_record = {}
+    host_information_record["host_name"] = "ubuntu"
+    host_information_record["ip_address"] = "127.0.1.1"
+    host_information_record["mac_address"] = "a9:6a:5a:96:a5:a9"
+
+    summary_dict["host_information_record"] = host_information_record
+
+    list_of_iteration_records = []
+
+    # Create output folder
+    if not os.path.exists(out_folder):
+        os.mkdir(out_folder)
+
+    execution_time_folder = out_folder + "/" + folder_name
+    tc_name_folder = out_folder + "/" + folder_name + "/" + tc_name
+
+    if os.path.exists(execution_time_folder):
+        shutil.rmtree(execution_time_folder)
+    os.mkdir(execution_time_folder)
+    os.mkdir(tc_name_folder)
+
+    for x in range(0, len(durations)):
+
+        curr_ite = str(x + 1)
+        # Creating iteration folder
+        iteration_folder = tc_name_folder + "/" + curr_ite
+        os.mkdir(iteration_folder)
+
+        # Copy the execution log to the iteration folder
+        shutil.copy(execution_logs[x], iteration_folder)
+
+        iteration_records = {}
+        iteration_data = {}
+
+        iteration_tc_execution_data = {}
+        iteration_tc_execution_data[
+            "iteration_begin_time"
+        ] = "2024-05-21T21:19:54.980997"
+        iteration_tc_execution_data["iteration_end_time"] = "2024-05-21T21:20:10.406147"
+        iteration_tc_execution_data["iteration_result"] = execution_status[x]
+        iteration_tc_execution_data["exception"] = None
+
+        iteration_tc_analytics_data = {}
+        iteration_tc_analytics_data["durations"] = durations[x]
+        iteration_tc_analytics_data["discovery_durations"] = discovery_durations[x]
+        iteration_tc_analytics_data["read_durations"] = read_durations[x]
+        iteration_tc_analytics_data["PASE_durations"] = PASE_durations[x]
+
+        iteration_data["iteration_tc_execution_data"] = iteration_tc_execution_data
+        iteration_data["iteration_tc_analytics_data"] = iteration_tc_analytics_data
+
+        iteration_records["iteration_number"] = curr_ite
+        iteration_records["iteration_data"] = iteration_data
+
+        list_of_iteration_records.append(iteration_records)
+
+        # Creating iteration.json for each iteration
+        json_str = json.dumps(iteration_records, indent=4)
+
+        with open(tc_name_folder + "/" + curr_ite + "/iteration.json", "w") as f:
+            f.write(json_str)
+
+            # json.dump(iteration_records, f)
+
+    summary_dict["list_of_iteration_records"] = list_of_iteration_records
+
+    json_str = json.dumps(summary_dict, indent=4)
+
+    print(f"Generating {tc_name_folder}/summary.json")
+    with open(tc_name_folder + "/summary.json", "w") as f:
+        f.write(json_str)
+
+    # Copy gerenated content to matter-qa
+    if os.path.exists(matter_qa_out_folder +"/" +folder_name):
+        shutil.rmtree(matter_qa_out_folder +"/" +folder_name)
+
+    print(f"Copy gerenated content to matter-qa: {matter_qa_out_folder}")
+    shutil.copytree(execution_time_folder, matter_qa_out_folder+"/" +folder_name)
+
+    time.sleep(5)
+    print(f"generate_summary process completed!!!")
+

@@ -39,6 +39,18 @@ def log_generator(
             yield f"{log_line.level:10} | {timestamp} | {log_line.message}\n"
 
 
+def convert_execution_log_to_text(log: list) -> str:
+    str_out = ""
+
+    for log_line in log:
+        timestamp = datetime.fromtimestamp(log_line.timestamp).strftime(
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+        log_message = f"{log_line.level:10} | {timestamp} | {log_line.message}\n"
+        str_out = str_out + log_message
+
+    return str_out
+
 def group_test_run_execution_logs(
     test_run_execution: models.TestRunExecution,
 ) -> schemas.GroupedTestRunExecutionLogs:
