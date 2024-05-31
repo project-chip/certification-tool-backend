@@ -62,6 +62,7 @@ DIRTY=`git status --porcelain --untracked-files=no`
    --help       get this message
    --squash     squash docker layers before push them to $GHCR_ORG (requires docker-squash python module)
    --clear      remove images after after publishing them
+   --multiarch  experimental command to build and push a multiarch image (arm64 and amd64)
 
 "
     exit 0
@@ -80,6 +81,11 @@ BUILD_ARGS=()
 if [[ ${*/--no-cache//} != "${*}" ]]; then
     BUILD_ARGS+=(--no-cache)
 fi
+
+[[ ${*/--multiarch//} != "${*}" ]] && {
+    docker buildx build --push --platform linux/amd64,linux/arm64 --build-arg GIT_SHA="$GIT_REV" --build-arg VERSION="$VERSION" -t "$GHCR_ORG"/"$ORG"/"$IMAGE":"$VERSION" .
+    exit 0
+}
 
 # Don't run `docker build` and `docker image prune` when `--skip-build` in arguments
 [[ ${*/--skip-build//} != "${*}" ]] || {
