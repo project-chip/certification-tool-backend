@@ -22,7 +22,7 @@ source "$TH_SCRIPTS_DIR/utils.sh"
 
 print_start_of_script
 
-print_instalation_step "Installing Matter Dependencies"
+print_script_step "Installing Matter Dependencies"
 # TODO Comment on what dependency is required for:
 packagelist=(
     "apt-transport-https (>=2.4.11)"
@@ -51,15 +51,15 @@ packagelist=(
 SAVEIFS=$IFS
 IFS=$(echo -en "\r")
 for package in ${packagelist[@]}; do
-  print_instalation_step "Instaling package: ${package[@]}"
+  print_script_step "Instaling package: ${package[@]}"
   sudo DEBIAN_FRONTEND=noninteractive sudo apt satisfy ${package[@]} -y --allow-downgrades
 done
 IFS=$SAVEIFS 
 
-print_instalation_step "Fetching sample apps"
+print_script_step "Fetching sample apps"
 $MATTER_PROGRAM_DIR/scripts/update-sample-apps.sh
 
-print_instalation_step "Fetching PAA Certs from SDK"
+print_script_step "Fetching PAA Certs from SDK"
 $MATTER_PROGRAM_DIR/scripts/update-paa-certs.sh
 
 print_end_of_script
