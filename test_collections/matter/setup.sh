@@ -16,9 +16,13 @@
  # limitations under the License.
 set -e
 MATTER_PROGRAM_DIR=$(dirname "$0")
+TH_SCRIPTS_DIR="$MATTER_PROGRAM_DIR/../../../scripts"
 
-printf "\n\n**********"
-printf "\n*** Installing Matter Dependencies ***\n"
+source "$TH_SCRIPTS_DIR/utils.sh"
+
+print_start_of_script
+
+print_instalation_step "Installing Matter Dependencies"
 # TODO Comment on what dependency is required for:
 packagelist=(
     "apt-transport-https (>=2.4.11)"
@@ -47,15 +51,15 @@ packagelist=(
 SAVEIFS=$IFS
 IFS=$(echo -en "\r")
 for package in ${packagelist[@]}; do
-  echo "# Instaling package: ${package[@]}"
+  print_instalation_step "Instaling package: ${package[@]}"
   sudo DEBIAN_FRONTEND=noninteractive sudo apt satisfy ${package[@]} -y --allow-downgrades
 done
 IFS=$SAVEIFS 
 
-printf "\n\n**********"
-printf "\n*** Fetching sample apps ***\n"
+print_instalation_step "Fetching sample apps"
 $MATTER_PROGRAM_DIR/scripts/update-sample-apps.sh
 
-printf "\n\n**********"
-printf "\n*** Fetching PAA Certs from SDK ***\n"
+print_instalation_step "Fetching PAA Certs from SDK"
 $MATTER_PROGRAM_DIR/scripts/update-paa-certs.sh
+
+print_end_of_script
