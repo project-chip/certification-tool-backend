@@ -12,6 +12,7 @@
         "baudrate",
         "behaviour",
         "bothify",
+        "buildx",
         "chip",
         "commissionee",
         "connectedhomeip",
