@@ -86,15 +86,18 @@ fi
 SAVEIFS=$IFS
 IFS=$(echo -en "\r")
 for package in ${packagelist[@]}; do
-  print_script_step "Instaling package: ${package[@]}"
-  sudo DEBIAN_FRONTEND=noninteractive sudo apt satisfy ${package[@]} -y --allow-downgrades
+  print_script_step "Search package: ${package[@]}"
+  sudo DEBIAN_FRONTEND=noninteractive sudo apt search ${package[@]}
+  
+  # print_script_step "Instaling package: ${package[@]}"
+  # sudo DEBIAN_FRONTEND=noninteractive sudo apt satisfy ${package[@]} -y --allow-downgrades
 done
 IFS=$SAVEIFS 
 
-print_script_step "Fetching sample apps"
-$MATTER_PROGRAM_DIR/scripts/update-sample-apps.sh
+# print_script_step "Fetching sample apps"
+# $MATTER_PROGRAM_DIR/scripts/update-sample-apps.sh
 
-print_script_step "Fetching PAA Certs from SDK"
-$MATTER_PROGRAM_DIR/scripts/update-paa-certs.sh
+# print_script_step "Fetching PAA Certs from SDK"
+# $MATTER_PROGRAM_DIR/scripts/update-paa-certs.sh
 
 print_end_of_script
