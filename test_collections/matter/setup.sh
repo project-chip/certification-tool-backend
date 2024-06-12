@@ -25,7 +25,7 @@ print_start_of_script
 print_script_step "Installing Matter Dependencies"
 # TODO Comment on what dependency is required for:
 UBUNTU_VERSION_NUMBER=$(lsb_release -sr)
-if [UBUNTU_VERSION_NUMBER -eq "22.04"]; then
+if ["$UBUNTU_VERSION_NUMBER" -eq "22.04"]; then
   packagelist=(
      "apt-transport-https (>=2.4.11)"
      "avahi-utils (>=0.8-5ubuntu5.2)"                 # Matter uses Avahi
@@ -49,7 +49,7 @@ if [UBUNTU_VERSION_NUMBER -eq "22.04"]; then
      "toilet (=0.3-1.4)"
      "unzip (>=6.0-26ubuntu3.1)"
   )
-elif [UBUNTU_VERSION_NUMBER -eq "24.04"]; then
+elif ["$UBUNTU_VERSION_NUMBER" -eq "24.04"]; then
   packagelist=(
      "apt-transport-https (=2.4.11)"
      "avahi-utils (=0.8-5ubuntu5.2)"                 # Matter uses Avahi
@@ -76,7 +76,7 @@ elif [UBUNTU_VERSION_NUMBER -eq "24.04"]; then
 else
   printf "###############################################################\n"
   printf "###############################################################\n"
-  printf "Essa versão do ubuntu não é suportada."
+  printf "########## This version of Ubuntu is not supported. ###########\n"
   printf "###############################################################\n"
   printf "###############################################################\n"
   exit 1
