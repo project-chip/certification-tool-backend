@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#! /usr/bin/env bash
 
  #
  # Copyright (c) 2023 Project CHIP Authors
@@ -37,6 +37,9 @@ DEVELOPMENT_PATH="/var/credentials/development"
 
 source "$TH_SCRIPTS_DIR/utils.sh"
 
+# Store the current dir
+CURRENT_DIR=$(pwd)
+
 print_start_of_script
 
 # If SDK path is not present, then do local checkout
@@ -46,10 +49,11 @@ then
     # If SDK SHA is not present, then fetch from Matter program config file
     if [ -z "$SDK_SHA" ]
     then
-        cd $MATTER_PROGRAM_DIR
+        print_script_step "Read SDK_SHA from $MATTER_PROGRAM_DIR/config.py file"
         SDK_SHA=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
     fi
-    
+    printf "SDK_SHA: $SDK_SHA\n"
+
     print_script_step "Checkout SDK sparsely"
     rm -rf $TMP_SDK_PATH
     cd /tmp
@@ -61,10 +65,15 @@ then
     SDK_PATH="$TMP_SDK_PATH"
 fi
 
+printf "\nSDK_PATH: $SDK_PATH\n"
+
+# Back to execution dir
+cd $CURRENT_DIR
+
 # Create folder if missing (owned by user)
 if [ ! -d "$CERT_PATH" ]
 then
-    print_script_step "Creating certification folder $CERT_PATH"
+    print_script_step "Creating certification folder"
     sudo mkdir -p $CERT_PATH
     sudo chown $USER:$USER $CERT_PATH
 fi
@@ -72,15 +81,17 @@ fi
 # Create folder if missing (owned by user)
 if [ ! -d "$DEVELOPMENT_PATH" ]
 then
-    print_script_step "Creating developer certification folder $DEVELOPMENT_PATH"
+    print_script_step "Creating developer certification folder"
     sudo mkdir -p $DEVELOPMENT_PATH
     sudo chown $USER:$USER $DEVELOPMENT_PATH
 fi
 
 print_script_step "Copying Certificates from SDK"
+echo "Running copy command: cp "$SDK_PATH/$SDK_CERT_PATH/"* $CERT_PATH/"
 cp "$SDK_PATH/$SDK_CERT_PATH/"* $CERT_PATH/
 
 print_script_step "Copying Developer Certificates from SDK"
+echo "Running copy command: cp -R "$SDK_PATH/$SDK_CERT_DEVELOPMENT_PATH/"** $DEVELOPMENT_PATH/"
 cp -R "$SDK_PATH/$SDK_CERT_DEVELOPMENT_PATH/"** $DEVELOPMENT_PATH/
 
 print_end_of_script
