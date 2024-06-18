@@ -84,3 +84,5 @@ printf "Simple Dataset: $BR_SIMPLE_DATASET"
 
 print_script_step "Restarting the Raspi avahi to have it in a clean state"
 sudo service avahi-daemon restart
+
+print_end_of_script
