@@ -81,7 +81,7 @@ fi
 # Create folder if missing (owned by user)
 if [ ! -d "$DEVELOPMENT_PATH" ]
 then
-    print_script_step "Creating developer certification folder"
+    print_script_step "Creating development certification folder"
     sudo mkdir -p $DEVELOPMENT_PATH
     sudo chown $USER:$USER $DEVELOPMENT_PATH
 fi
