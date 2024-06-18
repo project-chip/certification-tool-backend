@@ -82,5 +82,5 @@ BR_SIMPLE_DATASET="00030000"${BR_CHANNEL_HEX}"0208"${BR_EXTPANID}"0510"${BR_NETW
 sudo echo ${BR_SIMPLE_DATASET} > /tmp/otbr_simple_dataset.txt
 printf "Simple Dataset: $BR_SIMPLE_DATASET"
 
-print_script_step "Also make sure to restart the Raspi avahi to have it in a clean state"
+print_script_step "Restarting the Raspi avahi to have it in a clean state"
 sudo service avahi-daemon restart
