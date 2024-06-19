@@ -50,6 +50,7 @@ class TestRunExecution(Base):
     completed_at: Mapped[Optional[datetime]]
     archived_at: Mapped[Optional[datetime]]
     imported_at: Mapped[Optional[datetime]]
+    certification_mode: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     description: Mapped[Optional[str]] = mapped_column(default=None, nullable=True)
 

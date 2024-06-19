@@ -28,8 +28,10 @@ from .test_suite import PythonTestSuite, SuiteType
 
 
 class PythonCollectionDeclaration(TestCollectionDeclaration):
-    def __init__(self, folder: SDKTestFolder, name: str) -> None:
-        super().__init__(path=str(folder.path), name=name)
+    def __init__(
+        self, folder: SDKTestFolder, name: str, mandatory: bool = False
+    ) -> None:
+        super().__init__(path=str(folder.path), name=name, mandatory=mandatory)
         self.python_test_version = folder.version
 
 
@@ -38,13 +40,20 @@ class PythonSuiteDeclaration(TestSuiteDeclaration):
 
     class_ref: Type[PythonTestSuite]
 
-    def __init__(self, name: str, suite_type: SuiteType, version: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        suite_type: SuiteType,
+        version: str,
+        mandatory: bool = False,
+    ) -> None:
         super().__init__(
             PythonTestSuite.class_factory(
                 name=name,
                 suite_type=suite_type,
                 python_test_version=version,
-            )
+            ),
+            mandatory=mandatory,
         )
 
 

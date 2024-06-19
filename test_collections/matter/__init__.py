@@ -17,5 +17,6 @@ from .python_tests import onboarding_payload_collection
 from .sdk_tests.support.python_testing import (
     custom_python_collection,
     sdk_python_collection,
+    sdk_mandatory_python_collection,
 )
 from .sdk_tests.support.yaml_tests import custom_collection, sdk_collection
