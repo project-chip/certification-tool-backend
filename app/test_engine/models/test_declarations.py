@@ -101,7 +101,7 @@ class TestSuiteDeclaration(object):
 
 
 class TestCollectionDeclaration(object):
-    def __init__(self, path: str, name: str, mandatory: bool= False) -> None:
+    def __init__(self, path: str, name: str, mandatory: bool = False) -> None:
         self.name = name
         self.path = path
         self.test_suites: Dict[str, TestSuiteDeclaration] = {}
