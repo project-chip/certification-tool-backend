@@ -29,7 +29,7 @@ SDK_DOCKER_PACKAGE=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_DOCKER_IMAGE |
 SDK_DOCKER_TAG=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_DOCKER_TAG | cut -d'"' -f 2 | cut -d"'" -f 2)
 SDK_DOCKER_IMAGE=$SDK_DOCKER_PACKAGE:$SDK_DOCKER_TAG
 
-if [[ -z "$(docker images -q $SDK_DOCKER_IMAGE 2> /dev/null)" ]]; then
+if [[ -z "$(docker images -q $SDK_DOCKER_IMAGE)" ]]; then
     print_script_step "Downloading '$SDK_DOCKER_IMAGE' image"
     sudo docker pull $SDK_DOCKER_IMAGE
 fi
