@@ -28,9 +28,11 @@ class PythonTestType(Enum):
     # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
     #   but don't have a commissioning first step
     # - PythonTestType.LEGACY: test cases that don't follow the expected template
+    # - PythonTestType.MANDATORY: test cases that are mandatories
     COMMISSIONING = 1
     NO_COMMISSIONING = 2
     LEGACY = 3
+    MANDATORY = 4
 
 
 class PythonTest(MatterTest):
