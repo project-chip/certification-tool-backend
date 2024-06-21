@@ -43,7 +43,7 @@ LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
 DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
 # Python Testing Folder
-MATTER_PROGRAM_DIR = Path(__file__).parents[2]
+MATTER_PROGRAM_DIR = str(Path(__file__).parents[2])
 
 LOCAL_PYTHON_TESTING_PATH = Path(
     MATTER_PROGRAM_DIR + "/sdk_tests/sdk_checkout/python_testing"
