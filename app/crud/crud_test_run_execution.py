@@ -167,11 +167,11 @@ class CRUDTestRunExecution(
     def __sort_selected_tests(
         self, selected_tests: List[TestSuiteExecution]
     ) -> List[TestSuiteExecution]:
-        """Sorts the selected testa, make the mandatoies test cases the first to be
+        """Sorts the selected testa, make the mandatories test cases the first to be
         returned."""
         sorted_selected_tests = []
 
-        # First add the mandadories test cases
+        # First add the mandatories test cases
         for suite in selected_tests:
             if suite.mandatory:
                 sorted_selected_tests.append(suite)
