@@ -167,7 +167,7 @@ class CRUDTestRunExecution(
     def __sort_selected_tests(
         self, selected_tests: List[TestSuiteExecution]
     ) -> List[TestSuiteExecution]:
-        """Sorts the selected testa, make the mandatories test cases the first to be
+        """Sorts the selected tests, make the mandatories test cases the first to be
         returned."""
         sorted_selected_tests = []
 
