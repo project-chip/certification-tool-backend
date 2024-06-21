@@ -61,9 +61,9 @@ class YamlTestSuite(TestSuite):
         if suite_type == SuiteType.MANUAL:
             suite_class = ManualYamlTestSuite
         elif suite_type == SuiteType.SIMULATED:
-            suite_class = SimulatedYamlTestSuite
+            suite_class = SimulatedYamlTestSuite  # type: ignore
         elif suite_type == SuiteType.AUTOMATED:
-            suite_class = ChipYamlTestSuite
+            suite_class = ChipYamlTestSuite  # type: ignore
 
         return suite_class.__class_factory(name=name, yaml_version=yaml_version)
 
