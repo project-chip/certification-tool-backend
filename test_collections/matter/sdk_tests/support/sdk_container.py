@@ -43,18 +43,16 @@ LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
 DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
 # Python Testing Folder
-LOCAL_TEST_COLLECTIONS_PATH = (
-    "/home/ubuntu/certification-tool/backend/test_collections/matter"
-)
+MATTER_PROGRAM_DIR = Path(__file__).parents[2]
 
 LOCAL_PYTHON_TESTING_PATH = Path(
-    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/sdk_checkout/python_testing"
+    MATTER_PROGRAM_DIR + "/sdk_tests/sdk_checkout/python_testing"
 )
 DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
 
 # RPC Client Running on SDK Container
 LOCAL_RPC_PYTHON_TESTING_PATH = Path(
-    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/python_testing/models/rpc_client/"
+    MATTER_PROGRAM_DIR + "/sdk_tests/support/python_testing/models/rpc_client/"
     "test_harness_client.py"
 )
 DOCKER_RPC_PYTHON_TESTING_PATH = (
