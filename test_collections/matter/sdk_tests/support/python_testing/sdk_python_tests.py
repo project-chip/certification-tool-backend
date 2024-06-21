@@ -90,7 +90,7 @@ def _parse_python_script_to_test_case_declarations(
 
 def __parse_python_tests(
     python_test_files: list[Path], python_test_version: str, mandatory: bool
-):
+) -> list[PythonSuiteDeclaration]:
     suites = _init_test_suites(python_test_version)
 
     for python_test_file in python_test_files:
@@ -117,7 +117,7 @@ def __parse_python_tests(
 
 def __sdk_python_test_collection(
     name: str, python_test_folder: SDKTestFolder, mandatory: bool
-):
+) -> PythonCollectionDeclaration:
     collection = PythonCollectionDeclaration(name=name, folder=python_test_folder)
 
     python_test_files = python_test_folder.file_paths(extension=".py")
