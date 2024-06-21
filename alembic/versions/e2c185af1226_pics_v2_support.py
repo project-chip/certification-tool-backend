@@ -26,9 +26,6 @@ def upgrade():
         "testsuiteexecution",
         sa.Column("mandatory", sa.Boolean(), nullable=False, default=False),
     )
-
-    op.execute("UPDATE testrunexecution SET certification_mode = false")
-    op.execute("UPDATE testsuiteexecution SET mandatory = false")
     # ### end Alembic commands ###
 
 
