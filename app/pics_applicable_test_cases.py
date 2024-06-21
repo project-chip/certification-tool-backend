@@ -59,7 +59,7 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
     return PICSApplicableTestCases(test_cases=applicable_tests)
 
 
-def __append_test_cases(
+def __applicable_test_cases(
     test_collections: Dict[str, TestCollectionDeclaration],
     enabled_pics: set[str],
     mandatory: bool,
