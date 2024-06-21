@@ -61,7 +61,7 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
 
 def __append_test_cases(
     test_collections: Dict[str, TestCollectionDeclaration],
-    enabled_pics: set[PICSItem],
+    enabled_pics: set[str],
     mandatory: bool,
 ) -> list:
     applicable_tests: list = []
