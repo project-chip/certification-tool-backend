@@ -31,6 +31,7 @@ class TestSuiteExecutionBase(BaseModel):
     public_id: str
     execution_index: int
     collection_id: str
+    mandatory: bool = False
 
 
 # Properties shared by models stored in DB
