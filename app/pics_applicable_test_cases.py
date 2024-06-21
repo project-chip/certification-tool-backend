@@ -17,7 +17,7 @@ from typing import Dict
 
 from loguru import logger
 
-from app.schemas.pics import PICS, PICSApplicableTestCases, PICSItem
+from app.schemas.pics import PICS, PICSApplicableTestCases
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
 from app.test_engine.test_script_manager import test_script_manager
 
