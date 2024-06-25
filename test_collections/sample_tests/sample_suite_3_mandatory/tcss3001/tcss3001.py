@@ -24,7 +24,7 @@ class TCSS3001(TestCase):
         "title": "This is Test Case tcss3001",
         "description": """This is Test Case tcss3001,\
         it will not get a very long description""",
-        "mandatory": True,
+        "mandatory": True,  # type: ignore
     }
 
     def create_test_steps(self) -> None:

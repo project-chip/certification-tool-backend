@@ -129,7 +129,7 @@ def test_class_factory_mandatory() -> None:
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
             test=test, python_test_version="version", mandatory=True
         )
-        assert case_class.metadata["mandatory"] == True
+        assert case_class.metadata["mandatory"] == True  # type: ignore
 
 
 def test_class_factory_test_class_name() -> None:

@@ -23,7 +23,7 @@ class SampleTestSuite3Mandatory(TestSuite):
         "version": "7.6.5",
         "title": "This is Test Suite 3 Mandatory with version 7.6.5",
         "description": "This is Test Suite 3 Mandatory, It is a mandatory suite",
-        "mandatory": True,
+        "mandatory": True,  # type: ignore
     }
 
     async def setup(self) -> None:
