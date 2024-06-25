@@ -83,7 +83,11 @@ def _parse_python_script_to_test_case_declarations(
     python_tests = parse_python_script(python_test_path)
 
     return [
-        PythonCaseDeclaration(test=python_test, python_test_version=python_test_version)
+        PythonCaseDeclaration(
+            test=python_test,
+            python_test_version=python_test_version,
+            mandatory=python_test.python_test_type == PythonTestType.MANDATORY,
+        )
         for python_test in python_tests
     ]
 
@@ -118,7 +122,9 @@ def __parse_python_tests(
 def __sdk_python_test_collection(
     name: str, python_test_folder: SDKTestFolder, mandatory: bool
 ) -> PythonCollectionDeclaration:
-    collection = PythonCollectionDeclaration(name=name, folder=python_test_folder)
+    collection = PythonCollectionDeclaration(
+        name=name, folder=python_test_folder, mandatory=mandatory
+    )
 
     python_test_files = python_test_folder.file_paths(extension=".py")
     python_test_version = python_test_folder.version

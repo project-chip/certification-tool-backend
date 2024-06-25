@@ -50,7 +50,7 @@ class PythonTestSuite(TestSuite):
 
     @classmethod
     def class_factory(
-        cls, suite_type: SuiteType, name: str, python_test_version: str
+        cls, suite_type: SuiteType, name: str, python_test_version: str, mandatory: bool
     ) -> Type[T]:
         """Dynamically declares a subclass based on the type of test suite."""
         suite_class: Type[PythonTestSuite]
@@ -61,11 +61,13 @@ class PythonTestSuite(TestSuite):
             suite_class = PythonTestSuite
 
         return suite_class.__class_factory(
-            name=name, python_test_version=python_test_version
+            name=name, python_test_version=python_test_version, mandatory=mandatory
         )
 
     @classmethod
-    def __class_factory(cls, name: str, python_test_version: str) -> Type[T]:
+    def __class_factory(
+        cls, name: str, python_test_version: str, mandatory: bool
+    ) -> Type[T]:
         """Common class factory method for all subclasses of PythonTestSuite."""
 
         return type(
@@ -81,6 +83,7 @@ class PythonTestSuite(TestSuite):
                     "version": "0.0.1",
                     "title": name,
                     "description": name,
+                    "mandatory": mandatory,
                 },
             },
         )
