@@ -32,7 +32,7 @@ TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
 
 FunctionDefType = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
-mandatories_python_tcs_public_id = [
+mandatory_python_tcs_public_id = [
     "TC_IDM_10_2",
     "TC_IDM_10_3",
     "TC_IDM_10_4",
@@ -172,12 +172,12 @@ def __parse_test_case(
     # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
     #   but don't have a commissioning first step
     # - PythonTestType.LEGACY: test cases that don't follow the expected template
-    # - PythonTestType.MANDATORY: Mandatories test cases
+    # - PythonTestType.MANDATORY: Mandatory test cases
     # We use the desc_[test_name] method as an indicator that the test case follows the
     # expected template
     python_test_type = PythonTestType.LEGACY
 
-    if tc_name in mandatories_python_tcs_public_id:
+    if tc_name in mandatory_python_tcs_public_id:
         python_test_type = PythonTestType.MANDATORY
     elif len(tc_steps) > 0 and tc_steps[0].is_commissioning:
         python_test_type = PythonTestType.COMMISSIONING
