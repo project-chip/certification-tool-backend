@@ -177,7 +177,7 @@ def __parse_test_case(
     # expected template
     python_test_type = PythonTestType.LEGACY
 
-    if tc_name in mandatories_python_tcs_public_id:
+    if tc_name in mandatory_python_tcs_public_id:
         python_test_type = PythonTestType.MANDATORY
     elif len(tc_steps) > 0 and tc_steps[0].is_commissioning:
         python_test_type = PythonTestType.COMMISSIONING

@@ -43,10 +43,10 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
     test_collections = test_script_manager.test_collections
     enabled_pics = set([item.number for item in pics.all_enabled_items()])
 
-    applicable_mandatories_tests = __append_test_cases(
+    applicable_mandatories_tests = __applicable_test_cases(
         test_collections, enabled_pics, True
     )
-    applicable_remaining_tests = __append_test_cases(
+    applicable_remaining_tests = __applicable_test_cases(
         test_collections, enabled_pics, False
     )
 
