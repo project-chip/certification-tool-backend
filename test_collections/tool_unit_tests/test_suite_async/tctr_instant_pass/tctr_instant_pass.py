@@ -24,6 +24,7 @@ class TCTRInstantPass(TestCase):
         "title": "This is Test Case tctr_instant_pass",
         "description": """This Test Case is built to test the test runner,\
              it is supposed pass instantly""",
+        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

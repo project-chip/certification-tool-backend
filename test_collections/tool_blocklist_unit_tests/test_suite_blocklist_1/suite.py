@@ -22,4 +22,5 @@ class TestSuiteBlocklist1(TestSuite):
         "version": "0.0.1",
         "title": "Test Suite TestSuiteBlocklist1",
         "description": "",
+        "mandatory": False,
     }

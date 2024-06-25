@@ -29,6 +29,7 @@ class TCTRChipLogParsing(ChipTest):
         "version": "1.2.3",
         "title": "This is Test Case tctr_chip_log_parsing",
         "description": "This Test Case is built to test the chip-tool log parser",
+        "mandatory": False,
     }
     server_type = ChipServerType.CHIP_APP
     chip_test_identifier = "Test ID"

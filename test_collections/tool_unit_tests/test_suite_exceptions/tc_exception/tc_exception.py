@@ -35,6 +35,7 @@ class TCException(TestCase):
         "version": "1.2.3",
         "title": "Test Case with errors",
         "description": "This Test case can cause errors at all levels",
+        "mandatory": False,
     }
 
     # Static variables to control exceptions

@@ -24,6 +24,7 @@ class TCTRExpectedFail(TestCase):
         "title": "This is Test Case tctr_expected_fail",
         "description": """This Test Case is built to test the test runner,\
              it is supposed to fail""",
+        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

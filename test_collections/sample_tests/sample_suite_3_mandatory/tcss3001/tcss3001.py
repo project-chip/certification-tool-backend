@@ -17,14 +17,14 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 
 
-class TCSS2002(TestCase):
+class TCSS3001(TestCase):
     metadata = {
-        "public_id": "TCSS2002",
-        "version": "3.2.1",
-        "title": "This is Test Case tcss2002",
-        "description": "This is Test Case tcss2002, it will not get a very long\
-         description",
-        "mandatory": False,
+        "public_id": "TCSS3001",
+        "version": "1.2.3",
+        "title": "This is Test Case tcss3001",
+        "description": """This is Test Case tcss3001,\
+        it will not get a very long description""",
+        "mandatory": True,
     }
 
     def create_test_steps(self) -> None:

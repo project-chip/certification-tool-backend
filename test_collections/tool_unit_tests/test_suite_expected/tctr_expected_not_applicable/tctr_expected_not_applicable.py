@@ -24,6 +24,7 @@ class TCTRExpectedNotApplicable(TestCase):
         "title": "This is Test Case tctr_expected_not_applicable",
         "description": """This Test Case is built to test the test runner,\
              it is supposed to pass with one test step marked as not applicable""",
+        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

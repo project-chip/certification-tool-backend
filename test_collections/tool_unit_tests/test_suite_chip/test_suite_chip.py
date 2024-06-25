@@ -22,4 +22,5 @@ class TestSuiteChip(TestSuite):
         "version": "1.2.3",
         "title": "This is Chip Tool Unit Test Suite",
         "description": "This is Chip Tool Unit Test Suite",
+        "mandatory": False,
     }

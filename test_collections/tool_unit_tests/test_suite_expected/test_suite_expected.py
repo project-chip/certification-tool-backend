@@ -23,6 +23,7 @@ class TestSuiteExpected(TestSuite):
         "version": "1.2.3",
         "title": "This is Test Runner Test Suite",
         "description": "This is Test Runner Test Suite",
+        "mandatory": False,
     }
 
     async def setup(self) -> None:

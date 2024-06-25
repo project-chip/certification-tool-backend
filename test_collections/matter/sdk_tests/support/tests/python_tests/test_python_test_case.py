@@ -64,7 +64,7 @@ def test_python_test_name() -> None:
 
     # Create a subclass of PythonTest
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version="version"
+        test=test, python_test_version="version", mandatory=False
     )
     assert case_class.metadata["title"] == name
     assert case_class.metadata["description"] == description
@@ -76,7 +76,7 @@ def test_python_test_python_version() -> None:
     python_test_version = "best_version"
     # Create a subclass of PythonTest
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version=python_test_version
+        test=test, python_test_version=python_test_version, mandatory=False
     )
     assert case_class.python_test_version == python_test_version
 
@@ -86,7 +86,7 @@ def test_python_test_python() -> None:
     test = python_test_instance()
     # Create a subclass of PythonTest
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version="version"
+        test=test, python_test_version="version", mandatory=False
     )
     assert case_class.python_test is test
 
@@ -99,7 +99,7 @@ def test_python_test_case_class_pics() -> None:
 
     # Create a subclass of PythonTest
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-        test=test, python_test_version="version"
+        test=test, python_test_version="version", mandatory=False
     )
     assert case_class.pics() == test_PICS
 
@@ -113,9 +113,23 @@ def test_class_factory_test_public_id() -> None:
     for data in test_data:
         test = python_test_instance(name=data["name"])
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-            test=test, python_test_version="version"
+            test=test, python_test_version="version", mandatory=False
         )
         assert case_class.metadata["public_id"] == data["public_id"]
+
+
+def test_class_factory_mandatory() -> None:
+    """Test that checks that metadata mandatory field is set"""
+    test_data = [
+        {"name": "TC-AB-1.2", "class_name": "TC_AB_1_2"},
+        {"name": "TC-CD-3.4", "class_name": "TC_CD_3_4"},
+    ]
+    for data in test_data:
+        test = python_test_instance(name=data["name"])
+        case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+            test=test, python_test_version="version", mandatory=True
+        )
+        assert case_class.metadata["mandatory"] == True
 
 
 def test_class_factory_test_class_name() -> None:
@@ -128,7 +142,7 @@ def test_class_factory_test_class_name() -> None:
     for data in test_data:
         test = python_test_instance(name=data["name"])
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-            test=test, python_test_version="version"
+            test=test, python_test_version="version", mandatory=True
         )
         assert case_class.__name__ == data["class_name"]
 
@@ -140,7 +154,7 @@ async def test_python_version_logging() -> None:
         test = python_test_instance(type=type)
         test_python_version = "PythonVersionTest"
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-            test=test, python_test_version=test_python_version
+            test=test, python_test_version=test_python_version, mandatory=False
         )
         instance = case_class(TestCaseExecution())
 
@@ -158,7 +172,7 @@ def test_normal_steps_for_python_tests() -> None:
         test_step = MatterTestStep(label="Step1")
         test = python_test_instance(type=type, steps=[test_step])
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-            test=test, python_test_version="version"
+            test=test, python_test_version="version", mandatory=False
         )
         instance = case_class(TestCaseExecution())
         # Assert normal step is present
@@ -173,7 +187,7 @@ def test_multiple_steps_for_python_tests() -> None:
         no_steps = 5
         test = python_test_instance(type=type, steps=([test_step] * no_steps))
         case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
-            test=test, python_test_version="version"
+            test=test, python_test_version="version", mandatory=False
         )
         instance = case_class(TestCaseExecution())
 

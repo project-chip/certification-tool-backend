@@ -36,6 +36,7 @@ class TCTRUploadFileUserPrompt(TestCase, UserPromptSupport):
         "version": "1.2.3",
         "title": "UploadFile User Prompt Unit Test",
         "description": """This Test Case triggers the upload file user prompt.""",
+        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

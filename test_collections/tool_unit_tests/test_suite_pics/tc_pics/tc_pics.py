@@ -22,6 +22,7 @@ class TCPics(TestCase):
         "version": "1.2.3",
         "title": "TC_Pics (Test)",
         "description": "Test PICS test case for unit testing",
+        "mandatory": False,
     }
 
     @classmethod

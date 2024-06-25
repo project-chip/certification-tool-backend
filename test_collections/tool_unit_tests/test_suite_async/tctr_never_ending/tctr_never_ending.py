@@ -26,6 +26,7 @@ class TCTRNeverEnding(TestCase):
         "title": "This is Test Case tctr_never_ending",
         "description": """This Test Case is built to test the test runner,\
              step 2 is supposed to run for ever""",
+        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

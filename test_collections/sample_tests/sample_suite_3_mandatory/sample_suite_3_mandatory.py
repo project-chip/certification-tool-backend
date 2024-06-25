@@ -17,13 +17,13 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 
 
-class TestSuiteAsync(TestSuite):
+class SampleTestSuite3Mandatory(TestSuite):
     metadata = {
-        "public_id": "TestSuiteAsync",
-        "version": "1.2.3",
-        "title": "This is Test Runner Test Suite",
-        "description": "This is Test Runner Test Suite",
-        "mandatory": False,
+        "public_id": "SampleTestSuite3Mandatory",
+        "version": "7.6.5",
+        "title": "This is Test Suite 3 Mandatory with version 7.6.5",
+        "description": "This is Test Suite 3 Mandatory, It is a mandatory suite",
+        "mandatory": True,
     }
 
     async def setup(self) -> None:

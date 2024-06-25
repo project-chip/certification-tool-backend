@@ -25,6 +25,7 @@ class TestSuiteNeverEnding(TestSuite):
         "version": "1.2.3",
         "title": "A Test suite that can sleep forever. ",
         "description": "This is Test Suite that can sleep forever during all phases",
+        "mandatory": False,
     }
 
     # Static variables to control exceptions

@@ -23,6 +23,7 @@ class SampleTestSuite1(TestSuite):
         "version": "1.2.3",
         "title": "This is Test Suite 1",
         "description": "This is Test Suite 1, it will not get a very long description",
+        "mandatory": False,
     }
 
     async def setup(self) -> None:
