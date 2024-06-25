@@ -23,6 +23,7 @@ class TestMetadata(BaseModel):
     version: str
     title: str
     description: str
+    mandatory: bool = False
 
 
 class TestCase(BaseModel):
