@@ -30,6 +30,7 @@ class SuiteType(Enum):
     COMMISSIONING = 1
     NO_COMMISSIONING = 2
     LEGACY = 3
+    MANDATORY = 4
 
 
 # Custom Type variable used to annotate the factory methods of classmethod.

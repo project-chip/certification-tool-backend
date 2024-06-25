@@ -38,7 +38,7 @@ class PICS(BaseModel):
 
 
 class PICSApplicableTestCases(BaseModel):
-    test_cases: set[str]
+    test_cases: list[str]
 
 
 class PICSError(Exception):
