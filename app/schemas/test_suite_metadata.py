@@ -26,6 +26,7 @@ class TestSuiteMetadataBase(BaseModel):
     description: str
     version: str
     source_hash: str
+    mandatory: bool = False
 
     class Config:
         orm_mode = True

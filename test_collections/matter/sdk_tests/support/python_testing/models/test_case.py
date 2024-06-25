@@ -160,7 +160,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         return cls.python_test.PICS
 
     @classmethod
-    def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
+    def class_factory(
+        cls, test: PythonTest, python_test_version: str, mandatory: bool
+    ) -> Type[T]:
         """Dynamically declares a subclass based on the type of Python test."""
         case_class: Type[PythonTestCase]
 
@@ -172,11 +174,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
             case_class = PythonTestCase
 
         return case_class.__class_factory(
-            test=test, python_test_version=python_test_version
+            test=test, python_test_version=python_test_version, mandatory=mandatory
         )
 
     @classmethod
-    def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
+    def __class_factory(
+        cls, test: PythonTest, python_test_version: str, mandatory: bool
+    ) -> Type[T]:
         """class factory method for PythonTestCase."""
         title = cls.__title(test.name)
         class_name = cls.__class_name(test.name)
@@ -194,6 +198,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,
+                    "mandatory": mandatory,
                 },
             },
         )

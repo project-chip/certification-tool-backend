@@ -266,7 +266,11 @@ def __find_test_suite(
     if not test_cases:
         return None
 
-    suite_declaration = TestSuiteDeclaration(suite)
+    mandatory = False
+    if "mandatory" in suite.metadata:
+        mandatory = suite.metadata["mandatory"]
+
+    suite_declaration = TestSuiteDeclaration(suite, mandatory=mandatory)
     for test in test_cases:
         test_declaration = TestCaseDeclaration(test)
         suite_declaration.test_cases[test.public_id()] = test_declaration

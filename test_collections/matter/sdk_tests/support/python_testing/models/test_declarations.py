@@ -52,6 +52,7 @@ class PythonSuiteDeclaration(TestSuiteDeclaration):
                 name=name,
                 suite_type=suite_type,
                 python_test_version=version,
+                mandatory=mandatory,
             ),
             mandatory=mandatory,
         )
@@ -62,10 +63,12 @@ class PythonCaseDeclaration(TestCaseDeclaration):
 
     class_ref: Type[PythonTestCase]
 
-    def __init__(self, test: PythonTest, python_test_version: str) -> None:
+    def __init__(
+        self, test: PythonTest, python_test_version: str, mandatory: bool
+    ) -> None:
         super().__init__(
             PythonTestCase.class_factory(
-                test=test, python_test_version=python_test_version
+                test=test, python_test_version=python_test_version, mandatory=mandatory
             )
         )
 
