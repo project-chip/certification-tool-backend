@@ -78,11 +78,13 @@ def create_test_run_execution(
     db: Session = Depends(get_db),
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
+    certification_mode: bool = False,
 ) -> TestRunExecution:
     """Create a new test run execution."""
 
     # TODO: Remove test_run_config completely from the project
     test_run_execution_in.test_run_config_id = None
+    test_run_execution_in.certification_mode = certification_mode
 
     test_run_execution = crud.test_run_execution.create(
         db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
@@ -260,6 +262,7 @@ def repeat_test_run_execution(
     test_run_execution_in.description = execution_to_repeat.description
     test_run_execution_in.project_id = execution_to_repeat.project_id
     test_run_execution_in.operator_id = execution_to_repeat.operator_id
+    test_run_execution_in.certification_mode = execution_to_repeat.certification_mode
     # TODO: Remove test_run_config completely from the project
     test_run_execution_in.test_run_config_id = None
 
