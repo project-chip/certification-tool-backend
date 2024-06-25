@@ -24,7 +24,6 @@ class TCSS2002(TestCase):
         "title": "This is Test Case tcss2002",
         "description": "This is Test Case tcss2002, it will not get a very long\
          description",
-        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

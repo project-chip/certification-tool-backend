@@ -31,7 +31,6 @@ class TestSuiteExceptions(TestSuite):
         "version": "1.2.3",
         "title": "A Test suite with custom exceptions",
         "description": "This is Test Suite that can cause exceptions during all phases",
-        "mandatory": False,
     }
 
     # Static variables to control exceptions
