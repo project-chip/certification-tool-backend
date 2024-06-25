@@ -31,7 +31,10 @@ def upgrade():
     op.execute("UPDATE testsuiteexecution SET mandatory = false")
 
     op.alter_column(
-        "testrunexecution", "certification_mode", existing_type=sa.Boolean(), nullable=False
+        "testrunexecution",
+        "certification_mode",
+        existing_type=sa.Boolean(),
+        nullable=False,
     )
     op.alter_column(
         "testsuiteexecution", "mandatory", existing_type=sa.Boolean(), nullable=False
