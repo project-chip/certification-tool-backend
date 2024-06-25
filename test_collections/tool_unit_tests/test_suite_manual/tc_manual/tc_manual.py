@@ -25,7 +25,6 @@ class TCManual(ManualTestCase):
         "title": "A Test Case that must be done manually.",
         "description": "This Test case will prompt the user if this case"
         "pass/failed and to upload a log as evidence.",
-        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

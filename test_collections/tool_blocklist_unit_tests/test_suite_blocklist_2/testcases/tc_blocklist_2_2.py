@@ -24,7 +24,6 @@ class TCBlocklist22(TestCase):
         "title": "TC-Blocklist-2.2",
         "description": """This Test Case is built to test the test case blocklist,\
              it is supposed pass instantly""",
-        "mandatory": False,
     }
 
     def create_test_steps(self) -> None:

@@ -70,7 +70,6 @@ class TCNeverEndingV2(TestCase):
         "No new feature is added to this test case compared to TCNeverEnding."
         "The goal of this test case is add a second Test Case to the same "
         "Test Suite TestSuiteNeverEnding.",
-        "mandatory": False,
     }
 
     # Static variables to control exceptions

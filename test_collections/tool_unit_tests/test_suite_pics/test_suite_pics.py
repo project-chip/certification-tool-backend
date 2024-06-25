@@ -23,7 +23,6 @@ class TestPICSSuite(TestSuite):
         "version": "1.2.3",
         "title": "Test Suite TestPICSSuite",
         "description": " Test suite for testing PICS",
-        "mandatory": False,
     }
 
     async def setup(self) -> None:

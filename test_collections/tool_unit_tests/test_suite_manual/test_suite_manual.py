@@ -25,7 +25,6 @@ class TestSuiteManual(TestSuite):
         "version": "1.2.3",
         "title": "A Manual Test Suite",
         "description": "This is Test Suite that must be executed manually.",
-        "mandatory": False,
     }
 
     async def setup(self) -> None:
