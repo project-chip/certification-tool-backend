@@ -50,7 +50,7 @@ def test_python_suite_class_factory_name() -> None:
     assert suite_class.public_id() == name
     assert suite_class.metadata["title"] == name
     assert suite_class.metadata["description"] == name
-    assert suite_class.metadata["mandatory"] == False
+    assert suite_class.metadata["mandatory"] == False  # type: ignore
 
 
 def test_python_suite_class_factory_name_mandatory() -> None:
@@ -69,7 +69,7 @@ def test_python_suite_class_factory_name_mandatory() -> None:
     assert suite_class.public_id() == name
     assert suite_class.metadata["title"] == name
     assert suite_class.metadata["description"] == name
-    assert suite_class.metadata["mandatory"] == True
+    assert suite_class.metadata["mandatory"] == True  # type: ignore
 
 
 def test_python_test_suite_python_version() -> None:

@@ -268,7 +268,7 @@ def __find_test_suite(
 
     mandatory = False
     if "mandatory" in suite.metadata:
-        mandatory = suite.metadata["mandatory"]
+        mandatory = suite.metadata["mandatory"]  # type: ignore
 
     suite_declaration = TestSuiteDeclaration(suite, mandatory=mandatory)
     for test in test_cases:
