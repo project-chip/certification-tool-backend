@@ -194,31 +194,17 @@ def __get_method_by_name(
 
 
 def __retrieve_is_commissioning(method: FunctionDefType) -> bool:
-    steps_body = __retrieve_return_body(method, ast.List)
-    if not steps_body:
-        return []
-
-    for element in steps_body.value.elts:
-        step = element
-        break
-
-    arg_is_commissioning = False
     try:
-        has_is_commissioning = any(
-            k for k in step.keywords if k.arg == "is_commissioning"
-        )
-        if not has_is_commissioning:
-            return arg_is_commissioning
-
-        arg_is_commissioning = [
-            k.value.value for k in step.keywords if k.arg == "is_commissioning"
+        test_steps_body = __retrieve_return_body(method, ast.List)
+        step = test_steps_body.value.elts[0]
+        is_commissioning_keyword = [
+            keyword for keyword in step.keywords if keyword.arg == "is_commissioning"
         ][0]
-    except Exception as e:
-        logger.error(
-            f"Unable to determine property 'is_commissioning'. Method:{method.name}, Error:{str(e)}"
-        )
 
-    return arg_is_commissioning
+        return is_commissioning_keyword.value.value
+    except Exception as e:
+        logger.error(f"Can't determine 'is_commissioning' value. Error:{str(e)}")
+        return False
 
 
 def __retrieve_pics(method: FunctionDefType) -> list:
