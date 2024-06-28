@@ -24,8 +24,8 @@ from typing import Any, Optional, Type, TypeVar
 
 from sqlalchemy.orm import Session
 
+from app.crud.crud_test_step_execution import test_step_execution
 from app.models import TestCaseExecution
-from app.models.test_step_execution import TestStepExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
@@ -117,25 +117,19 @@ class PythonTestCase(TestCase, UserPromptSupport):
         count: int,
         steps: list[str],
     ) -> None:
-        db: Session = self.__get_db_session()
-
-        execution_index = 1  # Skip the "Start Python Test"
         steps.append("Show test logs")
 
         for step_name in steps:
             python_test_step = TestStep(step_name)
+            python_test_step.subscribe(self.observers)
             self.test_steps.append(python_test_step)
 
-            python_test_step.subscribe(self.observers)
-            test_step_execution = TestStepExecution(
-                title=step_name,
-                execution_index=execution_index,
-                test_case_execution_id=self.test_case_execution.id,
-            )
-            db.add(test_step_execution)
-            python_test_step.test_step_execution = test_step_execution
-            execution_index += 1
-        db.commit()
+        test_step_execution.update_db_with_received_test_steps(
+            self.__get_db_session(),
+            self.test_steps[1:],  # Skips "Python start test" step
+            start_execution_index=1,  # Skips "Python start test" step
+            test_case_execution_id=self.test_case_execution.id,
+        )
 
         self.notify()
         self.step_over()
