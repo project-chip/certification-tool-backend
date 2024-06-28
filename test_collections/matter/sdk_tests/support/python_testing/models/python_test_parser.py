@@ -16,7 +16,7 @@
 import ast
 import re
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 from app.test_engine.logger import test_engine_logger as logger
 
@@ -143,7 +143,7 @@ def __parse_test_case(
     pics_method_name = "pics_" + tc_name
 
     tc_desc = tc_name
-    tc_steps = []
+    tc_steps: list[MatterTestStep] = []
     tc_pics = []
     tc_is_commissioning = False
 
@@ -196,6 +196,9 @@ def __get_method_by_name(
 def __retrieve_is_commissioning(method: FunctionDefType) -> bool:
     try:
         test_steps = __retrieve_return_body(method, ast.List)
+        if test_steps is None:
+            raise Exception("Unable to obtain list of steps list")
+
         first_step = test_steps.value.elts[0]
         is_commissioning_keyword = [
             keyword
