@@ -22,7 +22,10 @@ from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
+from sqlalchemy.orm import Session
+
 from app.models import TestCaseExecution
+from app.models.test_step_execution import TestStepExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
@@ -102,7 +105,50 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if not self.test_stop_called:
             self.current_test_step.mark_as_completed()
 
-    def test_start(self, filename: str, name: str, count: int) -> None:
+    def __get_db_session(self) -> Session:
+        from app.test_engine.test_runner import TestRunner
+
+        return TestRunner().db_session
+
+    def test_start(
+        self,
+        filename: str,
+        name: str,
+        count: int,
+        steps: list[str],
+    ) -> None:
+        # print(f"Steps {steps}")
+        self.steps_sdk = ["Start Python test"]
+        self.steps_sdk.extend(steps)
+        self.steps_sdk = ["Show test logs"]
+
+        db: Session = self.__get_db_session()
+
+        execution_index = 1  # Skip the "Start Python Test"
+        steps.append("Show test logs")
+
+        for step_name in steps:
+            python_test_step = TestStep(step_name)
+            self.test_steps.append(python_test_step)
+
+            python_test_step.subscribe(self.observers)
+            test_step_execution = TestStepExecution(
+                title=step_name,
+                execution_index=execution_index,
+                test_case_execution_id=self.test_case_execution.id,
+            )
+            db.add(test_step_execution)
+            python_test_step.test_step_execution = test_step_execution
+            execution_index += 1
+        db.commit()
+
+        # for step in self.python_test.steps:
+        #     python_test_step = TestStep(step.label)
+        #     self.test_steps.append(python_test_step)
+
+        # self.create_test_steps()
+
+        self.notify()
         self.step_over()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
@@ -332,7 +378,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
         for step in self.python_test.steps:
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
-        self.test_steps.append(TestStep("Show test logs"))
 
 
 class NoCommissioningPythonTestCase(PythonTestCase):

@@ -64,6 +64,10 @@ class TestRunner(object, metaclass=Singleton):
     def state(self) -> TestRunnerState:
         return self.__state
 
+    @property
+    def db_session(self) -> Session:
+        return self.__db
+
     # LOADING new test run
     def load_test_run(self, test_run_execution_id: int) -> None:
         """This will load all the tests for an given test_run.

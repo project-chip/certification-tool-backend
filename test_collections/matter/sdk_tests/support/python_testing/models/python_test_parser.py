@@ -145,6 +145,7 @@ def __parse_test_case(
     tc_desc = tc_name
     tc_steps = []
     tc_pics = []
+    tc_is_commissioning = False
 
     desc_method = __get_method_by_name(desc_method_name, methods)
     if desc_method:
@@ -155,7 +156,7 @@ def __parse_test_case(
     # executed as one step
     steps_method = __get_method_by_name(steps_method_name, methods)
     if steps_method:
-        tc_steps = __retrieve_steps(steps_method)
+        tc_is_commissioning = __retrieve_is_commissioning(steps_method)
 
     pics_method = __get_method_by_name(pics_method_name, methods)
     if pics_method:
@@ -168,7 +169,7 @@ def __parse_test_case(
     # We use the desc_[test_name] method as an indicator that the test case follows the
     # expected template
     python_test_type = PythonTestType.LEGACY
-    if len(tc_steps) > 0 and tc_steps[0].is_commissioning:
+    if tc_is_commissioning:
         python_test_type = PythonTestType.COMMISSIONING
     elif desc_method:
         python_test_type = PythonTestType.NO_COMMISSIONING
@@ -192,39 +193,32 @@ def __get_method_by_name(
     return next((m for m in methods if name in m.name), None)
 
 
-def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
-    python_steps: List[MatterTestStep] = []
-
+def __retrieve_is_commissioning(method: FunctionDefType) -> bool:
     steps_body = __retrieve_return_body(method, ast.List)
     if not steps_body:
         return []
 
-    for step in steps_body.value.elts:
-        try:
-            arg_is_commissioning = False
+    for element in steps_body.value.elts:
+        step = element
+        break
 
-            if (
-                step.keywords
-                and "is_commissioning"
-                in step.keywords[KEYWORD_IS_COMISSIONING_INDEX].arg
-            ):
-                arg_is_commissioning = step.keywords[
-                    KEYWORD_IS_COMISSIONING_INDEX
-                ].value.value
+    arg_is_commissioning = False
+    try:
+        has_is_commissioning = any(
+            k for k in step.keywords if k.arg == "is_commissioning"
+        )
+        if not has_is_commissioning:
+            return arg_is_commissioning
 
-            step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
-            parsed_step_name = step_name
-        except Exception as e:
-            logger.error(f"Error while parsing step from {method.name}, Error:{str(e)}")
-            parsed_step_name = "UNABLE TO PARSE TEST STEP NAME"
-
-        python_steps.append(
-            MatterTestStep(
-                label=parsed_step_name, is_commissioning=arg_is_commissioning
-            )
+        arg_is_commissioning = [
+            k.value.value for k in step.keywords if k.arg == "is_commissioning"
+        ][0]
+    except Exception as e:
+        logger.error(
+            f"Unable to determine property 'is_commissioning'. Method:{method.name}, Error:{str(e)}"
         )
 
-    return python_steps
+    return arg_is_commissioning
 
 
 def __retrieve_pics(method: FunctionDefType) -> list:

@@ -99,10 +99,16 @@ class TestUIObserver(Observer):
         if observable.test_case_execution is not None:
             test_case_execution = observable.test_case_execution
             test_suite_execution = test_case_execution.test_suite_execution
+            steps_sdk = []
+            if hasattr(observable, "steps_sdk"):
+                steps_sdk = observable.steps_sdk
+            
+            
             update = {
                 "test_suite_execution_index": test_suite_execution.execution_index,
                 "test_case_execution_index": test_case_execution.execution_index,
                 "state": observable.state,
+                "steps": steps_sdk,
                 "errors": observable.errors,
             }
             self.__send_test_update_message(
