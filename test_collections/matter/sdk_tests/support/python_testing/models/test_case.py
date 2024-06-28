@@ -93,7 +93,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         # Python tests that don't follow the template only have the default steps "Start
         # Python test" and "Show test logs", but inside the file there can be more than
         # one test case, so the hooks' step methods will continue to be called
-        if len(self.test_steps) == 2:
+        if self.python_test.python_test_type == PythonTestType.LEGACY:
             return
 
         self.next_step()
@@ -117,11 +117,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
         count: int,
         steps: list[str],
     ) -> None:
-        # print(f"Steps {steps}")
-        self.steps_sdk = ["Start Python test"]
-        self.steps_sdk.extend(steps)
-        self.steps_sdk = ["Show test logs"]
-
         db: Session = self.__get_db_session()
 
         execution_index = 1  # Skip the "Start Python Test"
@@ -141,12 +136,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
             python_test_step.test_step_execution = test_step_execution
             execution_index += 1
         db.commit()
-
-        # for step in self.python_test.steps:
-        #     python_test_step = TestStep(step.label)
-        #     self.test_steps.append(python_test_step)
-
-        # self.create_test_steps()
 
         self.notify()
         self.step_over()
@@ -174,7 +163,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         # tests can fail and so this method will be called for each of them. These
         # failures should be reported in the first step and moving to the logs step
         # should only happen after all test cases are executed.
-        if len(self.test_steps) > 2:
+        if self.python_test.python_test_type != PythonTestType.LEGACY:
             # Python tests stop when there's a failure. We need to skip the next steps
             # and execute only the last one, which shows the logs
             self.skip_to_last_step()
@@ -339,7 +328,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # step_over method. So we have to explicitly move on to the next step here.
             # The tests that do follow the template will have additional steps and will
             # have already been moved to the correct step by the hooks' step methods.
-            if len(self.test_steps) == 2:
+            if self.python_test.python_test_type == PythonTestType.LEGACY:
                 self.next_step()
 
             logger.info("---- Start of Python test logs ----")
