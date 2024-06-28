@@ -121,7 +121,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         for step_name in steps:
             python_test_step = TestStep(step_name)
-            python_test_step.subscribe(self.observers)
+            python_test_step.subscribe(list(self.observers))
             self.test_steps.append(python_test_step)
 
         test_step_execution.update_db_with_received_test_steps(
