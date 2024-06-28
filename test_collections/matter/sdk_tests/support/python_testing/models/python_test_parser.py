@@ -195,10 +195,12 @@ def __get_method_by_name(
 
 def __retrieve_is_commissioning(method: FunctionDefType) -> bool:
     try:
-        test_steps_body = __retrieve_return_body(method, ast.List)
-        step = test_steps_body.value.elts[0]
+        test_steps = __retrieve_return_body(method, ast.List)
+        first_step = test_steps.value.elts[0]
         is_commissioning_keyword = [
-            keyword for keyword in step.keywords if keyword.arg == "is_commissioning"
+            keyword
+            for keyword in first_step.keywords
+            if keyword.arg == "is_commissioning"
         ][0]
 
         return is_commissioning_keyword.value.value
