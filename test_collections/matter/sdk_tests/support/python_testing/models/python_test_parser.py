@@ -196,7 +196,7 @@ def __get_method_by_name(
 def __retrieve_is_commissioning(method: FunctionDefType) -> bool:
     try:
         test_steps = __retrieve_return_body(method, ast.List)
-        if test_steps is None:
+        if test_steps is None or not test_steps.value.elts:
             raise Exception("Unable to obtain list of steps list")
 
         first_step = test_steps.value.elts[0]
@@ -204,9 +204,12 @@ def __retrieve_is_commissioning(method: FunctionDefType) -> bool:
             keyword
             for keyword in first_step.keywords
             if keyword.arg == "is_commissioning"
-        ][0]
+        ]
 
-        return is_commissioning_keyword.value.value
+        if len(is_commissioning_keyword) == 0:
+            return False
+
+        return is_commissioning_keyword[0].value.value
     except Exception as e:
         logger.error(f"Can't determine 'is_commissioning' value. Error:{str(e)}")
         return False
