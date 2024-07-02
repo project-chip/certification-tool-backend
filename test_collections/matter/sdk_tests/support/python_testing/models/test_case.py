@@ -131,8 +131,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
             test_case_execution_id=self.test_case_execution.id,
         )
 
-        self.notify()
         self.step_over()
+        self.notify()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True

@@ -18,6 +18,10 @@
 from pathlib import Path
 from unittest import mock
 
+from test_collections.matter.sdk_tests.support.python_testing.models.python_test_models import (
+    PythonTestType,
+)
+
 from ...python_testing.models.python_test_parser import parse_python_script
 
 sample_single_test_python_file_content = """
@@ -111,7 +115,7 @@ def test_single_test_python_file_parser() -> None:
 
     assert len(tests) is 1
     assert all(test.path == file_path for test in tests)
-    assert len(tests[0].steps) is 3
+    assert tests[0].python_test_type == PythonTestType.COMMISSIONING
     assert tests[0].description == "Sample TC Description"
     assert "MCORE.ROLE.COMMISSIONEE" in tests[0].PICS
     assert len(tests[0].PICS) is 1

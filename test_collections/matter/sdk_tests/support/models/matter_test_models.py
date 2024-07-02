@@ -45,6 +45,6 @@ class MatterTest(BaseModel):
     name: str
     PICS: set[str] = set()
     config: dict[str, Any]
-    steps: list[MatterTestStep]
+    steps: list[MatterTestStep] = []
     type: MatterTestType = MatterTestType.MANUAL
     path: Optional[Path]
