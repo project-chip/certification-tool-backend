@@ -23,9 +23,6 @@ from app.test_engine.logger import test_engine_logger as logger
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from .python_test_models import PythonTest, PythonTestType
 
-ARG_STEP_DESCRIPTION_INDEX = 1
-KEYWORD_IS_COMISSIONING_INDEX = 0
-
 TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
 TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
 
