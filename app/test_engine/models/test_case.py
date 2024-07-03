@@ -299,3 +299,34 @@ class TestCase(TestObservable):
 
     async def cleanup(self) -> None:
         raise NotImplementedError  # Must be overridden by subclass
+
+    # def __cancel_remaning_test_steps(self) -> None:
+    #     for step in self.test_steps:
+    #         step.state = TestStateEnum.CANCELLED
+
+    # # def cancel(self) -> None:
+    # #     # Only cancel if test case is not already completed
+    # #     if self.completed():
+    # #         return
+
+    # #     # Cancel remaning test_steps
+    # #     self.__cancel_remaning_test_steps()
+
+    # #     logger.info("Cancel test case")
+    # #     self.mark_as_completed()
+
+    # def __not_applicable_all_test_steps(self) -> None:
+    #     for step in self.test_steps:
+    #         step.state = TestStateEnum.NOT_APPLICABLE
+
+    # def mark_as_not_applicable(self) -> None:
+    #     self.state = TestStateEnum.NOT_APPLICABLE
+
+    #     # Not applicable all test_steps
+    #     self.__not_applicable_all_test_steps()
+
+    #     # if self.completed():
+    #     #     return
+    #     # self.state = self.__compute_state()
+    #     logger.info(f"Test Case Completed[{self.state.name}]: {self.metadata['title']}")
+    #     self.__print_log_separator()

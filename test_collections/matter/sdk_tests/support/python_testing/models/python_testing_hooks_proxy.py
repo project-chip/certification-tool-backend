@@ -26,6 +26,7 @@ class SDKPythonTestResultEnum(str, Enum):
     STOP = "stop"
     TEST_START = "test_start"
     TEST_STOP = "test_stop"
+    TEST_NOT_APPLICABLE = "test_not_applicable"
     STEP_SKIPPED = "step_skipped"
     STEP_START = "step_start"
     STEP_SUCCESS = "step_success"
@@ -63,6 +64,12 @@ class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.TEST_STOP
     duration: Optional[str]
     exception: Any
+
+
+class SDKPythonTestResultTestNotApplicable(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.TEST_NOT_APPLICABLE
+    name: Optional[str]
+    expression: Optional[str]
 
 
 class SDKPythonTestResultStepSkipped(SDKPythonTestResultBase):
@@ -149,6 +156,10 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
                 duration=duration,
             )
         )
+
+    def test_not_applicable(self, name: str) -> None:
+        self.results.put(SDKPythonTestResultTestNotApplicable(name=name))
+        SDKPythonTestRunnerHooks.finished = True
 
     def step_skipped(self, name: str, expression: str) -> None:
         self.results.put(SDKPythonTestResultStepSkipped(expression=expression))

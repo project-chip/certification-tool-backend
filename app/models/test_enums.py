@@ -24,5 +24,5 @@ class TestStateEnum(str, Enum):
     PASSED = "passed"  # Test Passed with no issued
     FAILED = "failed"  # Test Failed
     ERROR = "error"  # Test Error due to tool setup or environment
-    NOT_APPLICABLE = "not_applicable"  # TODO: Do we need this for full cert runs?
+    NOT_APPLICABLE = "not_applicable"  # Test is not applicable - e.g. PICS mismatch
     CANCELLED = "cancelled"

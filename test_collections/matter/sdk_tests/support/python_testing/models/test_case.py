@@ -23,6 +23,7 @@ from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
 from app.models import TestCaseExecution
+from app.socket_connection_manager import socket_connection_manager
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
@@ -34,6 +35,7 @@ from app.user_prompt_support.prompt_request import (
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
+from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...pics import PICS_FILE_PATH
 from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
@@ -107,6 +109,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
+
+    def test_not_applicable(self, name: str) -> None:
+        # TODO - Make all steps skipped
+        # test_case_execution
+        # self.current_test_step.mark_as_not_applicable(f"Test case: {name} skipped")
+        # self.test_case_execution
+        self.mark_as_not_applicable()
+        # self.mark_as_completed()
 
     def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
