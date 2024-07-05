@@ -120,6 +120,21 @@ class TestRun(TestObservable):
             self.current_test_suite = test_suite
             await test_suite.run()
 
+            # Check if mandatory suite failed
+            if (
+                self.test_run_execution.certification_mode
+                and test_suite.mandatory
+                and any(
+                    tc
+                    for tc in test_suite.test_cases
+                    if tc.state != TestStateEnum.PASSED
+                )
+            ):
+                print("Abort execution")
+                self.__cancel_remaining_tests()
+                self.cancel()
+                break
+
     def cancel(self) -> None:
         """This will abort executuion of the current test suite, and mark all remaining
         tests as cancelled."""
