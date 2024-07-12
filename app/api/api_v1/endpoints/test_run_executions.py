@@ -606,7 +606,7 @@ def generate_summary_log(
     directory_path = "/app/backend/app/api/api_v1/endpoints/logs"
     if os.path.exists(directory_path):
         shutil.rmtree(directory_path)
-        os.mkdir(directory_path)
+    os.mkdir(directory_path)
 
     out_datetime = test_run_execution.started_at.strftime(date_pattern_out_file)
 
