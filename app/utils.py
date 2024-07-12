@@ -174,8 +174,13 @@ def selected_tests_from_execution(run: TestRunExecution) -> TestSelection:
         selected_tests.setdefault(suite.collection_id, {})
         selected_tests[suite.collection_id][suite.public_id] = {}
         for case in suite.test_case_executions:
+            case_count = (
+                int(case.test_case_metadata.count)
+                if case.test_case_metadata.count
+                else 1
+            )
             selected_tests[suite.collection_id][suite.public_id].update(
-                {case.public_id: 1}
+                {case.public_id: case_count}
             )
 
     return selected_tests
