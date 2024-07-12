@@ -598,7 +598,10 @@ def generate_summary_log(
             status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
         )
 
-    log_lines = log_utils.convert_execution_log_to_text(log=test_run_execution.log)
+    log_lines_list = log_utils.convert_execution_log_to_list(
+        log=test_run_execution.log, json_entries=False
+    )
+    log_lines = "\n".join(log_lines_list)
 
     directory_path = "/app/backend/app/api/api_v1/endpoints/logs"
     if os.path.exists(directory_path):
