@@ -42,5 +42,5 @@ def create_random_pics() -> PICS:
     return pics
 
 
-def create_random_project_with_pics(db: Session) -> models.Project:
-    return create_random_project(db=db, pics=create_random_pics())
+def create_random_project_with_pics(db: Session, config: dict) -> models.Project:
+    return create_random_project(db=db, config=config, pics=create_random_pics())

@@ -1,6 +1,5 @@
 #!/bin/bash -e
-set -x
-set -e
+
  #
  # Copyright (c) 2023 Project CHIP Authors
  #
@@ -20,9 +19,11 @@ set -e
 # 
 # When an SDK path is supplied, the SDK_SHA from .env is ignored.
 # Otherwise a temporary checkout of matter sdk will be made.
+set -x
+set -e
 
 # Paths
-ROOT_DIR=$(realpath $(dirname "$0")/../..)
+MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/../..)
 
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
@@ -35,7 +36,7 @@ SDK_EXAMPLE_CHIP_TOOL_PATH="examples/chip-tool"
 SDK_EXAMPLE_PLACEHOLDER_PATH="examples/placeholder"
 SDK_DATA_MODEL_PATH="src/app/zap-templates/zcl/data-model/chip"
 
-TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$ROOT_DIR/sdk_tests/sdk_checkout"
+TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$MATTER_PROGRAM_DIR/sdk_tests/sdk_checkout"
 
 # YAML Files
 YAML_TEST_COLLECTION_PATH="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/yaml_tests"
@@ -75,8 +76,8 @@ then
     echo "Using custom SDK path: ${SDK_PATH}. Update required"
     SDK_CHECKOUT_VERSION="custom-sdk"
 else
-    # Get configured SDK_SHA (will default to value in app/core/config.py)
-    SDK_SHA=`LOGGING_LEVEL=critical python3 -c "from app.core.config import settings; print(settings.SDK_SHA)"`
+    # Get configured SDK_SHA (will default to value in test_collection/matter/config.py)
+    SDK_SHA=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
     if [[ $FORCE_UPDATE -eq 1 ]]
     then 
         echo "Update is forced."

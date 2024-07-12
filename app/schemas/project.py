@@ -19,13 +19,12 @@ from typing import Optional
 from pydantic import BaseModel
 
 from .pics import PICS
-from .test_environment_config import TestEnvironmentConfig
 
 
 # Shared properties
 class ProjectBase(BaseModel):
     name: Optional[str]
-    config: Optional[TestEnvironmentConfig]
+    config: Optional[dict]
     pics: Optional[PICS]
 
 

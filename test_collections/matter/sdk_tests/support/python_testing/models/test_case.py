@@ -32,6 +32,7 @@ from app.user_prompt_support.prompt_request import (
     TextInputPromptRequest,
 )
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...pics import PICS_FILE_PATH
 from ...sdk_container import SDKContainer
@@ -260,7 +261,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # project configuration
             # comissioning method is omitted because it's handled by the test suite
             command_arguments = generate_command_arguments(
-                config=self.config, omit_commissioning_method=True
+                config=TestEnvironmentConfigMatter(**self.config),  # type: ignore
+                omit_commissioning_method=True,
             )
             command.extend(command_arguments)
 
@@ -365,7 +367,9 @@ class LegacyPythonTestCase(PythonTestCase):
             case PromptOption.YES:
                 logger.info("User chose prompt option YES")
                 logger.info("Commission DUT")
-                commission_device(self.config, logger)
+                commission_device(
+                    TestEnvironmentConfigMatter(**self.config), logger  # type: ignore
+                )
 
             case PromptOption.NO:
                 logger.info("User chose prompt option NO")

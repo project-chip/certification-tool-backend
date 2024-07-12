@@ -13,22 +13,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import ast
+import importlib
 import os
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional
+from types import ModuleType
+from typing import Any, Dict, Optional, Tuple, Type
 
 import emails
 from emails.template import JinjaTemplate
 from jose import jwt
 from loguru import logger
-from sqlalchemy import create_engine
 
-from alembic.migration import MigrationContext
 from app.core.config import settings
 from app.models import TestRunExecution
 from app.schemas import TestSelection
+
+TEST_COLLECTIONS = "test_collections"
+TEST_ENVIRONMENT_CONFIG_NAME = "default_project.config"
+TEST_ENVIRONMENT_CONFIG_PYTHON = "test_environment_config.py"
+TEST_ENVIRONMENT_CONFIG_MODULE = "test_environment_config"
+TEST_ENVIRONMENT_CONFIG_BASE_CLASS_NAME = "TestEnvironmentConfig"
+
+
+class InvalidProgramConfigurationError(Exception):
+    """'Exception raised when the program configuration is invalid"""
+
+    pass
 
 
 def send_email(
@@ -149,24 +162,6 @@ def read_information_from_file(filepath: Path) -> str:
             return f.readline().rstrip()
 
 
-def get_db_url() -> str:
-    user = os.getenv("POSTGRES_USER", "postgres")
-    password = os.getenv("POSTGRES_PASSWORD", "")
-    server = os.getenv("POSTGRES_SERVER", "db")
-    db = os.getenv("POSTGRES_DB", "app")
-    return f"postgresql://{user}:{password}@{server}/{db}"
-
-
-def get_db_revision() -> str:
-    engine = create_engine(get_db_url())
-    conn = engine.connect()
-
-    context = MigrationContext.configure(conn)
-    current_rev = context.get_current_revision() or "Unknown"
-
-    return current_rev
-
-
 def selected_tests_from_execution(run: TestRunExecution) -> TestSelection:
     selected_tests: TestSelection = {}
 
@@ -198,3 +193,74 @@ def remove_title_date(title: str) -> str:
     The date format expected is: '_YYYY_MM_DD_hh_mm_ss'
     """
     return re.sub(r"\_\d{4}(\_\d{2}){5}", "", title)
+
+
+def __retrieve_program_module(test_folder_file_name: Path) -> ModuleType:
+    """Retrives the program module"""
+    items = str(test_folder_file_name).split("/")
+    program = items[items.index(TEST_COLLECTIONS) + 1]
+    module = importlib.import_module(
+        f"{TEST_COLLECTIONS}.{program}.{TEST_ENVIRONMENT_CONFIG_MODULE}"
+    )
+    return module
+
+
+def __retrieve_program_class(test_folder_file_name: Path) -> str:
+    """Looking for a class, inside the given path, that extends TestEnvironmentConfig"""
+    with open(test_folder_file_name, "r") as python_file:
+        parsed_python_file = ast.parse(python_file.read())
+
+        classes = [
+            c
+            for c in parsed_python_file.body
+            if isinstance(c, ast.ClassDef)
+            and any(
+                b
+                for b in c.bases
+                if isinstance(b, ast.Name)
+                and b.id == TEST_ENVIRONMENT_CONFIG_BASE_CLASS_NAME
+            )
+        ]
+
+    # It should have only one occurrence for a class that extends TestEnvironmentConfig
+    if not classes or len(classes) == 0:
+        raise InvalidProgramConfigurationError(
+            "At least one class definition is required"
+        )
+    return classes[0].name
+
+
+def __retrieve_program_conf() -> Tuple[Optional[Type], Optional[Path]]:
+    PROJECT_ROOT = Path(__file__).parent.parents[0]
+
+    test_collection_folder = os.listdir(PROJECT_ROOT / TEST_COLLECTIONS)
+
+    # Iterate through the folders inside test_collections in order to find the first
+    # occurency for the default_project.config file
+    for program_folder in test_collection_folder:
+        test_folder_file_name = (
+            PROJECT_ROOT
+            / TEST_COLLECTIONS
+            / program_folder
+            / TEST_ENVIRONMENT_CONFIG_PYTHON
+        )
+        # Currently, only one program is supported, so it should consider the first
+        # occurency for default_project.config file
+        if test_folder_file_name.is_file():
+            ProgramConfigClassReference = getattr(
+                __retrieve_program_module(test_folder_file_name),
+                __retrieve_program_class(test_folder_file_name),
+            )
+            default_config_file = (
+                PROJECT_ROOT
+                / TEST_COLLECTIONS
+                / program_folder
+                / TEST_ENVIRONMENT_CONFIG_NAME
+            )
+
+            return ProgramConfigClassReference, default_config_file
+
+    return None, None
+
+
+program_class, program_config_path = __retrieve_program_conf()

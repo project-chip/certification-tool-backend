@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 from datetime import datetime
 from functools import reduce
 from io import BytesIO
 from operator import add
-from typing import Generator, List, Optional
+from typing import AsyncGenerator, Generator, List, Optional
 from zipfile import ZipFile
 
 from app import models, schemas
@@ -39,17 +40,25 @@ def log_generator(
             yield f"{log_line.level:10} | {timestamp} | {log_line.message}\n"
 
 
-def convert_execution_log_to_text(log: list) -> str:
-    str_out = ""
+async def async_log_generator(items: list) -> AsyncGenerator:
+    for log_line in items:
+        yield log_line + "\n"
+
+
+def convert_execution_log_to_list(log: list, json_entries: bool) -> list:
+    log_entries = []
 
     for log_line in log:
-        timestamp = datetime.fromtimestamp(log_line.timestamp).strftime(
-            "%Y-%m-%d %H:%M:%S.%f"
-        )
-        log_message = f"{log_line.level:10} | {timestamp} | {log_line.message}\n"
-        str_out = str_out + log_message
+        if json_entries:
+            log_entries.append(json.dumps(log_line.__dict__))
+        else:
+            entry = log_line
+            timestamp = datetime.fromtimestamp(entry.timestamp).strftime(
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+            log_entries.append(f"{entry.level:10} | {timestamp} | {entry.message}")
 
-    return str_out
+    return log_entries
 
 
 def group_test_run_execution_logs(

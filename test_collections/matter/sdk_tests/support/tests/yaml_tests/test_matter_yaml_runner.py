@@ -26,9 +26,9 @@ from matter_yamltests.parser_builder import TestParserBuilderConfig
 from matter_yamltests.runner import TestRunnerConfig
 from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
-from app.core.config import settings
 from app.schemas.pics import PICSError
 from app.tests.utils.test_pics_data import create_random_pics
+from test_collections.matter.config import matter_settings
 
 from ...chip.chip_server import ChipServer, ChipServerType
 from ...pics import PICS_FILE_PATH, SHELL_OPTION, SHELL_PATH
@@ -346,9 +346,9 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
 
 @pytest.mark.asyncio
 async def test_pairing_on_network_command_params() -> None:
-    original_trace_setting_value = settings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        settings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     # Attributes
     runner: MatterYAMLRunner = MatterYAMLRunner()
@@ -373,15 +373,15 @@ async def test_pairing_on_network_command_params() -> None:
     mock_send_websocket_command.assert_awaited_once_with(expected_command)
 
     # clean up:
-    settings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
     chip_server._ChipServer__node_id = None
 
 
 @pytest.mark.asyncio
 async def test_pairing_ble_wifi_command_params() -> None:
-    original_trace_setting_value = settings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        settings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     # Attributes
     runner: MatterYAMLRunner = MatterYAMLRunner()
@@ -412,15 +412,15 @@ async def test_pairing_ble_wifi_command_params() -> None:
     mock_send_websocket_command.assert_awaited_once_with(expected_command)
 
     # clean up:
-    settings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
     chip_server._ChipServer__node_id = None
 
 
 @pytest.mark.asyncio
 async def test_pairing_ble_thread_command_params() -> None:
-    original_trace_setting_value = settings.CHIP_TOOL_TRACE
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
-        settings.CHIP_TOOL_TRACE = False
+        matter_settings.CHIP_TOOL_TRACE = False
 
     # Attributes
     runner: MatterYAMLRunner = MatterYAMLRunner()
@@ -450,5 +450,5 @@ async def test_pairing_ble_thread_command_params() -> None:
     mock_send_websocket_command.assert_awaited_once_with(expected_command)
 
     # clean up:
-    settings.CHIP_TOOL_TRACE = original_trace_setting_value
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
     chip_server._ChipServer__node_id = None

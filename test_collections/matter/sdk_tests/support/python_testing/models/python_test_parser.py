@@ -18,6 +18,8 @@ import re
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
+from app.test_engine.logger import test_engine_logger as logger
+
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from .python_test_models import PythonTest, PythonTestType
 
@@ -198,18 +200,28 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
         return []
 
     for step in steps_body.value.elts:
-        step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
-        arg_is_commissioning = False
-        if (
-            step.keywords
-            and "is_commissioning" in step.keywords[KEYWORD_IS_COMISSIONING_INDEX].arg
-        ):
-            arg_is_commissioning = step.keywords[
-                KEYWORD_IS_COMISSIONING_INDEX
-            ].value.value
+        try:
+            arg_is_commissioning = False
+
+            if (
+                step.keywords
+                and "is_commissioning"
+                in step.keywords[KEYWORD_IS_COMISSIONING_INDEX].arg
+            ):
+                arg_is_commissioning = step.keywords[
+                    KEYWORD_IS_COMISSIONING_INDEX
+                ].value.value
+
+            step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
+            parsed_step_name = step_name
+        except Exception as e:
+            logger.error(f"Error while parsing step from {method.name}, Error:{str(e)}")
+            parsed_step_name = "UNABLE TO PARSE TEST STEP NAME"
 
         python_steps.append(
-            MatterTestStep(label=step_name, is_commissioning=arg_is_commissioning)
+            MatterTestStep(
+                label=parsed_step_name, is_commissioning=arg_is_commissioning
+            )
         )
 
     return python_steps

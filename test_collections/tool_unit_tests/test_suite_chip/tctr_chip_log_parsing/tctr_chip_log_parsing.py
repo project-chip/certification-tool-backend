@@ -39,7 +39,7 @@ class TCTRChipLogParsing(ChipTest):
     # default config.
     @property
     def config(self) -> TestEnvironmentConfig:
-        return default_environment_config.copy(deep=True)
+        return default_environment_config.copy(deep=True)  # type: ignore
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Test Step 1")]

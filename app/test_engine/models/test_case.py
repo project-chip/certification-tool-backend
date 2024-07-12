@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 from asyncio import CancelledError
-from typing import Any, List
+from typing import Any, List, Union, cast
 
 from app.models import Project, TestCaseExecution
 from app.models.test_enums import TestStateEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
 from app.test_engine.test_observer import Observer
 
@@ -47,19 +48,14 @@ class TestCase(TestObservable):
 
     @property
     def test_parameters(self) -> dict[str, Any]:
-        if self.config.test_parameters is None:
-            return self.default_test_parameters()
-        else:
-            all_test_parameters = (
-                self.default_test_parameters() | self.config.test_parameters
-            )
+        config_dict = cast(dict, self.config)
 
-        # filter test_parameters to only contain relevant test_parameters from
-        # default_test_parameters
-        return {
-            name: all_test_parameters[name]
-            for name in self.default_test_parameters().keys()
-        }
+        test_parameters = self.default_test_parameters()
+
+        if config_dict and config_dict.get("test_parameters"):
+            test_parameters |= config_dict.get("test_parameters")  # type: ignore
+
+        return test_parameters
 
     def __init__(self, test_case_execution: TestCaseExecution):
         super().__init__()
@@ -177,9 +173,11 @@ class TestCase(TestObservable):
             return
         self.state = self.__compute_state()
         logger.info(f"Test Case Completed[{self.state.name}]: {self.metadata['title']}")
+        self.__print_log_separator()
 
     def mark_as_executing(self) -> None:
         self.state = TestStateEnum.EXECUTING
+        self.__print_log_separator()
         logger.info(f"Executing Test Case: {self.metadata['title']}")
 
     ###
@@ -262,8 +260,15 @@ class TestCase(TestObservable):
     # Helpers
     ###
 
-    def mark_step_failure(self, msg: str) -> None:
-        self.current_test_step.append_failure(msg)
+    def mark_step_failure(self, msg: Union[str, Exception]) -> None:
+        message = "The failure message parameter \
+            must be of type 'str' or 'Exception'"
+        if isinstance(msg, str):
+            message = msg
+        elif isinstance(msg, Exception):
+            message = str(msg)
+
+        self.current_test_step.append_failure(message)
 
     def next_step(self) -> None:
         if self.current_test_step_index + 1 >= len(self.test_steps):
@@ -277,6 +282,9 @@ class TestCase(TestObservable):
         # update current step
         self.current_test_step_index += 1
         self.current_test_step.mark_as_executing()
+
+    def __print_log_separator(self) -> None:
+        logger.info(LogSeparator.TEST_CASE.value)
 
     ###
     # Below is expected to be overridden by each test script

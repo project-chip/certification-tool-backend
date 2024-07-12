@@ -390,10 +390,12 @@ def download_log(
             "Content-Disposition": f'attachment; filename="{filename}"'
         }
 
+    log_output = log_utils.convert_execution_log_to_list(
+        log=test_run_execution.log, json_entries=json_entries
+    )
+
     return StreamingResponse(
-        log_utils.log_generator(
-            log_entries=test_run_execution.log, json_entries=json_entries
-        ),
+        log_utils.async_log_generator(items=log_output),
         **options,
     )
 

@@ -85,7 +85,7 @@ def create_random_test_run_execution(
     test_run_execution_dict = random_test_run_execution_dict(**kwargs)
 
     if test_run_execution_dict.get("project_id") is None:
-        project = create_random_project(db)
+        project = create_random_project(db, config={})
         test_run_execution_dict["project_id"] = project.id
 
     test_run_execution_in = TestRunExecutionCreate(**test_run_execution_dict)

@@ -135,7 +135,7 @@ def test_create_test_run_execution_with_selected_tests_project_operator_succeeds
     """
 
     title = "TestRunExecutionFoo"
-    project = create_random_project(db)
+    project = create_random_project(db, config={})
     operator = create_random_operator(db)
     json_data = {
         "test_run_execution_in": {
@@ -459,7 +459,7 @@ def test_read_multiple_test_run_executions_by_archived(
 def test_read_multiple_test_run_executions_by_project(
     client: TestClient, db: Session
 ) -> None:
-    project = create_random_project(db)
+    project = create_random_project(db, config={})
     test_run_execution = create_random_test_run_execution(db, project_id=project.id)
 
     response = client.get(
@@ -470,7 +470,7 @@ def test_read_multiple_test_run_executions_by_project(
     assert isinstance(content, list)
     assert any(test_run.get("id") == test_run_execution.id for test_run in content)
 
-    project2 = create_random_project(db)
+    project2 = create_random_project(db, config={})
     response = client.get(
         f"{settings.API_V1_STR}/test_run_executions?project_id={project2.id}",
     )
