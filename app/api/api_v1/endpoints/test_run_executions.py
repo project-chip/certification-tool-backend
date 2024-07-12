@@ -15,8 +15,8 @@
 #
 import json
 import os
-import shutil
 import re
+import shutil
 from datetime import datetime
 
 # import numpy as np
@@ -43,6 +43,7 @@ from app.utils import (
     selected_tests_from_execution,
 )
 from app.version import version_information
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 router = APIRouter()
 
@@ -572,21 +573,24 @@ def generate_summary_log(
             status_code=HTTPStatus.NOT_FOUND, detail="Project not found"
         )
 
+    project_config = TestEnvironmentConfigMatter(**project.config)  # type: ignore
+
     matter_qa_out_folder = None
     matter_qa_url = None
     if (
-        "matter_qa_log_folder" in project.config.test_parameters
-        and "matter_qa_url" in project.config.test_parameters
+        project_config.test_parameters
+        and "matter_qa_log_folder" in project_config.test_parameters
+        and "matter_qa_url" in project_config.test_parameters
     ):
-        matter_qa_out_folder = project.config.test_parameters["matter_qa_log_folder"]
-        matter_qa_url = project.config.test_parameters["matter_qa_url"]
+        matter_qa_out_folder = project_config.test_parameters["matter_qa_log_folder"]
+        matter_qa_url = project_config.test_parameters["matter_qa_url"]
     else:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="matter_qa_log_folder and matter_qa_url must be configured",
         )
 
-    commissioning_method = project.config.dut_config.pairing_mode
+    commissioning_method = project_config.dut_config.pairing_mode
 
     test_run_execution = crud.test_run_execution.get(db=db, id=id)
     if not test_run_execution:

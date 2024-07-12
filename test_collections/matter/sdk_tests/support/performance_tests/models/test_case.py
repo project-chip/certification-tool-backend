@@ -20,7 +20,7 @@ from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
 from socket import SocketIO
-from typing import Any, Optional, Type, TypeVar, Generator, cast
+from typing import Any, Generator, Optional, Type, TypeVar, cast
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
@@ -32,6 +32,7 @@ from app.user_prompt_support.prompt_request import (
     TextInputPromptRequest,
 )
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...pics import PICS_FILE_PATH
 from ...sdk_container import SDKContainer
@@ -77,7 +78,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
     python_test: PythonTest
     python_test_version: str
     test_socket: Optional[SocketIO]
-    
 
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
@@ -118,7 +118,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         pass
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
-        duration_ms = int(duration/1000)
+        duration_ms = int(duration / 1000)
         self.step_execution_times.append(duration_ms)
         self.analytics = self.generate_analytics_data()
         self.step_over()
@@ -159,22 +159,25 @@ class PythonTestCase(TestCase, UserPromptSupport):
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
-    def generate_analytics_data(self)-> dict[str:str]:
+    def generate_analytics_data(self) -> dict[str:str]:
         print(self.step_execution_times)
         self.step_execution_times.sort()
         print(self.step_execution_times)
         sorted_list_size = len(self.step_execution_times)
-        p50_index = int(sorted_list_size * (50/100))
-        p95_index = int(sorted_list_size * (95/100))
-        p99_index = int(sorted_list_size * (99/100))
+        p50_index = int(sorted_list_size * (50 / 100))
+        p95_index = int(sorted_list_size * (95 / 100))
+        p99_index = int(sorted_list_size * (99 / 100))
 
         try:
-            return {'p50': f'{self.step_execution_times[p50_index]}', 'p95': f'{self.step_execution_times[p95_index]}', 'p99': f'{self.step_execution_times[p99_index]}', 'unit': 'ms'}
+            return {
+                "p50": f"{self.step_execution_times[p50_index]}",
+                "p95": f"{self.step_execution_times[p95_index]}",
+                "p99": f"{self.step_execution_times[p99_index]}",
+                "unit": "ms",
+            }
         except:
             logger.info("Error generating analytics data for step execution times.")
-        return {'p50':'0', 'p95': '0', 'p99': '0', 'unit':'ms'}
-
-
+        return {"p50": "0", "p95": "0", "p99": "0", "unit": "ms"}
 
     @classmethod
     def pics(cls) -> set[str]:
@@ -261,7 +264,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             "'kEstablishing' --> 'kActive'",
             "SecureChannel:PBKDFParamRequest",
             "Discovered Device:",
-            "|====="
+            "|=====",
         ]
 
         # This is a temporary workaround since Python Test are generating a
@@ -305,7 +308,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # project configuration
             # comissioning method is omitted because it's handled by the test suite
             command_arguments = generate_command_arguments(
-                config=self.config, omit_commissioning_method=True
+                config=TestEnvironmentConfigMatter(**self.config),  # type: ignore
+                omit_commissioning_method=True,
             )
             command.extend(command_arguments)
 
@@ -314,7 +318,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             command.append(f" --interactions {(len(self.test_steps) - 2)}")
 
-            # exec_result = 
+            # exec_result =
             self.sdk_container.send_command(
                 command,
                 prefix=EXECUTABLE,
@@ -330,7 +334,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 if not update:
                     await sleep(0.0001)
                     continue
-                
+
                 await self.__handle_update(update)
 
             # Step: Show test logs
@@ -424,4 +428,3 @@ class LegacyPythonTestCase(PythonTestCase):
                     f"Received unknown prompt option for \
                         commissioning step: {prompt_response.response}"
                 )
-
