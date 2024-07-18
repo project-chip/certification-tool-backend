@@ -17,6 +17,7 @@
 set -e
 
 MATTER_QA_PATH="/home/ubuntu/matter-qa"
+VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
 
 clone_matter_qa() {
     if [ ! -d $MATTER_QA_PATH ]; then
@@ -45,8 +46,9 @@ install_mongodb() {
 install_python_dependencies() {
     sudo apt install uvicorn
     sudo apt install python-is-python3
-    pip install fastapi --break-system-packages
-    pip install pymongo --break-system-packages
+    python -m venv $VIRTUAL_ENV
+    $VIRTUAL_ENV/bin/pip install fastapi
+    $VIRTUAL_ENV/bin/pip install pymongo
 }
 
 echo "Log Display install Initiated"

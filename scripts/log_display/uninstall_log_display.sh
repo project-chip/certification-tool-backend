@@ -17,57 +17,54 @@
 set -e
 
 MATTER_QA_PATH="/home/ubuntu/matter-qa"
+VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
 
 uninstall_mongodb() {
-    read -p "Do you want to uninstall MongoDB? [y/N] " -n 1 -r
-    echo
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Uninstalling MongoDB..."
-        sudo service mongod stop
-        sudo apt-get purge "mongodb-org*"
-        sudo rm -r /var/log/mongodb
-        sudo rm -r /var/lib/mongodb
-        echo "Done"
-    fi
+    echo "Uninstalling MongoDB..."
+    sudo service mongod stop
+    sudo apt-get purge "mongodb-org*"
+    sudo rm -r /var/log/mongodb
+    sudo rm -r /var/lib/mongodb
+    echo "Done"
 }
 
 uninstall_python_dependencies() {
-    echo "The following was installed for Log Display: uvicorn, [pip] fastapi, [pip] pymongo"
-    read -p "Do you want to uninstall those packages? [y/N] " -n 1 -r
-    echo
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Uninstalling packages..."
-        pip uninstall pymongo
-        pip uninstall fastapi
-        sudo apt remove uvicorn
-        echo "Done"
+    echo "Uninstalling packages..."
+    if [ "$VIRTUAL_ENV" != "" ]; then
+        deactivate
     fi
+    $VIRTUAL_ENV/bin/pip uninstall pymongo
+    $VIRTUAL_ENV/bin/pip uninstall fastapi
+    rm -rf $VIRTUAL_ENV
+    sudo apt remove uvicorn
+    echo "Done"
+
 }
 
 remove_matter_qa_repo() {
-    read -p "Do you want to delete the Matter QA repository? [y/N] " -n 1 -r
-    echo
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        if [ -d $MATTER_QA_PATH ]; then
-            echo "Deleting Matter QA repository..."
-            sudo rm -rf $MATTER_QA_PATH
-            echo "Done"
-        else
-            echo "Matter QA repository not in the default location. Please, remove it manually"
-        fi
-
+    if [ -d $MATTER_QA_PATH ]; then
+        echo "Deleting Matter QA repository..."
+        sudo rm -rf $MATTER_QA_PATH
+        echo "Done"
+    else
+        echo "Matter QA repository not in the default location. Please, remove it manually"
     fi
 }
 
 echo "Uninstall initiated"
 echo
 
-uninstall_mongodb
-uninstall_python_dependencies
-remove_matter_qa_repo
+echo "The dependencies for LogDisplay app are: MongoDB, uvicorn, [pip] fastapi, [pip] pymongo and the Matter QA repository"
+read -p "Are you sure you want to uninstall all those packages? [y/N] " -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    uninstall_mongodb
+    uninstall_python_dependencies
+    remove_matter_qa_repo
+else
+    echo "Cancelling..."
+fi
 
 echo
 echo "Uninstall completed"

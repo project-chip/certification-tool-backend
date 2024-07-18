@@ -30,8 +30,9 @@ USAGE="usage: $0 [-f | --foreground] [[-m | --matter-qa-path] <value>] [[-p | --
 # Default Paths
 RUN_IN_BACKGROUND="yes"
 MATTER_QA_PATH="/home/ubuntu/matter-qa"
+VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
 BACKEND_PATH="/home/ubuntu/certification-tool/backend"
-LOG_PATH=$BACKEND_PATH/logs/performance-logs
+LOGS_PATH=$BACKEND_PATH/logs/performance-logs
 DISPLAY_LOG_OUTPUT="/dev/null"
 
 for arg in "$@"; do
@@ -51,7 +52,7 @@ for arg in "$@"; do
         ;;
     -p | --log-path)
         shift # Remove the switch option
-        LOG_PATH="$1"
+        LOGS_PATH="$1"
         shift # Remove the value
         ;;
     -o | --output)
@@ -71,17 +72,20 @@ if [ ! -e $LOG_DISPLAY_APP ]; then
     exit 2
 fi
 
-if [ ! -d $LOG_PATH ]; then
-    echo "Error: the log directory $LOG_PATH does not exist. Please, verify"
+if [ ! -d $LOGS_PATH ]; then
+    echo "Error: the log directory $LOGS_PATH does not exist. Please, verify"
     exit 2
 fi
 
+source $VIRTUAL_ENV/bin/activate
+
 if [ "$RUN_IN_BACKGROUND" == "yes" ]; then
     echo "Running in background"
-    python $LOG_DISPLAY_APP --logs_path $LOG_PATH &>$DISPLAY_LOG_OUTPUT &
+    python $LOG_DISPLAY_APP --logs_path $LOGS_PATH &>$DISPLAY_LOG_OUTPUT &
 else
     echo "Running..."
-    python $LOG_DISPLAY_APP --logs_path $LOG_PATH
+    python $LOG_DISPLAY_APP --logs_path $LOGS_PATH
+    deactivate
     echo
     echo "Done"
 fi
