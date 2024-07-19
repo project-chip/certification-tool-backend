@@ -110,7 +110,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
 
-    def test_skipped(self, filnename: str, name: str) -> None:
+    def test_skipped(self, filename: str, name: str) -> None:
         # TODO - Make all steps skipped
         # test_case_execution
         # self.current_test_step.mark_as_not_applicable(f"Test case: {name} skipped")
