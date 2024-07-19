@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+from asyncio import sleep
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -100,6 +101,10 @@ class ChipServer(metaclass=Singleton):
                     self.logger.log(CHIPTOOL_LEVEL, line)
                     return True
                 self.logger.log(CHIPTOOL_LEVEL, line)
+            # TODO - Workaround for truncated log from chip-tool
+            # https://github.com/project-chip/connectedhomeip/issues/34237
+            await sleep(1)
+            return True
         else:
             return False
 
