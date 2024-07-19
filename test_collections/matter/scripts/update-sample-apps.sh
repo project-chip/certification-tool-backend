@@ -35,7 +35,8 @@ if [[ -z "$(docker images -q $SDK_DOCKER_IMAGE)" ]]; then
 fi
 
 print_script_step "Updating Sample APPs"
-sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v * /apps/;"
+# TODO: update SDK image to place the apps in a specific folder and then copy that entire folder
+sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v chip-* /apps/; cp -v thermostat-app /apps/; cp -v lit-icd-app /apps/;"
 sudo chown -R `whoami` ~/apps
 
 print_end_of_script
