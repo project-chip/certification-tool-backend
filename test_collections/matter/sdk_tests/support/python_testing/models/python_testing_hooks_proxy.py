@@ -26,7 +26,7 @@ class SDKPythonTestResultEnum(str, Enum):
     STOP = "stop"
     TEST_START = "test_start"
     TEST_STOP = "test_stop"
-    TEST_NOT_APPLICABLE = "test_not_applicable"
+    TEST_SKIPPED = "test_skipped"
     STEP_SKIPPED = "step_skipped"
     STEP_START = "step_start"
     STEP_SUCCESS = "step_success"
@@ -58,18 +58,19 @@ class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
     filename: Optional[str]
     name: Optional[str]
     count: Optional[int]
+    steps: list[str]
 
 
 class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.TEST_STOP
-    duration: Optional[str]
+    duration: Optional[int]
     exception: Any
 
 
-class SDKPythonTestResultTestNotApplicable(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.TEST_NOT_APPLICABLE
+class SDKPythonTestResultTestSkipped(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.TEST_SKIPPED
+    filename: Optional[str]
     name: Optional[str]
-    expression: Optional[str]
 
 
 class SDKPythonTestResultStepSkipped(SDKPythonTestResultBase):
@@ -140,12 +141,13 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         self.results.put(SDKPythonTestResultStop(duration=duration))
         SDKPythonTestRunnerHooks.finished = True
 
-    def test_start(self, filename: str, name: str, count: int) -> None:
+    def test_start(self, filename: str, name: str, count: int, steps: list[str] = []) -> None:
         self.results.put(
             SDKPythonTestResultTestStart(
                 filename=filename,
                 name=name,
                 count=count,
+                steps=steps 
             )
         )
 
@@ -153,12 +155,12 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         self.results.put(
             SDKPythonTestResultTestStop(
                 exception=exception,
-                duration=duration,
+                duration=0, # duration is not being passed as int, NEED TO FIX THIS
             )
         )
 
-    def test_not_applicable(self, name: str) -> None:
-        self.results.put(SDKPythonTestResultTestNotApplicable(name=name))
+    def test_skipped(self, filename: str, name: str) -> None:
+        self.results.put(SDKPythonTestResultTestSkipped(filename=filename, name=name))
         SDKPythonTestRunnerHooks.finished = True
 
     def step_skipped(self, name: str, expression: str) -> None:

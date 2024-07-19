@@ -104,13 +104,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if not self.test_stop_called:
             self.current_test_step.mark_as_completed()
 
-    def test_start(self, filename: str, name: str, count: int) -> None:
+    def test_start(self, filename: str, name: str, count: int, steps: list[str] = []) -> None:
         self.step_over()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
 
-    def test_not_applicable(self, name: str) -> None:
+    def test_skipped(self, filnename: str, name: str) -> None:
         # TODO - Make all steps skipped
         # test_case_execution
         # self.current_test_step.mark_as_not_applicable(f"Test case: {name} skipped")
