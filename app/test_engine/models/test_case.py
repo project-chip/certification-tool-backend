@@ -180,7 +180,9 @@ class TestCase(TestObservable):
         if self.completed():
             return
         self.state = self.__compute_state()
-        logger.info(f"Test Case Completed[{self.state.name}]: {self.metadata['title']}")
+        logger.info(
+            f"Test Case Completed [{self.state.name}]: {self.metadata['title']}"
+        )
         self.__print_log_separator()
 
     def mark_as_executing(self) -> None:
