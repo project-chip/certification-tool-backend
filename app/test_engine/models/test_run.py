@@ -74,17 +74,20 @@ class TestRun(TestObservable, UserPromptSupport):
 
         # Note: These loops cannot be easily coalesced as we need to iterate through
         # and assign Test Suite State in order.
-        if any(ts for ts in self.test_suites if ts.state == TestStateEnum.CANCELLED):
+        if any(ts.state == TestStateEnum.CANCELLED for ts in self.test_suites):
             return TestStateEnum.CANCELLED
 
-        if any(ts for ts in self.test_suites if ts.state == TestStateEnum.ERROR):
+        if any(ts.state == TestStateEnum.ERROR for ts in self.test_suites):
             return TestStateEnum.ERROR
 
-        if any(ts for ts in self.test_suites if ts.state == TestStateEnum.FAILED):
+        if any(ts.state == TestStateEnum.FAILED for ts in self.test_suites):
             return TestStateEnum.FAILED
 
-        if any(ts for ts in self.test_suites if ts.state == TestStateEnum.PENDING):
+        if any(ts.state == TestStateEnum.PENDING for ts in self.test_suites):
             return TestStateEnum.PENDING
+
+        if all(ts.state == TestStateEnum.NOT_APPLICABLE for ts in self.test_suites):
+            return TestStateEnum.NOT_APPLICABLE
 
         return TestStateEnum.PASSED
 

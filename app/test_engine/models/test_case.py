@@ -152,7 +152,7 @@ class TestCase(TestObservable):
         return TestStateEnum.PASSED
 
     def any_steps_with_state(self, state: TestStateEnum) -> bool:
-        return any(ts for ts in self.test_steps if ts.state == state)
+        return any(ts.state == state for ts in self.test_steps)
 
     def completed(self) -> bool:
         return self.state not in [
