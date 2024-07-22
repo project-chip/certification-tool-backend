@@ -153,10 +153,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.results.put(
-            SDKPythonTestResultTestStop(
-                exception=exception,
-                duration=0, # duration is not being passed as int, NEED TO FIX THIS
-            )
+            SDKPythonTestResultTestStop(exception=exception, duration=duration)
         )
 
     def test_skipped(self, filename: str, name: str) -> None:
