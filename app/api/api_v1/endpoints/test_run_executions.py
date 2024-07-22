@@ -18,8 +18,6 @@ import os
 import re
 import shutil
 from datetime import datetime
-
-# import numpy as np
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
@@ -76,13 +74,13 @@ class Commissioning:
         },
     }
 
-    def __init__(self):
-        self.commissioning = {}
+    def __init__(self) -> None:
+        self.commissioning: dict[str, Any] = {}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.commissioning.__repr__()
 
-    def add_event(self, line: str):
+    def add_event(self, line: str) -> None:
         for stage, patterns in self.stages.items():
             begin = None
             end = None
@@ -560,7 +558,6 @@ def generate_summary_log(
     db: Session = Depends(get_db),
     id: int,
     project_id: int,
-    # import_file: UploadFile = File(...),
 ) -> JSONResponse:
     """
     Imports a test run execution to the the given project_id.
@@ -573,21 +570,23 @@ def generate_summary_log(
             status_code=HTTPStatus.NOT_FOUND, detail="Project not found"
         )
 
-    project_config = TestEnvironmentConfigMatter(**project.config)  # type: ignore
-
-    matter_qa_out_folder = None
+    project_config = TestEnvironmentConfigMatter(**project.config)
     matter_qa_url = None
+    host_out_folder = "/home/ubuntu/certification-tool/backend/logs/performance-logs"
+    container_out_folder = "/app/backend/logs/performance-logs"
+    if os.path.exists(container_out_folder):
+        shutil.rmtree(container_out_folder)
+    os.mkdir(container_out_folder)
+
     if (
         project_config.test_parameters
-        and "matter_qa_log_folder" in project_config.test_parameters
         and "matter_qa_url" in project_config.test_parameters
     ):
-        matter_qa_out_folder = project_config.test_parameters["matter_qa_log_folder"]
         matter_qa_url = project_config.test_parameters["matter_qa_url"]
     else:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail="matter_qa_log_folder and matter_qa_url must be configured",
+            detail="matter_qa_url must be configured",
         )
 
     commissioning_method = project_config.dut_config.pairing_mode
@@ -603,17 +602,18 @@ def generate_summary_log(
     )
     log_lines = "\n".join(log_lines_list)
 
-    directory_path = "/app/backend/app/api/api_v1/endpoints/logs"
-    if os.path.exists(directory_path):
-        shutil.rmtree(directory_path)
-    os.mkdir(directory_path)
+    out_datetime = ""
+    if test_run_execution.started_at:
+        out_datetime = test_run_execution.started_at.strftime(date_pattern_out_file)
+    else:
+        out_datetime = datetime.now().strftime(date_pattern_out_file)
 
-    out_datetime = test_run_execution.started_at.strftime(date_pattern_out_file)
-
-    with open(directory_path + f"/UI_Test_Run_{out_datetime}.log", "w") as f:
+    with open(
+        container_out_folder + f"/Performance_Test_Run_{out_datetime}.log", "w"
+    ) as f:
         f.write(str(log_lines))
 
-    files = os.listdir(directory_path)
+    files = os.listdir(container_out_folder)
 
     commissioning_list = []
 
@@ -624,17 +624,15 @@ def generate_summary_log(
     execution_status = []
 
     for file_name in files:
-        file_path = os.path.join(directory_path, file_name)
-        commissioning_obj: Commissioning = None
+        file_path = os.path.join(container_out_folder, file_name)
+        commissioning_obj: Optional[Commissioning] = None
         file_execution_time = None
-        file_execution_end_time = None
-        tc_name = None
-        tc_suite = None
+        tc_name = ""
+        tc_suite = ""
         tc_result = None
         tc_execution_in_file = 0
 
         if os.path.isfile(file_path):
-            # execution_logs.append(file_path)
             with open(file_path, "r") as file:
                 for line in file:
                     line = line.strip()
@@ -644,7 +642,6 @@ def generate_summary_log(
 
                     if not file_execution_time:
                         file_execution_time = extract_datetime(line)
-                        # execution_begin_time.append(file_execution_time)
 
                     if not tc_suite:
                         if line.find("Test Suite Executing:") > 0:
@@ -656,8 +653,7 @@ def generate_summary_log(
 
                     if not tc_result:
                         if line.find("Test Case Completed[") > 0:
-                            file_execution_end_time = extract_datetime(line)
-                            # execution_end_time.append(end_execution_time)
+                            extract_datetime(line)
 
                             m = re.search(r"\[([A-Za-z0-9_]+)\]", line)
                             if m:
@@ -686,13 +682,10 @@ def generate_summary_log(
                             execution_logs.append(file_path)
                             tc_execution_in_file = tc_execution_in_file + 1
 
-                            # execution_begin_time.append(file_execution_time)
                         continue
 
                     elif commissioning_obj is not None:
                         commissioning_obj.add_event(line)
-
-    # execution_end_time = [file_execution_end_time]* len(execution_begin_time)
 
     durations = []
     read_durations = []
@@ -726,31 +719,14 @@ def generate_summary_log(
         )
         PASE_end = int(commissioning.commissioning["PASE"]["end"].timestamp() * 1000000)
 
-        duration = end - begin  # + random.randint(1, 20)
+        duration = end - begin
         read_duration = read_end - read_begin
         discovery_duration = discovery_end - discovery_begin
         PASE_duration = PASE_end - PASE_begin
-        # print(f"Commission duration: {duration}")
-        # print(f"ReadCommissioningInfo duration: {read_duration}")
-        # break # Just get  one sample
         durations.append(duration)
         read_durations.append(read_duration)
         discovery_durations.append(discovery_duration)
         PASE_durations.append(PASE_duration)
-        # read_durations += read_duration
-
-    # np_durations = np.array(durations)
-    # durations_99p = np.percentile(np_durations, 99)
-    # np_discoveries = np.array(discovery_durations)
-    # discoveries_99p = np.percentile(np_discoveries, 99)
-    # np_reads = np.array(read_durations)
-    # reads_99p = np.percentile(np_reads, 99)
-    # np_pases = np.array(PASE_durations)
-    # pases_99p = np.percentile(np_pases, 99)
-    # print(f"Total Commissioning 99-percentile: {durations_99p}")
-    # print(f"Discovery Latency 99-percentile: {discoveries_99p}")
-    # print(f"Read Commissioning Info Latency 99-percentile: {reads_99p}")
-    # print(f"Pase Latency 99-percentile: {pases_99p}\n")
 
     execution_time_folder = execution_begin_time[0].strftime(date_pattern_out_folder)[
         :-3
@@ -769,10 +745,11 @@ def generate_summary_log(
         discovery_durations,
         read_durations,
         PASE_durations,
-        matter_qa_out_folder,
+        container_out_folder,
     )
 
-    url_report = f"{matter_qa_url}/home/displayLogFolder?dir_path={matter_qa_out_folder}/{execution_time_folder}/{tc_name}"
+    target_dir = f"{host_out_folder}/{execution_time_folder}/{tc_name}"
+    url_report = f"{matter_qa_url}/home/displayLogFolder?dir_path={target_dir}"
 
     summary_report: dict = {}
     summary_report["url"] = url_report
@@ -785,7 +762,7 @@ def generate_summary_log(
     )
 
 
-def compute_state(execution_status) -> str:
+def compute_state(execution_status: list) -> str:
     if any(tc for tc in execution_status if tc == "CANCELLED"):
         return "FAIL"
 
@@ -801,10 +778,9 @@ def compute_state(execution_status) -> str:
     return "PASS"
 
 
-def compute_count_state(execution_status, passed=True) -> str:
-    # """
+def compute_count_state(execution_status: list, passed: bool = True) -> str:
     # State is computed based test_suite errors and on on test case states.
-    # """
+    #
     # if self.errors is not None and len(self.errors) > 0:
     #     return "ERROR"
 
@@ -815,27 +791,25 @@ def compute_count_state(execution_status, passed=True) -> str:
         if tc == "PASS" and passed or (tc != "PASS" and not passed):
             count = count + 1
 
-    return count
+    return str(count)
 
 
 def generate_summary(
-    execution_logs,
-    execution_status,
-    folder_name,
-    execution_begin_time,
-    execution_end_time,
-    tc_suite,
-    tc_name,
-    commissioning_method,
-    durations,
-    discovery_durations,
-    read_durations,
-    PASE_durations,
-    matter_qa_out_folder,
+    execution_logs: list,
+    execution_status: list,
+    folder_name: str,
+    execution_begin_time: list,
+    execution_end_time: list,
+    tc_suite: str,
+    tc_name: str,
+    commissioning_method: str,
+    durations: list,
+    discovery_durations: list,
+    read_durations: list,
+    PASE_durations: list,
+    container_out_folder: str,
 ) -> None:
-    out_folder = "/app/backend/app/api/api_v1/endpoints/out"
-
-    summary_dict = {}
+    summary_dict: dict[str, Any] = {}
     summary_dict["run_set_id"] = "d"
     summary_dict["test_summary_record"] = {}
     summary_dict["test_summary_record"]["test_suite_name"] = tc_suite
@@ -843,8 +817,8 @@ def generate_summary(
     summary_dict["test_summary_record"]["test_case_name"] = tc_name
     summary_dict["test_summary_record"]["test_case_id"] = "stress_1_1"
     summary_dict["test_summary_record"]["test_case_class"] = tc_name
-    summary_dict["test_summary_record"]["test_case_description"]: None
-    summary_dict["test_summary_record"]["test_case_begined_at"] = execution_begin_time[
+    summary_dict["test_summary_record"]["test_case_description"] = None
+    summary_dict["test_summary_record"]["test_case_beginned_at"] = execution_begin_time[
         0
     ].strftime(datetime_json_pattern)
     summary_dict["test_summary_record"]["test_case_ended_at"] = execution_end_time[
@@ -877,8 +851,8 @@ def generate_summary(
     dut_information_record = {}
     dut_information_record["vendor_name"] = "TEST_VENDOR"
     dut_information_record["product_name"] = "TEST_PRODUCT"
-    dut_information_record["product_id"] = 32769
-    dut_information_record["vendor_id"] = 65521
+    dut_information_record["product_id"] = str(32769)
+    dut_information_record["vendor_id"] = str(65521)
     dut_information_record["software_version"] = "1.0"
     dut_information_record["hardware_version"] = "TEST_VERSION"
     dut_information_record["serial_number"] = "TEST_SN"
@@ -895,11 +869,11 @@ def generate_summary(
     list_of_iteration_records = []
 
     # Create output folder
-    if not os.path.exists(out_folder):
-        os.mkdir(out_folder)
+    if not os.path.exists(container_out_folder):
+        os.mkdir(container_out_folder)
 
-    execution_time_folder = out_folder + "/" + folder_name
-    tc_name_folder = out_folder + "/" + folder_name + "/" + tc_name
+    execution_time_folder = container_out_folder + "/" + folder_name
+    tc_name_folder = container_out_folder + "/" + folder_name + "/" + tc_name
 
     if os.path.exists(execution_time_folder):
         shutil.rmtree(execution_time_folder)
@@ -915,7 +889,7 @@ def generate_summary(
         # Copy the execution log to the iteration folder
         shutil.copy(execution_logs[x], iteration_folder)
 
-        iteration_records = {}
+        iteration_records: dict[str, Any] = {}
         iteration_data = {}
 
         iteration_tc_execution_data = {}
@@ -956,18 +930,4 @@ def generate_summary(
     with open(tc_name_folder + "/summary.json", "w") as f:
         f.write(json_str)
 
-    # Convert matter-qa output folder from host to container
-    # Ex: /home/ubuntu/certification-tool/backend/performance-logs => /app/backend/performance-logs
-    index = matter_qa_out_folder.find("/backend", 0)
-    matter_qa_out_folder = "/app" + matter_qa_out_folder[index:]
-    # Copy gerenated content to matter-qa
-    if os.path.exists(matter_qa_out_folder + "/" + folder_name):
-        shutil.rmtree(matter_qa_out_folder + "/" + folder_name)
-
-    print(f"Copy gerenated content to matter-qa: {matter_qa_out_folder}")
-    shutil.copytree(execution_time_folder, matter_qa_out_folder + "/" + folder_name)
-
-    print(f"Perform a cleanup")
-    shutil.rmtree(out_folder)
-
-    print(f"generate_summary process completed!!!")
+    print("generate_summary process completed!!!")

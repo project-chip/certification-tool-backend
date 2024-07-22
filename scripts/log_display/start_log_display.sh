@@ -25,14 +25,13 @@ echo
 sudo systemctl restart mongod
 
 # Usage message
-USAGE="usage: $0 [-f | --foreground] [[-m | --matter-qa-path] <value>] [[-p | --log-path] <value>]"
+USAGE="usage: $0 [-h | --help] [-f | --foreground] [[-o | --output] <path>]"
 
 # Default Paths
 RUN_IN_BACKGROUND="yes"
 MATTER_QA_PATH="/home/ubuntu/matter-qa"
 VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
-BACKEND_PATH="/home/ubuntu/certification-tool/backend"
-LOGS_PATH=$BACKEND_PATH/logs/performance-logs
+LOGS_PATH=/home/ubuntu/certification-tool/backend/logs/performance-logs
 DISPLAY_LOG_OUTPUT="/dev/null"
 
 for arg in "$@"; do
@@ -44,16 +43,6 @@ for arg in "$@"; do
     -f | --foreground)
         RUN_IN_BACKGROUND="no"
         shift
-        ;;
-    -m | --matter-qa-path)
-        shift # Remove the switch option
-        MATTER_QA_PATH="$1"
-        shift # Remove the value
-        ;;
-    -p | --log-path)
-        shift # Remove the switch option
-        LOGS_PATH="$1"
-        shift # Remove the value
         ;;
     -o | --output)
         shift # Remove the switch option
@@ -73,8 +62,10 @@ if [ ! -e $LOG_DISPLAY_APP ]; then
 fi
 
 if [ ! -d $LOGS_PATH ]; then
-    echo "Error: the log directory $LOGS_PATH does not exist. Please, verify"
-    exit 2
+    echo "Warning: the log directory $LOGS_PATH does not exist."
+    echo "Trying to create the log directory required..."
+    sudo mkdir $LOGS_PATH
+    echo "Log directory $LOGS_PATH created!"
 fi
 
 source $VIRTUAL_ENV/bin/activate
