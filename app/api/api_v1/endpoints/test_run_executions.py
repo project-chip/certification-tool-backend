@@ -576,7 +576,7 @@ def generate_summary_log(
     container_out_folder = "/app/backend/logs/performance-logs"
     if os.path.exists(container_out_folder):
         shutil.rmtree(container_out_folder)
-    os.mkdir(container_out_folder)
+    os.makedirs(container_out_folder)
 
     if (
         project_config.test_parameters

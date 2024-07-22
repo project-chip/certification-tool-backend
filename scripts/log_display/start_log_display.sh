@@ -64,7 +64,7 @@ fi
 if [ ! -d $LOGS_PATH ]; then
     echo "Warning: the log directory $LOGS_PATH does not exist."
     echo "Trying to create the log directory required..."
-    sudo mkdir $LOGS_PATH
+    sudo mkdir -p $LOGS_PATH
     echo "Log directory $LOGS_PATH created!"
 fi
 
