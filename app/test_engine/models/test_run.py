@@ -125,9 +125,7 @@ class TestRun(TestObservable):
                 self.test_run_execution.certification_mode
                 and test_suite.mandatory
                 and any(
-                    tc
-                    for tc in test_suite.test_cases
-                    if tc.state != TestStateEnum.PASSED
+                    tc.state != TestStateEnum.PASSED for tc in test_suite.test_cases
                 )
             ):
                 print("Abort execution")
