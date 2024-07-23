@@ -23,7 +23,6 @@ from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
 from app.models import TestCaseExecution
-from app.socket_connection_manager import socket_connection_manager
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
@@ -35,7 +34,6 @@ from app.user_prompt_support.prompt_request import (
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
-from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...pics import PICS_FILE_PATH
 from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
