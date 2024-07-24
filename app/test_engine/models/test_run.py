@@ -138,9 +138,8 @@ class TestRun(TestObservable, UserPromptSupport):
 
     async def __display_mandatory_test_failure_prompt(self) -> None:
         prompt = (
-            "At least one of the mandatory test cases have failed during a "
-            "test run execution in certification mode.\nAs a consequence, the remaining"
-            " tests have been cancelled."
+            "At least one of the mandatory test cases failed while running in "
+            "certification mode.\nAs a consequence, the remaining tests were cancelled."
         )
         options = {"OK": 1}
         prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
