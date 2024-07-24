@@ -40,16 +40,14 @@ class TestSuite(TestObservable):
 
     available_test_cases: List[Type[TestCase]] = []
 
-    def __init__(
-        self, test_suite_execution: TestSuiteExecution, mandatory: bool = False
-    ):
+    def __init__(self, test_suite_execution: TestSuiteExecution):
         super().__init__()
         self.test_suite_execution: TestSuiteExecution = test_suite_execution
         self.current_test_case: Optional[TestCase] = None
         self.test_cases: List[TestCase] = []
         self.__state = TestStateEnum.PENDING
         self.errors: List[str] = []
-        self.mandatory: bool = mandatory
+        self.mandatory: bool = test_suite_execution.mandatory
 
     @property
     def project(self) -> Project:

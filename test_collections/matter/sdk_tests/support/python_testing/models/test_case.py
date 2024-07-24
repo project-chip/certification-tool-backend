@@ -168,7 +168,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         if test.python_test_type == PythonTestType.NO_COMMISSIONING:
             case_class = NoCommissioningPythonTestCase
-        elif test.python_test_type == PythonTestType.LEGACY:
+        elif (
+            test.python_test_type == PythonTestType.LEGACY
+            or test.python_test_type == PythonTestType.MANDATORY
+        ):
             case_class = LegacyPythonTestCase
         else:  # Commissioning
             case_class = PythonTestCase

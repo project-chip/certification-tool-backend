@@ -52,15 +52,11 @@ def upgrade():
     )
     op.alter_column(
         "testsuitemetadata",
-        sa.Column(
-            "mandatory", existing_type=sa.Boolean(), nullable=False, default=False
-        ),
+        sa.Column("mandatory", nullable=False, default=False),
     )
     op.alter_column(
         "testcasemetadata",
-        sa.Column(
-            "mandatory", existing_type=sa.Boolean(), nullable=False, default=False
-        ),
+        sa.Column("mandatory", nullable=False, default=False),
     )
     # ### end Alembic commands ###
 

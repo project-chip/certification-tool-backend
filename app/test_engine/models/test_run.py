@@ -23,11 +23,13 @@ from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.test_observable import TestObservable
 from app.test_engine.test_observer import Observer
+from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
+from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
 from .test_suite import TestSuite
 
 
-class TestRun(TestObservable):
+class TestRun(TestObservable, UserPromptSupport):
     """
     Test run is a run-time object for a test_run
     """
@@ -107,7 +109,7 @@ class TestRun(TestObservable):
             self.__current_testing_task = create_task(self.__run_handle_errors())
             await self.__current_testing_task
         except CancelledError:
-            logger.error("User cancelled test run")
+            logger.error("The test run has been cancelled")
             self.__cancel_remaining_tests()
         finally:
             self.__current_testing_task = None
@@ -119,6 +121,31 @@ class TestRun(TestObservable):
         for test_suite in self.test_suites:
             self.current_test_suite = test_suite
             await test_suite.run()
+
+            # Check if mandatory suite failed
+            if (
+                self.test_run_execution.certification_mode
+                and test_suite.mandatory
+                and any(
+                    tc.state != TestStateEnum.PASSED for tc in test_suite.test_cases
+                )
+            ):
+                print("Abort execution")
+                self.__cancel_remaining_tests()
+                self.cancel()
+                await self.__display_mandatory_test_failure_prompt()
+                break
+
+    async def __display_mandatory_test_failure_prompt(self) -> None:
+        prompt = (
+            "At least one of the mandatory test cases failed while running in "
+            "certification mode.\nAs a consequence, the remaining tests were cancelled."
+        )
+        options = {"OK": 1}
+        prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
+
+        logger.info(f'User prompt: "{prompt}"')
+        await self.send_prompt_request(prompt_request)
 
     def cancel(self) -> None:
         """This will abort executuion of the current test suite, and mark all remaining
