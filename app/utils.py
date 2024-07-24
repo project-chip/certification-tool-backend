@@ -167,11 +167,13 @@ def selected_tests_from_execution(run: TestRunExecution) -> TestSelection:
 
     for suite in run.test_suite_executions:
         selected_tests.setdefault(suite.collection_id, {})
-        selected_tests[suite.collection_id][suite.public_id] = {}
+        selected_tests[suite.collection_id].setdefault(suite.public_id, {})
+        suite_dict = selected_tests[suite.collection_id][suite.public_id]
         for case in suite.test_case_executions:
-            selected_tests[suite.collection_id][suite.public_id].update(
-                {case.public_id: 1}
-            )
+            if case.public_id in suite_dict.keys():
+                suite_dict[case.public_id] += 1
+            else:
+                suite_dict.update({case.public_id: 1})
 
     return selected_tests
 
