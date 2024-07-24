@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2024 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,5 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .test_suite_expected import TestSuiteExpected
-from .test_suite_expected_2 import TestSuiteExpected2
+from .tctr_expected_case_not_applicable import TCTRExpectedCaseNotApplicable

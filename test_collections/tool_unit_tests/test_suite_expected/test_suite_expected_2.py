@@ -13,5 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .test_suite_expected import TestSuiteExpected
-from .test_suite_expected_2 import TestSuiteExpected2
+from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models import TestSuite
+
+
+class TestSuiteExpected2(TestSuite):
+    metadata = {
+        "public_id": "TestSuiteExpected2",
+        "version": "1.2.3",
+        "title": "This is Test Runner Test Suite",
+        "description": "This is Test Runner Test Suite",
+    }
+
+    async def setup(self) -> None:
+        logger.info("This is a test setup")
+
+    async def cleanup(self) -> None:
+        logger.info("This is a test cleanup")

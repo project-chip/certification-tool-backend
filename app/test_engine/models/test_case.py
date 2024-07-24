@@ -282,6 +282,7 @@ class TestCase(TestObservable):
 
     def mark_as_not_applicable(self) -> None:
         self.state = TestStateEnum.NOT_APPLICABLE
+        logger.warning(f"Test Case Not Applicable: {self.metadata['public_id']}")
 
     def next_step(self) -> None:
         if self.current_test_step_index + 1 >= len(self.test_steps):
