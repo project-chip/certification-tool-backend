@@ -32,10 +32,9 @@ from test_collections.matter.test_environment_config import (
 
 from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
+from ...utils import prompt_for_commissioning_mode
 from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
 from ...yaml_tests.models.chip_test import PromptOption
-from ...utils import prompt_for_commissioning_mode
-
 
 CHIP_APP_PAIRING_CODE = "CHIP:SVR: Manual pairing code:"
 
