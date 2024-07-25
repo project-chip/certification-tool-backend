@@ -32,9 +32,7 @@ DOCKER_IMAGE_FOUND=$(sudo docker images -q $SDK_DOCKER_IMAGE)
 
 if [[ -z "$DOCKER_IMAGE_FOUND" ]]; then
     print_script_step "Pulling '$SDK_DOCKER_IMAGE' image"
-    newgrp docker << END
-    docker pull $SDK_DOCKER_IMAGE
-END
+    sudo docker pull $SDK_DOCKER_IMAGE
 else
     echo "SDK Docker image already exists"
     echo "$SDK_DOCKER_IMAGE"
@@ -42,9 +40,7 @@ fi
 
 print_script_step "Updating Sample APPs"
 # TODO: update SDK image to place the apps in a specific folder and then copy that entire folder
-newgrp docker << END
-docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v chip-* /apps/; cp -v thermostat-app /apps/; cp -v lit-icd-app /apps/;"
-END
+sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v chip-* /apps/; cp -v thermostat-app /apps/; cp -v lit-icd-app /apps/;"
 echo "Setting Sample APPs ownership"
 sudo chown -R `whoami` ~/apps
 
