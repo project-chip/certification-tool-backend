@@ -28,7 +28,9 @@ SDK_DOCKER_PACKAGE=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_DOCKER_IMAGE |
 SDK_DOCKER_TAG=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_DOCKER_TAG | cut -d'"' -f 2 | cut -d"'" -f 2)
 SDK_DOCKER_IMAGE=$SDK_DOCKER_PACKAGE:$SDK_DOCKER_TAG
 
-if [[ -z "$(docker images -q $SDK_DOCKER_IMAGE)" ]]; then
+DOCKER_IMAGE_FOUND=$(sudo docker images -q $SDK_DOCKER_IMAGE)
+
+if [[ -z "$DOCKER_IMAGE_FOUND" ]]; then
     print_script_step "Pulling '$SDK_DOCKER_IMAGE' image"
     newgrp docker << END
     docker pull $SDK_DOCKER_IMAGE
