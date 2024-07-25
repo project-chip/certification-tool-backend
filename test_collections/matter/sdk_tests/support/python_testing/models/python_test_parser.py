@@ -148,18 +148,27 @@ def __parse_test_case(
 
     desc_method = __get_method_by_name(desc_method_name, methods)
     if desc_method:
-        tc_desc = __retrieve_description(desc_method)
+        try:
+            tc_desc = __retrieve_description(desc_method)
+        except:  # noqa E722n
+            pass
 
     # If the python test does not implement the steps template method,
     # the test case will be presented in UI and the whole test case will be
     # executed as one step
     steps_method = __get_method_by_name(steps_method_name, methods)
     if steps_method:
-        tc_steps = __retrieve_steps(steps_method)
+        try:
+            tc_steps = __retrieve_steps(steps_method)
+        except:  # noqa E722n
+            pass
 
     pics_method = __get_method_by_name(pics_method_name, methods)
     if pics_method:
-        tc_pics = __retrieve_pics(pics_method)
+        try:
+            tc_pics = __retrieve_pics(pics_method)
+        except:  # noqa E722n
+            pass
 
     # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
     # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
