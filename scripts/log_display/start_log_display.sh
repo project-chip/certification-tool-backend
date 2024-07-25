@@ -28,11 +28,12 @@ sudo systemctl restart mongod
 USAGE="usage: $0 [-h | --help] [-f | --foreground] [[-o | --output] <path>]"
 
 # Default Paths
-RUN_IN_BACKGROUND="yes"
-MATTER_QA_PATH="/home/ubuntu/matter-qa"
+BACKEND_DIR=$(realpath $(dirname "$0")/../..)
+LOGS_PATH="$BACKEND_DIR/logs/performance-logs"
+MATTER_QA_PATH="$HOME/matter-qa"
 VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
-LOGS_PATH=/home/ubuntu/certification-tool/backend/logs/performance-logs
 DISPLAY_LOG_OUTPUT="/dev/null"
+RUN_IN_BACKGROUND="yes"
 
 for arg in "$@"; do
     case $arg in

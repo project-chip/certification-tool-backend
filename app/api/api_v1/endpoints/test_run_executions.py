@@ -572,11 +572,14 @@ def generate_summary_log(
 
     project_config = TestEnvironmentConfigMatter(**project.config)
     matter_qa_url = None
-    host_out_folder = "/home/ubuntu/certification-tool/backend/logs/performance-logs"
-    container_out_folder = "/app/backend/logs/performance-logs"
-    if os.path.exists(container_out_folder):
-        shutil.rmtree(container_out_folder)
-    os.makedirs(container_out_folder)
+    LOGS_FOLDER = "/logs/performance-logs"
+    HOST_BACKEND = os.getenv("BACKEND_FILEPATH_ON_HOST") or ""
+    CONTAINER_BACKEND = os.getenv("PYTHONPATH") or ""
+    HOST_OUT_FOLDER = HOST_BACKEND + LOGS_FOLDER
+    CONTAINER_OUT_FOLDER = CONTAINER_BACKEND + LOGS_FOLDER
+    if os.path.exists(HOST_OUT_FOLDER):
+        shutil.rmtree(HOST_OUT_FOLDER)
+    os.makedirs(HOST_OUT_FOLDER)
 
     if (
         project_config.test_parameters
@@ -609,11 +612,11 @@ def generate_summary_log(
         out_datetime = datetime.now().strftime(date_pattern_out_file)
 
     with open(
-        container_out_folder + f"/Performance_Test_Run_{out_datetime}.log", "w"
+        CONTAINER_OUT_FOLDER + f"/Performance_Test_Run_{out_datetime}.log", "w"
     ) as f:
         f.write(str(log_lines))
 
-    files = os.listdir(container_out_folder)
+    files = os.listdir(CONTAINER_OUT_FOLDER)
 
     commissioning_list = []
 
@@ -624,7 +627,7 @@ def generate_summary_log(
     execution_status = []
 
     for file_name in files:
-        file_path = os.path.join(container_out_folder, file_name)
+        file_path = os.path.join(CONTAINER_OUT_FOLDER, file_name)
         commissioning_obj: Optional[Commissioning] = None
         file_execution_time = None
         tc_name = ""
@@ -745,10 +748,10 @@ def generate_summary_log(
         discovery_durations,
         read_durations,
         PASE_durations,
-        container_out_folder,
+        CONTAINER_OUT_FOLDER,
     )
 
-    target_dir = f"{host_out_folder}/{execution_time_folder}/{tc_name}"
+    target_dir = f"{HOST_OUT_FOLDER}/{execution_time_folder}/{tc_name}"
     url_report = f"{matter_qa_url}/home/displayLogFolder?dir_path={target_dir}"
 
     summary_report: dict = {}

@@ -16,7 +16,7 @@
 
 set -e
 
-MATTER_QA_PATH="/home/ubuntu/matter-qa"
+MATTER_QA_PATH="$HOME/matter-qa"
 VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
 
 clone_matter_qa() {
