@@ -76,7 +76,9 @@ if [ "$RUN_IN_BACKGROUND" == "yes" ]; then
     python $LOG_DISPLAY_APP --logs_path $LOGS_PATH &>$DISPLAY_LOG_OUTPUT &
 else
     echo "Running..."
+    trap '' SIGINT
     python $LOG_DISPLAY_APP --logs_path $LOGS_PATH
+    trap SIGINT
     deactivate
     echo
     echo "Done"
