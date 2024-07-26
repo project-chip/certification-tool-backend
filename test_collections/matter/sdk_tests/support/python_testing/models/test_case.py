@@ -22,6 +22,9 @@ from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
+from sqlalchemy.orm import Session
+
+from app.crud.crud_test_step_execution import test_step_execution
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
@@ -90,7 +93,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         # Python tests that don't follow the template only have the default steps "Start
         # Python test" and "Show test logs", but inside the file there can be more than
         # one test case, so the hooks' step methods will continue to be called
-        if len(self.test_steps) == 2:
+        if self.python_test.python_test_type == PythonTestType.LEGACY:
             return
 
         self.next_step()
@@ -102,10 +105,30 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if not self.test_stop_called:
             self.current_test_step.mark_as_completed()
 
+    def __get_db_session(self) -> Session:
+        from app.test_engine.test_runner import TestRunner
+
+        return TestRunner().db_session
+
     def test_start(
         self, filename: str, name: str, count: int, steps: list[str] = []
     ) -> None:
+        steps.append("Show test logs")
+
+        for step_name in steps:
+            python_test_step = TestStep(step_name)
+            python_test_step.subscribe(list(self.observers))
+            self.test_steps.append(python_test_step)
+
+        test_step_execution.update_db_with_received_test_steps(
+            self.__get_db_session(),
+            self.test_steps[1:],  # Skips "Python start test" step
+            start_execution_index=1,  # Skips "Python start test" step
+            test_case_execution_id=self.test_case_execution.id,
+        )
+
         self.step_over()
+        self.notify()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
@@ -130,7 +153,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         # tests can fail and so this method will be called for each of them. These
         # failures should be reported in the first step and moving to the logs step
         # should only happen after all test cases are executed.
-        if len(self.test_steps) > 2:
+        if self.python_test.python_test_type != PythonTestType.LEGACY:
             # Python tests stop when there's a failure. We need to skip the next steps
             # and execute only the last one, which shows the logs
             self.skip_to_last_step()
@@ -295,7 +318,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # step_over method. So we have to explicitly move on to the next step here.
             # The tests that do follow the template will have additional steps and will
             # have already been moved to the correct step by the hooks' step methods.
-            if len(self.test_steps) == 2:
+            if self.python_test.python_test_type == PythonTestType.LEGACY:
                 self.next_step()
 
             logger.info("---- Start of Python test logs ----")
@@ -334,7 +357,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
         for step in self.python_test.steps:
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
-        self.test_steps.append(TestStep("Show test logs"))
 
 
 class NoCommissioningPythonTestCase(PythonTestCase):
