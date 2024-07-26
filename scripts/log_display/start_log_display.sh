@@ -29,7 +29,7 @@ USAGE="usage: $0 [-h | --help] [-f | --foreground] [[-o | --output] <path>]"
 
 # Default Paths
 BACKEND_DIR=$(realpath $(dirname "$0")/../..)
-LOGS_PATH="$BACKEND_DIR/logs/performance-logs"
+LOGS_PATH="$BACKEND_DIR/test_collections/logs"
 MATTER_QA_PATH="$HOME/matter-qa"
 VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
 DISPLAY_LOG_OUTPUT="/dev/null"
