@@ -111,11 +111,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         return TestRunner().db_session
 
     def test_start(
-        self,
-        filename: str,
-        name: str,
-        count: int,
-        steps: list[str],
+        self, filename: str, name: str, count: int, steps: list[str] = []
     ) -> None:
         steps.append("Show test logs")
 

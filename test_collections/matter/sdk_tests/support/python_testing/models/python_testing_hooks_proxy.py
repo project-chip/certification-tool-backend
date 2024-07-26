@@ -57,7 +57,7 @@ class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
     filename: Optional[str]
     name: Optional[str]
     count: Optional[int]
-    steps: list[str]
+    steps: Optional[list[str]]
 
 
 class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
@@ -135,14 +135,11 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         SDKPythonTestRunnerHooks.finished = True
 
     def test_start(
-        self, filename: str, name: str, count: int, steps: list[str]
+        self, filename: str, name: str, count: int, steps: list[str] = []
     ) -> None:
         self.results.put(
             SDKPythonTestResultTestStart(
-                filename=filename,
-                name=name,
-                count=count,
-                steps=steps,
+                filename=filename, name=name, count=count, steps=steps
             )
         )
 
