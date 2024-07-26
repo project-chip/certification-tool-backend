@@ -572,14 +572,14 @@ def generate_summary_log(
 
     project_config = TestEnvironmentConfigMatter(**project.config)
     matter_qa_url = None
-    LOGS_FOLDER = "/logs/performance-logs"
+    LOGS_FOLDER = "/test_collections/logs"
     HOST_BACKEND = os.getenv("BACKEND_FILEPATH_ON_HOST") or ""
     CONTAINER_BACKEND = os.getenv("PYTHONPATH") or ""
     HOST_OUT_FOLDER = HOST_BACKEND + LOGS_FOLDER
     CONTAINER_OUT_FOLDER = CONTAINER_BACKEND + LOGS_FOLDER
-    if os.path.exists(HOST_OUT_FOLDER):
-        shutil.rmtree(HOST_OUT_FOLDER)
-    os.makedirs(HOST_OUT_FOLDER)
+    if os.path.exists(CONTAINER_OUT_FOLDER):
+        shutil.rmtree(CONTAINER_OUT_FOLDER)
+    os.makedirs(CONTAINER_OUT_FOLDER)
 
     if (
         project_config.test_parameters
