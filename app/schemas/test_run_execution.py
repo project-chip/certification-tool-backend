@@ -39,6 +39,7 @@ class TestRunExecutionBase(BaseModel):
 
     title: str
     description: Optional[str]
+    certification_mode: bool = False
 
 
 # Base + properties that represent relationhips

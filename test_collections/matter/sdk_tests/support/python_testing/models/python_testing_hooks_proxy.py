@@ -26,6 +26,7 @@ class SDKPythonTestResultEnum(str, Enum):
     STOP = "stop"
     TEST_START = "test_start"
     TEST_STOP = "test_stop"
+    TEST_SKIPPED = "test_skipped"
     STEP_SKIPPED = "step_skipped"
     STEP_START = "step_start"
     STEP_SUCCESS = "step_success"
@@ -62,8 +63,14 @@ class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
 
 class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.TEST_STOP
-    duration: Optional[str]
+    duration: Optional[int]
     exception: Any
+
+
+class SDKPythonTestResultTestSkipped(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.TEST_SKIPPED
+    filename: Optional[str]
+    name: Optional[str]
 
 
 class SDKPythonTestResultStepSkipped(SDKPythonTestResultBase):
@@ -145,11 +152,11 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.results.put(
-            SDKPythonTestResultTestStop(
-                exception=exception,
-                duration=duration,
-            )
+            SDKPythonTestResultTestStop(exception=exception, duration=duration)
         )
+
+    def test_skipped(self, filename: str, name: str) -> None:
+        self.results.put(SDKPythonTestResultTestSkipped(filename=filename, name=name))
 
     def step_skipped(self, name: str, expression: str) -> None:
         self.results.put(SDKPythonTestResultStepSkipped(expression=expression))

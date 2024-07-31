@@ -105,20 +105,23 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def test_start(
         self, filename: str, name: str, count: int, steps: list[str] = []
     ) -> None:
-        self.step_over()
+        pass
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
 
+    def test_skipped(self, filename: str, name: str) -> None:
+        self.mark_as_not_applicable()
+        self.skip_to_last_step()
+
     def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
-        self.step_over()
 
     def step_start(self, name: str) -> None:
-        pass
+        self.step_over()
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
-        self.step_over()
+        pass
 
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
@@ -162,23 +165,30 @@ class PythonTestCase(TestCase, UserPromptSupport):
         return cls.python_test.PICS
 
     @classmethod
-    def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
+    def class_factory(
+        cls, test: PythonTest, python_test_version: str, mandatory: bool
+    ) -> Type[T]:
         """Dynamically declares a subclass based on the type of Python test."""
         case_class: Type[PythonTestCase]
 
         if test.python_test_type == PythonTestType.NO_COMMISSIONING:
             case_class = NoCommissioningPythonTestCase
-        elif test.python_test_type == PythonTestType.LEGACY:
+        elif (
+            test.python_test_type == PythonTestType.LEGACY
+            or test.python_test_type == PythonTestType.MANDATORY
+        ):
             case_class = LegacyPythonTestCase
         else:  # Commissioning
             case_class = PythonTestCase
 
         return case_class.__class_factory(
-            test=test, python_test_version=python_test_version
+            test=test, python_test_version=python_test_version, mandatory=mandatory
         )
 
     @classmethod
-    def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
+    def __class_factory(
+        cls, test: PythonTest, python_test_version: str, mandatory: bool
+    ) -> Type[T]:
         """class factory method for PythonTestCase."""
         title = cls.__title(test.name)
         class_name = cls.__class_name(test.name)
@@ -196,6 +206,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,
+                    "mandatory": mandatory,
                 },
             },
         )
@@ -289,14 +300,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 await self.__handle_update(update)
 
             # Step: Show test logs
-
-            # Python tests that don't follow the template only have the 2 default steps
-            # and, at this point, will still be in the first step because of the
-            # step_over method. So we have to explicitly move on to the next step here.
-            # The tests that do follow the template will have additional steps and will
-            # have already been moved to the correct step by the hooks' step methods.
-            if len(self.test_steps) == 2:
-                self.next_step()
+            self.next_step()
 
             logger.info("---- Start of Python test logs ----")
             self.handle_logs_temp()

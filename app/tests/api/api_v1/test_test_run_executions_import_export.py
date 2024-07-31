@@ -80,6 +80,7 @@ def test_export_test_run_execution_successfully() -> None:
         state=TestStateEnum.PASSED,
         created_at="2023-05-23T21:43:43.543147",
         log=log,
+        certification_mode=False,
     )
 
     with mock.patch(

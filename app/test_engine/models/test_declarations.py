@@ -42,9 +42,10 @@ class TestCaseDeclaration(object):
 
 
 class TestSuiteDeclaration(object):
-    def __init__(self, class_ref: Type[TestSuite]) -> None:
+    def __init__(self, class_ref: Type[TestSuite], mandatory: bool = False) -> None:
         self.class_ref = class_ref
         self.test_cases: Dict[str, TestCaseDeclaration] = {}
+        self.mandatory: bool = mandatory
 
     @property
     def public_id(self) -> str:
@@ -100,10 +101,11 @@ class TestSuiteDeclaration(object):
 
 
 class TestCollectionDeclaration(object):
-    def __init__(self, path: str, name: str) -> None:
+    def __init__(self, path: str, name: str, mandatory: bool = False) -> None:
         self.name = name
         self.path = path
         self.test_suites: Dict[str, TestSuiteDeclaration] = {}
+        self.mandatory = mandatory
 
     def add_test_suite(self, suite: TestSuiteDeclaration) -> None:
         self.test_suites[suite.public_id] = suite

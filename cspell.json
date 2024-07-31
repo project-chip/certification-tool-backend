@@ -37,6 +37,7 @@
         "libdbus",
         "libgirepository",
         "loguru",
+        "mandatories",
         "MANYTOONE",
         "mypy",
         "noqa",

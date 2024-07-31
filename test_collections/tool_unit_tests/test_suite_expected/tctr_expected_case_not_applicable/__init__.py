@@ -13,22 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from pydantic import BaseSettings
-
-
-class MatterSettings(BaseSettings):
-    # Test Engine Config
-    CHIP_TOOL_TRACE: bool = True
-    SDK_CONTAINER_NAME: str = "th-sdk"
-
-    # SDK Docker Image
-    SDK_DOCKER_IMAGE: str = "connectedhomeip/chip-cert-bins"
-    SDK_DOCKER_TAG: str = "1cbcc5c81d478e4d24d68ced29c49cedef2043d8"
-    # SDK SHA: used to fetch test YAML from SDK.
-    SDK_SHA: str = "1cbcc5c81d478e4d24d68ced29c49cedef2043d8"
-
-    class Config:
-        case_sensitive = True
-
-
-matter_settings = MatterSettings()
+from .tctr_expected_case_not_applicable import TCTRExpectedCaseNotApplicable

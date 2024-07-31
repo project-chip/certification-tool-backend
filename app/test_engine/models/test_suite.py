@@ -47,6 +47,7 @@ class TestSuite(TestObservable):
         self.test_cases: List[TestCase] = []
         self.__state = TestStateEnum.PENDING
         self.errors: List[str] = []
+        self.mandatory: bool = test_suite_execution.mandatory
 
     @property
     def project(self) -> Project:
@@ -84,17 +85,20 @@ class TestSuite(TestObservable):
 
         # Note: These loops cannot be easily coalesced as we need to iterate through
         # and assign Test Suite State in order.
-        if any(tc for tc in self.test_cases if tc.state == TestStateEnum.CANCELLED):
+        if any(tc.state == TestStateEnum.CANCELLED for tc in self.test_cases):
             return TestStateEnum.CANCELLED
 
-        if any(tc for tc in self.test_cases if tc.state == TestStateEnum.ERROR):
+        if any(tc.state == TestStateEnum.ERROR for tc in self.test_cases):
             return TestStateEnum.ERROR
 
-        if any(tc for tc in self.test_cases if tc.state == TestStateEnum.FAILED):
+        if any(tc.state == TestStateEnum.FAILED for tc in self.test_cases):
             return TestStateEnum.FAILED
 
-        if any(tc for tc in self.test_cases if tc.state == TestStateEnum.PENDING):
+        if any(tc.state == TestStateEnum.PENDING for tc in self.test_cases):
             return TestStateEnum.PENDING
+
+        if all(tc.state == TestStateEnum.NOT_APPLICABLE for tc in self.test_cases):
+            return TestStateEnum.NOT_APPLICABLE
 
         return TestStateEnum.PASSED
 
