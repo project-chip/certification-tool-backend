@@ -58,7 +58,7 @@ class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
     filename: Optional[str]
     name: Optional[str]
     count: Optional[int]
-    steps: list[str]
+    steps: Optional[list[str]]
 
 
 class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
