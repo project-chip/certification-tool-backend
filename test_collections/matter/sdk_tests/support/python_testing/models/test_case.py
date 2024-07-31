@@ -102,21 +102,26 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if not self.test_stop_called:
             self.current_test_step.mark_as_completed()
 
-    def test_start(self, filename: str, name: str, count: int) -> None:
-        self.step_over()
+    def test_start(
+        self, filename: str, name: str, count: int, steps: list[str] = []
+    ) -> None:
+        pass
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
 
+    def test_skipped(self, filename: str, name: str) -> None:
+        self.mark_as_not_applicable()
+        self.skip_to_last_step()
+
     def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
-        self.step_over()
 
     def step_start(self, name: str) -> None:
-        pass
+        self.step_over()
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
-        self.step_over()
+        pass
 
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
@@ -295,14 +300,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 await self.__handle_update(update)
 
             # Step: Show test logs
-
-            # Python tests that don't follow the template only have the 2 default steps
-            # and, at this point, will still be in the first step because of the
-            # step_over method. So we have to explicitly move on to the next step here.
-            # The tests that do follow the template will have additional steps and will
-            # have already been moved to the correct step by the hooks' step methods.
-            if len(self.test_steps) == 2:
-                self.next_step()
+            self.next_step()
 
             logger.info("---- Start of Python test logs ----")
             self.handle_logs_temp()

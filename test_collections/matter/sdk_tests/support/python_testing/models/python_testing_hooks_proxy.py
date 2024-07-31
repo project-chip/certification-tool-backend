@@ -26,6 +26,7 @@ class SDKPythonTestResultEnum(str, Enum):
     STOP = "stop"
     TEST_START = "test_start"
     TEST_STOP = "test_stop"
+    TEST_SKIPPED = "test_skipped"
     STEP_SKIPPED = "step_skipped"
     STEP_START = "step_start"
     STEP_SUCCESS = "step_success"
@@ -57,12 +58,19 @@ class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
     filename: Optional[str]
     name: Optional[str]
     count: Optional[int]
+    steps: list[str]
 
 
 class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.TEST_STOP
-    duration: Optional[str]
+    duration: Optional[int]
     exception: Any
+
+
+class SDKPythonTestResultTestSkipped(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.TEST_SKIPPED
+    filename: Optional[str]
+    name: Optional[str]
 
 
 class SDKPythonTestResultStepSkipped(SDKPythonTestResultBase):
@@ -133,22 +141,22 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         self.results.put(SDKPythonTestResultStop(duration=duration))
         SDKPythonTestRunnerHooks.finished = True
 
-    def test_start(self, filename: str, name: str, count: int) -> None:
+    def test_start(
+        self, filename: str, name: str, count: int, steps: list[str] = []
+    ) -> None:
         self.results.put(
             SDKPythonTestResultTestStart(
-                filename=filename,
-                name=name,
-                count=count,
+                filename=filename, name=name, count=count, steps=steps
             )
         )
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.results.put(
-            SDKPythonTestResultTestStop(
-                exception=exception,
-                duration=duration,
-            )
+            SDKPythonTestResultTestStop(exception=exception, duration=duration)
         )
+
+    def test_skipped(self, filename: str, name: str) -> None:
+        self.results.put(SDKPythonTestResultTestSkipped(filename=filename, name=name))
 
     def step_skipped(self, name: str, expression: str) -> None:
         self.results.put(SDKPythonTestResultStepSkipped(expression=expression))

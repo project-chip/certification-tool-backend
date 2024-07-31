@@ -208,7 +208,23 @@ mocked_log: List[TestRunLogEntry] = [
     ),
     TestRunLogEntry(
         level="INFO",
-        timestamp=1684878245.0,
+        timestamp=1684878254.0,
+        message="Test suite 1 case 3 log 0",
+        test_suite_execution_index=1,
+        test_case_execution_index=3,
+        test_step_execution_index=None,
+    ),
+    TestRunLogEntry(
+        level="INFO",
+        timestamp=1684878255.0,
+        message="Test suite 1 case 3 step 0 log 0",
+        test_suite_execution_index=1,
+        test_case_execution_index=3,
+        test_step_execution_index=0,
+    ),
+    TestRunLogEntry(
+        level="INFO",
+        timestamp=1684878265.0,
         message="Test suite 1 log 2",
         test_suite_execution_index=1,
         test_case_execution_index=None,
@@ -216,7 +232,7 @@ mocked_log: List[TestRunLogEntry] = [
     ),
     TestRunLogEntry(
         level="INFO",
-        timestamp=1684878246.0,
+        timestamp=1684878276.0,
         message="General log 3",
         test_suite_execution_index=None,
         test_case_execution_index=None,
@@ -366,6 +382,31 @@ mocked_test_run_execution = schemas.TestRunExecutionWithChildren(
                     ),
                     test_step_executions=[],
                 ),
+                schemas.TestCaseExecution(
+                    state=TestStateEnum.NOT_APPLICABLE,
+                    public_id="TC-Y-1.4",
+                    execution_index=1,
+                    id=5,
+                    test_suite_execution_id=2,
+                    test_case_metadata_id=5,
+                    test_case_metadata=schemas.TestCaseMetadata(
+                        public_id="TC-Y-1.4",
+                        title="[TC-Y-1.4] Title",
+                        description="Fourth test case",
+                        version="1.0",
+                        source_hash="abc123",
+                        id=5,
+                    ),
+                    test_step_executions=[
+                        schemas.TestStepExecution(
+                            state=TestStateEnum.PASSED,
+                            title="First step",
+                            execution_index=0,
+                            id=5,
+                            test_case_execution_id=5,
+                        )
+                    ],
+                ),
             ],
             test_suite_metadata=schemas.TestSuiteMetadata(
                 public_id="Suite1",
@@ -392,11 +433,13 @@ def test_group_test_run_execution_logs() -> None:
     assert len(grouped_logs.suites) == 2
     assert len(grouped_logs.suites["Suite0"]) == 4
     assert len(grouped_logs.suites["Suite1"]) == 3
-    assert len(grouped_logs.cases) == 3
+    assert len(grouped_logs.cases) == 4
     assert len(grouped_logs.cases[TestStateEnum.PASSED]) == 2
     assert len(grouped_logs.cases[TestStateEnum.ERROR]) == 1
     assert len(grouped_logs.cases[TestStateEnum.FAILED]) == 1
+    assert len(grouped_logs.cases[TestStateEnum.NOT_APPLICABLE]) == 1
     assert len(grouped_logs.cases[TestStateEnum.PASSED]["TC-X-1.1"]) == 5
     assert len(grouped_logs.cases[TestStateEnum.PASSED]["TC-Y-1.3"]) == 1
     assert len(grouped_logs.cases[TestStateEnum.ERROR]["TC-Y-1.1"]) == 5
     assert len(grouped_logs.cases[TestStateEnum.FAILED]["TC-Y-1.2"]) == 3
+    assert len(grouped_logs.cases[TestStateEnum.NOT_APPLICABLE]["TC-Y-1.4"]) == 2

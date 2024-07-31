@@ -32,6 +32,7 @@ from test_collections.matter.test_environment_config import (
 
 from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
+from ...utils import prompt_for_commissioning_mode
 from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
 from ...yaml_tests.models.chip_test import PromptOption
 
@@ -85,6 +86,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         self.__dut_commissioned_successfully = False
         if self.server_type == ChipServerType.CHIP_TOOL:
             logger.info("Commission DUT")
+            await prompt_for_commissioning_mode(self, logger, None, self.cancel)
             await self.__commission_dut_allowing_retries()
         elif self.server_type == ChipServerType.CHIP_APP:
             logger.info("Verify Test suite prerequisites")
