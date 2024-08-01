@@ -300,7 +300,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 await self.__handle_update(update)
 
             # Step: Show test logs
-            self.next_step()
+            if self.current_test_step_index < len(self.test_steps) - 1:
+                self.skip_to_last_step()
 
             logger.info("---- Start of Python test logs ----")
             self.handle_logs_temp()
