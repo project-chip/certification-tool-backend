@@ -19,7 +19,6 @@ from typing import List, Optional, Type
 from app.models import Project, TestSuiteExecution
 from app.models.test_enums import TestStateEnum
 from app.schemas.pics import PICS
-from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
@@ -59,7 +58,7 @@ class TestSuite(TestObservable):
         return self.test_suite_execution.test_run_execution.project
 
     @property
-    def config(self) -> TestEnvironmentConfig:
+    def config(self) -> dict:
         return self.project.config
 
     @property

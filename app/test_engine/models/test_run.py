@@ -18,7 +18,6 @@ from typing import List, Optional
 
 from app.models import Project, TestRunExecution
 from app.models.test_enums import TestStateEnum
-from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.test_observable import TestObservable
@@ -55,7 +54,7 @@ class TestRun(TestObservable, UserPromptSupport):
         return self.test_run_execution.project
 
     @property
-    def config(self) -> TestEnvironmentConfig:
+    def config(self) -> dict:
         """Convenience getter to access project config."""
         return self.project.config
 
