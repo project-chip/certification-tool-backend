@@ -52,8 +52,8 @@ def generate_command_arguments(
 
     # Retrieve arguments from test_parameters
     if test_parameters:
-        # If manual-code, discriminator and passcode are provided, the test will think that
-        # we're trying to commission 2 DUTs and it will fail
+        # If manual-code, discriminator and passcode are provided, the test will think
+        # that we're trying to commission 2 DUTs and it will fail
         if "manual-code" not in test_parameters.keys():
             # Retrieve arguments from dut_config
             arguments.append(f"--discriminator {dut_config.discriminator}")

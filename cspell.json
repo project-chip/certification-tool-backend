@@ -60,7 +60,9 @@
         "unpairing",
         "wlan",
         "yamls",
-        "yamltests"
+        "yamltests",
+        "wifipaf",
+        "WIFIPAF"
     ],
     "ignoreWords": [
         "bdist",
