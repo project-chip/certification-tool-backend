@@ -46,9 +46,14 @@ def generate_command_arguments(
     # Increase log level by adding trace log
     if dut_config.trace_log:
         arguments.append("--trace-to json:log")
-    # Retrieve arguments from dut_config
-    arguments.append(f"--discriminator {dut_config.discriminator}")
-    arguments.append(f"--passcode {dut_config.setup_code}")
+
+    # If manual-code, discriminator and passcode are provided, the test will think that
+    # we're trying to commission 2 DUTs and it will fail
+    if "manual-code" not in test_parameters.keys():
+        # Retrieve arguments from dut_config
+        arguments.append(f"--discriminator {dut_config.discriminator}")
+        arguments.append(f"--passcode {dut_config.setup_code}")
+
     if not omit_commissioning_method:
         arguments.append(f"--commissioning-method {pairing_mode}")
 
