@@ -47,21 +47,25 @@ def generate_command_arguments(
     if dut_config.trace_log:
         arguments.append("--trace-to json:log")
 
-    # If manual-code, discriminator and passcode are provided, the test will think that
-    # we're trying to commission 2 DUTs and it will fail
-    if "manual-code" not in test_parameters.keys():
-        # Retrieve arguments from dut_config
-        arguments.append(f"--discriminator {dut_config.discriminator}")
-        arguments.append(f"--passcode {dut_config.setup_code}")
-
     if not omit_commissioning_method:
         arguments.append(f"--commissioning-method {pairing_mode}")
 
     # Retrieve arguments from test_parameters
     if test_parameters:
+        # If manual-code, discriminator and passcode are provided, the test will think that
+        # we're trying to commission 2 DUTs and it will fail
+        if "manual-code" not in test_parameters.keys():
+            # Retrieve arguments from dut_config
+            arguments.append(f"--discriminator {dut_config.discriminator}")
+            arguments.append(f"--passcode {dut_config.setup_code}")
+
         for name, value in test_parameters.items():
             arg_value = str(value) if value is not None else ""
             arguments.append(f"--{name} {arg_value}")
+    else:
+        # Retrieve arguments from dut_config
+        arguments.append(f"--discriminator {dut_config.discriminator}")
+        arguments.append(f"--passcode {dut_config.setup_code}")
 
     return arguments
 
