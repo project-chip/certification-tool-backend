@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 from asyncio import CancelledError
-from typing import Any, List, Union, cast
+from typing import Any, List, Union
 
 from app.models import Project, TestCaseExecution
 from app.models.test_enums import TestStateEnum
-from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable
@@ -48,12 +47,10 @@ class TestCase(TestObservable):
 
     @property
     def test_parameters(self) -> dict[str, Any]:
-        config_dict = cast(dict, self.config)
-
         test_parameters = self.default_test_parameters()
 
-        if config_dict and config_dict.get("test_parameters"):
-            test_parameters |= config_dict.get("test_parameters")  # type: ignore
+        if self.config and self.config.get("test_parameters"):
+            test_parameters |= self.config.get("test_parameters")  # type: ignore
 
         return test_parameters
 
@@ -81,7 +78,7 @@ class TestCase(TestObservable):
         return self.test_case_execution.test_suite_execution.test_run_execution.project
 
     @property
-    def config(self) -> TestEnvironmentConfig:
+    def config(self) -> dict:
         return self.project.config
 
     @property

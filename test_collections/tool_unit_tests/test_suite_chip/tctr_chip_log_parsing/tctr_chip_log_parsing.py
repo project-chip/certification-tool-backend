@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from app.default_environment_config import default_environment_config
-from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestStep
 from test_collections.matter.sdk_tests.support.chip.chip_server import ChipServerType
@@ -38,7 +37,7 @@ class TCTRChipLogParsing(ChipTest):
     # project are not set up. So, override the base class config() to return the
     # default config.
     @property
-    def config(self) -> TestEnvironmentConfig:
+    def config(self) -> dict:
         return default_environment_config.copy(deep=True)  # type: ignore
 
     def create_test_steps(self) -> None:
