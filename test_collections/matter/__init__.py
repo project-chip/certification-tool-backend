@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .python_tests import onboarding_payload_collection
-from .sdk_tests.support.python_testing import (
-    custom_python_collection,
-    sdk_mandatory_python_collection,
-    sdk_python_collection,
-)
-from .sdk_tests.support.yaml_tests import custom_collection, sdk_collection
+import os
+
+# Verify if this execution comes from python_tests_validator.
+if not os.getenv("DRY_RUN"):
+    from .python_tests import onboarding_payload_collection
+    from .sdk_tests.support.python_testing import (
+        custom_python_collection,
+        sdk_mandatory_python_collection,
+        sdk_python_collection,
+    )
+    from .sdk_tests.support.yaml_tests import custom_collection, sdk_collection
