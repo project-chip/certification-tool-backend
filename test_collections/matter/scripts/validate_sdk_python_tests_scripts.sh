@@ -64,12 +64,14 @@ git checkout -q $SDK_SHA
 # def parse_python_script(path: Path) -> list[PythonTest]:
 cd "$MATTER_PROGRAM_DIR/sdk_tests/support/python_testing_parser"
 
+python_scripts=()
 for dir in $PYTHON_SCRIPT_PATH/*.py
 do
-    echo "Script: $dir"
-    
-    DRY_RUN=1 python $VALIDATION_SCRIPT "$dir"
+    echo "Adding: $dir"
+    python_scripts+=("$dir")
 done
+
+DRY_RUN=1 python $VALIDATION_SCRIPT "${python_scripts[@]}"
 
 # exit 0
 

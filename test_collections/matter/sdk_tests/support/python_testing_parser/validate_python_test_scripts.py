@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from test_collections.matter.sdk_tests.support.python_testing_parser.python_test_parser import (
+from test_collections.matter.sdk_tests.support.python_testing.models.python_test_parser import (
     parse_python_script,
 )
 
