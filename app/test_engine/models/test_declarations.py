@@ -16,9 +16,7 @@
 import re
 from typing import Dict, Type
 
-from app.test_engine.models.test_metadata import TestMetadata
-
-from . import TestCase, TestSuite
+from . import TestCase, TestCollection, TestCollectionMetadata, TestMetadata, TestSuite
 
 
 class TestCaseDeclaration(object):
@@ -104,15 +102,26 @@ class TestCollectionDeclaration(object):
     def __init__(self, path: str, name: str, mandatory: bool = False) -> None:
         self.name = name
         self.path = path
-        self.test_suites: Dict[str, TestSuiteDeclaration] = {}
         self.mandatory = mandatory
+        self.test_suites: Dict[str, TestSuiteDeclaration] = {}
+
+        self.class_ref: Type[TestCollection] = TestCollection.class_factory(
+            name, path, mandatory
+        )
+
+    @property
+    def metadata(self) -> TestCollectionMetadata:
+        return self.class_ref.metadata
+
+    # @property
+    # def mandatory(self) -> bool:
+    #     return self.class_ref.metadata.mandatory
 
     def add_test_suite(self, suite: TestSuiteDeclaration) -> None:
         self.test_suites[suite.public_id] = suite
 
     def as_dict(self) -> dict:
         return {
-            "name": self.name,
-            "path": self.path,
+            "metadata": self.metadata,
             "test_suites": {k: v.as_dict() for k, v in self.test_suites.items()},
         }

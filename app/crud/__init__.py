@@ -18,6 +18,8 @@ from .crud_operator import operator
 from .crud_project import project
 from .crud_test_case_execution import test_case_execution
 from .crud_test_case_metadata import test_case_metadata
+from .crud_test_collection_execution import test_collection_execution
+from .crud_test_collection_metadata import test_collection_metadata
 from .crud_test_run_config import test_run_config
 from .crud_test_run_execution import test_run_execution
 from .crud_test_step_execution import test_step_execution

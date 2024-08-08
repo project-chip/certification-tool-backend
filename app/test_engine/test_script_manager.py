@@ -20,6 +20,8 @@ from sqlalchemy.orm import Session
 from app.models import (
     TestCaseExecution,
     TestCaseMetadata,
+    TestCollectionExecution,
+    TestCollectionMetadata,
     TestRunExecution,
     TestStepExecution,
     TestSuiteExecution,
@@ -73,25 +75,35 @@ class TestScriptManager(object, metaclass=Singleton):
         """
         self.test_collections = discover_test_collections()
 
-    def pending_test_suite_executions_for_selected_tests(
+    def pending_test_collection_executions_for_selected_tests(
         self, selected_tests: TestSelection
-    ) -> List[TestSuiteExecution]:
+    ) -> List[TestCollectionExecution]:
         """
-        This will create and associate pending test suites and test cases, based on the
-        selected test cases.
+        This will create and associate pending test collections, test suites and test
+        cases, based on the selected test cases.
         """
         result = []
 
         # Create models within each selected Test Collection
         for test_collection_name in selected_tests.keys():
-            # Lookup selected test collection:
+            # Lookup selected test collection
             test_collection = self.test_collections[test_collection_name]
 
+            # Create pending test collection
+            test_collection_execution = self.__pending_test_collection_execution(
+                test_collection=test_collection
+            )
+
+            # Create pending test suites
             test_suites = self.__pending_test_suites_for_test_collection(
                 test_collection=test_collection,
                 selected_test_suites=selected_tests[test_collection_name],
             )
-            result.extend(test_suites)
+
+            # Add test suites to test collection
+            test_collection_execution.test_suite_executions.extend(test_suites)
+
+            result.append(test_collection_execution)
 
         return result
 
@@ -112,9 +124,7 @@ class TestScriptManager(object, metaclass=Singleton):
             test_suite = test_collection.test_suites[test_suite_id]
 
             # Create pending test suite
-            test_suite_execution = self.__pending_test_suite_execution(
-                test_suite, test_collection
-            )
+            test_suite_execution = self.__pending_test_suite_execution(test_suite)
 
             # Create pending test cases
             test_cases = self.___pending_test_cases_for_test_suite(
@@ -129,10 +139,29 @@ class TestScriptManager(object, metaclass=Singleton):
 
         return test_suites
 
+    def __pending_test_collection_execution(
+        self,
+        test_collection: TestCollectionDeclaration,
+    ) -> TestCollectionExecution:
+        """
+        This will create a DB entry for test collection.
+        """
+
+        # Existing test collection not found creating a new one.
+        metadata = self.__find_or_create_test_collection_metadata(
+            test_collection=test_collection
+        )
+
+        test_collection_execution = TestCollectionExecution(
+            name=metadata.name,
+            test_collection_metadata=metadata,
+            mandatory=test_collection.mandatory,
+        )
+        return test_collection_execution
+
     def __pending_test_suite_execution(
         self,
         test_suite: TestSuiteDeclaration,
-        test_collection: TestCollectionDeclaration,
     ) -> TestSuiteExecution:
         """
         This will create a DB entry for test suite.
@@ -144,7 +173,6 @@ class TestScriptManager(object, metaclass=Singleton):
         test_suite_execution = TestSuiteExecution(
             public_id=metadata.public_id,
             test_suite_metadata=metadata,
-            collection_id=test_collection.name,
             mandatory=test_suite.mandatory,
         )
         return test_suite_execution
@@ -186,6 +214,24 @@ class TestScriptManager(object, metaclass=Singleton):
             test_cases.append(test_case_execution)
 
         return test_cases
+
+    def __find_or_create_test_collection_metadata(
+        self, test_collection: TestCollectionDeclaration
+    ) -> TestCollectionMetadata:
+        """
+        Based on test collection class reference, return a TestCollectionMetadata
+        record.
+        This will check for existing record, and validate the source hash and version.
+        If no match is found, a new updated record will be created
+        """
+
+        # TODO: implement real hash check
+        source_hash = "de7f3c1390cd283f91f74a334aaf0ec3"
+
+        # TODO: check if metadata exists before creating
+        return TestCollectionMetadata(
+            **test_collection.metadata, source_hash=source_hash
+        )
 
     def __find_or_create_test_suite_metadata(
         self, test_suite: TestSuiteDeclaration

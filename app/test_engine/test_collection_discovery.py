@@ -279,10 +279,10 @@ def __find_test_suite(
 
 
 def test_collection_declaration(
-    collection_path: Path, name: str
+    collection_path: Path, name: str, mandatory: bool = False
 ) -> Optional[TestCollectionDeclaration]:
     """Declare a new collection of test suites."""
-    collection = TestCollectionDeclaration(path=str(collection_path), name=name)
+    collection = TestCollectionDeclaration(str(collection_path), name, mandatory)
 
     collection_module_name = __collection_module_name(collection_path)
     suite_types = __find_classes_of_type(

@@ -18,7 +18,6 @@ from typing import List, Optional
 
 from app.models import Project, TestRunExecution
 from app.models.test_enums import TestStateEnum
-from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.test_observable import TestObservable
@@ -26,7 +25,7 @@ from app.test_engine.test_observer import Observer
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
-from .test_suite import TestSuite
+from .test_collection import TestCollection
 
 
 class TestRun(TestObservable, UserPromptSupport):
@@ -39,8 +38,8 @@ class TestRun(TestObservable, UserPromptSupport):
     def __init__(self, test_run_execution: TestRunExecution):
         super().__init__()
         self.test_run_execution = test_run_execution
-        self.current_test_suite: Optional[TestSuite] = None
-        self.test_suites: List[TestSuite] = []
+        self.current_test_collection: Optional[TestCollection] = None
+        self.test_collections: List[TestCollection] = []
         self.__state = TestStateEnum.PENDING
         self.__current_testing_task: Optional[Task] = None
         self.log: list[TestRunLogEntry] = []
@@ -55,7 +54,7 @@ class TestRun(TestObservable, UserPromptSupport):
         return self.test_run_execution.project
 
     @property
-    def config(self) -> TestEnvironmentConfig:
+    def config(self) -> dict:
         """Convenience getter to access project config."""
         return self.project.config
 
@@ -70,23 +69,25 @@ class TestRun(TestObservable, UserPromptSupport):
             self.notify()
 
     def __compute_state(self) -> TestStateEnum:
-        """State computed based test_suite states."""
+        """State computed based test_collection states."""
 
         # Note: These loops cannot be easily coalesced as we need to iterate through
-        # and assign Test Suite State in order.
-        if any(ts.state == TestStateEnum.CANCELLED for ts in self.test_suites):
+        # and assign Test Collection State in order.
+        if any(tc.state == TestStateEnum.CANCELLED for tc in self.test_collections):
             return TestStateEnum.CANCELLED
 
-        if any(ts.state == TestStateEnum.ERROR for ts in self.test_suites):
+        if any(tc.state == TestStateEnum.ERROR for tc in self.test_collections):
             return TestStateEnum.ERROR
 
-        if any(ts.state == TestStateEnum.FAILED for ts in self.test_suites):
+        if any(tc.state == TestStateEnum.FAILED for tc in self.test_collections):
             return TestStateEnum.FAILED
 
-        if any(ts.state == TestStateEnum.PENDING for ts in self.test_suites):
+        if any(tc.state == TestStateEnum.PENDING for tc in self.test_collections):
             return TestStateEnum.PENDING
 
-        if all(ts.state == TestStateEnum.NOT_APPLICABLE for ts in self.test_suites):
+        if all(
+            tc.state == TestStateEnum.NOT_APPLICABLE for tc in self.test_collections
+        ):
             return TestStateEnum.NOT_APPLICABLE
 
         return TestStateEnum.PASSED
@@ -113,28 +114,26 @@ class TestRun(TestObservable, UserPromptSupport):
             await self.__current_testing_task
         except CancelledError:
             logger.error("The test run has been cancelled")
-            self.__cancel_remaining_tests()
+            self.__cancel_remaining_collections()
         finally:
             self.__current_testing_task = None
-            self.current_test_suite = None
+            self.current_test_collection = None
             self.mark_as_completed()
 
     async def __run_handle_errors(self) -> None:
-        """Perform the test run, by executing test suites one at a time."""
-        for test_suite in self.test_suites:
-            self.current_test_suite = test_suite
-            await test_suite.run()
+        """Perform the test run, by executing test collections one at a time."""
+        for test_collection in self.test_collections:
+            self.current_test_collection = test_collection
+            await test_collection.run()
 
-            # Check if mandatory suite failed
+            # Check if mandatory collection failed
             if (
                 self.test_run_execution.certification_mode
-                and test_suite.mandatory
-                and any(
-                    tc.state != TestStateEnum.PASSED for tc in test_suite.test_cases
-                )
+                and test_collection.mandatory
+                and test_collection.state != TestStateEnum.PASSED
             ):
                 print("Abort execution")
-                self.__cancel_remaining_tests()
+                self.__cancel_remaining_collections()
                 self.cancel()
                 await self.__display_mandatory_test_failure_prompt()
                 break
@@ -151,8 +150,8 @@ class TestRun(TestObservable, UserPromptSupport):
         await self.send_prompt_request(prompt_request)
 
     def cancel(self) -> None:
-        """This will abort executuion of the current test suite, and mark all remaining
-        tests as cancelled."""
+        """This will abort executuion of the current test collection, and mark all
+        remaining suites and tests as cancelled."""
         if self.__current_testing_task is None:
             logger.error("Cannot cancel test run when no test is running")
             return
@@ -160,11 +159,12 @@ class TestRun(TestObservable, UserPromptSupport):
         self.__current_testing_task.cancel()
         self.__current_testing_task = None
 
-    def __cancel_remaining_tests(self) -> None:
-        """This will cancel all remaining test suites, and it's test cases."""
-        for test_suite in self.test_suites:
-            # Note: cancel on a completed test_suite is a No-op
-            test_suite.cancel()
+    def __cancel_remaining_collections(self) -> None:
+        """This will cancel all remaining test collections, its test suites and its
+        test cases."""
+        for test_collection in self.test_collections:
+            # Note: cancel on a completed test_collection is a No-op
+            test_collection.cancel()
 
     def append_log_entries(self, entries: list[TestRunLogEntry]) -> None:
         self.log.extend(entries)
@@ -172,38 +172,38 @@ class TestRun(TestObservable, UserPromptSupport):
 
     def subscribe(self, observers: List[Observer]) -> None:
         """Subscribe a list of observers to test run changes, and changes on sub-models
-        test suites, test cases, and test steps.
+        test collections, test cases, and test steps.
 
         Args:
             observers (List[Observer]): Observers to be notified of changes
         """
         super().subscribe(observers)
-        self.__subscribe_test_suites(observers)
+        self.__subscribe_test_collections(observers)
 
-    def __subscribe_test_suites(self, observers: List[Observer]) -> None:
+    def __subscribe_test_collections(self, observers: List[Observer]) -> None:
         """Subscribe sub-models to observers
 
         Args:
             observers (List[Observer]): Observers to be notified of changes
         """
-        for test_suite in self.test_suites:
-            test_suite.subscribe(observers)
+        for test_collection in self.test_collections:
+            test_collection.subscribe(observers)
 
     def unsubscribe(self, observers: List[Observer]) -> None:
         """Unsubscribe observers from changes to test run changes, and sub-models
-        test suites, test cases, and test steps.
+        test collections, test cases, and test steps.
 
         Args:
             observers (List[Observer]): Observers to be unsubscribed
         """
         super().unsubscribe(observers)
-        self.__unsubscribe_test_suites(observers)
+        self.__unsubscribe_test_collections(observers)
 
-    def __unsubscribe_test_suites(self, observers: List[Observer]) -> None:
+    def __unsubscribe_test_collections(self, observers: List[Observer]) -> None:
         """Unsubscribe sub-models to observers
 
         Args:
             observers (List[Observer]): Observers to be unsubscribed
         """
-        for test_suite in self.test_suites:
-            test_suite.unsubscribe(observers)
+        for test_collection in self.test_collections:
+            test_collection.unsubscribe(observers)

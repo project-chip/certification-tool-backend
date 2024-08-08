@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2024 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,18 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Optional
+from datetime import datetime
 
 from pydantic import BaseModel
 
 
-class TestRunLogEntry(BaseModel):
+# Shared properties
+class TestCollectionMetadataBase(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
+    name: str
+    path: str
+    version: str
+    source_hash: str
+    mandatory: bool = False
 
-    level: str
-    timestamp: float
-    message: str
-    test_collection_execution_index: Optional[int]
-    test_suite_execution_index: Optional[int]
-    test_case_execution_index: Optional[int]
-    test_step_execution_index: Optional[int]
+    class Config:
+        orm_mode = True
+
+
+# Properties shared by models stored in DB
+class TestCollectionMetadataInDBBase(TestCollectionMetadataBase):
+    id: int
+
+
+# Properties to return to client
+class TestCollectionMetadata(TestCollectionMetadataInDBBase):
+    pass
+
+
+# Additional Properties properties stored in DB
+class TestCollectionMetadataInDB(TestCollectionMetadataInDBBase):
+    created_at: datetime

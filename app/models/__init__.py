@@ -17,6 +17,8 @@ from .operator import Operator
 from .project import Project
 from .test_case_execution import TestCaseExecution
 from .test_case_metadata import TestCaseMetadata
+from .test_collection_execution import TestCollectionExecution
+from .test_collection_metadata import TestCollectionMetadata
 from .test_enums import TestStateEnum
 from .test_run_config import TestRunConfig
 from .test_run_execution import TestRunExecution

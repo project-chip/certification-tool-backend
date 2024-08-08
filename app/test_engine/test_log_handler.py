@@ -24,7 +24,13 @@ import loguru  # this is needed (with __future__ annotations)
 from loguru import logger
 
 from app.schemas.test_run_log_entry import TestRunLogEntry
-from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite
+from app.test_engine.models import (
+    TestCase,
+    TestCollection,
+    TestRun,
+    TestStep,
+    TestSuite,
+)
 
 LOG_PROCESSING_INTERVAL = 0.5
 
@@ -53,8 +59,14 @@ class TestLogHandler:
         self.__process_interval_in_sec = LOG_PROCESSING_INTERVAL
 
     @property
+    def __current_test_collection(self) -> Optional[TestCollection]:
+        return self.__test_run.current_test_collection
+
+    @property
     def __current_test_suite(self) -> Optional[TestSuite]:
-        return self.__test_run.current_test_suite
+        if self.__current_test_collection is None:
+            return None
+        return self.__current_test_collection.current_test_suite
 
     @property
     def __current_test_case(self) -> Optional[TestCase]:
@@ -67,6 +79,12 @@ class TestLogHandler:
         if (test_case := self.__current_test_case) is None:
             return None
         return test_case.current_test_step
+
+    @property
+    def __current_test_collection_index(self) -> Optional[int]:
+        if (test_collection := self.__current_test_collection) is None:
+            return None
+        return test_collection.test_collection_execution.execution_index
 
     @property
     def __current_test_suite_index(self) -> Optional[int]:
@@ -128,6 +146,7 @@ class TestLogHandler:
             level=message.record["level"].name,
             timestamp=message.record["time"].timestamp(),
             message=message.record["message"],
+            test_collection_execution_index=self.__current_test_collection_index,
             test_suite_execution_index=self.__current_test_suite_index,
             test_case_execution_index=self.__current_test_case_index,
             test_step_execution_index=self.__current_test_step_index,

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2024 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import TypedDict
+from app.crud.base import CRUDBaseRead
+from app.models.test_collection_execution import TestCollectionExecution
 
 
-class TestMetadata(TypedDict):
-    public_id: str
-    version: str
-    title: str
-    description: str
+class CRUDTestCollectionExecution(CRUDBaseRead[TestCollectionExecution]):
+    pass
 
 
-class TestCollectionMetadata(TypedDict):
-    name: str
-    path: str
-    version: str
-    mandatory: bool
+test_collection_execution = CRUDTestCollectionExecution(TestCollectionExecution)

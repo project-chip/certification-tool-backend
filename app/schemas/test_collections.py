@@ -19,10 +19,19 @@ from pydantic import BaseModel
 
 
 class TestMetadata(BaseModel):
+    __test__ = False  # Needed to indicate to PyTest that this is not a "test"
     public_id: str
     version: str
     title: str
     description: str
+    mandatory: bool = False
+
+
+class TestCollectionMetadata(BaseModel):
+    __test__ = False  # Needed to indicate to PyTest that this is not a "test"
+    name: str
+    version: str
+    path: str
     mandatory: bool = False
 
 
@@ -39,10 +48,10 @@ class TestSuite(BaseModel):
 
 class TestCollection(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
-    name: str
-    path: str
+    metadata: TestCollectionMetadata
     test_suites: Dict[str, TestSuite]
 
 
 class TestCollections(BaseModel):
+    __test__ = False  # Needed to indicate to PyTest that this is not a "test"
     test_collections: Dict[str, TestCollection]

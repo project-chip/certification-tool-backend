@@ -56,7 +56,9 @@ class TestSuite(TestObservable):
         Returns:
             Project: project in which test suite is being executed
         """
-        return self.test_suite_execution.test_run_execution.project
+        return (
+            self.test_suite_execution.test_collection_execution.test_run_execution.project  # noqa: E501
+        )
 
     @property
     def config(self) -> TestEnvironmentConfig:

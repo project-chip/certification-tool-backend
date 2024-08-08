@@ -24,7 +24,13 @@ from app.crud import operator as crud_operator
 from app.crud import project as crud_project
 from app.crud import test_run_config as crud_test_run_config
 from app.crud.base import CRUDBaseCreate, CRUDBaseDelete, CRUDBaseRead
-from app.models import Project, TestCaseExecution, TestRunExecution, TestSuiteExecution
+from app.models import (
+    Project,
+    TestCaseExecution,
+    TestCollectionExecution,
+    TestRunExecution,
+    TestSuiteExecution,
+)
 from app.schemas import (
     TestRunConfigCreate,
     TestRunExecutionToExport,
@@ -125,6 +131,7 @@ class CRUDTestRunExecution(
                 select(func.count())
                 .select_from(TestCaseExecution)
                 .join(TestSuiteExecution)
+                .join(TestCollectionExecution)
                 .join(TestRunExecution)
                 .filter(TestRunExecution.id == test_run_execution.id)
             )
@@ -137,6 +144,7 @@ class CRUDTestRunExecution(
         state_counts = db.execute(
             select(func.count(TestCaseExecution.state), TestCaseExecution.state)
             .join(TestSuiteExecution)
+            .join(TestCollectionExecution)
             .join(TestRunExecution)
             .filter(TestRunExecution.id == test_run_execution.id)
             .group_by(TestCaseExecution.state)
@@ -165,21 +173,21 @@ class CRUDTestRunExecution(
         return result
 
     def __sort_selected_tests(
-        self, selected_tests: List[TestSuiteExecution]
-    ) -> List[TestSuiteExecution]:
+        self, selected_tests: List[TestCollectionExecution]
+    ) -> List[TestCollectionExecution]:
         """Sorts the selected tests, make the mandatories test cases the first to be
         returned."""
         sorted_selected_tests = []
 
         # First add the mandatories test cases
-        for suite in selected_tests:
-            if suite.mandatory:
-                sorted_selected_tests.append(suite)
+        for collection in selected_tests:
+            if collection.mandatory:
+                sorted_selected_tests.append(collection)
 
         # Add the remaining test cases
-        for suite in selected_tests:
-            if not suite.mandatory:
-                sorted_selected_tests.append(suite)
+        for collection in selected_tests:
+            if not collection.mandatory:
+                sorted_selected_tests.append(collection)
 
         return sorted_selected_tests
 
@@ -209,15 +217,15 @@ class CRUDTestRunExecution(
                 test_run_execution.test_run_config
             ).selected_tests
 
-        test_suites = (
-            test_script_manager.pending_test_suite_executions_for_selected_tests(
+        test_collections = (
+            test_script_manager.pending_test_collection_executions_for_selected_tests(
                 selected_tests
             )
         )
 
-        # Sorting test_suite according to mandatories suites
-        test_suites_sorted = self.__sort_selected_tests(test_suites)
-        test_run_execution.test_suite_executions.extend(test_suites_sorted)
+        # Sorting test_collections according to mandatory collections
+        test_collections_sorted = self.__sort_selected_tests(test_collections)
+        test_run_execution.test_suite_executions.extend(test_collections_sorted)
 
         db.commit()
         db.refresh(test_run_execution)

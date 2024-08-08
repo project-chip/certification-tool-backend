@@ -27,6 +27,11 @@ from .pics import PICS, PICSApplicableTestCases, PICSCluster, PICSItem
 from .project import Project, ProjectCreate, ProjectInDB, ProjectUpdate
 from .test_case_execution import TestCaseExecution, TestCaseExecutionToExport
 from .test_case_metadata import TestCaseMetadata, TestCaseMetadataBase
+from .test_collection_execution import (
+    TestCollectionExecution,
+    TestCollectionExecutionToExport,
+)
+from .test_collection_metadata import TestCollectionMetadata, TestCollectionMetadataBase
 from .test_collections import TestCollections
 from .test_environment_config import TestEnvironmentConfig
 from .test_harness_backend_version import TestHarnessBackendVersion

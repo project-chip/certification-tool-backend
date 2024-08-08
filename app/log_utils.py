@@ -66,14 +66,20 @@ def group_test_run_execution_logs(
 ) -> schemas.GroupedTestRunExecutionLogs:
     grouped_logs = schemas.GroupedTestRunExecutionLogs()
 
-    # Log entries have indexes for test suite, test case and test step executions. E.g.:
+    # Log entries have indexes for test collection, test suite, test case and test step
+    # executions. E.g.:
+    #   test_collection_execution_index: 2,
     #   test_suite_execution_index: 0,
     #   test_case_execution_index: 1,
     #   test_step_execution_index: 4,
     # - For general TH logs, all 3 indexes are None;
+    # - For test collection specific logs (not related to any test suite or test case),
+    #   the indexes for test suite, test case and test step are None and the
+    #   test_collection_execution_index is not None;
     # - For test suite specific logs (not related to any test case), the indexes for
-    # test case and test step are None and the test_suite_execution_index is not None;
-    # - For test case logs, the indexes for test suite and test case are not None.
+    #   test case and test step are None and the test_suite_execution_index is not None;
+    # - For test case logs, the indexes for test collection, test suite and test case
+    #   are not None.
     for entry in test_run_execution.log:
         if test_case := __test_case_execution_for_log_entry(
             test_run_execution=test_run_execution, log_entry=entry
@@ -92,6 +98,13 @@ def group_test_run_execution_logs(
                 grouped_logs.suites[test_suite.public_id] = []
 
             grouped_logs.suites[test_suite.public_id].append(entry)
+        elif test_collection := __test_collection_execution_for_log_entry(
+            test_run_execution=test_run_execution, log_entry=entry
+        ):
+            if grouped_logs.collections.get(test_collection.name) is None:
+                grouped_logs.collections[test_collection.name] = []
+
+            grouped_logs.collections[test_collection.name].append(entry)
         else:
             grouped_logs.general.append(entry)
 
@@ -117,26 +130,43 @@ def create_grouped_log_zip_file(
     return file
 
 
+def __test_collection_execution_for_log_entry(
+    test_run_execution: models.TestRunExecution, log_entry: schemas.TestRunLogEntry
+) -> Optional[models.TestCollectionExecution]:
+    if (test_collection_index := log_entry.test_collection_execution_index) is None:
+        return None
+
+    return test_run_execution.test_collection_executions[test_collection_index]
+
+
 def __test_suite_execution_for_log_entry(
     test_run_execution: models.TestRunExecution, log_entry: schemas.TestRunLogEntry
 ) -> Optional[models.TestSuiteExecution]:
-    if (test_suite_index := log_entry.test_suite_execution_index) is None:
+    if (test_collection_index := log_entry.test_collection_execution_index) is None or (
+        test_suite_index := log_entry.test_suite_execution_index
+    ) is None:
         return None
 
-    return test_run_execution.test_suite_executions[test_suite_index]
+    return test_run_execution.test_collection_executions[
+        test_collection_index
+    ].test_suite_executions[test_suite_index]
 
 
 def __test_case_execution_for_log_entry(
     test_run_execution: models.TestRunExecution, log_entry: schemas.TestRunLogEntry
 ) -> Optional[models.TestCaseExecution]:
-    if (test_suite_index := log_entry.test_suite_execution_index) is None or (
-        test_case_index := log_entry.test_case_execution_index
-    ) is None:
+    if (
+        (test_collection_index := log_entry.test_collection_execution_index) is None
+        or (test_suite_index := log_entry.test_suite_execution_index) is None
+        or (test_case_index := log_entry.test_case_execution_index) is None
+    ):
         return None
 
-    return test_run_execution.test_suite_executions[
-        test_suite_index
-    ].test_case_executions[test_case_index]
+    return (
+        test_run_execution.test_collection_executions[test_collection_index]
+        .test_suite_executions[test_suite_index]
+        .test_case_executions[test_case_index]
+    )
 
 
 def __create_summary_file(

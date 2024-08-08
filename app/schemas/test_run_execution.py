@@ -21,9 +21,12 @@ from pydantic import BaseModel
 from app.models.test_enums import TestStateEnum
 
 from .operator import Operator, OperatorToExport
+from .test_collection_execution import (
+    TestCollectionExecution,
+    TestCollectionExecutionToExport,
+)
 from .test_run_config import TestRunConfigToExport
 from .test_run_log_entry import TestRunLogEntry
-from .test_suite_execution import TestSuiteExecution, TestSuiteExecutionToExport
 
 
 # Special schema for representing stats for a Test Run
@@ -79,7 +82,7 @@ class TestRunExecutionWithStats(TestRunExecution):
 
 # Properties to return to client
 class TestRunExecutionWithChildren(TestRunExecution):
-    test_suite_executions: Optional[List[TestSuiteExecution]]
+    test_collection_executions: Optional[List[TestCollectionExecution]]
 
 
 # Additional Properties properties stored in DB
@@ -95,7 +98,7 @@ class TestRunExecutionExportImportBase(TestRunExecutionBase):
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
     archived_at: Optional[datetime]
-    test_suite_executions: Optional[List[TestSuiteExecutionToExport]]
+    test_collection_executions: Optional[List[TestCollectionExecutionToExport]]
     created_at: datetime
     log: list[TestRunLogEntry]
 

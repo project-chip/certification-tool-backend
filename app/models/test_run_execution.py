@@ -25,8 +25,8 @@ from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship, with_p
 from app.db.base_class import Base
 from app.db.pydantic_data_type import PydanticListType
 
+from .test_collection_execution import TestCollectionExecution
 from .test_enums import TestStateEnum
-from .test_suite_execution import TestSuiteExecution
 
 if TYPE_CHECKING:
     from .operator import Operator  # noqa: F401
@@ -68,11 +68,11 @@ class TestRunExecution(Base):
         )
     )
 
-    test_suite_executions: Mapped[list["TestSuiteExecution"]] = relationship(
-        TestSuiteExecution,
+    test_collection_executions: Mapped[list["TestCollectionExecution"]] = relationship(
+        TestCollectionExecution,
         back_populates="test_run_execution",
         uselist=True,
-        order_by="TestSuiteExecution.execution_index",
+        order_by="TestCollectionExecution.execution_index",
         collection_class=ordering_list("execution_index"),
         cascade="all, delete-orphan",
     )
@@ -90,23 +90,23 @@ class TestRunExecution(Base):
     def append_to_log(self, log_record: "TestRunLogEntry") -> None:
         self.log.append(log_record)
 
-    def test_suite_execution_by_public_id(
-        self, public_id: str
-    ) -> Optional[TestSuiteExecution]:
+    def test_collection_execution_by_name(
+        self, name: str
+    ) -> Optional[TestCollectionExecution]:
         return self.obj_session().scalar(
-            select(TestSuiteExecution)
-            .where(with_parent(self, TestSuiteExecution.test_run_execution))
-            .filter_by(public_id=public_id)
+            select(TestCollectionExecution)
+            .where(with_parent(self, TestCollectionExecution.test_run_execution))
+            .filter_by(name=name)
             .limit(1)
         )
 
     @hybrid_property
-    def test_suite_execution_count(self) -> int:
+    def test_collection_execution_count(self) -> int:
         return (
             self.obj_session().scalar(
                 select(func.count())
-                .select_from(TestSuiteExecution)
-                .filter(TestSuiteExecution.test_run_execution == self)
+                .select_from(TestCollectionExecution)
+                .filter(TestCollectionExecution.test_run_execution == self)
             )
             or 0
         )

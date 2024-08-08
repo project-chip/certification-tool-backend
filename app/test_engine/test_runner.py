@@ -129,15 +129,24 @@ class TestRunner(object, metaclass=Singleton):
     def handle_uploaded_file(self, file: UploadFile) -> None:
         if self.test_run is None:
             raise AttributeError(TEST_ENGINE_NOT_ACTIVE_MESSAGE)
-        if self.test_run.current_test_suite is None:
+        if self.test_run.current_test_collection is None:
+            raise AttributeError(
+                "There is no active test collection to handle the uploaded file."
+            )
+        if self.test_run.current_test_collection.current_test_suite is None:
             raise AttributeError(
                 "There is no active test suite to handle the uploaded file."
             )
-        if self.test_run.current_test_suite.current_test_case is None:
+        if (
+            self.test_run.current_test_collection.current_test_suite.current_test_case
+            is None
+        ):
             raise AttributeError(
                 "There is no active test case to handle the uploaded file."
             )
-        current_test_case = self.test_run.current_test_suite.current_test_case
+        current_test_case = (
+            self.test_run.current_test_collection.current_test_suite.current_test_case
+        )
         if isinstance(current_test_case, UploadedFileSupport):
             current_test_case.handle_uploaded_file(file=file)
         else:

@@ -23,6 +23,8 @@ from app.schemas.test_run_log_entry import TestRunLogEntry
 
 class GroupedTestRunExecutionLogs(BaseModel):
     general: List[TestRunLogEntry] = []
+    # test collections logs are indexed by the collections's name
+    collections: Dict[str, List[TestRunLogEntry]] = {}
     # test suite logs are indexed by the suite's public_id
     suites: Dict[str, List[TestRunLogEntry]] = {}
     # test case logs are grouped by state and then indexed by the test case's pubic_id
