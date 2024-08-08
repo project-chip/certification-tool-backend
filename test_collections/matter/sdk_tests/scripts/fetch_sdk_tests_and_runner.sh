@@ -30,7 +30,6 @@ TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
 
 SDK_YAML_PATH="src/app/tests/suites/certification"
 SDK_PYTHON_SCRIPT_PATH="src/python_testing"
-SDK_PYTHON_DATA_MODEL_PATH="data_model"
 SDK_SCRIPTS_PATH="scripts/"
 SDK_EXAMPLE_CHIP_TOOL_PATH="examples/chip-tool"
 SDK_EXAMPLE_PLACEHOLDER_PATH="examples/placeholder"
@@ -101,7 +100,7 @@ then
     git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $TMP_SDK_FOLDER
     cd $TMP_SDK_FOLDER
     git sparse-checkout init
-    git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_EXAMPLE_PLACEHOLDER_PATH $SDK_EXAMPLE_CHIP_TOOL_PATH $SDK_DATA_MODEL_PATH $SDK_PYTHON_SCRIPT_PATH $SDK_PYTHON_DATA_MODEL_PATH
+    git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_EXAMPLE_PLACEHOLDER_PATH $SDK_EXAMPLE_CHIP_TOOL_PATH $SDK_DATA_MODEL_PATH $SDK_PYTHON_SCRIPT_PATH
     git checkout -q $SDK_SHA
     SDK_PATH="$TMP_SDK_PATH"
 fi
@@ -130,11 +129,6 @@ cp * "$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH/"
 # Copy SDK Python Testing folder
 cd "$SDK_PATH/$SDK_PYTHON_SCRIPT_PATH"
 cp -R * "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH/"
-
-# Copy XML data models for SDK Python Testing
-cd "$SDK_PATH/$SDK_PYTHON_DATA_MODEL_PATH"
-mkdir -p "$PYTHON_TESTING_TEST_COLLECTION_PATH/data_model"
-cp -R * "$PYTHON_TESTING_TEST_COLLECTION_PATH/data_model"
 
 ###
 # Extract sdk runner and dependencies
