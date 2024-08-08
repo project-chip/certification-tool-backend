@@ -29,6 +29,7 @@ class DutPairingModeEnum(str, Enum):
     ON_NETWORK = "onnetwork"
     BLE_WIFI = "ble-wifi"
     BLE_THREAD = "ble-thread"
+    WIFIPAF_WIFI = "wifipaf-wifi"
 
 
 class WiFiConfig(BaseModel):

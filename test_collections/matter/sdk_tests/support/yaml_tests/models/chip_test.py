@@ -105,7 +105,9 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
     def stop(self, duration: int) -> None:
         pass
 
-    def test_start(self, filename: str, name: str, count: int) -> None:
+    def test_start(
+        self, filename: str, name: str, count: int, steps: list[str] = []
+    ) -> None:
         # This is necessary in order to synchronize model and runner steps
         # since there is step execute outside runner context
         self.next_step()

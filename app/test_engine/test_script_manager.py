@@ -145,6 +145,7 @@ class TestScriptManager(object, metaclass=Singleton):
             public_id=metadata.public_id,
             test_suite_metadata=metadata,
             collection_id=test_collection.name,
+            mandatory=test_suite.mandatory,
         )
         return test_suite_execution
 

@@ -13,16 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from enum import Enum
+from app.test_engine.logger import test_engine_logger as logger
+from app.test_engine.models import TestSuite
 
 
-class TestStateEnum(str, Enum):
-    __test__ = False  # Needed to indicate to PyTest that this is not a "test"
-    PENDING = "pending"
-    EXECUTING = "executing"
-    PENDING_ACTUATION = "pending_actuation"  # TODO: Do we need this
-    PASSED = "passed"  # Test Passed with no issued
-    FAILED = "failed"  # Test Failed
-    ERROR = "error"  # Test Error due to tool setup or environment
-    NOT_APPLICABLE = "not_applicable"  # Test is not applicable - e.g. PICS mismatch
-    CANCELLED = "cancelled"
+class TestSuiteExpected2(TestSuite):
+    metadata = {
+        "public_id": "TestSuiteExpected2",
+        "version": "1.2.3",
+        "title": "This is Test Runner Test Suite",
+        "description": "This is Test Runner Test Suite",
+    }
+
+    async def setup(self) -> None:
+        logger.info("This is a test setup")
+
+    async def cleanup(self) -> None:
+        logger.info("This is a test cleanup")

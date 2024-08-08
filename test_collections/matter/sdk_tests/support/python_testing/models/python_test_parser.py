@@ -32,6 +32,13 @@ TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
 
 FunctionDefType = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
+mandatory_python_tcs_public_id = [
+    "TC_IDM_10_2",
+    "TC_IDM_10_3",
+    "TC_IDM_10_4",
+    "TC_IDM_12_1",
+]
+
 
 def parse_python_script(path: Path) -> list[PythonTest]:
     """Parse a python file into a list of PythonTest models.
@@ -148,27 +155,42 @@ def __parse_test_case(
 
     desc_method = __get_method_by_name(desc_method_name, methods)
     if desc_method:
-        tc_desc = __retrieve_description(desc_method)
+        try:
+            tc_desc = __retrieve_description(desc_method)
+        except Exception as e:
+            logger.error(
+                f"Error while parsing description for {tc_name}, Error:{str(e)}"
+            )
 
     # If the python test does not implement the steps template method,
     # the test case will be presented in UI and the whole test case will be
     # executed as one step
     steps_method = __get_method_by_name(steps_method_name, methods)
     if steps_method:
-        tc_steps = __retrieve_steps(steps_method)
+        try:
+            tc_steps = __retrieve_steps(steps_method)
+        except Exception as e:
+            logger.error(f"Error while parsing steps for {tc_name}, Error:{str(e)}")
 
     pics_method = __get_method_by_name(pics_method_name, methods)
     if pics_method:
-        tc_pics = __retrieve_pics(pics_method)
+        try:
+            tc_pics = __retrieve_pics(pics_method)
+        except Exception as e:
+            logger.error(f"Error while parsing PICS for {tc_name}, Error:{str(e)}")
 
     # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
     # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
     #   but don't have a commissioning first step
     # - PythonTestType.LEGACY: test cases that don't follow the expected template
+    # - PythonTestType.MANDATORY: Mandatory test cases
     # We use the desc_[test_name] method as an indicator that the test case follows the
     # expected template
     python_test_type = PythonTestType.LEGACY
-    if len(tc_steps) > 0 and tc_steps[0].is_commissioning:
+
+    if tc_name in mandatory_python_tcs_public_id:
+        python_test_type = PythonTestType.MANDATORY
+    elif len(tc_steps) > 0 and tc_steps[0].is_commissioning:
         python_test_type = PythonTestType.COMMISSIONING
     elif desc_method:
         python_test_type = PythonTestType.NO_COMMISSIONING

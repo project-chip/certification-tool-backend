@@ -207,6 +207,7 @@ def test_create_test_run_execution_with_test_run_config_and_selected_tests_succe
             "title": title,
             "description": description,
             "test_run_config_id": None,
+            "certification_mode": False,
         },
     )
 
@@ -253,7 +254,117 @@ def test_create_test_run_execution_with_selected_tests_with_two_suites_succeeds(
         response=response,
         expected_status_code=HTTPStatus.OK,
         expected_keys=["id", "test_suite_executions"],
-        expected_content={"title": title, "description": description},
+        expected_content={
+            "title": title,
+            "description": description,
+            "certification_mode": False,
+        },
+    )
+
+    content = response.json()
+    suites = content.get("test_suite_executions")
+    returned_suites = [s["public_id"] for s in suites]
+    selected_tests = json_data["selected_tests"]["sample_tests"].keys()
+    for selected_suite in selected_tests:
+        assert selected_suite in returned_suites
+
+
+def test_create_test_run_execution_cer_with_test_run_config_and_selected_tests_succeeds(
+    client: TestClient, db: Session
+) -> None:
+    """This test will create a new test run execution. A success is expected.
+    The selected tests are passed directly by JSON payload.
+    Also, one reference to a test run config is also included, but this is ignored by
+    the API by assigning None.
+    """
+
+    test_run_config = create_random_test_run_config(db)
+    title = "TestRunExecutionFoo"
+    description = random_lower_string()
+    json_data = {
+        "test_run_execution_in": {
+            "title": title,
+            "description": description,
+            "test_run_config_id": test_run_config.id,
+        },
+        "selected_tests": {
+            "sample_tests": {
+                "SampleTestSuite1": {
+                    "TCSS1001": 1,
+                    "TCSS1002": 2,
+                    "TCSS1003": 4,
+                    "TCSS1004": 8,
+                    "TCSS1005": 16,
+                },
+            },
+        },
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/?certification_mode=True",
+        json=json_data,
+    )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content={
+            "title": title,
+            "description": description,
+            "test_run_config_id": None,
+            "certification_mode": True,
+        },
+    )
+
+
+def test_create_test_run_execution_cert_with_selected_tests_with_3_suites_succeeds(
+    client: TestClient,
+) -> None:
+    """This test will create a new test run execution with two suites selected.
+    A success is expected.
+    The selected tests are passed directly by JSON payload.
+    """
+
+    title = "TestRunExecutionFoo"
+    description = random_lower_string()
+    json_data = {
+        "test_run_execution_in": {
+            "title": title,
+            "description": description,
+        },
+        "selected_tests": {
+            "sample_tests": {
+                "SampleTestSuite1": {
+                    "TCSS1001": 1,
+                    "TCSS1002": 2,
+                    "TCSS1003": 4,
+                    "TCSS1004": 8,
+                    "TCSS1005": 16,
+                },
+                "SampleTestSuite2": {
+                    "TCSS2001": 1,
+                    "TCSS2002": 2,
+                    "TCSS2003": 4,
+                    "TCSS2004": 8,
+                    "TCSS2005": 16,
+                },
+                "SampleTestSuite3Mandatory": {
+                    "TCSS3001": 1,
+                },
+            },
+        },
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/?certification_mode=True",
+        json=json_data,
+    )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_keys=["id", "test_suite_executions"],
+        expected_content={
+            "title": title,
+            "description": description,
+            "certification_mode": True,
+        },
     )
 
     content = response.json()
@@ -319,7 +430,10 @@ def test_repeat_existing_test_run_execution_with_two_suites_succeeds(
         response=response,
         expected_status_code=HTTPStatus.OK,
         expected_keys=["id", "title", "description", "test_suite_executions"],
-        expected_content={"description": test_run_execution.description},
+        expected_content={
+            "description": test_run_execution.description,
+            "certification_mode": False,
+        },
     )
 
     content = response.json()
@@ -355,6 +469,80 @@ def test_repeat_existing_test_run_execution_with_title_succeeds(
         response=response,
         expected_status_code=HTTPStatus.OK,
         expected_keys=["id", "title", "description", "test_suite_executions"],
+        expected_content={"certification_mode": False},
+    )
+    content = response.json()
+    assert title == remove_title_date(content.get("title"))
+
+
+def test_repeat_existing_test_run_execution_certification_mode_with_two_suites_succeeds(
+    client: TestClient, db: Session
+) -> None:
+    """This test will repeat all the tests from a previous created test run execution.
+    A success is expected.
+    We use a sample collection, suites and test cases to create the test run execution
+    that will be repeated. The title and description are provided by the JSON payload.
+    """
+
+    selected_tests = {
+        "sample_tests": {
+            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3},
+            "SampleTestSuite2": {"TCSS2004": 4, "TCSS2005": 5, "TCSS2006": 6},
+        }
+    }
+    test_run_execution = create_random_test_run_execution(
+        db=db, selected_tests=selected_tests, certification_mode=True
+    )
+
+    base_title = remove_title_date(test_run_execution.title)
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/repeat",
+    )
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_keys=["id", "title", "description", "test_suite_executions"],
+        expected_content={
+            "description": test_run_execution.description,
+            "certification_mode": True,
+        },
+    )
+
+    content = response.json()
+    assert test_run_execution.id != content.get("id")
+    assert base_title == remove_title_date(content.get("title"))
+
+    suites = content.get("test_suite_executions")
+    returned_suites = [s["public_id"] for s in suites]
+    for selected_suite in selected_tests["sample_tests"].keys():
+        assert selected_suite in returned_suites
+
+
+def test_repeat_existing_test_run_execution_certification_mode_with_title_succeeds(
+    client: TestClient, db: Session
+) -> None:
+    """This test will repeat all the tests from a previous created test run execution,
+    with a custom title instead of the old name.
+    A success is expected.
+    """
+    title = "TestRunExecutionFoo"
+    selected_tests = {
+        "sample_tests": {
+            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3}
+        }
+    }
+    test_run_execution = create_random_test_run_execution(
+        db=db, selected_tests=selected_tests, certification_mode=True
+    )
+    url = f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/repeat"
+    response = client.post(url + f"?title={title}")
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_keys=["id", "title", "description", "test_suite_executions"],
+        expected_content={"certification_mode": True},
     )
     content = response.json()
     assert title == remove_title_date(content.get("title"))
@@ -867,7 +1055,7 @@ def test_archive_project(client: TestClient, db: Session) -> None:
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
-        expected_content={"id": test_run_execution.id},
+        expected_content={"id": test_run_execution.id, "certification_mode": False},
         expected_keys=["archived_at"],
     )
 
@@ -883,6 +1071,38 @@ def test_unarchive_test_run_execution(client: TestClient, db: Session) -> None:
         expected_content={
             "id": test_run_execution.id,
             "archived_at": None,
+            "certification_mode": False,
+        },
+    )
+
+
+def test_archive_project_certification_mode(client: TestClient, db: Session) -> None:
+    test_run_execution = create_random_test_run_execution(db, certification_mode=True)
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/archive"
+    )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content={"id": test_run_execution.id, "certification_mode": True},
+        expected_keys=["archived_at"],
+    )
+
+
+def test_unarchive_test_run_execution_certification_mode(
+    client: TestClient, db: Session
+) -> None:
+    test_run_execution = create_random_test_run_execution(db, certification_mode=True)
+    response = client.post(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/unarchive"
+    )
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content={
+            "id": test_run_execution.id,
+            "archived_at": None,
+            "certification_mode": True,
         },
     )
 

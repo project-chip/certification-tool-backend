@@ -32,6 +32,7 @@ from test_collections.matter.test_environment_config import (
 
 from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
+from ...utils import prompt_for_commissioning_mode
 from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
 from ...yaml_tests.models.chip_test import PromptOption
 
@@ -85,6 +86,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         self.__dut_commissioned_successfully = False
         if self.server_type == ChipServerType.CHIP_TOOL:
             logger.info("Commission DUT")
+            await prompt_for_commissioning_mode(self, logger, None, self.cancel)
             await self.__commission_dut_allowing_retries()
         elif self.server_type == ChipServerType.CHIP_APP:
             logger.info("Verify Test suite prerequisites")
@@ -113,6 +115,11 @@ class ChipSuite(TestSuite, UserPromptSupport):
             self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
         ):
             pair_result = await self.__pair_with_dut_ble_thread()
+        elif (
+            self.config_matter.dut_config.pairing_mode
+            is DutPairingModeEnum.WIFIPAF_WIFI
+        ):
+            pair_result = await self.__pair_with_dut_wifipaf_wifi()
         else:
             raise DUTCommissioningError("Unsupported DUT pairing mode")
 
@@ -130,6 +137,17 @@ class ChipSuite(TestSuite, UserPromptSupport):
             raise DUTCommissioningError("Tool config is missing wifi config.")
 
         return await self.runner.pairing_ble_wifi(
+            ssid=self.config_matter.network.wifi.ssid,
+            password=self.config_matter.network.wifi.password,
+            setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,
+        )
+
+    async def __pair_with_dut_wifipaf_wifi(self) -> bool:
+        if self.config_matter.network.wifi is None:
+            raise DUTCommissioningError("Tool config is missing wifi config.")
+
+        return await self.runner.pairing_wifipaf_wifi(
             ssid=self.config_matter.network.wifi.ssid,
             password=self.config_matter.network.wifi.password,
             setup_code=self.config_matter.dut_config.setup_code,
