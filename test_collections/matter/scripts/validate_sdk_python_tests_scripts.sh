@@ -15,15 +15,7 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-# Usage: ./test_collections/matter/scripts/validate_sdk_python_tests_scripts.sh
-# set -x
-# set -e
-
-# Paths
-SDK_PYTHON_SCRIPT_PATH="src/python_testing"
 MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/..)
-VALIDATION_SCRIPT="$MATTER_PROGRAM_DIR/sdk_tests/support/python_testing_parser/validate_python_test_scripts.py"
-CHECKOUT_PATH_TEMPLATE="/tmp/SDKPythonTestValidation"
 
 if [ $# == 1 ]; then
     SDK_SHA=$1
@@ -39,43 +31,36 @@ fi
 
 printf "Using SDK SHA: $SDK_SHA\n"
 
-create_temp_dir()
+create_checkout_dir()
 {
-    temp_dir="$CHECKOUT_PATH_TEMPLATE-$SDK_SHA"
-    # if [ -d "$temp_dir" ]; then
-    #     rm -rf $temp_dir
-    # fi
+    temp_dir="/tmp/SDKPythonTestValidation-$SDK_SHA"
+    if [ -d "$temp_dir" ]; then
+        rm -rf $temp_dir
+    fi
     
-    # mkdir "$temp_dir"
+    mkdir "$temp_dir"
     echo "$temp_dir"
 }
 
-CHECKOUT_PATH=$(create_temp_dir)
-PYTHON_SCRIPT_PATH="$CHECKOUT_PATH/$SDK_PYTHON_SCRIPT_PATH"
+CHECKOUT_DIR=$(create_checkout_dir)
+SDK_PYTHON_SCRIPT_PATH="src/python_testing"
+PYTHON_SCRIPT_PATH="$CHECKOUT_DIR/$SDK_PYTHON_SCRIPT_PATH"
+VALIDATION_SCRIPT="$MATTER_PROGRAM_DIR/sdk_tests/support/python_testing_parser/validate_python_test_scripts.py"
+LOG_FILE="Log-$SDK_SHA.txt"
 
 # Checkout SDK sparsely 
-cd $CHECKOUT_PATH
-git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $CHECKOUT_PATH
+cd $CHECKOUT_DIR
+git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $CHECKOUT_DIR
 git sparse-checkout init
 git sparse-checkout set $SDK_PYTHON_SCRIPT_PATH
 git checkout -q $SDK_SHA
 
-
-# def parse_python_script(path: Path) -> list[PythonTest]:
-cd "$MATTER_PROGRAM_DIR/sdk_tests/support/python_testing_parser"
-
 python_scripts=()
-for dir in $PYTHON_SCRIPT_PATH/*.py
+for script in $PYTHON_SCRIPT_PATH/*.py
 do
-    echo "Adding: $dir"
-    python_scripts+=("$dir")
+    python_scripts+=("$script")
 done
 
-DRY_RUN=1 python $VALIDATION_SCRIPT "${python_scripts[@]}"
+DRY_RUN=1 python $VALIDATION_SCRIPT "$LOG_FILE" "${python_scripts[@]}"
 
-# exit 0
-
-
-# # Copy SDK Python Testing folder
-# cd "$SDK_PATH/$SDK_PYTHON_SCRIPT_PATH"
-# cp -R * "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH/"
+printf "Please check the log file: $CHECKOUT_DIR/$LOG_FILE\n"
