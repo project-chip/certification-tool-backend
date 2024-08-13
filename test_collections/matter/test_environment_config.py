@@ -65,6 +65,17 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
         valid_properties = list(DutConfig.__annotations__.keys())
 
         if dict_model:
+            # If both qr-code and manual-code are provided the test run execution
+            # will fail
+            if (
+                dict_model.get("test_parameters")
+                and "qr-code" in dict_model.get("test_parameters")
+                and "manual-code" in dict_model.get("test_parameters")
+            ):
+                raise TestEnvironmentConfigMatterError(
+                    "Please inform just one of either: qr-code or manual-code"
+                )
+
             dut_config = dict_model.get("dut_config")
             network = dict_model.get("network")
 
