@@ -2,10 +2,12 @@ import sys
 from pathlib import Path
 
 from app.test_engine.logger import test_engine_logger as logger
+# flake8: noqa: E501
 from test_collections.matter.sdk_tests.support.python_testing.models.python_test_models import (
     PythonTest,
     PythonTestType,
 )
+# flake8: noqa: E501
 from test_collections.matter.sdk_tests.support.python_testing.models.python_test_parser import (
     parse_python_script,
 )
