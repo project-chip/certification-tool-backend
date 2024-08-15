@@ -331,7 +331,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # have already been moved to the correct step by the hooks' step methods.
             if self.python_test.python_test_type == PythonTestType.LEGACY:
                 self.next_step()
-    
+
             if self.current_test_step_index < len(self.test_steps) - 1:
                 self.skip_to_last_step()
 
