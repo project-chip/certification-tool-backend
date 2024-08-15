@@ -13,23 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Optional
+import os
 
-from app.test_engine.models.test_declarations import TestCollectionDeclaration
+# Verify if this execution comes from python_tests_validator.
+if not os.getenv("DRY_RUN"):
+    from typing import Optional
 
-from .sdk_python_tests import (
-    custom_python_test_collection,
-    sdk_mandatory_python_test_collection,
-    sdk_python_test_collection,
-)
+    from app.test_engine.models.test_declarations import TestCollectionDeclaration
 
-# Test engine will auto load TestCollectionDeclarations declared inside the package
-# initializer
-sdk_python_collection: TestCollectionDeclaration = sdk_python_test_collection()
-sdk_mandatory_python_collection: TestCollectionDeclaration = (
-    sdk_mandatory_python_test_collection()
-)
+    from .sdk_python_tests import (
+        custom_python_test_collection,
+        sdk_mandatory_python_test_collection,
+        sdk_python_test_collection,
+    )
 
-custom_python_collection: Optional[
-    TestCollectionDeclaration
-] = custom_python_test_collection()
+    # Test engine will auto load TestCollectionDeclarations declared inside the package
+    # initializer
+    sdk_python_collection: TestCollectionDeclaration = sdk_python_test_collection()
+    sdk_mandatory_python_collection: TestCollectionDeclaration = (
+        sdk_mandatory_python_test_collection()
+    )
+
+    custom_python_collection: Optional[
+        TestCollectionDeclaration
+    ] = custom_python_test_collection()
