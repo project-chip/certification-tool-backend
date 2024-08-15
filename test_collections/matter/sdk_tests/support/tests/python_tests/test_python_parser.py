@@ -18,10 +18,7 @@
 from pathlib import Path
 from unittest import mock
 
-from test_collections.matter.sdk_tests.support.python_testing.models.python_test_models import (
-    PythonTestType,
-)
-
+from ...python_testing.models.python_test_models import PythonTestType
 from ...python_testing.models.python_test_parser import parse_python_script
 
 sample_single_test_python_file_content = """
