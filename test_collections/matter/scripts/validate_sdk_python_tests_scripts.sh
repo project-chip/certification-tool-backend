@@ -45,7 +45,7 @@ create_checkout_dir()
 CHECKOUT_DIR=$(create_checkout_dir)
 SDK_PYTHON_SCRIPT_PATH="src/python_testing"
 PYTHON_SCRIPT_PATH="$CHECKOUT_DIR/$SDK_PYTHON_SCRIPT_PATH"
-VALIDATION_SCRIPT="$MATTER_PROGRAM_DIR/sdk_tests/support/python_testing_parser/validate_python_test_scripts.py"
+VALIDATION_SCRIPT="$MATTER_PROGRAM_DIR/sdk_tests/support/python_testing/validate_python_test_scripts.py"
 LOG_FILE="Log-$SDK_SHA.txt"
 
 # Checkout SDK sparsely 
@@ -64,3 +64,4 @@ done
 DRY_RUN=1 python $VALIDATION_SCRIPT "$LOG_FILE" "${python_scripts[@]}"
 
 printf "Please check the log file: $CHECKOUT_DIR/$LOG_FILE\n"
+
