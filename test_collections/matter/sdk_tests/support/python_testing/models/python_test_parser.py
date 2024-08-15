@@ -185,7 +185,6 @@ def __parse_test_case(
     # We use the desc_[test_name] method as an indicator that the test case follows the
     # expected template
     python_test_type = PythonTestType.LEGACY
-    
     if tc_name in mandatory_python_tcs_public_id:
         python_test_type = PythonTestType.MANDATORY
     elif tc_is_commissioning:
