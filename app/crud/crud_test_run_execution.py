@@ -164,6 +164,25 @@ class CRUDTestRunExecution(
 
         return result
 
+    def __sort_selected_tests(
+        self, selected_tests: List[TestSuiteExecution]
+    ) -> List[TestSuiteExecution]:
+        """Sorts the selected tests, make the mandatories test cases the first to be
+        returned."""
+        sorted_selected_tests = []
+
+        # First add the mandatories test cases
+        for suite in selected_tests:
+            if suite.mandatory:
+                sorted_selected_tests.append(suite)
+
+        # Add the remaining test cases
+        for suite in selected_tests:
+            if not suite.mandatory:
+                sorted_selected_tests.append(suite)
+
+        return sorted_selected_tests
+
     def create(
         self,
         db: Session,
@@ -196,7 +215,9 @@ class CRUDTestRunExecution(
             )
         )
 
-        test_run_execution.test_suite_executions.extend(test_suites)
+        # Sorting test_suite according to mandatories suites
+        test_suites_sorted = self.__sort_selected_tests(test_suites)
+        test_run_execution.test_suite_executions.extend(test_suites_sorted)
 
         db.commit()
         db.refresh(test_run_execution)

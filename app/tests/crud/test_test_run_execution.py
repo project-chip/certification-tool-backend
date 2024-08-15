@@ -319,6 +319,7 @@ def test_create_test_run_execution_from_test_run_config(db: Session) -> None:
     # Assert direct properties
     assert test_run_execution.title == test_run_execution_title
     assert test_run_execution.test_run_config_id == test_run_config.id
+    assert not test_run_execution.certification_mode
 
     # Assert created test_suite_executions
     test_suite_executions = test_run_execution.test_suite_executions
@@ -341,6 +342,77 @@ def test_create_test_run_execution_from_test_run_config(db: Session) -> None:
     # Assert the correct number of test cases where created
     for _, missing_count in remaining_test_cases.items():
         assert missing_count == 0
+
+
+def test_create_test_run_execution_certification_from_selected_tests_mandatory_suite(
+    db: Session,
+) -> None:
+    first_test_suite_identifier = "SampleTestSuite1"
+    first_test_case_identifier = "TCSS1001"
+    first_mandatory_test_case_identifier = "TCSS3001"
+
+    selected_tests = {
+        "sample_tests": {
+            first_test_suite_identifier: {
+                first_test_case_identifier: 1,
+                "TCSS1002": 2,
+                "TCSS1003": 3,
+            },
+            "SampleTestSuite2": {
+                "TCSS2001": 2,
+            },
+            "SampleTestSuite3Mandatory": {
+                "TCSS3001": 1,
+            },
+        },
+    }
+
+    total_test_case_count = (
+        sum(selected_tests["sample_tests"][first_test_suite_identifier].values())
+        + sum(selected_tests["sample_tests"]["SampleTestSuite2"].values())
+        + sum(selected_tests["sample_tests"]["SampleTestSuite3Mandatory"].values())
+    )
+
+    # Prepare data for test_run_execution
+    test_run_execution_title = "Test Execution title"
+    test_run_execution_data = TestRunExecutionCreate(
+        title=test_run_execution_title, certification_mode=True
+    )
+
+    test_run_execution = crud.test_run_execution.create(
+        db=db, obj_in=test_run_execution_data, selected_tests=selected_tests
+    )
+
+    # Assert direct properties
+    assert test_run_execution.title == test_run_execution_title
+    assert test_run_execution.test_run_config_id is None
+    assert test_run_execution.certification_mode
+
+    # Assert created test_suite_executions
+    test_suite_executions = test_run_execution.test_suite_executions
+    assert len(test_suite_executions) > 0
+
+    total_test_case_executions = 0
+    for test_suite_execution in test_suite_executions:
+        total_test_case_executions += len(test_suite_execution.test_case_executions)
+
+    assert total_test_case_executions == total_test_case_count
+
+    first_test_case_execution = test_suite_executions[0].test_case_executions[0]
+    assert first_test_case_execution.public_id == first_mandatory_test_case_identifier
+
+    remaining_test_cases = selected_tests["sample_tests"]
+    for test_suite_execution in test_suite_executions:
+        for test_case_execution in test_suite_execution.test_case_executions:
+            public_id = test_case_execution.public_id
+
+            assert public_id in remaining_test_cases[test_suite_execution.public_id]
+            remaining_test_cases[test_suite_execution.public_id][public_id] -= 1
+
+    # Assert the correct number of test cases where created
+    for r in remaining_test_cases:
+        for _, missing_count in remaining_test_cases[r].items():
+            assert missing_count == 0
 
 
 def test_create_test_run_execution_from_selected_tests(db: Session) -> None:
@@ -371,6 +443,139 @@ def test_create_test_run_execution_from_selected_tests(db: Session) -> None:
     # Assert direct properties
     assert test_run_execution.title == test_run_execution_title
     assert test_run_execution.test_run_config_id is None
+    assert not test_run_execution.certification_mode
+
+    # Assert created test_suite_executions
+    test_suite_executions = test_run_execution.test_suite_executions
+    assert len(test_suite_executions) > 0
+
+    first_test_suite_execution = test_suite_executions[0]
+    test_case_executions = first_test_suite_execution.test_case_executions
+    assert len(test_case_executions) == total_test_case_count
+
+    first_test_case_execution = test_case_executions[0]
+    assert first_test_case_execution.public_id == first_test_case_identifier
+
+    remaining_test_cases = selected_tests["sample_tests"][first_test_suite_identifier]
+    for test_case_execution in test_case_executions:
+        public_id = test_case_execution.public_id
+        # Assert all test case public id's match
+        assert public_id in remaining_test_cases
+        remaining_test_cases[public_id] -= 1
+
+    # Assert the correct number of test cases where created
+    for _, missing_count in remaining_test_cases.items():
+        assert missing_count == 0
+
+
+def test_create_test_run_execution_certification_mode_from_test_run_config(
+    db: Session,
+) -> None:
+    # Create build new test_run_config object
+    name = random_lower_string()
+    dut_name = random_lower_string()
+    first_test_suite_identifier = "SampleTestSuite1"
+    first_test_case_identifier = "TCSS1001"
+
+    selected_tests = {
+        "sample_tests": {
+            first_test_suite_identifier: {
+                first_test_case_identifier: 1,
+                "TCSS1002": 2,
+                "TCSS1003": 3,
+            }
+        }
+    }
+
+    total_test_case_count = sum(
+        selected_tests["sample_tests"][first_test_suite_identifier].values()
+    )
+    test_run_config_dict = random_test_run_config_dict(
+        name=name,
+        dut_name=dut_name,
+        selected_tests=selected_tests,
+    )
+
+    test_run_config_in = TestRunConfigCreate(
+        **test_run_config_dict, certification_mode=True
+    )
+
+    # Save create test_run_config in DB
+    test_run_config = crud.test_run_config.create(db=db, obj_in=test_run_config_in)
+
+    # Prepare data for test_run_execution
+    test_run_execution_title = "Test Execution title"
+    test_run_execution_data = TestRunExecutionCreate(
+        title=test_run_execution_title,
+        test_run_config_id=test_run_config.id,
+        certification_mode=True,
+    )
+
+    test_run_execution = crud.test_run_execution.create(
+        db=db, obj_in=test_run_execution_data
+    )
+
+    # Assert direct properties
+    assert test_run_execution.title == test_run_execution_title
+    assert test_run_execution.test_run_config_id == test_run_config.id
+    assert test_run_execution.certification_mode
+
+    # Assert created test_suite_executions
+    test_suite_executions = test_run_execution.test_suite_executions
+    assert len(test_suite_executions) > 0
+
+    first_test_suite_execution = test_suite_executions[0]
+    test_case_executions = first_test_suite_execution.test_case_executions
+    assert len(test_case_executions) == total_test_case_count
+
+    first_test_case_execution = test_case_executions[0]
+    assert first_test_case_execution.public_id == first_test_case_identifier
+
+    remaining_test_cases = selected_tests["sample_tests"][first_test_suite_identifier]
+    for test_case_execution in test_case_executions:
+        public_id = test_case_execution.public_id
+        # Assert all test case public id's match
+        assert public_id in remaining_test_cases
+        remaining_test_cases[public_id] -= 1
+
+    # Assert the correct number of test cases where created
+    for _, missing_count in remaining_test_cases.items():
+        assert missing_count == 0
+
+
+def test_create_test_run_execution_certification_mode_from_selected_tests(
+    db: Session,
+) -> None:
+    first_test_suite_identifier = "SampleTestSuite1"
+    first_test_case_identifier = "TCSS1001"
+    selected_tests = {
+        "sample_tests": {
+            first_test_suite_identifier: {
+                first_test_case_identifier: 1,
+                "TCSS1002": 2,
+                "TCSS1003": 3,
+            }
+        }
+    }
+
+    total_test_case_count = sum(
+        selected_tests["sample_tests"][first_test_suite_identifier].values()
+    )
+
+    # Prepare data for test_run_execution
+    test_run_execution_title = "Test Execution title"
+    test_run_execution_data = TestRunExecutionCreate(
+        title=test_run_execution_title, certification_mode=True
+    )
+
+    test_run_execution = crud.test_run_execution.create(
+        db=db, obj_in=test_run_execution_data, selected_tests=selected_tests
+    )
+
+    # Assert direct properties
+    assert test_run_execution.title == test_run_execution_title
+    assert test_run_execution.test_run_config_id is None
+    assert test_run_execution.certification_mode
 
     # Assert created test_suite_executions
     test_suite_executions = test_run_execution.test_suite_executions

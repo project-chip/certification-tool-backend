@@ -56,9 +56,9 @@ async def test_generate_command_arguments_with_null_value_attribute() -> None:
 
     assert [
         "--trace-to json:log",
+        "--commissioning-method on-network",
         "--discriminator 123",
         "--passcode 1234",
-        "--commissioning-method on-network",
         "--test-argument ",
     ] == arguments
 
@@ -89,9 +89,9 @@ async def test_generate_command_arguments_on_network() -> None:
 
     assert [
         "--trace-to json:log",
+        "--commissioning-method on-network",
         "--discriminator 123",
         "--passcode 1234",
-        "--commissioning-method on-network",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
@@ -121,9 +121,9 @@ async def test_generate_command_arguments_ble_wifi() -> None:
 
     assert [
         "--trace-to json:log",
+        "--commissioning-method ble-wifi",
         "--discriminator 147",
         "--passcode 357",
-        "--commissioning-method ble-wifi",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
@@ -152,9 +152,9 @@ async def test_generate_command_arguments_ble_thread() -> None:
     )
     assert [
         "--trace-to json:log",
+        "--commissioning-method ble-thread",
         "--discriminator 456",
         "--passcode 8765",
-        "--commissioning-method ble-thread",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
@@ -181,9 +181,9 @@ async def test_generate_command_arguments_no_test_parameter_informed() -> None:
 
     assert [
         "--trace-to json:log",
+        "--commissioning-method ble-thread",
         "--discriminator 456",
         "--passcode 8765",
-        "--commissioning-method ble-thread",
     ] == arguments
 
 
@@ -208,9 +208,9 @@ async def test_generate_command_arguments_trace_log_false_informed() -> None:
     )
 
     assert [
+        "--commissioning-method ble-thread",
         "--discriminator 456",
         "--passcode 8765",
-        "--commissioning-method ble-thread",
     ] == arguments
 
 

@@ -37,7 +37,7 @@ def test_python_suite_declaration() -> None:
     ) as declaration_init:
         PythonSuiteDeclaration(name=name, suite_type=type, version=version)
         class_factory.assert_called_once_with(
-            name=name, suite_type=type, python_test_version=version
+            name=name, suite_type=type, python_test_version=version, mandatory=False
         )
         declaration_init.assert_called_once()
 
@@ -50,6 +50,7 @@ def test_python_case_declaration() -> None:
         steps=[],
         class_name="TC_TestTest",
         python_test_type=PythonTestType.COMMISSIONING,
+        mandatory=True,
     )
     version = "SomeVersionStr"
     with mock.patch(
@@ -57,6 +58,8 @@ def test_python_case_declaration() -> None:
     ) as class_factory, mock.patch(
         "app.test_engine.models.test_declarations.TestCaseDeclaration.__init__"
     ) as declaration_init:
-        PythonCaseDeclaration(test=test, python_test_version=version)
-        class_factory.assert_called_once_with(test=test, python_test_version=version)
+        PythonCaseDeclaration(test=test, python_test_version=version, mandatory=True)
+        class_factory.assert_called_once_with(
+            test=test, python_test_version=version, mandatory=True
+        )
         declaration_init.assert_called_once()

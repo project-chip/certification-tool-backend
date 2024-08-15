@@ -37,6 +37,7 @@ def random_test_run_execution_dict(
     project_id: Optional[int] = None,
     operator_id: Optional[int] = None,
     description: Optional[str] = None,
+    certification_mode: Optional[bool] = False,
 ) -> Dict[str, Any]:
     output: Dict[str, Any] = {}
 
@@ -68,6 +69,10 @@ def random_test_run_execution_dict(
     # description is optional, include if present
     if description is not None:
         output["description"] = description
+
+    # certification_mode is optional, include if present
+    if certification_mode is not None:
+        output["certification_mode"] = certification_mode
 
     return output
 
@@ -145,6 +150,7 @@ test_run_execution_base_dict = {
     "imported_at": None,
     "archived_at": None,
     "created_at": "2023-05-23T21:43:31.038050",
+    "certification_mode": False,
     "log": [
         {
             "level": "INFO",
@@ -169,6 +175,7 @@ test_run_execution_base_dict = {
                 "description": "FirstChipToolSuite",
                 "version": "0.0.1",
                 "source_hash": "de7f3c1390cd283f91f74a334aaf0ec3",
+                "mandatory": False,
             },
             "execution_index": 0,
             "collection_id": "SDK YAML Tests",
@@ -180,12 +187,14 @@ test_run_execution_base_dict = {
                     "completed_at": "2023-05-23T21:44:28.937346",
                     "errors": [],
                     "created_at": "2023-05-23T21:43:31.451550",
+                    "mandatory": False,
                     "test_case_metadata": {
                         "public_id": "TC-ACE-1.1",
                         "title": "TC-ACE-1.1",
                         "description": "42.1.1. [TC-ACE-1.1] Privileges",
                         "version": "0.0.1",
                         "source_hash": "de7f3c1390cd283f91f74a334aaf0ec3",
+                        "mandatory": False,
                     },
                     "execution_index": 0,
                     "test_step_executions": [

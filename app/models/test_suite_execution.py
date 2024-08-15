@@ -38,6 +38,7 @@ class TestSuiteExecution(Base):
     public_id: Mapped[str] = mapped_column(nullable=False)
     execution_index: Mapped[int] = mapped_column(nullable=False)
     collection_id: Mapped[str] = mapped_column(nullable=False)
+    mandatory: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     state: Mapped[TestStateEnum] = mapped_column(
         Enum(TestStateEnum), nullable=False, default=TestStateEnum.PENDING

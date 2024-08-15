@@ -14,11 +14,11 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
-ROOT_DIR=$(realpath $(dirname "$0")/../..)
+ROOT_DIR=$(realpath $(dirname "$0")/../../../../..)
 TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 DEFAULT_OTBR_INTERFACE="eth0"
-BR_INTERFACE=${1:-$DEAFULT_OTBR_INTERFACE}
+BR_INTERFACE=${1:-$DEFAULT_OTBR_INTERFACE}
 BR_VARIANT="35"
 BR_CHANNEL=25
 BR_IMAGE_BASE="nrfconnect/otbr"

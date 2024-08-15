@@ -130,6 +130,11 @@ class TestCase(TestObservable):
         if self.errors is not None and len(self.errors) > 0:
             return TestStateEnum.ERROR
 
+        # Test cases that have already been marked as not applicable should not
+        # change state
+        if self.state == TestStateEnum.NOT_APPLICABLE:
+            return TestStateEnum.NOT_APPLICABLE
+
         # Note: These loops cannot be easily coalesced as we need to iterate through
         # and assign Test Case State in order.
         if self.any_steps_with_state(TestStateEnum.CANCELLED):
@@ -147,10 +152,14 @@ class TestCase(TestObservable):
         return TestStateEnum.PASSED
 
     def any_steps_with_state(self, state: TestStateEnum) -> bool:
-        return any(ts for ts in self.test_steps if ts.state == state)
+        return any(ts.state == state for ts in self.test_steps)
 
     def completed(self) -> bool:
-        return self.state not in [TestStateEnum.PENDING, TestStateEnum.EXECUTING]
+        return self.state not in [
+            TestStateEnum.PENDING,
+            TestStateEnum.EXECUTING,
+            TestStateEnum.NOT_APPLICABLE,
+        ]
 
     def __cancel_remaning_test_steps(self) -> None:
         for step in self.test_steps:
@@ -171,7 +180,9 @@ class TestCase(TestObservable):
         if self.completed():
             return
         self.state = self.__compute_state()
-        logger.info(f"Test Case Completed[{self.state.name}]: {self.metadata['title']}")
+        logger.info(
+            f"Test Case Completed [{self.state.name}]: {self.metadata['title']}"
+        )
         self.__print_log_separator()
 
     def mark_as_executing(self) -> None:
@@ -268,6 +279,10 @@ class TestCase(TestObservable):
             message = str(msg)
 
         self.current_test_step.append_failure(message)
+
+    def mark_as_not_applicable(self) -> None:
+        self.state = TestStateEnum.NOT_APPLICABLE
+        logger.warning(f"Test Case Not Applicable: {self.metadata['public_id']}")
 
     def next_step(self) -> None:
         if self.current_test_step_index + 1 >= len(self.test_steps):

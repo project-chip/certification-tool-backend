@@ -35,7 +35,13 @@ from app.tests.utils.test_runner import (
     load_and_run_tool_unit_tests,
     load_test_run_for_test_cases,
 )
-from test_collections.tool_unit_tests.test_suite_expected import TestSuiteExpected
+from test_collections.tool_unit_tests.test_suite_expected import (
+    TestSuiteExpected,
+    TestSuiteExpected2,
+)
+from test_collections.tool_unit_tests.test_suite_expected.tctr_expected_case_not_applicable import (  # noqa: E501
+    TCTRExpectedCaseNotApplicable,
+)
 from test_collections.tool_unit_tests.test_suite_expected.tctr_expected_error import (
     TCTRExpectedError,
 )
@@ -308,6 +314,74 @@ async def test_runner_test_step_not_applicable(db: Session) -> None:
     # Index 1 corresponds to test step 2 which is expected
     # to be in NOT_APPLICABLE state.
     assert case.test_steps[1].state == TestStateEnum.NOT_APPLICABLE
+
+
+@pytest.mark.asyncio
+async def test_runner_not_all_test_cases_not_applicable(db: Session) -> None:
+    """Load and run a test_run that is not applicable.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+    """
+
+    test_cases = {
+        "tool_unit_tests": {
+            TestSuiteExpected.public_id(): {
+                TCTRExpectedCaseNotApplicable.public_id(): 1,
+                TCTRExpectedPass.public_id(): 1,
+            },
+            TestSuiteExpected2.public_id(): {
+                TCTRExpectedCaseNotApplicable.public_id(): 1,
+            },
+        }
+    }
+
+    runner = load_test_run_for_test_cases(db, test_cases)
+    run = runner.test_run
+    assert run is not None
+
+    await runner.run()
+
+    assert runner.state == TestRunnerState.IDLE
+    assert run.state == TestStateEnum.PASSED
+    assert run.test_suites[0].state == TestStateEnum.PASSED
+    assert run.test_suites[0].test_cases[0].state == TestStateEnum.NOT_APPLICABLE
+    assert run.test_suites[0].test_cases[1].state == TestStateEnum.PASSED
+    assert run.test_suites[1].state == TestStateEnum.NOT_APPLICABLE
+    assert run.test_suites[1].test_cases[0].state == TestStateEnum.NOT_APPLICABLE
+
+
+@pytest.mark.asyncio
+async def test_runner_all_test_cases_not_applicable(db: Session) -> None:
+    """Load and run a test_run that is not applicable.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+    """
+
+    test_cases = {
+        "tool_unit_tests": {
+            TestSuiteExpected.public_id(): {
+                TCTRExpectedCaseNotApplicable.public_id(): 1,
+            },
+            TestSuiteExpected2.public_id(): {
+                TCTRExpectedCaseNotApplicable.public_id(): 1,
+            },
+        }
+    }
+
+    runner = load_test_run_for_test_cases(db, test_cases)
+    run = runner.test_run
+    assert run is not None
+
+    await runner.run()
+
+    assert runner.state == TestRunnerState.IDLE
+    assert run.state == TestStateEnum.NOT_APPLICABLE
+    assert run.test_suites[0].state == TestStateEnum.NOT_APPLICABLE
+    assert run.test_suites[0].test_cases[0].state == TestStateEnum.NOT_APPLICABLE
+    assert run.test_suites[1].state == TestStateEnum.NOT_APPLICABLE
+    assert run.test_suites[1].test_cases[0].state == TestStateEnum.NOT_APPLICABLE
 
 
 @pytest.mark.asyncio
