@@ -26,12 +26,12 @@ readarray th_package_list < "$TH_PACKAGE_LIST_FILE"
 readarray matter_package_list < "$MATTER_PACKAGE_LIST_FILE"
 
 for package in ${th_package_list[@]}; do
-  echo "Instaling package: ${package[@]}"
+  >&2 echo "Instaling package: ${package[@]}"
   DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades > /dev/null
 done
 
 for package in ${matter_package_list[@]}; do
-  echo "Instaling package: ${package[@]}"
+  >&2 echo "Instaling package: ${package[@]}"
   DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades > /dev/null
 done
 
