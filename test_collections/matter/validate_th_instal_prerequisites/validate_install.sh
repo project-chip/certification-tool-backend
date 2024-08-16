@@ -26,18 +26,17 @@ MATTER_PACKAGE_LIST_FILE="/app/certification-tool/backend/test_collections/matte
 TH_PACKAGE_LIST_FILE="/app/certification-tool/scripts/ubuntu/package-dependency-list.txt"
 
 readarray matter_package_list < "$MATTER_PACKAGE_LIST_FILE"
-
 readarray th_package_list < "$MATTER_PACKAGE_LIST_FILE"
 
 SAVEIFS=$IFS
 for package in ${th_package_list[@]}; do
   echo "Instaling package: ${package[@]}"
-  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades  1> /dev/null
+  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades  > /dev/null
 done
 
 for package in ${matter_package_list[@]}; do
   echo "Instaling package: ${package[@]}"
-  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades 1> /dev/null
+  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades > /dev/null
 done
 
 
