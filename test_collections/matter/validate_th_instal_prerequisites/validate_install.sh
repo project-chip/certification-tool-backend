@@ -25,14 +25,19 @@ apt-get update -y
 MATTER_PACKAGE_LIST_FILE="/app/certification-tool/backend/test_collections/matter/scripts/package-dependency-list.txt"
 TH_PACKAGE_LIST_FILE="/app/certification-tool/scripts/ubuntu/package-dependency-list.txt"
 
-readarray packagelist < "$MATTER_PACKAGE_LIST_FILE"
+readarray matter_package_list < "$MATTER_PACKAGE_LIST_FILE"
+
+readarray th_package_list < "$MATTER_PACKAGE_LIST_FILE"
 
 SAVEIFS=$IFS
-IFS=$(echo -en "\r")
-for package in ${packagelist[@]}; do
+for package in ${th_package_list[@]}; do
   echo "Instaling package: ${package[@]}"
-  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades
+  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades  1> /dev/null
 done
-IFS=$SAVEIFS 
+
+for package in ${matter_package_list[@]}; do
+  echo "Instaling package: ${package[@]}"
+  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades 1> /dev/null
+done
 
 
