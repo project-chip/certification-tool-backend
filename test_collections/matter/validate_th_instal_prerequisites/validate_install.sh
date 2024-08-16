@@ -16,22 +16,18 @@
  # limitations under the License.
 set -e
 
+apt-get update -y > /dev/null
 
-# Usage: ./test_collections/matter/scripts/update-paa-certs.sh
-
-apt-get update -y
-
-# Paths
 MATTER_PACKAGE_LIST_FILE="/app/certification-tool/backend/test_collections/matter/scripts/package-dependency-list.txt"
 TH_PACKAGE_LIST_FILE="/app/certification-tool/scripts/ubuntu/package-dependency-list.txt"
 
+IFS=$(echo -en "\r")
+readarray th_package_list < "$TH_PACKAGE_LIST_FILE"
 readarray matter_package_list < "$MATTER_PACKAGE_LIST_FILE"
-readarray th_package_list < "$MATTER_PACKAGE_LIST_FILE"
 
-SAVEIFS=$IFS
 for package in ${th_package_list[@]}; do
   echo "Instaling package: ${package[@]}"
-  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades  > /dev/null
+  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades > /dev/null
 done
 
 for package in ${matter_package_list[@]}; do
