@@ -117,9 +117,4 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
 
         logger.info("Commission DUT")
 
-        if isinstance(self.config, TestEnvironmentConfigMatter):
-            commission_device(self.config, logger)
-        else:
-            commission_device(
-                TestEnvironmentConfigMatter(**self.config), logger  # type: ignore
-            )
+        commission_device(TestEnvironmentConfigMatter(**self.config), logger)

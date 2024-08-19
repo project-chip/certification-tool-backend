@@ -135,7 +135,7 @@ async def test_suite_setup_log_python_version() -> None:
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
-            return_value=default_environment_config,
+            return_value=default_environment_config.__dict__,
         ):
             await suite_instance.setup()
 
@@ -177,7 +177,7 @@ async def test_suite_setup_without_pics() -> None:
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
-            return_value=default_environment_config,
+            return_value=default_environment_config.__dict__,
         ):
             await suite_instance.setup()
 
@@ -219,7 +219,7 @@ async def test_suite_setup_with_pics() -> None:
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
-            return_value=default_environment_config,
+            return_value=default_environment_config.__dict__,
         ):
             await suite_instance.setup()
 
@@ -256,7 +256,7 @@ async def test_commissioning_suite_setup_with_pics() -> None:
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
-        return_value=default_environment_config,
+        return_value=default_environment_config.__dict__,
     ):
         await suite_instance.setup()
 
@@ -292,7 +292,7 @@ async def test_commissioning_suite_setup() -> None:
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
-        return_value=default_environment_config,
+        return_value=default_environment_config.__dict__,
     ):
         await suite_instance.setup()
         python_suite_setup.assert_called_once()

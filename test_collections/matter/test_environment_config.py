@@ -73,6 +73,9 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                     "The dut_config and network configuration are mandatory"
                 )
 
+            if not isinstance(dut_config, dict):
+                dut_config = dut_config.__dict__
+
             # Check if the informed field in dut_config is valid
             for field, _ in dut_config.items():
                 if field not in valid_properties:
