@@ -14,9 +14,11 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
  FROM ubuntu:24.04
- 
- WORKDIR /app
 
+ RUN apt-get update -y
+ RUN apt-get install -y iputils-ping sudo apt-utils
+
+ WORKDIR /app
  COPY . /app/
 
  ADD  https://github.com/project-chip/certification-tool.git#isolate_dependency_package_list /app/certification-tool

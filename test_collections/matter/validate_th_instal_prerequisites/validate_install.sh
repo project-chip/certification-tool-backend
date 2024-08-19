@@ -18,8 +18,12 @@ set -e
 
 apt-get update -y > /dev/null
 
+DOCKER_REPO_INSTALL_FILE="/app/certification-tool/scripts/ubuntu/1.1-install-docker-repository.sh"
 MATTER_PACKAGE_LIST_FILE="/app/certification-tool/backend/test_collections/matter/scripts/package-dependency-list.txt"
 TH_PACKAGE_LIST_FILE="/app/certification-tool/scripts/ubuntu/package-dependency-list.txt"
+
+>&2 echo "Installing Docker Repository"
+DEBIAN_FRONTEND=noninteractive $DOCKER_REPO_INSTALL_FILE
 
 IFS=$(echo -en "\r")
 readarray th_package_list < "$TH_PACKAGE_LIST_FILE"
@@ -34,5 +38,3 @@ for package in ${matter_package_list[@]}; do
   >&2 echo "Instaling package: ${package[@]}"
   DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades > /dev/null
 done
-
-
