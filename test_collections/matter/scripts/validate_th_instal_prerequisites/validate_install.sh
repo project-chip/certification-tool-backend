@@ -40,7 +40,7 @@ for package in ${th_package_list[@]}; do
 done
 
 for package in ${matter_package_list[@]}; do
-    print_script_step "Instaling package: ${package[@]}"
+    print_script_step "Installing package: ${package[@]}"
     DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades
 done
 
