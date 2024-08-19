@@ -35,7 +35,7 @@ readarray th_package_list < "$TH_PACKAGE_LIST_FILE"
 readarray matter_package_list < "$MATTER_PACKAGE_LIST_FILE"
 
 for package in ${th_package_list[@]}; do
-    print_script_step "Instaling package: ${package[@]}"
+    print_script_step "Installing package: ${package[@]}"
     DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades
 done
 
