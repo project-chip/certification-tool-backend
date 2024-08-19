@@ -27,8 +27,6 @@ source "$TH_DIR/scripts/utils.sh"
 
 print_start_of_script
 
-apt-get update -y > /dev/null
-
 print_script_step "Calling Install Docker Repository Script"
 $TH_DOCKER_REPO_INSTALL_FILE
 
