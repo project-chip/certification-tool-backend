@@ -13,12 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from sqlalchemy.orm import Session
+
 from app.crud.base import CRUDBaseRead
 from app.models.test_step_execution import TestStepExecution
+from app.test_engine.models import TestStep
 
 
 class CRUDTestStepExecution(CRUDBaseRead[TestStepExecution]):
-    pass
+    def update_db_with_received_test_steps(
+        self,
+        db: Session,
+        steps: list[TestStep],
+        start_execution_index: int,
+        test_case_execution_id: int,
+    ) -> None:
+        execution_index = start_execution_index
+        for step in steps:
+            execution = TestStepExecution(
+                title=step.name,
+                execution_index=execution_index,
+                test_case_execution_id=test_case_execution_id,
+            )
+            step.test_step_execution = execution
+            execution_index += 1
+            db.add(execution)
+
+        db.commit()
 
 
 test_step_execution = CRUDTestStepExecution(TestStepExecution)

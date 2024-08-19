@@ -91,7 +91,15 @@ async def test_test_ui_observer_send_message(db: Session) -> None:
         args_list = broadcast.call_args_list
         assert call(__expected_test_run_state_dict(run_id)) in args_list
         assert call(__expected_test_suite_dict(suite_index)) in args_list
-        assert call(__expected_test_case_dict(case_index, suite_index)) in args_list
+        expected_test_step_list = [step.name for step in case.test_steps]
+        assert (
+            call(
+                __expected_test_case_dict(
+                    case_index, suite_index, expected_test_step_list
+                )
+            )
+            in args_list
+        )
         assert (
             call(__expected_test_step_dict(step_index, case_index, suite_index))
             in args_list
@@ -129,7 +137,9 @@ def __expected_test_suite_dict(index: int) -> Dict[str, Any]:
     }
 
 
-def __expected_test_case_dict(index: int, suite_index: int) -> Dict[str, Any]:
+def __expected_test_case_dict(
+    index: int, suite_index: int, step_list: list[str]
+) -> Dict[str, Any]:
     return {
         MessageKeysEnum.TYPE: MessageTypeEnum.TEST_UPDATE,
         MessageKeysEnum.PAYLOAD: {
@@ -138,6 +148,7 @@ def __expected_test_case_dict(index: int, suite_index: int) -> Dict[str, Any]:
                 "test_suite_execution_index": suite_index,
                 "test_case_execution_index": index,
                 "state": TestStateEnum.EXECUTING,
+                "steps": step_list,
                 "errors": [],
             },
         },
