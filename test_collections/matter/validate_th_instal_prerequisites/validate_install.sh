@@ -16,25 +16,34 @@
  # limitations under the License.
 set -e
 
+# Paths
+TH_DIR="/app/certification-tool"
+TH_DOCKER_REPO_INSTALL_FILE="$TH_DIR/scripts/ubuntu/1.1-install-docker-repository.sh"
+TH_PACKAGE_LIST_FILE="$TH_DIR/scripts/ubuntu/package-dependency-list.txt"
+MATTER_PROGRAM_DIR="$TH_DIR/backend/test_collections/matter"
+MATTER_PACKAGE_LIST_FILE="$MATTER_PROGRAM_DIR/scripts/package-dependency-list.txt"
+
+source "$TH_DIR/scripts/utils.sh"
+
+print_start_of_script
+
 apt-get update -y > /dev/null
 
-DOCKER_REPO_INSTALL_FILE="/app/certification-tool/scripts/ubuntu/1.1-install-docker-repository.sh"
-MATTER_PACKAGE_LIST_FILE="/app/certification-tool/backend/test_collections/matter/scripts/package-dependency-list.txt"
-TH_PACKAGE_LIST_FILE="/app/certification-tool/scripts/ubuntu/package-dependency-list.txt"
-
->&2 echo "Installing Docker Repository"
-DEBIAN_FRONTEND=noninteractive $DOCKER_REPO_INSTALL_FILE
+print_script_step "Calling Install Docker Repository Script"
+$TH_DOCKER_REPO_INSTALL_FILE
 
 IFS=$(echo -en "\r")
 readarray th_package_list < "$TH_PACKAGE_LIST_FILE"
 readarray matter_package_list < "$MATTER_PACKAGE_LIST_FILE"
 
 for package in ${th_package_list[@]}; do
-  >&2 echo "Instaling package: ${package[@]}"
-  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades > /dev/null
+    print_script_step "Instaling package: ${package[@]}"
+    DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades
 done
 
 for package in ${matter_package_list[@]}; do
-  >&2 echo "Instaling package: ${package[@]}"
-  DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades > /dev/null
+    print_script_step "Instaling package: ${package[@]}"
+    DEBIAN_FRONTEND=noninteractive apt-get satisfy ${package[@]} -y --allow-downgrades
 done
+
+print_end_of_script
