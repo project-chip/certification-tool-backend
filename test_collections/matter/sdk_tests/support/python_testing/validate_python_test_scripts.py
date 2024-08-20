@@ -2,8 +2,7 @@ import sys
 from pathlib import Path
 
 from app.test_engine.logger import test_engine_logger as logger
-# noqa: E501
-from test_collections.matter.sdk_tests.support.python_testing.models.python_test_models import (
+from test_collections.matter.sdk_tests.support.python_testing.models.python_test_models import (  # noqa: E501
     PythonTest,
     PythonTestType,
 )
