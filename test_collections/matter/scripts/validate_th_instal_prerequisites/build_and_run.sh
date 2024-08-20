@@ -28,11 +28,29 @@
 set -e
 
 TH_DIR=$(realpath $(dirname "$0")/../../../../..)
+
+source "$TH_DIR/scripts/utils.sh"
+
+print_start_of_script
+
 CONTAINER_TH_DIR="/app/certification-tool"
 VALIDATE_SCRIPT_DIR="backend/test_collections/matter/scripts/validate_th_instal_prerequisites"
 CONTAINER_VALIDATE_SCRIPT="$CONTAINER_TH_DIR/$VALIDATE_SCRIPT_DIR/validate_install.sh"
-DOCKER_IMAGE_TAG="validade_th_installation:v1"
+DOCKER_IMAGE="csa-certification-tool-validation:v1"
 
 cd $TH_DIR/$VALIDATE_SCRIPT_DIR
-docker build -t $DOCKER_IMAGE_TAG .
-docker run -v $TH_DIR:/app/certification-tool:ro -it $DOCKER_IMAGE_TAG $CONTAINER_VALIDATE_SCRIPT
+
+DOCKER_IMAGE_FOUND=$(docker images -q $DOCKER_IMAGE)
+
+if [[ -z "$DOCKER_IMAGE_FOUND" ]]; then
+    print_script_step "Building '$DOCKER_IMAGE' image"
+    docker build -t $DOCKER_IMAGE .
+else
+    print_script_step "Validation Docker image already exists"
+    echo "$DOCKER_IMAGE"
+fi
+
+print_script_step "Running Validation Script"
+docker run -v $TH_DIR:/app/certification-tool:ro -it $DOCKER_IMAGE $CONTAINER_VALIDATE_SCRIPT
+
+print_end_of_script
