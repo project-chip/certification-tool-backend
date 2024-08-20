@@ -6,7 +6,6 @@ from test_collections.matter.sdk_tests.support.python_testing.models.python_test
     PythonTest,
     PythonTestType,
 )
-
 from test_collections.matter.sdk_tests.support.python_testing.models.python_test_parser import (  # noqa: E501
     parse_python_script,
 )
