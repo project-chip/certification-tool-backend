@@ -67,6 +67,18 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
         if dict_model:
             dut_config = dict_model.get("dut_config")
             network = dict_model.get("network")
+            test_parameters = dict_model.get("test_parameters")
+
+            # If both qr-code and manual-code are provided the test run execution
+            # will fail
+            if (
+                test_parameters
+                and "qr-code" in test_parameters
+                and "manual-code" in test_parameters
+            ):
+                raise TestEnvironmentConfigMatterError(
+                    "Please inform just one of either: qr-code or manual-code"
+                )
 
             if not dut_config or not network:
                 raise TestEnvironmentConfigMatterError(
