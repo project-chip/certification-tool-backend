@@ -16,10 +16,17 @@
 from enum import Enum
 from typing import Type, TypeVar
 
+from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
+from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
+    ThreadBorderRouter,
+)
+from test_collections.matter.test_environment_config import (
+    DutPairingModeEnum,
+    TestEnvironmentConfigMatter,
+)
 
 from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
@@ -47,6 +54,7 @@ class PythonTestSuite(TestSuite):
     python_test_version: str
     suite_name: str
     sdk_container: SDKContainer = SDKContainer(logger)
+    border_router: ThreadBorderRouter = ThreadBorderRouter()
 
     @classmethod
     def class_factory(
@@ -108,6 +116,9 @@ class PythonTestSuite(TestSuite):
         logger.info("Stopping SDK container")
         self.sdk_container.destroy()
 
+        logger.info("Stopping Border Router")
+        self.border_router.destroy_device()
+
 
 class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
@@ -117,4 +128,12 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
 
         logger.info("Commission DUT")
 
-        commission_device(TestEnvironmentConfigMatter(**self.config), logger)
+        matter_config = TestEnvironmentConfigMatter(**self.config)
+        if (
+            matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
+            and isinstance(matter_config.network.thread, ThreadAutoConfig)
+        ):
+            await self.border_router.start_device(matter_config.network.thread)
+            await self.border_router.form_thread_topology()
+
+        await commission_device(matter_config, logger)

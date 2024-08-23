@@ -122,4 +122,4 @@ class ContainerManager(object, metaclass=Singleton):
             await asyncio.sleep(sleep_interval)
 
 
-container_manager = ContainerManager()
+container_manager: ContainerManager = ContainerManager()

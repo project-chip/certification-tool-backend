@@ -273,8 +273,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # Generate the command argument by getting the test_parameters from
             # project configuration
             # comissioning method is omitted because it's handled by the test suite
-            command_arguments = generate_command_arguments(
-                config=TestEnvironmentConfigMatter(**self.config),
+            command_arguments = await generate_command_arguments(
+                config=TestEnvironmentConfigMatter(**self.config),  # type: ignore
                 omit_commissioning_method=True,
             )
             command.extend(command_arguments)
@@ -374,7 +374,9 @@ class LegacyPythonTestCase(PythonTestCase):
             case PromptOption.YES:
                 logger.info("User chose prompt option YES")
                 logger.info("Commission DUT")
-                commission_device(TestEnvironmentConfigMatter(**self.config), logger)
+                await commission_device(
+                    TestEnvironmentConfigMatter(**self.config), logger  # type: ignore
+                )
 
             case PromptOption.NO:
                 logger.info("User chose prompt option NO")

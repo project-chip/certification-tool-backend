@@ -20,7 +20,7 @@ TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 DEFAULT_OTBR_INTERFACE="eth0"
 BR_INTERFACE=${1:-$DEFAULT_OTBR_INTERFACE}
 BR_VARIANT="35"
-BR_CHANNEL=25
+BR_CHANNEL=15
 BR_IMAGE_BASE="nrfconnect/otbr"
 BR_IMAGE_TAG="9185bda"
 BR_IMAGE=$BR_IMAGE_BASE":"$BR_IMAGE_TAG
@@ -30,6 +30,7 @@ source "$TH_SCRIPTS_DIR/utils.sh"
 print_start_of_script
 
 print_script_step "Removing 'otbr-chip' container"
+docker stop otbr-chip > /dev/null 2>&1
 docker rm otbr-chip > /dev/null 2>&1
 
 if docker images | grep $BR_IMAGE_BASE | grep $BR_IMAGE_TAG;
@@ -49,10 +50,10 @@ print_script_step "Waiting 10 seconds to give the the docker container enough ti
 sleep 10
 
 BR_CHANNEL_HEX=$(printf '%02x' $BR_CHANNEL)
-BR_PANID="5b${BR_VARIANT}"
-BR_EXTPANID="5b${BR_VARIANT}dead5b${BR_VARIANT}beef"
-BR_NETWORKNAME="5b${BR_VARIANT}"
-BR_IPV6PREFIX="fd11:${BR_VARIANT}::/64"
+BR_PANID="1234"
+BR_EXTPANID="1111111122222222"
+BR_NETWORKNAME="DEMO"
+BR_IPV6PREFIX="fd11:22::/64"
 BR_NETWORKKEY="00112233445566778899aabbccddeeff"
 
 BR_PARAMS=(
