@@ -129,6 +129,10 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         logger.info("Commission DUT")
 
         matter_config = TestEnvironmentConfigMatter(**self.config)
+
+        # If in BLE-Thread mode and a Thread Auto-Config was provided by the user,
+        # start a new OTBR container app with the according Thread topology for all
+        # tests in the Python Tests Suite.
         if (
             matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
             and isinstance(matter_config.network.thread, ThreadAutoConfig)

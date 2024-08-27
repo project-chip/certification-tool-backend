@@ -136,6 +136,9 @@ async def __thread_dataset_hex(
     elif isinstance(thread_config, ThreadAutoConfig):
         border_router: ThreadBorderRouter = ThreadBorderRouter()
 
+        # Expecting false as the OTBR is started in the suite's setup.
+        # Either way, if true, we try to start and configure the container in case
+        # there's no OTBR application running.
         if await border_router.start_device(thread_config):
             await border_router.form_thread_topology()
 
