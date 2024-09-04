@@ -40,7 +40,7 @@ fi
 
 print_script_step "Updating Sample APPs"
 # TODO: update SDK image to place the apps in a specific folder and then copy that entire folder
-sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v chip-* /apps/; cp -v thermostat-app /apps/; cp -v lit-icd-app /apps/;cp -v fabric-admin /apps/; cp -v fabric-bridge-app /apps/; cp -v matter-network-manager-app /apps/"
+sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v chip-* /apps/; cp -v thermostat-app /apps/; cp -v lit-icd-app /apps/;cp -v fabric-* /apps/; cp -v matter-network-manager-app /apps/"
 echo "Setting Sample APPs ownership"
 sudo chown -R `whoami` ~/apps
 
