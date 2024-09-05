@@ -112,7 +112,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         # since there is step execute outside runner context
         self.next_step()
 
-    def test_stop(self, duration: int) -> None:
+    def test_stop(self, exception: Exception, duration: int) -> None:
         self.current_test_step.mark_as_completed()
 
     def step_skipped(self, name: str, expression: str) -> None:
@@ -127,7 +127,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         self.__skipped += 1
         self.next_step()
 
-    def step_start(self, request: TestStep) -> None:
+    def step_start(self, request: TestStep, endpoint: int | None = None) -> None:
         if (
             self.server_type == ChipServerType.CHIP_APP
             and
@@ -140,6 +140,9 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
                 self.__prompt_user_for_controller_action(prompt), loop=loop
             )
         self.__index += 1
+        # The TestStep request object already has the endpoint information for YAML
+        # tests and it will be stored in the current test step observable below.
+        self.current_test_step.endpoint = request.endpoint
 
     def step_success(
         self, logger: Any, logs: Any, duration: int, request: TestStep
@@ -180,7 +183,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
                 self.__prompt_user_manual_step(step), OUTCOME_TIMEOUT_S
             )
         except asyncio.TimeoutError:
-            self.current_test_step.append_failure("Prompt timed out.")
+            step.append_failure("Prompt timed out.")
         self.next_step()
 
     def show_prompt(
@@ -188,6 +191,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         msg: str,
         placeholder: Optional[str] = None,
         default_value: Optional[str] = None,
+        endpoint_id: Optional[int] = None,
     ) -> None:
         pass
 

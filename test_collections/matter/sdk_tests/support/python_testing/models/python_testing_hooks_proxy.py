@@ -44,17 +44,17 @@ class SDKPythonTestResultBase(BaseModel):
 
 
 class SDKPythonTestResultStart(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.START
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.START
     count: int
 
 
 class SDKPythonTestResultStop(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STOP
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.STOP
     duration: int
 
 
 class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.TEST_START
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.TEST_START
     filename: Optional[str]
     name: Optional[str]
     count: Optional[int]
@@ -62,30 +62,31 @@ class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
 
 
 class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.TEST_STOP
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.TEST_STOP
     duration: Optional[int]
     exception: Any
 
 
 class SDKPythonTestResultTestSkipped(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.TEST_SKIPPED
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.TEST_SKIPPED
     filename: Optional[str]
     name: Optional[str]
 
 
 class SDKPythonTestResultStepSkipped(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_SKIPPED
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.STEP_SKIPPED
     name: Optional[str]
     expression: Optional[str]
 
 
 class SDKPythonTestResultStepStart(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_START
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.STEP_START
     name: Optional[str]
+    endpoint: Optional[int]
 
 
 class SDKPythonTestResultStepSuccess(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_SUCCESS
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.STEP_SUCCESS
     logger: Any
     logs: Any
     duration: int
@@ -93,7 +94,7 @@ class SDKPythonTestResultStepSuccess(SDKPythonTestResultBase):
 
 
 class SDKPythonTestResultStepFailure(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_FAILURE
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.STEP_FAILURE
     logger: Any
     logs: Any
     duration: int
@@ -102,15 +103,15 @@ class SDKPythonTestResultStepFailure(SDKPythonTestResultBase):
 
 
 class SDKPythonTestResultStepUnknown(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_UNKNOWN
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.STEP_UNKNOWN
 
 
 class SDKPythonTestResultStepManual(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_MANUAL
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.STEP_MANUAL
 
 
 class SDKPythonTestResultShowPrompt(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.SHOW_PROMPT
+    type: SDKPythonTestResultEnum = SDKPythonTestResultEnum.SHOW_PROMPT
     msg: str
     placeholder: Optional[str]
     default_value: Optional[str]
@@ -159,10 +160,12 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         self.results.put(SDKPythonTestResultTestSkipped(filename=filename, name=name))
 
     def step_skipped(self, name: str, expression: str) -> None:
-        self.results.put(SDKPythonTestResultStepSkipped(expression=expression))
+        self.results.put(
+            SDKPythonTestResultStepSkipped(name=None, expression=expression)
+        )
 
-    def step_start(self, name: str) -> None:
-        self.results.put(SDKPythonTestResultStepStart(name=name))
+    def step_start(self, name: str, endpoint: Optional[int] = None) -> None:
+        self.results.put(SDKPythonTestResultStepStart(name=name, endpoint=endpoint))
 
     def step_success(self, logger: Any, logs: Any, duration: int, request: Any) -> None:
         self.results.put(
@@ -198,6 +201,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         msg: str,
         placeholder: Optional[str] = None,
         default_value: Optional[str] = None,
+        endpoint_id: Optional[int] = None,
     ) -> None:
         self.results.put(
             SDKPythonTestResultShowPrompt(

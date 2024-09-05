@@ -119,6 +119,7 @@ class TestUIObserver(Observer):
                 "test_suite_execution_index": test_suite_execution.execution_index,
                 "test_case_execution_index": test_case_execution.execution_index,
                 "test_step_execution_index": test_step_execution.execution_index,
+                "endpoint": observable.endpoint,
                 "state": observable.state,
                 "errors": observable.errors,
                 "failures": observable.failures,

@@ -33,6 +33,10 @@ class MatterTestType(Enum):
 
 class MatterTestStep(BaseModel):
     label: str
+    # Pydantic will fail parsing YAML files since they are using endpoints as variables
+    # instead of numbers only.
+    # So endpoint has to be a String as well to pass the file parsing.
+    endpoint: Optional[int | str] = None
     PICS: Optional[str] = None
     verification: Optional[str] = None
     command: Optional[str]

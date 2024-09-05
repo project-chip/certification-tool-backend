@@ -293,6 +293,7 @@ class TestCase(TestObservable):
 
         # update current step
         self.current_test_step_index += 1
+
         self.current_test_step.mark_as_executing()
 
     def __print_log_separator(self) -> None:

@@ -29,11 +29,17 @@ class TestStep(TestObservable):
 
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
 
-    def __init__(self, name: str, state: TestStateEnum = TestStateEnum.PENDING) -> None:
+    def __init__(
+        self,
+        name: str,
+        endpoint: int | None = None,
+        state: TestStateEnum = TestStateEnum.PENDING,
+    ) -> None:
         super().__init__()
         self.errors: List[str] = []
         self.failures: List[str] = []
         self.name = name
+        self.endpoint = endpoint
         self.__state = state
         self.test_step_execution: Optional[TestStepExecution] = None
 
@@ -90,7 +96,12 @@ class TestStep(TestObservable):
         else:
             self.state = TestStateEnum.PASSED
 
-        logger.info(f"Test Step Completed [{self.state.name}]: {self.name}")
+        endpoint_info = (
+            f" for endpoint {self.endpoint}" if self.endpoint is not None else ""
+        )
+        logger.info(
+            f"Test Step Completed [{self.state.name}]: {self.name}{endpoint_info}"
+        )
         self.__print_log_separator()
 
     def __print_log_separator(self) -> None:

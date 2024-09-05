@@ -170,7 +170,8 @@ class YamlTestCase(TestCase):
             )
             return
 
-        step = TestStep(yaml_step.label)
+        endpoint = yaml_step.endpoint if isinstance(yaml_step.endpoint, int) else None
+        step = TestStep(yaml_step.label, endpoint=endpoint)
         if yaml_step.command == "UserPrompt":
             step = ManualVerificationTestStep(
                 name=yaml_step.label,

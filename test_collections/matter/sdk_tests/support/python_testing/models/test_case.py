@@ -118,8 +118,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         else:
             self.current_test_step.mark_as_not_applicable(skiped_msg)
 
-    def step_start(self, name: str) -> None:
+    def step_start(self, name: str, endpoint: int | None = None) -> None:
         self.step_over()
+        self.current_test_step.endpoint = endpoint
 
     def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
         pass

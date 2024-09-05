@@ -288,17 +288,19 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
 
             step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
             parsed_step_name = step_name
+            python_steps.append(
+                MatterTestStep(
+                    label=parsed_step_name,
+                    command=None,
+                    arguments=None,
+                    is_commissioning=arg_is_commissioning,
+                )
+            )
         except Exception as e:
             logger.warning(
                 f"Failed parsing step name from {method.name}, Error:{str(e)}"
             )
             parsed_step_name = "UNABLE TO PARSE TEST STEP NAME"
-
-        python_steps.append(
-            MatterTestStep(
-                label=parsed_step_name, is_commissioning=arg_is_commissioning
-            )
-        )
 
     return python_steps
 
