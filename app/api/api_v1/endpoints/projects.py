@@ -281,13 +281,13 @@ def remove_pics_cluster_type(
 
 
 @router.get(
-    "/{id}/applicable_test_cases", response_model=schemas.PICSApplicableTestCases
+    "/{id}/applicable_test_cases", response_model=schemas.PICSApplicableTestCasesDetail
 )
 def applicable_test_cases(
     *,
     db: Session = Depends(get_db),
     id: int,
-) -> schemas.PICSApplicableTestCases:
+) -> schemas.PICSApplicableTestCasesDetail:
     """Retrieve list of applicable test cases based on project identifier.
 
     Args:
@@ -297,13 +297,15 @@ def applicable_test_cases(
         HTTPException: if no project exists for provided project id
 
     Returns:
-        PICSApplicableTestCases: List of applicable test cases
+        PICSApplicableTestCasesDetail: List of applicable test cases
     """
     project = __project(db=db, id=id)
 
     project_data = Proj.from_orm(project)
 
-    return applicable_test_cases_list(pics=project_data.pics)
+    applicable_test_cases = applicable_test_cases_list(pics=project_data.pics)
+
+    return applicable_test_cases
 
 
 def __project(db: Session, id: int) -> Project:

@@ -41,5 +41,9 @@ class PICSApplicableTestCases(BaseModel):
     test_cases: list[str]
 
 
+class PICSApplicableTestCasesDetail(BaseModel):
+    test_cases: list[dict]
+
+
 class PICSError(Exception):
     """Raised when an error occurs during execution."""

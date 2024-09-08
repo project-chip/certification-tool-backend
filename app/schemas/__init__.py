@@ -23,7 +23,13 @@ from .operator import (
     OperatorToExport,
     OperatorUpdate,
 )
-from .pics import PICS, PICSApplicableTestCases, PICSCluster, PICSItem
+from .pics import (
+    PICS,
+    PICSApplicableTestCases,
+    PICSApplicableTestCasesDetail,
+    PICSCluster,
+    PICSItem,
+)
 from .project import Project, ProjectCreate, ProjectInDB, ProjectUpdate
 from .test_case_execution import TestCaseExecution, TestCaseExecutionToExport
 from .test_case_metadata import TestCaseMetadata, TestCaseMetadataBase
