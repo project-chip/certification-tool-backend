@@ -159,7 +159,7 @@ def __parse_test_case(
             tc_desc = __retrieve_description(desc_method)
         except Exception as e:
             logger.warning(
-                f"Fail parsing description methood for {tc_name}, Error:{str(e)}"
+                f"Failed parsing description method for {tc_name}, Error:{str(e)}"
             )
 
     # If the python test does not implement the steps template method,
