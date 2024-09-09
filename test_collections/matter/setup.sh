@@ -33,6 +33,9 @@ for package in ${packagelist[@]}; do
 done
 IFS=$SAVEIFS 
 
+print_script_step "Pulling chip-cert-bins docker image"
+$MATTER_PROGRAM_DIR/scripts/update-pull-sdk-docker-image.sh
+
 print_script_step "Fetching sample apps"
 $MATTER_PROGRAM_DIR/scripts/update-sample-apps.sh
 
