@@ -237,9 +237,7 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
             step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
             parsed_step_name = step_name
         except Exception as e:
-            logger.warning(
-                f"Fail parsing step name from {method.name}, Error:{str(e)}"
-            )
+            logger.warning(f"Fail parsing step name from {method.name}, Error:{str(e)}")
             parsed_step_name = "UNABLE TO PARSE TEST STEP NAME"
 
         python_steps.append(
