@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2023-2024 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,16 +55,24 @@ async def generate_command_arguments(
     if dut_config.trace_log:
         arguments.append("--trace-to json:log")
 
-    if not omit_commissioning_method:
+    if dut_config.enhanced_setup_flow:
+        arguments.append(f"--require-tc-acknowledgements 1")
+        arguments.append(f"--tc-acknowledgements {dut_config.enhanced_setup_flow.tc_user_response}")
+        arguments.append(f"--tc-acknowledgements-version {dut_config.enhanced_setup_flow.tc_version}")
+
+    if omit_commissioning_method:
+        arguments.append(f"--in-test-commissioning-method {pairing_mode}")
+
+    else:
         arguments.append(f"--commissioning-method {pairing_mode}")
 
-        if pairing_mode == DutPairingModeEnum.BLE_WIFI:
-            arguments.append(f"--wifi-ssid {config.network.wifi.ssid}")
-            arguments.append(f"--wifi-passphrase {config.network.wifi.password}")
+    if pairing_mode == DutPairingModeEnum.BLE_WIFI:
+        arguments.append(f"--wifi-ssid {config.network.wifi.ssid}")
+        arguments.append(f"--wifi-passphrase {config.network.wifi.password}")
 
-        if pairing_mode == DutPairingModeEnum.BLE_THREAD:
-            dataset_hex = await __thread_dataset_hex(config.network.thread)
-            arguments.append(f"--thread-dataset-hex {dataset_hex}")
+    if pairing_mode == DutPairingModeEnum.BLE_THREAD:
+        dataset_hex = await __thread_dataset_hex(config.network.thread)
+        arguments.append(f"--thread-dataset-hex {dataset_hex}")
 
     # Retrieve arguments from test_parameters
     if test_parameters:
