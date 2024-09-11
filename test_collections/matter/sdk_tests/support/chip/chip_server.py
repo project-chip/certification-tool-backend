@@ -179,7 +179,6 @@ class ChipServer(metaclass=Singleton):
             f'-SIGTERM -f "{self.__server_full_command}"', prefix="pkill"
         )
 
-        self.__wait_for_server_exit()
         self.__server_started = False
 
     def trace_file_params(self, topic: str) -> str:
