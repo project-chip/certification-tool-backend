@@ -158,19 +158,6 @@ class ChipServer(metaclass=Singleton):
 
         return cast(Generator, self.__server_logs)
 
-    def __wait_for_server_exit(self) -> Optional[int]:
-        if self.__chip_server_id is None:
-            self.logger.info(
-                "Server execution id not found, cannot wait for server exit."
-            )
-            return None
-
-        exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
-        while exit_code is None:
-            exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
-
-        return exit_code
-
     async def stop(self) -> None:
         if not self.__server_started:
             return
