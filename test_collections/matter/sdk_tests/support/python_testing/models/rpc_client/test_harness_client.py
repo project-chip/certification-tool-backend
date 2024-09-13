@@ -53,16 +53,22 @@ def main() -> None:
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
-    # For a script_path like 'custom/TC_XYZ' the module is 'custom.TC_XYZ'
-    module = importlib.import_module(script_path.replace("/", "."))
-    TestClassReference = getattr(module, class_name)
-
     BaseManager.register(TestRunnerHooks.__name__)
     manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
     manager.connect()
     test_runner_hooks = manager.TestRunnerHooks()  # shared object proxy # type: ignore
 
-    run_tests(TestClassReference, config, test_runner_hooks)
+    try:
+        # For a script_path like 'custom/TC_XYZ' the module is 'custom.TC_XYZ'
+        module = importlib.import_module(script_path.replace("/", "."))
+        TestClassReference = getattr(module, class_name)
+
+        run_tests(TestClassReference, config, test_runner_hooks)
+    except Exception as e:
+        test_runner_hooks.step_failure(
+            logger=None, logs=str(e), duration=0, request=None, received=None
+        )
+        test_runner_hooks.stop(duration=0)
 
 
 def commission(config: MatterTestConfig) -> None:

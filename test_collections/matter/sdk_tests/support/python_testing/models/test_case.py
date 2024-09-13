@@ -126,7 +126,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
-        self.mark_step_failure("Python test step failure")
+        failure_msg = "Python test step failure"
+        if logs:
+            failure_msg = f"Python test step failure: {logs}"
+
+        self.mark_step_failure(failure_msg)
 
         # Python tests with only 2 steps are the ones that don't follow the template.
         # In the case of a test file with multiple test cases, more than one of these
