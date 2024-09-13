@@ -183,7 +183,8 @@ class ChipServer(metaclass=Singleton):
         except Exception as e:
             # Issue: https://github.com/project-chip/certification-tool/issues/414
             self.logger.info(
-                f"Could not get exit code after pkill command {__server_full_command}."
+                "Could not get exit code after pkill command "
+                f"{self.__server_full_command}."
             )
             self.logger.debug(str(e))
 
