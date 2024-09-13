@@ -128,7 +128,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
     ) -> None:
         failure_msg = "Python test step failure"
         if logs:
-            failure_msg = f"Python test step failure: {logs}"
+            failure_msg += f": {logs}"
 
         self.mark_step_failure(failure_msg)
 
