@@ -175,11 +175,19 @@ class ChipServer(metaclass=Singleton):
         if not self.__server_started:
             return
 
-        self.sdk_container.send_command(
-            f'-SIGTERM -f "{self.__server_full_command}"', prefix="pkill"
-        )
+        try:
+            self.sdk_container.send_command(
+                f'-SIGTERM -f "{self.__server_full_command}"', prefix="pkill"
+            )
+            self.__wait_for_server_exit()
+        except Exception as e:
+            # Issue: https://github.com/project-chip/certification-tool/issues/414
+            self.logger.info(
+                "Could not get exit code after pkill command "
+                f"{self.__server_full_command}."
+            )
+            self.logger.debug(str(e))
 
-        self.__wait_for_server_exit()
         self.__server_started = False
 
     def trace_file_params(self, topic: str) -> str:
