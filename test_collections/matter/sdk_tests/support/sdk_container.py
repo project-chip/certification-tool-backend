@@ -51,10 +51,8 @@ LOCAL_PYTHON_TESTING_PATH = Path(
     LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/sdk_checkout/python_testing"
 )
 DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
-
 MAPPED_DATA_MODEL_VOLUME = "mapped_data_model_volume"
 DOCKER_DATA_MODEL_PATH = DOCKER_PYTHON_TESTING_PATH + "/data_model"
-
 
 # RPC Client Running on SDK Container
 LOCAL_RPC_PYTHON_TESTING_PATH = Path(
