@@ -28,26 +28,17 @@ from .models.test_declarations import (
 from .models.test_suite import SuiteType
 
 ###
-# This file hosts logic to load and parse Python test cases, located in
-# `test_collections/matter/sdk_tests/sdk_checkout/python_testing/scripts/sdk`.
-# The `sdk` sub-folder here is automatically maintained using the
-# `test_collections/matter/sdk_tests/fetch_sdk_tests_and_runner.sh` script.
+# This file hosts logic to load and parse Stress/Stability test cases, located in
+# `./models/rpc_client/`.
 #
-# The Python Tests are organized into 1 Test Suite:
-#        - Automated
+# This is a temporary solution since those tests should come from SDK.
+#       
 ###
 
-PYTHON_TEST_PATH = SDK_CHECKOUT_PATH / "python_testing/scripts"
-SDK_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "sdk"
-SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
-    path=SDK_PYTHON_TEST_PATH, filename_pattern="TC_CO*"
+STRESS_TEST_PATH = Path(__file__).resolve().parent / "scripts/sdk/"
+STRESS_TEST_FOLDER = SDKTestFolder(
+    path=STRESS_TEST_PATH, filename_pattern="TC_*"
 )
-
-CUSTOM_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "custom"
-CUSTOM_PYTHON_TEST_FOLDER = SDKTestFolder(
-    path=CUSTOM_PYTHON_TEST_PATH, filename_pattern="TC*"
-)
-
 
 def _init_test_suites(
     python_test_version: str,
@@ -107,7 +98,7 @@ def _parse_all_sdk_python_tests(
 
 
 def sdk_performance_test_collection(
-    python_test_folder: SDKTestFolder = SDK_PYTHON_TEST_FOLDER,
+    python_test_folder: SDKTestFolder = STRESS_TEST_FOLDER,
 ) -> PythonCollectionDeclaration:
     """Declare a new collection of test suites."""
     collection = PythonCollectionDeclaration(

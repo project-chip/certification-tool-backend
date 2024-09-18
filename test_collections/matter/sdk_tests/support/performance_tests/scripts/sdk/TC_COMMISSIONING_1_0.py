@@ -16,9 +16,7 @@
 #
 import time
 import logging
-import signal
 import subprocess
-import sys
 import chip.clusters as Clusters
 from chip import ChipDeviceCtrl
 from chip.clusters.Types import NullValue
@@ -29,6 +27,7 @@ from matter_testing_support import (
     async_test_body,
     default_matter_test_main,
 )
+from .accessory_manager import AccessoryManager
 from mobly import asserts
 
 # We don't have a good pipe between the c++ enums in CommissioningDelegate and python
@@ -97,8 +96,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
 
     @async_test_body
     async def test_TC_COMMISSIONING_1_0(self):
-        simulatedAppManager = SimulatedAppManager("/root/chip-all-clusters-app")
-        # print(f"INFO Internal Control ===========Test Commission Loop=============")
+        accessory_manager = AccessoryManager()
         self.clean_chip_tool_kvs()
         await self.create_commissioner()
         conf = self.matter_test_config
@@ -125,22 +123,20 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
             logging.info("|============== Accessory LifeCycle =========================|")
 
             logging.info("INFO Internal Control reset simulated app ")
-            simulatedAppManager.clean()
+            accessory_manager.clean()
 
             logging.info("INFO Internal Control start simulated app ")
-            simulatedAppManager.start()
+            accessory_manager.start()
 
             logging.info("|============== Commissioning Steps =========================|")
 
             await self.commission_and_base_checks()
 
-            # print("INFO Internal Control Waiting 0.5 secs before killing simulator app")
             time.sleep(0.5)
             logging.info("|============== Accessory LifeCycle =========================|")
             logging.info("INFO Internal Control stop simulated app")
-            simulatedAppManager.stop()
-            simulatedAppManager.clean()
-            # print(f"INFO Internal Control ===========End Commission {i}=============")
+            accessory_manager.stop()
+            accessory_manager.clean()
             
     def clean_chip_tool_kvs(self):
         try:
@@ -148,50 +144,6 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
             print(f"KVS info deleted.")
         except subprocess.CalledProcessError as e:
             print(f"Error deleting KVS info: {e}")
-
-
-class SimulatedAppManager:
-    def __init__(self, simulatedAppPath):
-        self.simulatedAppPath = simulatedAppPath
-        self.process = None
-
-    def start(self):
-        if self.process is None:
-            # # Arguments to pass to the binary
-            arguments = ["--discriminator", "3842", "--KVS", "kvs1"]
-
-            # # Combine the binary path and arguments
-            command = ["/root/chip-all-clusters-app"] + arguments
-
-            # # Running the binary with the specified arguments
-            self.process = subprocess.Popen(command)
-            print("Simulated App started.")
-        else:
-            print("Simulated App already running.")
-
-    def stop(self):
-        if self.process is not None:
-            self.process.send_signal(signal.SIGTERM)
-            self.process.wait()  # Wait for the process to exit
-            self.process = None
-        else:
-            print("Simulated App is not running.")
-
-    def clean(self):
-        if self.process is not None:
-            self.stop()  # Simulate App still running?
-        try:
-            subprocess.check_call("rm -rf /root/kvs1", shell=True)
-            subprocess.check_call("rm -rf /tmp/chip_*", shell=True)
-            print(f"KVS info deleted.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error deleting KVS info: {e}")
-        try:
-            subprocess.check_call("kill -9 $(pidof  chip-all-clusters-app)", shell=True)
-        except subprocess.CalledProcessError as e:
-            print(
-                f"Error while trying to remove possible simulator ghost instances: {e}"
-            )
 
 
 if __name__ == "__main__":
