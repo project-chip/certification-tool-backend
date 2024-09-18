@@ -165,14 +165,14 @@ class TestScriptManager(object, metaclass=Singleton):
             )
             test_cases = []
 
-            if (test_suite.public_id == 'Performance Test Suite'):
+            if test_suite.public_id == "Performance Test Suite":
                 test_cases = self.__pending_test_cases_for_iterations(
                     test_case=test_case_declaration, iterations=1
                 )
 
                 test_cases[0].test_case_metadata.count = iterations
             else:
-                 test_cases = self.__pending_test_cases_for_iterations(
+                test_cases = self.__pending_test_cases_for_iterations(
                     test_case=test_case_declaration, iterations=iterations
                 )
 
@@ -285,7 +285,7 @@ class TestScriptManager(object, metaclass=Singleton):
     ) -> None:
         test_suite.test_cases = []
 
-        if (test_suite_declaration.public_id == 'Performance Test Suite'):
+        if test_suite_declaration.public_id == "Performance Test Suite":
             test_case_declaration = self.__test_case_declaration(
                 test_case_executions[0].public_id,
                 test_suite_declaration=test_suite_declaration,
@@ -293,12 +293,18 @@ class TestScriptManager(object, metaclass=Singleton):
             TestCaseClass = test_case_declaration.class_ref
             test_case = TestCaseClass(test_case_execution=test_case_executions[0])
 
-            additional_step_count = int(test_case_executions[0].test_case_metadata.count) - 1
+            additional_step_count = (
+                int(test_case_executions[0].test_case_metadata.count) - 1
+            )
 
-            for index in range(2,additional_step_count+2):
-                test_case.test_steps.insert(index, TestStep(f"Loop Commissioning ... {index}"))
+            for index in range(2, additional_step_count + 2):
+                test_case.test_steps.insert(
+                    index, TestStep(f"Loop Commissioning ... {index}")
+                )
 
-            self.create_pending_teststeps_execution(db, test_case, test_case_executions[0])
+            self.create_pending_teststeps_execution(
+                db, test_case, test_case_executions[0]
+            )
             test_suite.test_cases.append(test_case)
         else:
             for test_case_execution in test_case_executions:
@@ -309,7 +315,9 @@ class TestScriptManager(object, metaclass=Singleton):
                 )
                 TestCaseClass = test_case_declaration.class_ref
                 test_case = TestCaseClass(test_case_execution=test_case_execution)
-                self.create_pending_teststeps_execution(db, test_case, test_case_execution)
+                self.create_pending_teststeps_execution(
+                    db, test_case, test_case_execution
+                )
                 test_suite.test_cases.append(test_case)
 
     def create_pending_teststeps_execution(

@@ -17,6 +17,7 @@
 
 from abc import ABC, abstractmethod
 
+
 # This interface must be implemented to provide basic access to accessory functionality.
 class AccessoryInterface(ABC):
     @abstractmethod
@@ -30,7 +31,8 @@ class AccessoryInterface(ABC):
     @abstractmethod
     def clean(self):
         pass
-    
+
+
 from .simulated_accessory import SimulatedAccessory
 
 
@@ -47,5 +49,3 @@ class AccessoryManager:
 
     def clean(self):
         self.accessory.clean()
-
-

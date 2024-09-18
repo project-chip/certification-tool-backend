@@ -21,4 +21,6 @@ from .sdk_performance_tests import sdk_performance_test_collection
 
 # Test engine will auto load TestCollectionDeclarations declared inside the package
 # initializer
-sdk_performance_collection: TestCollectionDeclaration = sdk_performance_test_collection()
+sdk_performance_collection: TestCollectionDeclaration = (
+    sdk_performance_test_collection()
+)

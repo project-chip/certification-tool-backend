@@ -86,6 +86,7 @@ DOCKER_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH = (
     "/root/python_testing/scripts/sdk/simulated_accessory.py"
 )
 
+
 class SDKContainerNotRunning(Exception):
     """Raised when we attempt to use the docker container, but it is not running"""
 
@@ -240,7 +241,7 @@ class SDKContainer(metaclass=Singleton):
             socket=is_socket,
             stream=is_stream,
             stdin=True,
-            detach =is_detach,
+            detach=is_detach,
         )
 
         return result

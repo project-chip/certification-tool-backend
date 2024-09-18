@@ -39,10 +39,13 @@ from app.utils import (
     selected_tests_from_execution,
 )
 from app.version import version_information
+from test_collections.matter.sdk_tests.support.performance_tests.utils import (
+    create_summary_report,
+)
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
-from test_collections.matter.sdk_tests.support.performance_tests.utils import create_summary_report
 
 router = APIRouter()
+
 
 @router.get("/", response_model=List[schemas.TestRunExecutionWithStats])
 def read_test_run_executions(
@@ -483,7 +486,9 @@ def import_test_run_execution(
             detail=str(error),
         )
 
+
 date_pattern_out_file = "%Y_%m_%d_%H_%M_%S"
+
 
 @router.post("/{id}/performance_summary")
 def generate_summary_log(
@@ -538,9 +543,9 @@ def generate_summary_log(
     else:
         timestamp = datetime.now().strftime(date_pattern_out_file)
 
-    
-    tc_name, execution_time_folder = create_summary_report(timestamp, log_lines_list, commissioning_method)
-
+    tc_name, execution_time_folder = create_summary_report(
+        timestamp, log_lines_list, commissioning_method
+    )
 
     target_dir = f"{HOST_OUT_FOLDER}/{execution_time_folder}/{tc_name}"
     url_report = f"{matter_qa_url}/home/displayLogFolder?dir_path={target_dir}"

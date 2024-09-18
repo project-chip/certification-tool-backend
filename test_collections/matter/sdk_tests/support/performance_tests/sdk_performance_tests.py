@@ -14,10 +14,8 @@
 # limitations under the License.
 #
 from pathlib import Path
-from typing import Optional
 
 from ..models.sdk_test_folder import SDKTestFolder
-from ..paths import SDK_CHECKOUT_PATH
 from .models.python_test_models import PythonTestType
 from .models.python_test_parser import parse_python_script
 from .models.test_declarations import (
@@ -32,13 +30,12 @@ from .models.test_suite import SuiteType
 # `./models/rpc_client/`.
 #
 # This is a temporary solution since those tests should come from SDK.
-#       
+#
 ###
 
 STRESS_TEST_PATH = Path(__file__).resolve().parent / "scripts/sdk/"
-STRESS_TEST_FOLDER = SDKTestFolder(
-    path=STRESS_TEST_PATH, filename_pattern="TC_*"
-)
+STRESS_TEST_FOLDER = SDKTestFolder(path=STRESS_TEST_PATH, filename_pattern="TC_*")
+
 
 def _init_test_suites(
     python_test_version: str,

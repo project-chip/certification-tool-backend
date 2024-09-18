@@ -18,11 +18,10 @@
 # flake8: noqa
 
 import importlib
+import subprocess
 import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
-import subprocess
-
 
 try:
     from matter_yamltests.hooks import TestRunnerHooks

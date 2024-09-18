@@ -41,8 +41,6 @@ TEST_ENVIRONMENT_CONFIG_BASE_CLASS_NAME = "TestEnvironmentConfig"
 class InvalidProgramConfigurationError(Exception):
     """'Exception raised when the program configuration is invalid"""
 
-    pass
-
 
 def send_email(
     email_to: str,
@@ -168,7 +166,7 @@ def selected_tests_from_execution(run: TestRunExecution) -> TestSelection:
     for suite in run.test_suite_executions:
         selected_tests.setdefault(suite.collection_id, {})
         selected_tests[suite.collection_id].setdefault(suite.public_id, {})
-        suite_dict = selected_tests[suite.collection_id][suite.public_id]
+        selected_tests[suite.collection_id][suite.public_id]
         for case in suite.test_case_executions:
             if (
                 case.public_id

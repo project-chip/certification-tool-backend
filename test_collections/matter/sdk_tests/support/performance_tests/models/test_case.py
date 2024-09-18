@@ -20,7 +20,7 @@ from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
 from socket import SocketIO
-from typing import Any, Generator, Optional, Type, TypeVar, cast
+from typing import Any, Optional, Type, TypeVar
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
@@ -47,7 +47,6 @@ from .utils import (
     RUNNER_CLASS_PATH,
     commission_device,
     generate_command_arguments,
-    handle_logs,
 )
 
 
@@ -213,9 +212,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 "python_test": test,
                 "python_test_version": python_test_version,
                 "metadata": {
-                    "public_id": test.name
-                    if python_test_version != CUSTOM_TEST_IDENTIFIER
-                    else test.name + "-" + CUSTOM_TEST_IDENTIFIER,
+                    "public_id": (
+                        test.name
+                        if python_test_version != CUSTOM_TEST_IDENTIFIER
+                        else test.name + "-" + CUSTOM_TEST_IDENTIFIER
+                    ),
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,

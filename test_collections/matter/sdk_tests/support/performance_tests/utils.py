@@ -24,9 +24,12 @@ date_pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+"
 date_pattern_out_folder = "%d-%m-%Y_%H-%M-%S-%f"
 datetime_json_pattern = "%Y-%m-%dT%H:%M:%S.%f"
 
+
 # Creates the file structure and content required by matter_qa visualization tool.
 # Returns the test case name and the folder name where the report is save.
-def create_summary_report(timestamp: str, log_lines: list, commissioning_method: str) -> tuple[str, str]:
+def create_summary_report(
+    timestamp: str, log_lines: list, commissioning_method: str
+) -> tuple[str, str]:
 
     log_lines_list = "\n".join(log_lines)
 
@@ -178,7 +181,7 @@ def create_summary_report(timestamp: str, log_lines: list, commissioning_method:
     )
 
     return (tc_name, execution_time_folder)
-    
+
 
 def compute_state(execution_status: list) -> str:
     if any(tc for tc in execution_status if tc == "CANCELLED"):
@@ -250,12 +253,12 @@ def generate_summary(
     summary_dict["test_summary_record"]["number_of_iterations_completed"] = len(
         durations
     )
-    summary_dict["test_summary_record"][
-        "number_of_iterations_passed"
-    ] = compute_count_state(execution_status, True)
-    summary_dict["test_summary_record"][
-        "number_of_iterations_failed"
-    ] = compute_count_state(execution_status, False)
+    summary_dict["test_summary_record"]["number_of_iterations_passed"] = (
+        compute_count_state(execution_status, True)
+    )
+    summary_dict["test_summary_record"]["number_of_iterations_failed"] = (
+        compute_count_state(execution_status, False)
+    )
     summary_dict["test_summary_record"]["platform"] = "rpi"
     summary_dict["test_summary_record"]["commissioning_method"] = commissioning_method
     summary_dict["test_summary_record"]["list_of_iterations_failed"] = []
@@ -358,6 +361,7 @@ def extract_datetime(line: str) -> Optional[datetime]:
         line_datetime = datetime.strptime(match[0], "%Y-%m-%d %H:%M:%S.%f")
 
     return line_datetime
+
 
 class Commissioning:
     stages = {

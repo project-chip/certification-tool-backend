@@ -18,6 +18,7 @@ import signal
 import subprocess
 from .accessory_manager import AccessoryInterface
 
+
 class SimulatedAccessory(AccessoryInterface):
 
     def __init__(self):

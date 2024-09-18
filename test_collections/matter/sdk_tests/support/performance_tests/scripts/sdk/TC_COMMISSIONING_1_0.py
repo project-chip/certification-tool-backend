@@ -17,10 +17,7 @@
 import time
 import logging
 import subprocess
-import chip.clusters as Clusters
 from chip import ChipDeviceCtrl
-from chip.clusters.Types import NullValue
-from chip.interaction_model import InteractionModelError, Status
 from matter_testing_support import (
     MatterBaseTest,
     TestStep,
@@ -109,9 +106,8 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         except Exception:
             pass
 
-        for i in range(1, interactions+1):
-            self.additional_steps.insert(i,TestStep(i, f"Loop Commissioning ... {i}"))
-
+        for i in range(1, interactions + 1):
+            self.additional_steps.insert(i, TestStep(i, f"Loop Commissioning ... {i}"))
 
         for i in range(1, interactions + 1):
             self.step(i)
@@ -120,7 +116,9 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
                 f"|============== Begin Commission {i} =========================|"
             )
 
-            logging.info("|============== Accessory LifeCycle =========================|")
+            logging.info(
+                "|============== Accessory LifeCycle =========================|"
+            )
 
             logging.info("INFO Internal Control reset simulated app ")
             accessory_manager.clean()
@@ -128,16 +126,20 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
             logging.info("INFO Internal Control start simulated app ")
             accessory_manager.start()
 
-            logging.info("|============== Commissioning Steps =========================|")
+            logging.info(
+                "|============== Commissioning Steps =========================|"
+            )
 
             await self.commission_and_base_checks()
 
             time.sleep(0.5)
-            logging.info("|============== Accessory LifeCycle =========================|")
+            logging.info(
+                "|============== Accessory LifeCycle =========================|"
+            )
             logging.info("INFO Internal Control stop simulated app")
             accessory_manager.stop()
             accessory_manager.clean()
-            
+
     def clean_chip_tool_kvs(self):
         try:
             subprocess.check_call("rm -f /root/admin_storage.json", shell=True)
@@ -148,4 +150,3 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
 
 if __name__ == "__main__":
     default_matter_test_main()
-
