@@ -37,6 +37,7 @@ class TestCaseMetadata(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     version: Mapped[str] = mapped_column(nullable=False)
     source_hash: Mapped[str] = mapped_column(VARCHAR(64), nullable=False, index=True)
+    mandatory: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.now, nullable=False)
 

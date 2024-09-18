@@ -29,6 +29,7 @@ class DutPairingModeEnum(str, Enum):
     ON_NETWORK = "onnetwork"
     BLE_WIFI = "ble-wifi"
     BLE_THREAD = "ble-thread"
+    WIFIPAF_WIFI = "wifipaf-wifi"
 
 
 class WiFiConfig(BaseModel):
@@ -66,11 +67,26 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
         if dict_model:
             dut_config = dict_model.get("dut_config")
             network = dict_model.get("network")
+            test_parameters = dict_model.get("test_parameters")
+
+            # If both qr-code and manual-code are provided the test run execution
+            # will fail
+            if (
+                test_parameters
+                and "qr-code" in test_parameters
+                and "manual-code" in test_parameters
+            ):
+                raise TestEnvironmentConfigMatterError(
+                    "Please inform just one of either: qr-code or manual-code"
+                )
 
             if not dut_config or not network:
                 raise TestEnvironmentConfigMatterError(
                     "The dut_config and network configuration are mandatory"
                 )
+
+            if not isinstance(dut_config, dict):
+                dut_config = dut_config.__dict__
 
             # Check if the informed field in dut_config is valid
             for field, _ in dut_config.items():

@@ -37,6 +37,7 @@
         "libdbus",
         "libgirepository",
         "loguru",
+        "mandatories",
         "MANYTOONE",
         "mypy",
         "noqa",
@@ -59,7 +60,9 @@
         "unpairing",
         "wlan",
         "yamls",
-        "yamltests"
+        "yamltests",
+        "wifipaf",
+        "WIFIPAF"
     ],
     "ignoreWords": [
         "bdist",

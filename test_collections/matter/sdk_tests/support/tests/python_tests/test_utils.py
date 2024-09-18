@@ -22,6 +22,7 @@ from app.test_engine.logger import test_engine_logger
 from test_collections.matter.test_environment_config import (
     DutConfig,
     DutPairingModeEnum,
+    ThreadExternalConfig,
 )
 
 from ...exec_run_in_container import ExecResultExtended
@@ -50,15 +51,15 @@ async def test_generate_command_arguments_with_null_value_attribute() -> None:
 
     mock_config.dut_config = mock_dut_config
 
-    arguments = generate_command_arguments(
+    arguments = await generate_command_arguments(
         config=mock_config, omit_commissioning_method=False
     )
 
     assert [
         "--trace-to json:log",
+        "--commissioning-method on-network",
         "--discriminator 123",
         "--passcode 1234",
-        "--commissioning-method on-network",
         "--test-argument ",
     ] == arguments
 
@@ -83,15 +84,15 @@ async def test_generate_command_arguments_on_network() -> None:
 
     mock_config.dut_config = mock_dut_config
 
-    arguments = generate_command_arguments(
+    arguments = await generate_command_arguments(
         config=mock_config, omit_commissioning_method=False
     )
 
     assert [
         "--trace-to json:log",
+        "--commissioning-method on-network",
         "--discriminator 123",
         "--passcode 1234",
-        "--commissioning-method on-network",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
@@ -115,15 +116,17 @@ async def test_generate_command_arguments_ble_wifi() -> None:
 
     mock_config.dut_config = mock_dut_config
 
-    arguments = generate_command_arguments(
+    arguments = await generate_command_arguments(
         config=mock_config, omit_commissioning_method=False
     )
 
     assert [
         "--trace-to json:log",
+        "--commissioning-method ble-wifi",
+        "--wifi-ssid testharness",
+        "--wifi-passphrase wifi-password",
         "--discriminator 147",
         "--passcode 357",
-        "--commissioning-method ble-wifi",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
@@ -147,14 +150,77 @@ async def test_generate_command_arguments_ble_thread() -> None:
 
     mock_config.dut_config = mock_dut_config
 
-    arguments = generate_command_arguments(
+    with mock.patch(
+        (
+            "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+            ".__thread_dataset_hex"
+        ),
+        return_value=(
+            "0e08000000000001000035060004001fffe00708fd47156040435d2b041069c13cc038488"
+            "0328b9d2d7a6ee891150c0402a0f7f8000300000f01021234020811111111222222220510"
+            "00112233445566778899aabbccddeeff030444454d4f"
+        ),
+    ):
+        arguments = await generate_command_arguments(
+            config=mock_config, omit_commissioning_method=False
+        )
+
+        assert [
+            "--trace-to json:log",
+            "--commissioning-method ble-thread",
+            (
+                "--thread-dataset-hex 0e08000000000001000035060004001fffe00708fd4715604"
+                "0435d2b041069c13cc0384880328b9d2d7a6ee891150c0402a0f7f8000300000f01021"
+                "23402081111111122222222051000112233445566778899aabbccddeeff030444454d4"
+                "f"
+            ),
+            "--discriminator 456",
+            "--passcode 8765",
+            "--paa-trust-store-path /paa-root-certs",
+            "--storage_path /root/admin_storage.json",
+        ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_ble_thread_for_external_network() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+
+    mock_config.test_parameters = {
+        "paa-trust-store-path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        discriminator="456",
+        setup_code="8765",
+        pairing_mode=DutPairingModeEnum.BLE_THREAD,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    mock_config.network.thread = ThreadExternalConfig(
+        operational_dataset_hex=(
+            "0e08000000000001000035060004001fffe00708fd17e4031e5ea4f20410d477d767e424a5"
+            "f2ef25c16fc9b621e90c0402a0f7f8000300000f0102123402081111111122222222051000"
+            "112233445566778899aabbccddeeff030444454d4f"
+        )
+    )
+
+    arguments = await generate_command_arguments(
         config=mock_config, omit_commissioning_method=False
     )
+
     assert [
         "--trace-to json:log",
+        "--commissioning-method ble-thread",
+        (
+            "--thread-dataset-hex 0e08000000000001000035060004001fffe00708fd17e4031e5ea"
+            "4f20410d477d767e424a5f2ef25c16fc9b621e90c0402a0f7f8000300000f0102123402081"
+            "111111122222222051000112233445566778899aabbccddeeff030444454d4f"
+        ),
         "--discriminator 456",
         "--passcode 8765",
-        "--commissioning-method ble-thread",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
@@ -175,16 +241,33 @@ async def test_generate_command_arguments_no_test_parameter_informed() -> None:
 
     mock_config.dut_config = mock_dut_config
 
-    arguments = generate_command_arguments(
-        config=mock_config, omit_commissioning_method=False
-    )
+    with mock.patch(
+        (
+            "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+            ".__thread_dataset_hex"
+        ),
+        return_value=(
+            "0e08000000000001000035060004001fffe00708fd47156040435d2b041069c13cc0384880"
+            "328b9d2d7a6ee891150c0402a0f7f8000300000f0102123402081111111122222222051000"
+            "112233445566778899aabbccddeeff030444454d4f"
+        ),
+    ):
+        arguments = await generate_command_arguments(
+            config=mock_config, omit_commissioning_method=False
+        )
 
-    assert [
-        "--trace-to json:log",
-        "--discriminator 456",
-        "--passcode 8765",
-        "--commissioning-method ble-thread",
-    ] == arguments
+        assert [
+            "--trace-to json:log",
+            "--commissioning-method ble-thread",
+            (
+                "--thread-dataset-hex 0e08000000000001000035060004001fffe00708fd4715604"
+                "0435d2b041069c13cc0384880328b9d2d7a6ee891150c0402a0f7f8000300000f01021"
+                "23402081111111122222222051000112233445566778899aabbccddeeff030444454d4"
+                "f"
+            ),
+            "--discriminator 456",
+            "--passcode 8765",
+        ] == arguments
 
 
 @pytest.mark.asyncio
@@ -203,15 +286,32 @@ async def test_generate_command_arguments_trace_log_false_informed() -> None:
 
     mock_config.dut_config = mock_dut_config
 
-    arguments = generate_command_arguments(
-        config=mock_config, omit_commissioning_method=False
-    )
+    with mock.patch(
+        (
+            "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+            ".__thread_dataset_hex"
+        ),
+        return_value=(
+            "0e08000000000001000035060004001fffe00708fd17e4031e5ea4f20410d477d767e424a5"
+            "f2ef25c16fc9b621e90c0402a0f7f8000300000f0102123402081111111122222222051000"
+            "112233445566778899aabbccddeeff030444454d4f"
+        ),
+    ):
+        arguments = await generate_command_arguments(
+            config=mock_config, omit_commissioning_method=False
+        )
 
-    assert [
-        "--discriminator 456",
-        "--passcode 8765",
-        "--commissioning-method ble-thread",
-    ] == arguments
+        assert [
+            "--commissioning-method ble-thread",
+            (
+                "--thread-dataset-hex 0e08000000000001000035060004001fffe00708fd17e4031"
+                "e5ea4f20410d477d767e424a5f2ef25c16fc9b621e90c0402a0f7f8000300000f01021"
+                "23402081111111122222222051000112233445566778899aabbccddeeff030444454d4"
+                "f"
+            ),
+            "--discriminator 456",
+            "--passcode 8765",
+        ] == arguments
 
 
 @pytest.mark.asyncio
@@ -227,7 +327,7 @@ async def test_generate_command_arguments_omit_comissioning_method() -> None:
 
     mock_config.dut_config = mock_dut_config
 
-    arguments = generate_command_arguments(
+    arguments = await generate_command_arguments(
         config=mock_config, omit_commissioning_method=True
     )
 
@@ -259,7 +359,7 @@ async def test_commission_device() -> None:
     ) as mock_handle_logs, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=0
     ):
-        commission_device(
+        await commission_device(
             default_environment_config, test_engine_logger  # type: ignore
         )
 
@@ -292,7 +392,7 @@ async def test_commission_device_failure() -> None:
     ), pytest.raises(
         DUTCommissioningError
     ):
-        commission_device(
+        await commission_device(
             default_environment_config, test_engine_logger  # type: ignore
         )
 

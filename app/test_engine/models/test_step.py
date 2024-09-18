@@ -48,11 +48,13 @@ class TestStep(TestObservable):
             self.notify()
 
     def record_error(self, msg: str) -> None:
+        self.state = TestStateEnum.ERROR
         self.errors.append(msg)
         logger.error(f"Test Step Error: {msg}")
         self.notify()
 
     def append_failure(self, msg: str) -> None:
+        self.state = TestStateEnum.FAILED
         logger.warning(f"Test Failure: {msg}")
         self.failures.append(msg)
 

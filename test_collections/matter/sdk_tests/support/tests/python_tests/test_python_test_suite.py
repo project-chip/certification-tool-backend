@@ -40,13 +40,36 @@ def test_python_suite_class_factory_name() -> None:
 
     # Create a subclass of PythonTestSuite
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=SuiteType.COMMISSIONING, name=name, python_test_version="version"
+        suite_type=SuiteType.COMMISSIONING,
+        name=name,
+        python_test_version="version",
+        mandatory=False,
     )
 
     assert suite_class.__name__ == name
     assert suite_class.public_id() == name
     assert suite_class.metadata["title"] == name
     assert suite_class.metadata["description"] == name
+    assert suite_class.metadata["mandatory"] == False  # type: ignore
+
+
+def test_python_suite_class_factory_name_mandatory() -> None:
+    """Test that test mandatory field is set."""
+    name = "AnotherTestSuite"
+
+    # Create a subclass of PythonTestSuite
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name=name,
+        python_test_version="version",
+        mandatory=True,
+    )
+
+    assert suite_class.__name__ == name
+    assert suite_class.public_id() == name
+    assert suite_class.metadata["title"] == name
+    assert suite_class.metadata["description"] == name
+    assert suite_class.metadata["mandatory"] == True  # type: ignore
 
 
 def test_python_test_suite_python_version() -> None:
@@ -57,6 +80,7 @@ def test_python_test_suite_python_version() -> None:
         suite_type=SuiteType.COMMISSIONING,
         name="SomeSuite",
         python_test_version=python_test_version,
+        mandatory=False,
     )
 
     assert suite_class.python_test_version == python_test_version
@@ -68,7 +92,10 @@ def test_commissioning_suite_subclass() -> None:
     type = SuiteType.COMMISSIONING
     # Create a subclass of PythonTestSuite
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-        suite_type=type, name="SomeSuite", python_test_version="some_version"
+        suite_type=type,
+        name="SomeSuite",
+        python_test_version="some_version",
+        mandatory=False,
     )
     assert issubclass(suite_class, CommissioningPythonTestSuite)
 
@@ -82,7 +109,10 @@ async def test_suite_setup_log_python_version() -> None:
         python_test_version = "best_version"
         # Create a subclass of PythonTestSuite
         suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-            suite_type=type, name="SomeSuite", python_test_version=python_test_version
+            suite_type=type,
+            name="SomeSuite",
+            python_test_version=python_test_version,
+            mandatory=False,
         )
 
         suite_instance = suite_class(TestSuiteExecution())
@@ -105,7 +135,7 @@ async def test_suite_setup_log_python_version() -> None:
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
-            return_value=default_environment_config,
+            return_value=default_environment_config.__dict__,
         ):
             await suite_instance.setup()
 
@@ -121,7 +151,10 @@ async def test_suite_setup_without_pics() -> None:
         python_test_version = "best_version"
         # Create a subclass of PythonTestSuite
         suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-            suite_type=type, name="SomeSuite", python_test_version=python_test_version
+            suite_type=type,
+            name="SomeSuite",
+            python_test_version=python_test_version,
+            mandatory=True,
         )
 
         suite_instance = suite_class(TestSuiteExecution())
@@ -144,7 +177,7 @@ async def test_suite_setup_without_pics() -> None:
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
-            return_value=default_environment_config,
+            return_value=default_environment_config.__dict__,
         ):
             await suite_instance.setup()
 
@@ -160,7 +193,10 @@ async def test_suite_setup_with_pics() -> None:
         python_test_version = "best_version"
         # Create a subclass of PythonTestSuite
         suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
-            suite_type=type, name="SomeSuite", python_test_version=python_test_version
+            suite_type=type,
+            name="SomeSuite",
+            python_test_version=python_test_version,
+            mandatory=False,
         )
 
         suite_instance = suite_class(TestSuiteExecution())
@@ -183,7 +219,7 @@ async def test_suite_setup_with_pics() -> None:
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
-            return_value=default_environment_config,
+            return_value=default_environment_config.__dict__,
         ):
             await suite_instance.setup()
 
@@ -201,6 +237,7 @@ async def test_commissioning_suite_setup_with_pics() -> None:
         suite_type=SuiteType.COMMISSIONING,
         name="SomeSuite",
         python_test_version=python_test_version,
+        mandatory=False,
     )
 
     suite_instance = suite_class(TestSuiteExecution())
@@ -219,7 +256,7 @@ async def test_commissioning_suite_setup_with_pics() -> None:
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
-        return_value=default_environment_config,
+        return_value=default_environment_config.__dict__,
     ):
         await suite_instance.setup()
 
@@ -237,6 +274,7 @@ async def test_commissioning_suite_setup() -> None:
         suite_type=SuiteType.COMMISSIONING,
         name="SomeSuite",
         python_test_version="Some version",
+        mandatory=False,
     )
 
     suite_instance = suite_class(TestSuiteExecution())
@@ -254,7 +292,7 @@ async def test_commissioning_suite_setup() -> None:
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
-        return_value=default_environment_config,
+        return_value=default_environment_config.__dict__,
     ):
         await suite_instance.setup()
         python_suite_setup.assert_called_once()

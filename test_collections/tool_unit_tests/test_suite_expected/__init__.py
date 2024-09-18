@@ -14,3 +14,4 @@
 # limitations under the License.
 #
 from .test_suite_expected import TestSuiteExpected
+from .test_suite_expected_2 import TestSuiteExpected2

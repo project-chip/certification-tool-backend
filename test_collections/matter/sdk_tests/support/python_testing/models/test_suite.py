@@ -16,10 +16,17 @@
 from enum import Enum
 from typing import Type, TypeVar
 
+from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
-from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
+from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
+    ThreadBorderRouter,
+)
+from test_collections.matter.test_environment_config import (
+    DutPairingModeEnum,
+    TestEnvironmentConfigMatter,
+)
 
 from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
@@ -30,6 +37,7 @@ class SuiteType(Enum):
     COMMISSIONING = 1
     NO_COMMISSIONING = 2
     LEGACY = 3
+    MANDATORY = 4
 
 
 # Custom Type variable used to annotate the factory methods of classmethod.
@@ -46,10 +54,11 @@ class PythonTestSuite(TestSuite):
     python_test_version: str
     suite_name: str
     sdk_container: SDKContainer = SDKContainer(logger)
+    border_router: ThreadBorderRouter = ThreadBorderRouter()
 
     @classmethod
     def class_factory(
-        cls, suite_type: SuiteType, name: str, python_test_version: str
+        cls, suite_type: SuiteType, name: str, python_test_version: str, mandatory: bool
     ) -> Type[T]:
         """Dynamically declares a subclass based on the type of test suite."""
         suite_class: Type[PythonTestSuite]
@@ -60,11 +69,13 @@ class PythonTestSuite(TestSuite):
             suite_class = PythonTestSuite
 
         return suite_class.__class_factory(
-            name=name, python_test_version=python_test_version
+            name=name, python_test_version=python_test_version, mandatory=mandatory
         )
 
     @classmethod
-    def __class_factory(cls, name: str, python_test_version: str) -> Type[T]:
+    def __class_factory(
+        cls, name: str, python_test_version: str, mandatory: bool
+    ) -> Type[T]:
         """Common class factory method for all subclasses of PythonTestSuite."""
 
         return type(
@@ -80,6 +91,7 @@ class PythonTestSuite(TestSuite):
                     "version": "0.0.1",
                     "title": name,
                     "description": name,
+                    "mandatory": mandatory,
                 },
             },
         )
@@ -104,6 +116,9 @@ class PythonTestSuite(TestSuite):
         logger.info("Stopping SDK container")
         self.sdk_container.destroy()
 
+        logger.info("Stopping Border Router")
+        self.border_router.destroy_device()
+
 
 class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
@@ -113,9 +128,16 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
 
         logger.info("Commission DUT")
 
-        if isinstance(self.config, TestEnvironmentConfigMatter):
-            commission_device(self.config, logger)
-        else:
-            commission_device(
-                TestEnvironmentConfigMatter(**self.config), logger  # type: ignore
-            )
+        matter_config = TestEnvironmentConfigMatter(**self.config)
+
+        # If in BLE-Thread mode and a Thread Auto-Config was provided by the user,
+        # start a new OTBR container app with the according Thread topology for all
+        # tests in the Python Tests Suite.
+        if (
+            matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
+            and isinstance(matter_config.network.thread, ThreadAutoConfig)
+        ):
+            await self.border_router.start_device(matter_config.network.thread)
+            await self.border_router.form_thread_topology()
+
+        await commission_device(matter_config, logger)
