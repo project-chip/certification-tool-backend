@@ -104,6 +104,7 @@ class TestUIObserver(Observer):
                 "test_case_execution_index": test_case_execution.execution_index,
                 "state": observable.state,
                 "errors": observable.errors,
+                "analytics": observable.analytics,
             }
             self.__send_test_update_message(
                 {"test_type": TestUpdateTypeEnum.TEST_CASE, "body": update}
