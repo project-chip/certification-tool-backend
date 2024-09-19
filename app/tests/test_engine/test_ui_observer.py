@@ -147,7 +147,7 @@ def __expected_test_case_dict(index: int, suite_index: int) -> Dict[str, Any]:
 
 
 def __expected_test_step_dict(
-    index: int, case_index: int, suite_index: int
+    index: int, case_index: int, suite_index: int, endpoint: int | None = None
 ) -> Dict[str, Any]:
     return {
         MessageKeysEnum.TYPE: MessageTypeEnum.TEST_UPDATE,
@@ -157,6 +157,7 @@ def __expected_test_step_dict(
                 "test_suite_execution_index": suite_index,
                 "test_case_execution_index": case_index,
                 "test_step_execution_index": index,
+                "endpoint": endpoint,
                 "state": TestStateEnum.EXECUTING,
                 "errors": [],
                 "failures": [],
