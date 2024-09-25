@@ -1,24 +1,25 @@
 #! /usr/bin/env bash
-
- #
- # Copyright (c) 2023 Project CHIP Authors
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
- # You may obtain a copy of the License at
- #
- # http://www.apache.org/licenses/LICENSE-2.0
- #
- # Unless required by applicable law or agreed to in writing, software
- # distributed under the License is distributed on an "AS IS" BASIS,
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- # See the License for the specific language governing permissions and
- # limitations under the License.
+#
+# Copyright (c) 2023 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ROOT_DIR=$(realpath $(dirname "$0")/../../../../..)
 TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 DEFAULT_OTBR_INTERFACE="eth0"
 BR_INTERFACE=${1:-$DEFAULT_OTBR_INTERFACE}
+BR_VARIANT="35"
+BR_CHANNEL=25 # The Thread communication channel used
 BR_IMAGE_BASE="nrfconnect/otbr"
 BR_IMAGE_TAG="9185bda"
 BR_IMAGE=$BR_IMAGE_BASE":"$BR_IMAGE_TAG
@@ -47,15 +48,11 @@ sudo docker run --privileged -d --network host --name otbr-chip -e NAT64=1 -e DN
 print_script_step "Waiting 10 seconds to give the the docker container enough time to start up..."
 sleep 10
 
-# The configuration values used below are matching the TH's default Thread configuration
-# Please, change the following attributes to create a custom Thread network as desired
-#
-BR_CHANNEL=15 # The Thread communication channel used
 BR_CHANNEL_HEX=$(printf '%02x' $BR_CHANNEL)
-BR_PANID="1234" # The 2-byte Personal Area Network ID is a unique Thread identifier
-BR_EXTPANID="1111111122222222" # The 8-byte Extended Personal Area Network ID is a unique Thread identifier
-BR_NETWORKNAME="DEMO" # The human-readable Network Name is a unique Thread identifier
-BR_IPV6PREFIX="fd11:22::/64" # The Mesh-Local prefix used to reach interfaces in the same network
+BR_PANID="5b${BR_VARIANT}" # The 2-byte Personal Area Network ID is a unique Thread identifier
+BR_EXTPANID="5b${BR_VARIANT}dead5b${BR_VARIANT}beef" # The 8-byte Extended Personal Area Network ID is a unique Thread identifier
+BR_NETWORKNAME="5b${BR_VARIANT}" # The human-readable Network Name is a unique Thread identifier
+BR_IPV6PREFIX="fd11:${BR_VARIANT}::/64" # The Mesh-Local prefix used to reach interfaces in the same network
 BR_NETWORKKEY="00112233445566778899aabbccddeeff" # The Thread authentication key value
 
 BR_PARAMS=(
@@ -89,3 +86,4 @@ print_script_step "Restarting the Raspi avahi to have it in a clean state"
 sudo service avahi-daemon restart
 
 print_end_of_script
+
