@@ -13,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from pathlib import Path
 from typing import Optional
 
+from test_collections.matter.config import matter_settings
+
 from ..models.sdk_test_folder import SDKTestFolder
-from ..paths import SDK_CHECKOUT_PATH
-from .models.python_test_models import PythonTestType
+from ..paths import SDK_CHECKOUT_PATH, SDK_TESTS_ROOT
+from .models.python_test_models import PythonTest, PythonTestType
 from .models.python_test_parser import parse_python_script
 from .models.test_declarations import (
     PythonCaseDeclaration,
@@ -46,6 +49,10 @@ SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
 CUSTOM_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "custom"
 CUSTOM_PYTHON_TEST_FOLDER = SDKTestFolder(
     path=CUSTOM_PYTHON_TEST_PATH, filename_pattern="TC*"
+)
+
+PYTHON_TESTS_PARSED_FILE = (
+    SDK_TESTS_ROOT / f"python_tests_{matter_settings.SDK_SHA}.json"
 )
 
 
@@ -78,9 +85,9 @@ def _init_test_suites(
 
 
 def _parse_python_script_to_test_case_declarations(
-    python_test_path: Path, python_test_version: str
+    python_test_version: str,
 ) -> list[PythonCaseDeclaration]:
-    python_tests = parse_python_script(python_test_path)
+    python_tests: list[PythonTest] = parse_python_script(PYTHON_TESTS_PARSED_FILE)
 
     return [
         PythonCaseDeclaration(
@@ -93,28 +100,26 @@ def _parse_python_script_to_test_case_declarations(
 
 
 def __parse_python_tests(
-    python_test_files: list[Path], python_test_version: str, mandatory: bool
+    python_test_version: str, mandatory: bool
 ) -> list[PythonSuiteDeclaration]:
     suites = _init_test_suites(python_test_version)
 
-    for python_test_file in python_test_files:
-        test_cases = _parse_python_script_to_test_case_declarations(
-            python_test_path=python_test_file,
-            python_test_version=python_test_version,
-        )
+    test_cases = _parse_python_script_to_test_case_declarations(
+        python_test_version=python_test_version,
+    )
 
-        for test_case in test_cases:
-            python_test_type = test_case.class_ref.python_test.python_test_type
-            if mandatory:
-                if python_test_type == PythonTestType.MANDATORY:
-                    suites[SuiteType.MANDATORY].add_test_case(test_case)
-            else:
-                if python_test_type == PythonTestType.COMMISSIONING:
-                    suites[SuiteType.COMMISSIONING].add_test_case(test_case)
-                elif python_test_type == PythonTestType.NO_COMMISSIONING:
-                    suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
-                elif python_test_type != PythonTestType.MANDATORY:
-                    suites[SuiteType.LEGACY].add_test_case(test_case)
+    for test_case in test_cases:
+        python_test_type = test_case.class_ref.python_test.python_test_type
+        if mandatory:
+            if python_test_type == PythonTestType.MANDATORY:
+                suites[SuiteType.MANDATORY].add_test_case(test_case)
+        else:
+            if python_test_type == PythonTestType.COMMISSIONING:
+                suites[SuiteType.COMMISSIONING].add_test_case(test_case)
+            elif python_test_type == PythonTestType.NO_COMMISSIONING:
+                suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
+            elif python_test_type != PythonTestType.MANDATORY:
+                suites[SuiteType.LEGACY].add_test_case(test_case)
 
     return [s for s in list(suites.values()) if len(s.test_cases) != 0]
 
@@ -126,11 +131,9 @@ def __sdk_python_test_collection(
         name=name, folder=python_test_folder, mandatory=mandatory
     )
 
-    python_test_files = python_test_folder.file_paths(extension=".py")
     python_test_version = python_test_folder.version
 
     suites = __parse_python_tests(
-        python_test_files=python_test_files,
         python_test_version=python_test_version,
         mandatory=mandatory,
     )
@@ -166,24 +169,23 @@ def custom_python_test_collection(
     python_test_folder: SDKTestFolder = CUSTOM_PYTHON_TEST_FOLDER,
 ) -> Optional[PythonCollectionDeclaration]:
     """Declare a new collection of test suites."""
-    collection = PythonCollectionDeclaration(
-        name="Custom SDK Python Tests", folder=python_test_folder
-    )
+    return None
+    # collection = PythonCollectionDeclaration(
+    #     name="Custom SDK Python Tests", folder=python_test_folder
+    # )
 
-    python_test_files = python_test_folder.file_paths(extension=".py")
-    suites = __parse_python_tests(
-        python_test_files=python_test_files,
-        python_test_version="custom",
-        mandatory=False,
-    )
+    # suites = __parse_python_tests(
+    #     python_test_version="custom",
+    #     mandatory=False,
+    # )
 
-    for suite in suites:
-        if not suite.test_cases:
-            continue
-        suite.sort_test_cases()
-        collection.add_test_suite(suite)
+    # for suite in suites:
+    #     if not suite.test_cases:
+    #         continue
+    #     suite.sort_test_cases()
+    #     collection.add_test_suite(suite)
 
-    if not collection.test_suites:
-        return None
+    # if not collection.test_suites:
+    #     return None
 
-    return collection
+    # return collection
