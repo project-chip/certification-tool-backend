@@ -45,7 +45,7 @@ class ContainerManager(object, metaclass=Singleton):
     def destroy(self, container: Container) -> None:
         if self.is_running(container):
             container.kill()
-        container.remove()
+        container.remove(force=True)
 
     def get_container(self, id_or_name: str) -> Optional[Container]:
         try:
