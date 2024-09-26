@@ -18,7 +18,7 @@ TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 DEFAULT_OTBR_INTERFACE="eth0"
 BR_INTERFACE=${1:-$DEFAULT_OTBR_INTERFACE}
-BR_VARIANT="35"
+BR_VARIANT="35" TODO: Receive the BR variant via shell script parameter
 BR_CHANNEL=25 # The Thread communication channel used
 BR_IMAGE_BASE="nrfconnect/otbr"
 BR_IMAGE_TAG="9185bda"
