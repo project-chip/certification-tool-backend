@@ -16,13 +16,33 @@
 ROOT_DIR=$(realpath $(dirname "$0")/../../../../..)
 TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 
-DEFAULT_OTBR_INTERFACE="eth0"
-BR_INTERFACE=${1:-$DEFAULT_OTBR_INTERFACE}
-BR_VARIANT="35" # TODO: Receive the BR variant via shell script parameter
+BR_INTERFACE="eth0"
+BR_VARIANT="35"
 BR_CHANNEL=25 # The Thread communication channel used
 BR_IMAGE_BASE="nrfconnect/otbr"
 BR_IMAGE_TAG="9185bda"
 BR_IMAGE=$BR_IMAGE_BASE":"$BR_IMAGE_TAG
+
+while getopts ":i:v:" opt; do
+  case $opt in
+    i)
+      echo "Using BR Interface: $OPTARG" >&2
+      BR_INTERFACE=$OPTARG
+      ;;
+    v)
+      echo "Using BR Variant: $OPTARG" >&2
+      BR_VARIANT=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
 
 source "$TH_SCRIPTS_DIR/utils.sh"
 
