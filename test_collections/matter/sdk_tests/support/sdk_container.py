@@ -56,7 +56,6 @@ MAPPED_DATA_MODEL_VOLUME = "mapped_data_model_volume"
 DOCKER_DATA_MODEL_PATH = DOCKER_PYTHON_TESTING_PATH + "/data_model"
 
 
-
 # RPC Client Running on SDK Container
 LOCAL_RPC_PYTHON_TESTING_PATH = Path(
     LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/python_testing/models/rpc_client/"
