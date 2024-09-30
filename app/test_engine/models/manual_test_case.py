@@ -193,7 +193,7 @@ class ManualTestCase(TestCase, UserPromptSupport):
             if isinstance(step, ManualVerificationTestStep):
                 await step.prompt_verification_step()
             else:
-                logger.error(f"Unsupported test test {step.__class__}")
+                logger.error(f"Unsupported test step {step.__class__}")
             self.next_step()
 
         if isinstance(self.current_test_step, ManualLogUploadStep):
