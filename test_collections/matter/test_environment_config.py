@@ -36,6 +36,10 @@ class WiFiConfig(BaseModel):
     ssid: str
     password: str
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.ssid = f"\"{self.ssid}\""
+
 
 class ThreadExternalConfig(BaseModel):
     operational_dataset_hex: str
