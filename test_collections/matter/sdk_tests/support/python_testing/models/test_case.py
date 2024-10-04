@@ -115,7 +115,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.skip_to_last_step()
 
     def step_skipped(self, name: str, expression: str) -> None:
-        self.current_test_step.mark_as_not_applicable("Test step skipped")
+        # From TH perspective, Legacy test cases shows only 2 steps in UI
+        # but it may have several in the script file.
+        # So TH should not skip the step in order to keep the test execution flow
+        skiped_msg = "Test step skipped"
+        if self.python_test.python_test_type == PythonTestType.LEGACY:
+            logger.info(skiped_msg)
+        else:
+            self.current_test_step.mark_as_not_applicable(skiped_msg)
 
     def step_start(self, name: str) -> None:
         self.step_over()
