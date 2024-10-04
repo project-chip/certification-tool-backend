@@ -36,6 +36,7 @@ mandatory_python_tcs_public_id = [
     "TC_IDM_10_2",
     "TC_IDM_10_3",
     "TC_IDM_10_4",
+    "TC_IDM_10_5",
     "TC_IDM_12_1",
 ]
 
