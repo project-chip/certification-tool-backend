@@ -36,7 +36,7 @@ class WiFiConfig(BaseModel):
     ssid: str
     password: str
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.ssid = f'"{self.ssid}"'
 
