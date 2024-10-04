@@ -38,7 +38,7 @@ class WiFiConfig(BaseModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.ssid = f"\"{self.ssid}\""
+        self.ssid = f'"{self.ssid}"'
 
 
 class ThreadExternalConfig(BaseModel):
