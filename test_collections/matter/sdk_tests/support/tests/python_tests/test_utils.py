@@ -123,7 +123,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
     assert [
         "--trace-to json:log",
         "--commissioning-method ble-wifi",
-        "--wifi-ssid testharness",
+        "--wifi-ssid \"testharness\"",
         "--wifi-passphrase wifi-password",
         "--discriminator 147",
         "--passcode 357",
