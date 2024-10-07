@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from enum import Enum
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel
 
@@ -35,6 +35,10 @@ class DutPairingModeEnum(str, Enum):
 class WiFiConfig(BaseModel):
     ssid: str
     password: str
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.ssid = f'"{self.ssid}"'
 
 
 class ThreadExternalConfig(BaseModel):
