@@ -35,7 +35,7 @@ async def prompt_for_commissioning_mode(
     logger: loguru.Logger,
     on_success: Optional[Callable] = None,
     on_failure: Optional[Callable] = None,
-) -> None:
+) -> PromptOption:
     prompt = "Make sure the DUT is in Commissioning Mode"
     options = {
         "DONE": PromptOption.PASS,
@@ -62,3 +62,4 @@ async def prompt_for_commissioning_mode(
                 f"Received unknown prompt option for \
                         commissioning step: {prompt_response.response}"
             )
+    return prompt_response.response
