@@ -161,6 +161,11 @@ def start_test_run_execution(
             status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
         )
 
+    if len(test_run_execution.project.pics.clusters) == 0:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="No PICS were informed"
+        )
+
     test_runner = TestRunner()
 
     try:
