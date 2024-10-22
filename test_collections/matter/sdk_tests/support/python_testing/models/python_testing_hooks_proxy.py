@@ -161,7 +161,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     def step_skipped(self, name: str, expression: str) -> None:
         self.results.put(SDKPythonTestResultStepSkipped(expression=expression))
 
-    def step_start(self, name: str) -> None:
+    def step_start(self, name: str, endpoint: Optional[int] = None) -> None:
         self.results.put(SDKPythonTestResultStepStart(name=name))
 
     def step_success(self, logger: Any, logs: Any, duration: int, request: Any) -> None:
@@ -198,6 +198,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         msg: str,
         placeholder: Optional[str] = None,
         default_value: Optional[str] = None,
+        endpoint_id: Optional[int] = None,
     ) -> None:
         self.results.put(
             SDKPythonTestResultShowPrompt(
