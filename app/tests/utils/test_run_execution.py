@@ -26,17 +26,9 @@ from app.schemas import TestSelection
 from app.schemas.pics import PICS
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.tests.utils.project import create_random_project
+from app.tests.utils.test_pics_data import create_random_pics
 
 fake = Faker()
-
-default_pics = {
-    "clusters": {
-        "Access Control cluster": {
-            "name": "Access Control cluster",
-            "items": {"ACL.S": {"number": "ACL.S", "enabled": True}},
-        }
-    }
-}
 
 
 def random_test_run_execution_dict(
@@ -123,7 +115,7 @@ def create_random_test_run_execution_with_test_case_states(
         "sample_tests": {"SampleTestSuite1": {"TCSS1001": num_test_cases}}
     }
     test_run_execution = create_random_test_run_execution(
-        db=db, selected_tests=selected_tests, pics=default_pics
+        db=db, selected_tests=selected_tests, pics=create_random_pics()
     )
 
     test_suite_execution = test_run_execution.test_suite_executions[0]
@@ -141,7 +133,7 @@ def create_random_test_run_execution_with_test_case_states(
 
 
 def create_test_run_execution_with_some_test_cases(
-    db: Session, pics: Optional[PICS] = default_pics, **kwargs: Any
+    db: Session, pics: Optional[PICS] = create_random_pics(), **kwargs: Any
 ) -> TestRunExecution:
     return create_random_test_run_execution(
         db=db,
