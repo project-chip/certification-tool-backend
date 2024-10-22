@@ -163,7 +163,7 @@ def start_test_run_execution(
 
     if len(test_run_execution.project.pics.clusters) == 0:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="No PICS were informed"
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail="No PICS were informed."
         )
 
     test_runner = TestRunner()
