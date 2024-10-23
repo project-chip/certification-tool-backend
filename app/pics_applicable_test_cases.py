@@ -17,19 +17,19 @@ from typing import Dict
 
 from loguru import logger
 
-from app.schemas.pics import PICS, PICSApplicableTestCases
+from app.schemas.pics import PICS, PICSApplicableTestCasesDetail
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
 from app.test_engine.test_script_manager import test_script_manager
 
 
-def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
+def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCasesDetail:
     """Returns the applicable test cases for this project given the set of PICS"
 
     Args:
         pics (PICS): set of pics to map against
 
     Returns:
-        PICSApplicableTestCases: List of test cases that are applicable
+        PICSApplicableTestCasesDetail: List of test cases that are applicable
           for this Project
     """
     applicable_tests: list = []
@@ -38,7 +38,7 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
         # If the user has not uploaded any PICS
         # i.e, there are no PICS associated with the project then return empty set
         logger.debug(f"Applicable test cases: {applicable_tests}")
-        return PICSApplicableTestCases(test_cases=applicable_tests)
+        return PICSApplicableTestCasesDetail(test_cases=applicable_tests)
 
     test_collections = test_script_manager.test_collections
     enabled_pics = set([item.number for item in pics.all_enabled_items()])
@@ -56,7 +56,7 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
     applicable_tests.extend(applicable_remaining_tests)
 
     logger.debug(f"Applicable test cases: {applicable_tests}")
-    return PICSApplicableTestCases(test_cases=applicable_tests)
+    return PICSApplicableTestCasesDetail(test_cases=applicable_tests)
 
 
 def __applicable_test_cases(
@@ -70,10 +70,20 @@ def __applicable_test_cases(
         if test_collection.mandatory == mandatory:
             for test_suite in test_collection.test_suites.values():
                 for test_case in test_suite.test_cases.values():
+                    test_case_trace = {}
+                    test_case_trace[test_case.metadata["title"]] = {
+                        "test_suite": test_suite.metadata["title"],
+                        "test_collection": test_collection.name,
+                        "mandatory": test_collection.mandatory,
+                        "pics_required": True,
+                    }
                     if len(test_case.pics) == 0:
                         # Test cases without pics required are always applicable
-                        applicable_tests.append(test_case.metadata["title"])
+                        test_case_trace[test_case.metadata["title"]][
+                            "pics_required"
+                        ] = False
+                        applicable_tests.append(test_case_trace)
                     elif len(test_case.pics) > 0:
                         if test_case.pics.issubset(enabled_pics):
-                            applicable_tests.append(test_case.metadata["title"])
+                            applicable_tests.append(test_case_trace)
     return applicable_tests
