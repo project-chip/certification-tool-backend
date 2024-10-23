@@ -158,8 +158,8 @@ def __parse_test_case(
         try:
             tc_desc = __retrieve_description(desc_method)
         except Exception as e:
-            logger.error(
-                f"Error while parsing description for {tc_name}, Error:{str(e)}"
+            logger.warning(
+                f"Failed parsing description method for {tc_name}, Error:{str(e)}"
             )
 
     # If the python test does not implement the steps template method,
@@ -170,14 +170,14 @@ def __parse_test_case(
         try:
             tc_steps = __retrieve_steps(steps_method)
         except Exception as e:
-            logger.error(f"Error while parsing steps for {tc_name}, Error:{str(e)}")
+            logger.warning(f"Failed parsing steps method for {tc_name}, Error:{str(e)}")
 
     pics_method = __get_method_by_name(pics_method_name, methods)
     if pics_method:
         try:
             tc_pics = __retrieve_pics(pics_method)
         except Exception as e:
-            logger.error(f"Error while parsing PICS for {tc_name}, Error:{str(e)}")
+            logger.warning(f"Failed parsing PICS method for {tc_name}, Error:{str(e)}")
 
     # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
     # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
@@ -237,7 +237,9 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
             step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
             parsed_step_name = step_name
         except Exception as e:
-            logger.error(f"Error while parsing step from {method.name}, Error:{str(e)}")
+            logger.warning(
+                f"Failed parsing step name from {method.name}, Error:{str(e)}"
+            )
             parsed_step_name = "UNABLE TO PARSE TEST STEP NAME"
 
         python_steps.append(
