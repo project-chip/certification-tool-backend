@@ -807,7 +807,7 @@ async def test_test_run_execution_start_no_pics(
         f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/start",
     )
 
-    # Assert 200 OK and that test run data is returned
+    # Assert 422 UNPROCESSABLE_ENTITY and a detail error message
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     content = response.json()
     assert isinstance(content, dict)
