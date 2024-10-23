@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+from multiprocessing.managers import BaseManager
 from pathlib import Path
 from typing import Optional, Union
 
@@ -29,6 +30,7 @@ from test_collections.matter.config import matter_settings
 
 from .exec_run_in_container import ExecResultExtended, exec_run_in_container
 from .pics import set_pics_command
+from .python_testing.models.python_testing_hooks_proxy import SDKPythonTestRunnerHooks
 
 # Trace mount
 LOCAL_LOGS_PATH = Path("/var/tmp")
@@ -173,6 +175,7 @@ class SDKContainer(metaclass=Singleton):
 
         self.__pics_file_created = False
         self.logger = logger
+        self.manager: BaseManager | None = None
 
     @property
     def pics_file_created(self) -> bool:
@@ -186,6 +189,13 @@ class SDKContainer(metaclass=Singleton):
                 f'Existing container named "{self.container_name}" found. Destroying.'
             )
             container_manager.destroy(existing_container)
+
+    def __create_manager(self) -> BaseManager:
+        BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
+        manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
+        manager.start()
+
+        return manager
 
     def is_running(self) -> bool:
         if self.__container is None:
@@ -212,6 +222,9 @@ class SDKContainer(metaclass=Singleton):
         self.__container = await container_manager.create_container(
             self.image_tag, self.run_parameters
         )
+
+        # Create the BaseManager for multiprocess data share
+        self.manager = self.__create_manager()
 
         self.logger.info(
             f"{self.container_name} container started"

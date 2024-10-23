@@ -77,6 +77,10 @@ async def test_destroy_container_running() -> None:
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
+        target=sdk_container,
+        attribute="_SDKContainer__create_manager",
+        return_value=None,
+    ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
         target=container_manager, attribute="destroy"
@@ -113,6 +117,10 @@ async def test_destroy_container_once() -> None:
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
+        target=sdk_container,
+        attribute="_SDKContainer__create_manager",
+        return_value=None,
+    ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
         target=container_manager, attribute="destroy"
@@ -147,6 +155,10 @@ async def test_send_command_default_prefix() -> None:
 
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
+    ), mock.patch.object(
+        target=sdk_container,
+        attribute="_SDKContainer__create_manager",
+        return_value=None,
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
@@ -189,6 +201,10 @@ async def test_send_command_custom_prefix() -> None:
 
     with mock.patch.object(
         target=sdk_container, attribute="is_running", return_value=False
+    ), mock.patch.object(
+        target=sdk_container,
+        attribute="_SDKContainer__create_manager",
+        return_value=None,
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(

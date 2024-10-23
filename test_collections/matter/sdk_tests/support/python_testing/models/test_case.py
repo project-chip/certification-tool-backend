@@ -17,7 +17,6 @@ import re
 from asyncio import sleep
 from enum import IntEnum
 from inspect import iscoroutinefunction
-from multiprocessing.managers import BaseManager
 from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
@@ -38,10 +37,7 @@ from ...pics import PICS_FILE_PATH
 from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
 from .python_test_models import PythonTest, PythonTestType
-from .python_testing_hooks_proxy import (
-    SDKPythonTestResultBase,
-    SDKPythonTestRunnerHooks,
-)
+from .python_testing_hooks_proxy import SDKPythonTestResultBase
 from .utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
@@ -263,9 +259,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         try:
             logger.info("Running Python Test: " + self.python_test.name)
 
-            BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
-            manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
-            manager.start()
+            manager = self.sdk_container.manager
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
             if not self.python_test.path:
