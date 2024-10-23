@@ -257,7 +257,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
         try:
             logger.info("Running Python Test: " + self.python_test.name)
 
-            test_runner_hooks = self.sdk_container.manager.TestRunnerHooks()  # type: ignore
+            manager = self.sdk_container.manager
+            test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
             if not self.python_test.path:
                 raise PythonTestCaseError(

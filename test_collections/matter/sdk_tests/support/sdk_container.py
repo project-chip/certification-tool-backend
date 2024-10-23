@@ -153,6 +153,13 @@ class SDKContainer(metaclass=Singleton):
             )
             container_manager.destroy(existing_container)
 
+    def __create_manager(self) -> BaseManager:
+        BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
+        manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
+        manager.start()
+
+        return manager
+
     def is_running(self) -> bool:
         if self.__container is None:
             return False
@@ -179,9 +186,8 @@ class SDKContainer(metaclass=Singleton):
             self.image_tag, self.run_parameters
         )
 
-        BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
-        self.manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
-        self.manager.start()
+        # Create the BaseManager for multiprocess data share
+        self.manager = self.__create_manager()
 
         self.logger.info(
             f"{self.container_name} container started"
