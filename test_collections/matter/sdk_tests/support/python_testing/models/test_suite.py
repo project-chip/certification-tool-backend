@@ -29,8 +29,8 @@ from test_collections.matter.test_environment_config import (
 )
 
 from ...sdk_container import SDKContainer
-from ...utils import prompt_for_commissioning_mode
-from .utils import commission_device
+from ...utils import PromptOption, prompt_for_commissioning_mode
+from .utils import DUTCommissioningError, commission_device
 
 
 class SuiteType(Enum):
@@ -124,7 +124,14 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
         await super().setup()
 
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+        user_response = await prompt_for_commissioning_mode(
+            self, logger, None, self.cancel
+        )
+
+        if user_response == PromptOption.FAIL:
+            raise DUTCommissioningError(
+                "User chose prompt option FAILED for DUT is in Commissioning Mode"
+            )
 
         logger.info("Commission DUT")
 
