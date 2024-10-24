@@ -83,6 +83,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.__runned = 0
         self.test_stop_called = False
         self.test_socket = None
+        self.step_execution_times = []  # type: ignore[var-annotated]
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -102,35 +103,29 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if not self.test_stop_called:
             self.current_test_step.mark_as_completed()
 
-    def test_start(
-        self, filename: str, name: str, count: int, steps: list[str] = []
-    ) -> None:
-        pass
+    def test_start(self, filename: str, name: str, count: int) -> None:
+        self.step_over()
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.test_stop_called = True
 
-    def test_skipped(self, filename: str, name: str) -> None:
-        self.mark_as_not_applicable()
-        self.skip_to_last_step()
-
     def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
-
-    def step_start(self, name: str) -> None:
         self.step_over()
 
-    def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
+    def step_start(self, name: str) -> None:
         pass
+
+    def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
+        duration_ms = int(duration / 1000)
+        self.step_execution_times.append(duration_ms)
+        self.analytics = self.generate_analytics_data()
+        self.step_over()
 
     def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
-        failure_msg = "Python test step failure"
-        if logs:
-            failure_msg += f": {logs}"
-
-        self.mark_step_failure(failure_msg)
+        self.mark_step_failure("Python test step failure")
 
         # Python tests with only 2 steps are the ones that don't follow the template.
         # In the case of a test file with multiple test cases, more than one of these
@@ -163,36 +158,49 @@ class PythonTestCase(TestCase, UserPromptSupport):
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
+    def generate_analytics_data(self) -> dict[str, str]:
+        print(self.step_execution_times)
+        self.step_execution_times.sort()
+        print(self.step_execution_times)
+        sorted_list_size = len(self.step_execution_times)
+        p50_index = int(sorted_list_size * (50 / 100))
+        p95_index = int(sorted_list_size * (95 / 100))
+        p99_index = int(sorted_list_size * (99 / 100))
+
+        try:
+            return {
+                "p50": f"{self.step_execution_times[p50_index]}",
+                "p95": f"{self.step_execution_times[p95_index]}",
+                "p99": f"{self.step_execution_times[p99_index]}",
+                "unit": "ms",
+            }
+        except:  # noqa: E722
+            logger.info("Error generating analytics data for step execution times.")
+        return {"p50": "0", "p95": "0", "p99": "0", "unit": "ms"}
+
     @classmethod
     def pics(cls) -> set[str]:
         """Test Case level PICS. Read directly from parsed Python Test."""
         return cls.python_test.PICS
 
     @classmethod
-    def class_factory(
-        cls, test: PythonTest, python_test_version: str, mandatory: bool
-    ) -> Type[T]:
+    def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """Dynamically declares a subclass based on the type of Python test."""
         case_class: Type[PythonTestCase]
 
         if test.python_test_type == PythonTestType.NO_COMMISSIONING:
             case_class = NoCommissioningPythonTestCase
-        elif (
-            test.python_test_type == PythonTestType.LEGACY
-            or test.python_test_type == PythonTestType.MANDATORY
-        ):
+        elif test.python_test_type == PythonTestType.LEGACY:
             case_class = LegacyPythonTestCase
         else:  # Commissioning
             case_class = PythonTestCase
 
         return case_class.__class_factory(
-            test=test, python_test_version=python_test_version, mandatory=mandatory
+            test=test, python_test_version=python_test_version
         )
 
     @classmethod
-    def __class_factory(
-        cls, test: PythonTest, python_test_version: str, mandatory: bool
-    ) -> Type[T]:
+    def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """class factory method for PythonTestCase."""
         title = cls.__title(test.name)
         class_name = cls.__class_name(test.name)
@@ -212,7 +220,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,
-                    "mandatory": mandatory,
                 },
             },
         )
@@ -240,8 +247,27 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
+        try:
+            self.sdk_container.destroy()
+        except Exception:
+            pass
 
     def handle_logs_temp(self) -> None:
+        sdk_tests_path = Path(Path(__file__).parents[3])
+        file_output_path = (
+            sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
+        )
+
+        filter_entries = [
+            "INFO Successfully",
+            "INFO Performing next",
+            "INFO Internal Control",
+            "'kEstablishing' --> 'kActive'",
+            "SecureChannel:PBKDFParamRequest",
+            "Discovered Device:",
+            "|=====",
+        ]
+
         # This is a temporary workaround since Python Test are generating a
         # big amount of log
         sdk_tests_path = Path(Path(__file__).parents[3])
@@ -249,8 +275,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
             sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
         )
         with open(file_output_path) as f:
-            lines = f.read()
-            logger.log(PYTHON_TEST_LEVEL, lines)
+            for line in f:
+                if any(specific_string in line for specific_string in filter_entries):
+                    logger.log(PYTHON_TEST_LEVEL, line)
+            # lines = f.read()
+            # logger.log(PYTHON_TEST_LEVEL, lines)
 
     async def execute(self) -> None:
         try:
@@ -279,7 +308,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # Generate the command argument by getting the test_parameters from
             # project configuration
             # comissioning method is omitted because it's handled by the test suite
-            command_arguments = await generate_command_arguments(
+            command_arguments = generate_command_arguments(
                 config=TestEnvironmentConfigMatter(**self.config),
                 omit_commissioning_method=True,
             )
@@ -288,13 +317,17 @@ class PythonTestCase(TestCase, UserPromptSupport):
             if self.sdk_container.pics_file_created:
                 command.append(f" --PICS {PICS_FILE_PATH}")
 
-            exec_result = self.sdk_container.send_command(
+            command.append(f" --interactions {(len(self.test_steps) - 2)}")
+
+            # exec_result =
+            self.sdk_container.send_command(
                 command,
                 prefix=EXECUTABLE,
-                is_stream=True,
-                is_socket=True,
+                is_stream=False,
+                is_socket=False,
+                is_detach=True,
             )
-            self.test_socket = exec_result.socket
+            # self.test_socket = exec_result.socket
 
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
@@ -306,15 +339,21 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 await self.__handle_update(update)
 
             # Step: Show test logs
-            if self.current_test_step_index < len(self.test_steps) - 1:
-                self.skip_to_last_step()
 
-            logger.info("---- Start of Python test logs ----")
+            # Python tests that don't follow the template only have the 2 default steps
+            # and, at this point, will still be in the first step because of the
+            # step_over method. So we have to explicitly move on to the next step here.
+            # The tests that do follow the template will have additional steps and will
+            # have already been moved to the correct step by the hooks' step methods.
+            if len(self.test_steps) == 2:
+                self.next_step()
+
+            logger.info("---- Start of Performance test logs ----")
             self.handle_logs_temp()
             # Uncomment line bellow when the workaround has a definitive solution
             # handle_logs(cast(Generator, exec_result.output), logger)
 
-            logger.info("---- End of Python test logs ----")
+            logger.info("---- End of Performance test logs ----")
 
             self.current_test_step.mark_as_completed()
         finally:
@@ -341,7 +380,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             func(**kwargs)
 
     def create_test_steps(self) -> None:
-        self.test_steps = [TestStep("Start Python test")]
+        self.test_steps = [TestStep("Start Performance test")]
         for step in self.python_test.steps:
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
@@ -351,7 +390,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 class NoCommissioningPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+        # await prompt_for_commissioning_mode(self, logger, None, self.cancel)
 
 
 class LegacyPythonTestCase(PythonTestCase):
@@ -380,9 +419,7 @@ class LegacyPythonTestCase(PythonTestCase):
             case PromptOption.YES:
                 logger.info("User chose prompt option YES")
                 logger.info("Commission DUT")
-                await commission_device(
-                    TestEnvironmentConfigMatter(**self.config), logger
-                )
+                commission_device(self.config, logger)  # type: ignore
 
             case PromptOption.NO:
                 logger.info("User chose prompt option NO")

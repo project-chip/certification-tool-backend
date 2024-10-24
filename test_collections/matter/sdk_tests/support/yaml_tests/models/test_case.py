@@ -104,9 +104,11 @@ class YamlTestCase(TestCase):
                 "yaml_version": yaml_version,
                 "chip_test_identifier": class_name,
                 "metadata": {
-                    "public_id": identifier
-                    if yaml_version != CUSTOM_TEST_IDENTIFIER
-                    else identifier + "-" + CUSTOM_TEST_IDENTIFIER,
+                    "public_id": (
+                        identifier
+                        if yaml_version != CUSTOM_TEST_IDENTIFIER
+                        else identifier + "-" + CUSTOM_TEST_IDENTIFIER
+                    ),
                     "version": "0.0.1",
                     "title": title,
                     "description": test.name,

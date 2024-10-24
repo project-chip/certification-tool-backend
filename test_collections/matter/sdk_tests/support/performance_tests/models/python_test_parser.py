@@ -18,8 +18,6 @@ import re
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
-from app.test_engine.logger import test_engine_logger as logger
-
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from .python_test_models import PythonTest, PythonTestType
 
@@ -31,13 +29,6 @@ TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
 
 
 FunctionDefType = Union[ast.FunctionDef, ast.AsyncFunctionDef]
-
-mandatory_python_tcs_public_id = [
-    "TC_IDM_10_2",
-    "TC_IDM_10_3",
-    "TC_IDM_10_4",
-    "TC_IDM_12_1",
-]
 
 
 def parse_python_script(path: Path) -> list[PythonTest]:
@@ -89,10 +80,7 @@ def __test_classes(module: ast.Module) -> list[ast.ClassDef]:
         for c in module.body
         if isinstance(c, ast.ClassDef)
         and any(
-            b
-            for b in c.bases
-            if isinstance(b, ast.Name)
-            and (b.id == "MatterBaseTest" or b.id == "MatterQABaseTestCaseClass")
+            b for b in c.bases if isinstance(b, ast.Name) and b.id == "MatterBaseTest"
         )
     ]
 
@@ -158,42 +146,27 @@ def __parse_test_case(
 
     desc_method = __get_method_by_name(desc_method_name, methods)
     if desc_method:
-        try:
-            tc_desc = __retrieve_description(desc_method)
-        except Exception as e:
-            logger.error(
-                f"Error while parsing description for {tc_name}, Error:{str(e)}"
-            )
+        tc_desc = __retrieve_description(desc_method)
 
     # If the python test does not implement the steps template method,
     # the test case will be presented in UI and the whole test case will be
     # executed as one step
     steps_method = __get_method_by_name(steps_method_name, methods)
     if steps_method:
-        try:
-            tc_steps = __retrieve_steps(steps_method)
-        except Exception as e:
-            logger.error(f"Error while parsing steps for {tc_name}, Error:{str(e)}")
+        tc_steps = __retrieve_steps(steps_method)
 
     pics_method = __get_method_by_name(pics_method_name, methods)
     if pics_method:
-        try:
-            tc_pics = __retrieve_pics(pics_method)
-        except Exception as e:
-            logger.error(f"Error while parsing PICS for {tc_name}, Error:{str(e)}")
+        tc_pics = __retrieve_pics(pics_method)
 
     # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
     # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
     #   but don't have a commissioning first step
     # - PythonTestType.LEGACY: test cases that don't follow the expected template
-    # - PythonTestType.MANDATORY: Mandatory test cases
     # We use the desc_[test_name] method as an indicator that the test case follows the
     # expected template
     python_test_type = PythonTestType.LEGACY
-
-    if tc_name in mandatory_python_tcs_public_id:
-        python_test_type = PythonTestType.MANDATORY
-    elif len(tc_steps) > 0 and tc_steps[0].is_commissioning:
+    if len(tc_steps) > 0 and tc_steps[0].is_commissioning:
         python_test_type = PythonTestType.COMMISSIONING
     elif desc_method:
         python_test_type = PythonTestType.NO_COMMISSIONING
@@ -225,28 +198,18 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
         return []
 
     for step in steps_body.value.elts:
-        try:
-            arg_is_commissioning = False
-
-            if (
-                step.keywords
-                and "is_commissioning"
-                in step.keywords[KEYWORD_IS_COMISSIONING_INDEX].arg
-            ):
-                arg_is_commissioning = step.keywords[
-                    KEYWORD_IS_COMISSIONING_INDEX
-                ].value.value
-
-            step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
-            parsed_step_name = step_name
-        except Exception as e:
-            logger.error(f"Error while parsing step from {method.name}, Error:{str(e)}")
-            parsed_step_name = "UNABLE TO PARSE TEST STEP NAME"
+        step_name = step.args[ARG_STEP_DESCRIPTION_INDEX].value
+        arg_is_commissioning = False
+        if (
+            step.keywords
+            and "is_commissioning" in step.keywords[KEYWORD_IS_COMISSIONING_INDEX].arg
+        ):
+            arg_is_commissioning = step.keywords[
+                KEYWORD_IS_COMISSIONING_INDEX
+            ].value.value
 
         python_steps.append(
-            MatterTestStep(
-                label=parsed_step_name, is_commissioning=arg_is_commissioning
-            )
+            MatterTestStep(label=step_name, is_commissioning=arg_is_commissioning)
         )
 
     return python_steps

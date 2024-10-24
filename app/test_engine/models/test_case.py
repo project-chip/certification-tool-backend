@@ -62,6 +62,7 @@ class TestCase(TestObservable):
         self.create_test_steps()
         self.__state = TestStateEnum.PENDING
         self.errors: List[str] = []
+        self.analytics: dict[str, str] = {}  # Move to dictionary
 
     # Make pics a class method as they are mostly needed at class level.
     @classmethod
