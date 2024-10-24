@@ -22,7 +22,7 @@ import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 
-from matter_testing_support import (
+from matter_testing import (
     CommissionDeviceTest,
     MatterTestConfig,
     parse_matter_test_args,
@@ -38,6 +38,9 @@ def main() -> None:
     # Load python_testing/scripts as a module. This folder is where all python scripts
     # are located
     sys.path.append("/root/python_testing/scripts")
+    sys.path.append(
+        "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip"
+    )
 
     test_args = sys.argv[2:]
     config = parse_matter_test_args(test_args)
