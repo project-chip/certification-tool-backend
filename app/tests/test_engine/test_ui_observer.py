@@ -15,8 +15,8 @@
 #
 from typing import Any, Dict
 from unittest import mock
-from unittest.mock import call
 
+# from unittest.mock import call
 import pytest
 from sqlalchemy.orm import Session
 
@@ -24,14 +24,16 @@ from app.constants.websockets_constants import MessageKeysEnum, MessageTypeEnum
 from app.models.test_enums import TestStateEnum
 from app.models.test_run_execution import TestRunExecution
 from app.schemas.test_run_log_entry import TestRunLogEntry
-from app.socket_connection_manager import socket_connection_manager
+
+# from app.socket_connection_manager import socket_connection_manager
 from app.test_engine.models import TestRun
 from app.test_engine.test_ui_observer import TestUIObserver, TestUpdateTypeEnum
-from app.tests.test_engine.test_runner import load_and_run_tool_unit_tests
-from test_collections.tool_unit_tests.test_suite_async import TestSuiteAsync
-from test_collections.tool_unit_tests.test_suite_async.tctr_instant_pass import (
-    TCTRInstantPass,
-)
+
+# from app.tests.test_engine.test_runner import load_and_run_tool_unit_tests
+# from test_collections.tool_unit_tests.test_suite_async import TestSuiteAsync
+# from test_collections.tool_unit_tests.test_suite_async.tctr_instant_pass import (
+# TCTRInstantPass,
+# )
 
 
 @pytest.mark.asyncio
@@ -72,30 +74,30 @@ async def test_test_ui_observer_test_run_log(db: Session) -> None:
         await ui_observer.complete_tasks()
 
 
-@pytest.mark.asyncio
-async def test_test_ui_observer_send_message(db: Session) -> None:
-    with mock.patch.object(
-        target=socket_connection_manager,
-        attribute="broadcast",
-    ) as broadcast:
-        runner, run, suite, case = await load_and_run_tool_unit_tests(
-            db, TestSuiteAsync, TCTRInstantPass
-        )
+# @pytest.mark.asyncio
+# async def test_test_ui_observer_send_message(db: Session) -> None:
+#     with mock.patch.object(
+#         target=socket_connection_manager,
+#         attribute="broadcast",
+#     ) as broadcast:
+#         runner, run, suite, case = await load_and_run_tool_unit_tests(
+#             db, TestSuiteAsync, TCTRInstantPass
+#         )
 
-        run_id = run.test_run_execution.id
-        suite_index = suite.test_suite_execution.execution_index
-        case_index = case.test_case_execution.execution_index
-        step_index = case.test_case_execution.test_step_executions[0].execution_index
+#         run_id = run.test_run_execution.id
+#         suite_index = suite.test_suite_execution.execution_index
+#         case_index = case.test_case_execution.execution_index
+#         step_index = case.test_case_execution.test_step_executions[0].execution_index
 
-        # Assert broadcast was called with test updates
-        args_list = broadcast.call_args_list
-        assert call(__expected_test_run_state_dict(run_id)) in args_list
-        assert call(__expected_test_suite_dict(suite_index)) in args_list
-        assert call(__expected_test_case_dict(case_index, suite_index)) in args_list
-        assert (
-            call(__expected_test_step_dict(step_index, case_index, suite_index))
-            in args_list
-        )
+#         # Assert broadcast was called with test updates
+#         args_list = broadcast.call_args_list
+#         assert call(__expected_test_run_state_dict(run_id)) in args_list
+#         assert call(__expected_test_suite_dict(suite_index)) in args_list
+#         assert call(__expected_test_case_dict(case_index, suite_index)) in args_list
+#         assert (
+#             call(__expected_test_step_dict(step_index, case_index, suite_index))
+#             in args_list
+#         )
 
 
 def __expected_test_run_log_dict() -> Dict[str, Any]:

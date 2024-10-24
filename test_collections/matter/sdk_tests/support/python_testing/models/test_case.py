@@ -155,7 +155,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             prompt=msg,
             placeholder_text=placeholder,
             default_value=default_value,
-        )  # type: ignore
+        )
 
         user_response = await self.send_prompt_request(prompt_request)
 
