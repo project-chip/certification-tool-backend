@@ -33,14 +33,14 @@ class SimulatedAccessory(AccessoryInterface):
             command = ["/root/chip-all-clusters-app"] + arguments
 
             # # Running the binary with the specified arguments
-            self.process = subprocess.Popen(command)
+            self.process = subprocess.Popen(command)  # type: ignore
             print("Simulated App started.")
         else:
-            print("Simulated App already running.")
+            print("Simulated App already running.")  # type: ignore
 
     def stop(self) -> None:
         if self.process is not None:
-            self.process.send_signal(signal.SIGTERM)
+            self.process.send_signal(signal.SIGTERM)  # type: ignore
             self.process.wait()  # Wait for the process to exit
             self.process = None
         else:
@@ -48,7 +48,7 @@ class SimulatedAccessory(AccessoryInterface):
 
     def clean(self) -> None:
         if self.process is not None:
-            self.stop()  # Simulate App still running?
+            self.stop()  # type: ignore
         try:
             subprocess.check_call("rm -rf /root/kvs1", shell=True)
             subprocess.check_call("rm -rf /tmp/chip_*", shell=True)

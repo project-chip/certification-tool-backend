@@ -1,5 +1,3 @@
-
- 
 """Adding count on metadata to support Performance Test Fix
 
 Revision ID: 804ecda3d5bf
@@ -7,13 +5,14 @@ Revises: 0a251edfd975
 Create Date: 2024-05-16 06:41:23.593054
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '804ecda3d5bf'
-down_revision = '0a251edfd975'
+revision = "804ecda3d5bf"
+down_revision = "0a251edfd975"
 branch_labels = None
 depends_on = None
 

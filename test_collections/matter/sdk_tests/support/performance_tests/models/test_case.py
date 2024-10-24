@@ -150,7 +150,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             prompt=msg,
             placeholder_text=placeholder,
             default_value=default_value,
-        )
+        )  # type: ignore
 
         user_response = await self.send_prompt_request(prompt_request)
 
@@ -309,7 +309,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # project configuration
             # comissioning method is omitted because it's handled by the test suite
             command_arguments = generate_command_arguments(
-                config=TestEnvironmentConfigMatter(**self.config),  # type: ignore
+                config=TestEnvironmentConfigMatter(**self.config),
                 omit_commissioning_method=True,
             )
             command.extend(command_arguments)
@@ -419,7 +419,7 @@ class LegacyPythonTestCase(PythonTestCase):
             case PromptOption.YES:
                 logger.info("User chose prompt option YES")
                 logger.info("Commission DUT")
-                commission_device(self.config, logger)
+                commission_device(self.config, logger)  # type: ignore
 
             case PromptOption.NO:
                 logger.info("User chose prompt option NO")

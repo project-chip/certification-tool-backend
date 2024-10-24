@@ -114,4 +114,4 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         await prompt_for_commissioning_mode(self, logger, None, self.cancel)
 
         logger.info("Commission DUT")
-        commission_device(self.config, logger)
+        commission_device(self.config, logger)  # type: ignore

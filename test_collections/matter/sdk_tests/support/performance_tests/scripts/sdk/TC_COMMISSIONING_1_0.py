@@ -67,7 +67,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         return super().teardown_test()
 
     async def commission_and_base_checks(self):  # type: ignore[no-untyped-def]
-        errcode = self.commissioner.CommissionOnNetwork(
+        errcode = self.commissioner.CommissionOnNetwork(  # type: ignore
             nodeId=self.dut_node_id,
             setupPinCode=20202021,
             filterType=ChipDeviceCtrl.DiscoveryFilterType.LONG_DISCRIMINATOR,

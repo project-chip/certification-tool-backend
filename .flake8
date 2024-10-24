@@ -8,3 +8,4 @@ per-file-ignores =
     test_collections/manual_tests/**/*:E501,W291
     test_collections/app1_tests/**/*:E501
     test_collections/semi_automated_tests/**/*:E501
+    alembic/versions/**/*:E128,W293,F401
