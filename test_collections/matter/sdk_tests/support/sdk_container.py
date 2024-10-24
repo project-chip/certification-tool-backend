@@ -65,7 +65,7 @@ DOCKER_RPC_PYTHON_TESTING_PATH = (
     "/root/python_testing/scripts/sdk/test_harness_client.py"
 )
 
-# Stress/Stability Test Script (For now it is injected on SDK container. Not the final solution.)
+# Stress/Stability Test Script (For now it is injected on SDK container.)
 LOCAL_STRESS_TEST_SCRIPT_PATH = Path(
     LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/performance_tests/scripts/sdk/"
     "TC_COMMISSIONING_1_0.py"

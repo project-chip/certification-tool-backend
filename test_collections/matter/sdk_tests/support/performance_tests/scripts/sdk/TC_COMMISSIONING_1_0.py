@@ -14,9 +14,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-import time
 import logging
 import subprocess
+import time
+
 from chip import ChipDeviceCtrl
 from matter_testing_support import (
     MatterBaseTest,
@@ -24,8 +25,9 @@ from matter_testing_support import (
     async_test_body,
     default_matter_test_main,
 )
-from .accessory_manager import AccessoryManager
 from mobly import asserts
+
+from .accessory_manager import AccessoryManager
 
 # We don't have a good pipe between the c++ enums in CommissioningDelegate and python
 # so this is hardcoded.
@@ -39,12 +41,11 @@ kConfigureTrustedTimeSource = 19
 
 
 class TC_COMMISSIONING_1_0(MatterBaseTest):
-
-    def __init__(self, *args):
+    def __init__(self, *args):  # type: ignore[no-untyped-def]
         super().__init__(*args)
         self.additional_steps = []
 
-    def setup_class(self):
+    def setup_class(self):  # type: ignore[no-untyped-def]
         self.commissioner = None
         self.commissioned = False
         self.discriminator = 3842
@@ -62,10 +63,10 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
             return steps
 
     @async_test_body
-    async def teardown_test(self):
+    async def teardown_test(self):  # type: ignore[no-untyped-def]
         return super().teardown_test()
 
-    async def commission_and_base_checks(self):
+    async def commission_and_base_checks(self):  # type: ignore[no-untyped-def]
         errcode = self.commissioner.CommissionOnNetwork(
             nodeId=self.dut_node_id,
             setupPinCode=20202021,
@@ -77,7 +78,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         )
         self.commissioned = True
 
-    async def create_commissioner(self):
+    async def create_commissioner(self) -> None:
         new_certificate_authority = (
             self.certificate_authority_manager.NewCertificateAuthority()
         )
@@ -92,7 +93,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         self.commissioner.ResetTestCommissioner()
 
     @async_test_body
-    async def test_TC_COMMISSIONING_1_0(self):
+    async def test_TC_COMMISSIONING_1_0(self):  # type: ignore[no-untyped-def]
         accessory_manager = AccessoryManager()
         self.clean_chip_tool_kvs()
         await self.create_commissioner()
@@ -140,10 +141,10 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
             accessory_manager.stop()
             accessory_manager.clean()
 
-    def clean_chip_tool_kvs(self):
+    def clean_chip_tool_kvs(self):  # type: ignore[no-untyped-def]
         try:
             subprocess.check_call("rm -f /root/admin_storage.json", shell=True)
-            print(f"KVS info deleted.")
+            print("KVS info deleted.")
         except subprocess.CalledProcessError as e:
             print(f"Error deleting KVS info: {e}")
 

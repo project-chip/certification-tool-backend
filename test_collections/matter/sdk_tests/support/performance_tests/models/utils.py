@@ -33,7 +33,7 @@ EXECUTABLE = "python3"
 def generate_command_arguments(
     config: TestEnvironmentConfig, omit_commissioning_method: bool = False
 ) -> list:
-    dut_config = config.dut_config
+    dut_config = config.dut_config  # type: ignore[attr-defined]
     test_parameters = config.test_parameters
 
     pairing_mode = (

@@ -21,31 +21,30 @@ from abc import ABC, abstractmethod
 # This interface must be implemented to provide basic access to accessory functionality.
 class AccessoryInterface(ABC):
     @abstractmethod
-    def start(self):
+    def start(self) -> None:
         pass
 
     @abstractmethod
-    def stop(self):
+    def stop(self) -> None:
         pass
 
     @abstractmethod
-    def clean(self):
+    def clean(self) -> None:
         pass
 
 
-from .simulated_accessory import SimulatedAccessory
+from .simulated_accessory import SimulatedAccessory  # noqa: E402
 
 
 class AccessoryManager:
-
     def __init__(self, accessory: AccessoryInterface = SimulatedAccessory()):
         self.accessory = accessory
 
-    def start(self):
+    def start(self) -> None:
         self.accessory.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self.accessory.stop()
 
-    def clean(self):
+    def clean(self) -> None:
         self.accessory.clean()

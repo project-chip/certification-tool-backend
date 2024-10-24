@@ -30,7 +30,6 @@ datetime_json_pattern = "%Y-%m-%dT%H:%M:%S.%f"
 def create_summary_report(
     timestamp: str, log_lines: list, commissioning_method: str
 ) -> tuple[str, str]:
-
     log_lines_list = "\n".join(log_lines)
 
     LOGS_FOLDER = "/test_collections/logs"
@@ -253,12 +252,12 @@ def generate_summary(
     summary_dict["test_summary_record"]["number_of_iterations_completed"] = len(
         durations
     )
-    summary_dict["test_summary_record"]["number_of_iterations_passed"] = (
-        compute_count_state(execution_status, True)
-    )
-    summary_dict["test_summary_record"]["number_of_iterations_failed"] = (
-        compute_count_state(execution_status, False)
-    )
+    summary_dict["test_summary_record"][
+        "number_of_iterations_passed"
+    ] = compute_count_state(execution_status, True)
+    summary_dict["test_summary_record"][
+        "number_of_iterations_failed"
+    ] = compute_count_state(execution_status, False)
     summary_dict["test_summary_record"]["platform"] = "rpi"
     summary_dict["test_summary_record"]["commissioning_method"] = commissioning_method
     summary_dict["test_summary_record"]["list_of_iterations_failed"] = []
@@ -396,7 +395,8 @@ class Commissioning:
             if not (stage in self.commissioning):
                 self.commissioning[stage] = {}
 
-            # pattern_begin = f"(?=.*{re.escape(stage)})(?=.*{re.escape(self.step_type[0])})"
+            # pattern_begin:
+            # f"(?=.*{re.escape(stage)})(?=.*{re.escape(self.step_type[0])})"
             if re.search(patterns["begin"], line) is not None:
                 match = re.findall(date_pattern, line)
                 if match[0]:
@@ -405,7 +405,8 @@ class Commissioning:
                         self.commissioning["begin"] = begin
                     self.commissioning[stage]["begin"] = begin
 
-            # pattern_end = f"(?=.*{re.escape(stage)})(?=.*{re.escape(self.step_type[1])})"
+            # pattern_end:
+            # f"(?=.*{re.escape(stage)})(?=.*{re.escape(self.step_type[1])})"
             if re.search(patterns["end"], line) is not None:
                 match = re.findall(date_pattern, line)
                 if match[0]:

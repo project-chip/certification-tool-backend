@@ -83,7 +83,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.__runned = 0
         self.test_stop_called = False
         self.test_socket = None
-        self.step_execution_times = []
+        self.step_execution_times = []  # type: ignore[var-annotated]
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -158,7 +158,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
-    def generate_analytics_data(self) -> dict[str:str]:
+    def generate_analytics_data(self) -> dict[str, str]:
         print(self.step_execution_times)
         self.step_execution_times.sort()
         print(self.step_execution_times)
@@ -174,7 +174,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 "p99": f"{self.step_execution_times[p99_index]}",
                 "unit": "ms",
             }
-        except:
+        except:  # noqa: E722
             logger.info("Error generating analytics data for step execution times.")
         return {"p50": "0", "p95": "0", "p99": "0", "unit": "ms"}
 

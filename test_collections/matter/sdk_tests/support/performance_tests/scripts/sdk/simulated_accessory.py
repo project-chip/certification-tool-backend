@@ -16,15 +16,15 @@
 #
 import signal
 import subprocess
+
 from .accessory_manager import AccessoryInterface
 
 
 class SimulatedAccessory(AccessoryInterface):
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.process = None
 
-    def start(self):
+    def start(self) -> None:
         if self.process is None:
             # # Arguments to pass to the binary
             arguments = ["--discriminator", "3842", "--KVS", "kvs1"]
@@ -38,7 +38,7 @@ class SimulatedAccessory(AccessoryInterface):
         else:
             print("Simulated App already running.")
 
-    def stop(self):
+    def stop(self) -> None:
         if self.process is not None:
             self.process.send_signal(signal.SIGTERM)
             self.process.wait()  # Wait for the process to exit
@@ -46,13 +46,13 @@ class SimulatedAccessory(AccessoryInterface):
         else:
             print("Simulated App is not running.")
 
-    def clean(self):
+    def clean(self) -> None:
         if self.process is not None:
             self.stop()  # Simulate App still running?
         try:
             subprocess.check_call("rm -rf /root/kvs1", shell=True)
             subprocess.check_call("rm -rf /tmp/chip_*", shell=True)
-            print(f"KVS info deleted.")
+            print("KVS info deleted.")
         except subprocess.CalledProcessError as e:
             print(f"Error deleting KVS info: {e}")
         try:
