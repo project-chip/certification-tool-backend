@@ -252,12 +252,12 @@ def generate_summary(
     summary_dict["test_summary_record"]["number_of_iterations_completed"] = len(
         durations
     )
-    summary_dict["test_summary_record"]["number_of_iterations_passed"] = (
-        compute_count_state(execution_status, True)
-    )
-    summary_dict["test_summary_record"]["number_of_iterations_failed"] = (
-        compute_count_state(execution_status, False)
-    )
+    summary_dict["test_summary_record"][
+        "number_of_iterations_passed"
+    ] = compute_count_state(execution_status, True)
+    summary_dict["test_summary_record"][
+        "number_of_iterations_failed"
+    ] = compute_count_state(execution_status, False)
     summary_dict["test_summary_record"]["platform"] = "rpi"
     summary_dict["test_summary_record"]["commissioning_method"] = commissioning_method
     summary_dict["test_summary_record"]["list_of_iterations_failed"] = []
