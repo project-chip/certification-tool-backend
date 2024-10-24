@@ -797,6 +797,25 @@ async def test_test_run_execution_start(async_client: AsyncClient, db: Session) 
 
 
 @pytest.mark.asyncio
+async def test_test_run_execution_start_no_pics(
+    async_client: AsyncClient, db: Session
+) -> None:
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db, pics={})
+
+    # First attempt to start test run
+    response = await async_client.post(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/start",
+    )
+
+    # Assert 422 UNPROCESSABLE_ENTITY and a detail error message
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    content = response.json()
+    assert isinstance(content, dict)
+    assert "detail" in content.keys()
+    assert content["detail"] == "No PICS were informed."
+
+
+@pytest.mark.asyncio
 async def test_test_run_execution_busy(async_client: AsyncClient, db: Session) -> None:
     test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
 
