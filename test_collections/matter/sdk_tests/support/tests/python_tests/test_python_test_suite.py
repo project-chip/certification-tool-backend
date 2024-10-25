@@ -136,6 +136,8 @@ async def test_suite_setup_log_python_version() -> None:
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
+        ), mock.patch.object(
+            target=sdk_container, attribute="send_command", return_value=""
         ):
             await suite_instance.setup()
 
@@ -178,6 +180,8 @@ async def test_suite_setup_without_pics() -> None:
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
+        ), mock.patch.object(
+            target=sdk_container, attribute="send_command", return_value=""
         ):
             await suite_instance.setup()
 
@@ -220,6 +224,8 @@ async def test_suite_setup_with_pics() -> None:
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
+        ), mock.patch.object(
+            target=sdk_container, attribute="send_command", return_value=""
         ):
             await suite_instance.setup()
 
@@ -257,6 +263,8 @@ async def test_commissioning_suite_setup_with_pics() -> None:
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
+    ), mock.patch.object(
+        target=sdk_container, attribute="send_command", return_value=""
     ):
         await suite_instance.setup()
 

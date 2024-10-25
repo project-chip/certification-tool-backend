@@ -43,6 +43,13 @@ class SuiteType(Enum):
 # Custom Type variable used to annotate the factory methods of classmethod.
 T = TypeVar("T", bound="PythonTestSuite")
 
+# TODO - This is a workaround
+# for https://github.com/project-chip/certification-tool/issues/473
+DOCKER_CHIP_TESTING_FOLDER = (
+    "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing"
+)
+DOCKER_CHIP_DESTINATION_FOLDER = "/usr/local/lib/python3.12/dist-packages/chip/"
+
 
 class PythonTestSuite(TestSuite):
     """Base class for all Python tests based test suites.
@@ -103,6 +110,15 @@ class PythonTestSuite(TestSuite):
 
         logger.info("Setting up SDK container")
         await self.sdk_container.start()
+
+        # TODO - This is a workaround
+        # for https://github.com/project-chip/certification-tool/issues/473
+        logger.info("Copying chip/testing to the proper destination")
+
+        self.sdk_container.send_command(
+            f"-r {DOCKER_CHIP_TESTING_FOLDER} {DOCKER_CHIP_DESTINATION_FOLDER}",
+            prefix="cp",
+        )
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
