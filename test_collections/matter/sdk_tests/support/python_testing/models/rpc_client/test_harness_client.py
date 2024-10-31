@@ -23,16 +23,7 @@ import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 
-try:
-    from matter_yamltests.hooks import TestRunnerHooks
-except ImportError:
-
-    class TestRunnerHooks:
-        pass
-
-
-sys.path.append("/root/python_testing")
-from matter_testing_support import (
+from chip.testing.matter_testing import (
     CommissionDeviceTest,
     MatterTestConfig,
     TestStep,
