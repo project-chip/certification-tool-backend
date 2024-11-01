@@ -19,35 +19,25 @@ from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
-from socket import SocketIO
-from typing import Any, Optional, Type, TypeVar
+from typing import Any, Type, TypeVar
 
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
-from app.test_engine.models import TestCase, TestStep
+from app.test_engine.models import TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
-from app.user_prompt_support.prompt_request import (
-    OptionsSelectPromptRequest,
-    TextInputPromptRequest,
+from test_collections.matter.sdk_tests.support.python_testing.models.test_case import (
+    PythonTestCase,
 )
-from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...pics import PICS_FILE_PATH
-from ...sdk_container import SDKContainer
-from ...utils import prompt_for_commissioning_mode
-from .python_test_models import PythonTest, PythonTestType
+from .python_test_models import PythonTest
 from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
 )
-from .utils import (
-    EXECUTABLE,
-    RUNNER_CLASS_PATH,
-    commission_device,
-    generate_command_arguments,
-)
+from .utils import EXECUTABLE, RUNNER_CLASS_PATH, generate_command_arguments
 
 
 class PromptOption(IntEnum):
@@ -55,15 +45,15 @@ class PromptOption(IntEnum):
     NO = 2
 
 
-# Custom type variable used to annotate the factory method in PythonTestCase.
-T = TypeVar("T", bound="PythonTestCase")
+# Custom type variable used to annotate the factory method in PerformanceTestCase.
+T = TypeVar("T", bound="PerformanceTestCase")
 
 
-class PythonTestCaseError(Exception):
+class PerformanceTestCaseError(Exception):
     pass
 
 
-class PythonTestCase(TestCase, UserPromptSupport):
+class PerformanceTestCase(PythonTestCase):
     """Base class for all Python Test based test cases.
 
     This class provides a class factory that will dynamically declare a new sub-class
@@ -73,41 +63,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
     in all instances of such subclass.
     """
 
-    sdk_container: SDKContainer = SDKContainer(logger)
-    python_test: PythonTest
-    python_test_version: str
-    test_socket: Optional[SocketIO]
-
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
-        self.__runned = 0
-        self.test_stop_called = False
-        self.test_socket = None
         self.step_execution_times = []  # type: ignore[var-annotated]
 
-    # Move to the next step if the test case has additional steps apart from the 2
-    # deafult ones
-    def step_over(self) -> None:
-        # Python tests that don't follow the template only have the default steps "Start
-        # Python test" and "Show test logs", but inside the file there can be more than
-        # one test case, so the hooks' step methods will continue to be called
-        if len(self.test_steps) == 2:
-            return
-
-        self.next_step()
-
-    def start(self, count: int) -> None:
-        pass
-
-    def stop(self, duration: int) -> None:
-        if not self.test_stop_called:
-            self.current_test_step.mark_as_completed()
-
-    def test_start(self, filename: str, name: str, count: int) -> None:
+    def test_start(
+        self, filename: str, name: str, count: int, steps: list[str] = []
+    ) -> None:
         self.step_over()
-
-    def test_stop(self, exception: Exception, duration: int) -> None:
-        self.test_stop_called = True
 
     def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
@@ -121,42 +84,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.step_execution_times.append(duration_ms)
         self.analytics = self.generate_analytics_data()
         self.step_over()
-
-    def step_failure(
-        self, logger: Any, logs: str, duration: int, request: Any, received: Any
-    ) -> None:
-        self.mark_step_failure("Python test step failure")
-
-        # Python tests with only 2 steps are the ones that don't follow the template.
-        # In the case of a test file with multiple test cases, more than one of these
-        # tests can fail and so this method will be called for each of them. These
-        # failures should be reported in the first step and moving to the logs step
-        # should only happen after all test cases are executed.
-        if len(self.test_steps) > 2:
-            # Python tests stop when there's a failure. We need to skip the next steps
-            # and execute only the last one, which shows the logs
-            self.skip_to_last_step()
-
-    def step_unknown(self) -> None:
-        self.__runned += 1
-
-    async def show_prompt(
-        self,
-        msg: str,
-        placeholder: Optional[str] = None,
-        default_value: Optional[str] = None,
-    ) -> None:
-        prompt_request = TextInputPromptRequest(
-            prompt=msg,
-            placeholder_text=placeholder,
-            default_value=default_value,
-        )
-
-        user_response = await self.send_prompt_request(prompt_request)
-
-        if self.test_socket and user_response.response_str:
-            response = f"{user_response.response_str}\n".encode()
-            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
     def generate_analytics_data(self) -> dict[str, str]:
         print(self.step_execution_times)
@@ -186,14 +113,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
     @classmethod
     def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
         """Dynamically declares a subclass based on the type of Python test."""
-        case_class: Type[PythonTestCase]
-
-        if test.python_test_type == PythonTestType.NO_COMMISSIONING:
-            case_class = NoCommissioningPythonTestCase
-        elif test.python_test_type == PythonTestType.LEGACY:
-            case_class = LegacyPythonTestCase
-        else:  # Commissioning
-            case_class = PythonTestCase
+        case_class: Type[PerformanceTestCase] = PerformanceTestCase
 
         return case_class.__class_factory(
             test=test, python_test_version=python_test_version
@@ -201,7 +121,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     @classmethod
     def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
-        """class factory method for PythonTestCase."""
+        """class factory method for PerformanceTestCase."""
         title = cls.__title(test.name)
         class_name = cls.__class_name(test.name)
 
@@ -242,9 +162,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         return title
 
-    async def setup(self) -> None:
-        logger.info("Test Setup")
-
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
         try:
@@ -283,7 +200,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     async def execute(self) -> None:
         try:
-            logger.info("Running Python Test: " + self.python_test.name)
+            logger.info("Running Stress & Stability Test: " + self.python_test.name)
 
             BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
             manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
@@ -291,7 +208,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
             if not self.python_test.path:
-                raise PythonTestCaseError(
+                raise PerformanceTestCaseError(
                     f"Missing file path for python test {self.python_test.name}"
                 )
 
@@ -319,7 +236,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             command.append(f" --interactions {(len(self.test_steps) - 2)}")
 
-            # exec_result =
             self.sdk_container.send_command(
                 command,
                 prefix=EXECUTABLE,
@@ -327,7 +243,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 is_socket=False,
                 is_detach=True,
             )
-            # self.test_socket = exec_result.socket
 
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
@@ -359,11 +274,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
         finally:
             pass
 
-    def skip_to_last_step(self) -> None:
-        self.current_test_step.mark_as_completed()
-        self.current_test_step_index = len(self.test_steps) - 1
-        self.current_test_step.mark_as_executing()
-
     async def __handle_update(self, update: SDKPythonTestResultBase) -> None:
         await self.__call_function_from_name(update.type.value, update.params_dict())
 
@@ -385,47 +295,3 @@ class PythonTestCase(TestCase, UserPromptSupport):
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
         self.test_steps.append(TestStep("Show test logs"))
-
-
-class NoCommissioningPythonTestCase(PythonTestCase):
-    async def setup(self) -> None:
-        await super().setup()
-        # await prompt_for_commissioning_mode(self, logger, None, self.cancel)
-
-
-class LegacyPythonTestCase(PythonTestCase):
-    async def setup(self) -> None:
-        await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
-        await self.prompt_about_commissioning()
-
-    async def prompt_about_commissioning(self) -> None:
-        """Prompt the user to ask about commissioning
-
-        Raises:
-            ValueError: Prompt response is unexpected
-        """
-
-        prompt = "Should the DUT be commissioned to run this test case?"
-        options = {
-            "YES": PromptOption.YES,
-            "NO": PromptOption.NO,
-        }
-        prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
-        logger.info(f'User prompt: "{prompt}"')
-        prompt_response = await self.send_prompt_request(prompt_request)
-
-        match prompt_response.response:
-            case PromptOption.YES:
-                logger.info("User chose prompt option YES")
-                logger.info("Commission DUT")
-                commission_device(self.config, logger)  # type: ignore
-
-            case PromptOption.NO:
-                logger.info("User chose prompt option NO")
-
-            case _:
-                raise ValueError(
-                    f"Received unknown prompt option for \
-                        commissioning step: {prompt_response.response}"
-                )

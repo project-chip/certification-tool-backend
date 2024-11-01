@@ -67,14 +67,14 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         return super().teardown_test()
 
     async def commission_and_base_checks(self):  # type: ignore[no-untyped-def]
-        errcode = self.commissioner.CommissionOnNetwork(  # type: ignore
+        node_id = await self.commissioner.CommissionOnNetwork(  # type: ignore
             nodeId=self.dut_node_id,
             setupPinCode=20202021,
             filterType=ChipDeviceCtrl.DiscoveryFilterType.LONG_DISCRIMINATOR,
-            filter=3842,
+            filter=self.discriminator,
         )
         asserts.assert_true(
-            errcode.is_success, "Commissioning did not complete successfully"
+            node_id == self.dut_node_id, "Commissioning did not complete successfully"
         )
         self.commissioned = True
 

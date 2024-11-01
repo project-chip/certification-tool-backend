@@ -48,7 +48,7 @@ class TestRunnerHooks:
     def stop(self, duration: int):
         print("=====> hooks.stop")
 
-    def test_start(self, filename: str, name: str, count: int):
+    def test_start(self, filename: str, name: str, count: int, steps: list[str] = []):
         print("=====> hooks.test_start")
 
     def test_stop(self, exception: Exception, duration: int):
@@ -101,12 +101,6 @@ def main() -> None:
         subprocess.check_call("kill $(pidof  chip-all-clusters-app)", shell=True)
     except subprocess.CalledProcessError as e:
         print(f"Error while trying to remove rogue simulators: {e}")
-    # config.commission_only = False
-    # config.commissioning_method = None
-    # run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
-    # with open("/root/python_testing/test_output.txt", "w") as f:
-    #     with redirect_stdout(f):
-    #         run_test(script_path=sys.argv[1], class_name=sys.argv[2], config=config)
 
 
 def configure_interactions(args) -> []:

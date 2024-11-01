@@ -23,7 +23,7 @@ from app.test_engine.models.test_declarations import (
 
 from ...models.sdk_test_folder import SDKTestFolder
 from .python_test_models import MatterTestType, PythonTest
-from .test_case import PythonTestCase
+from .test_case import PerformanceTestCase
 from .test_suite import PythonTestSuite, SuiteType
 
 
@@ -51,11 +51,11 @@ class PythonSuiteDeclaration(TestSuiteDeclaration):
 class PythonCaseDeclaration(TestCaseDeclaration):
     """Direct initialization for Python Test Case."""
 
-    class_ref: Type[PythonTestCase]
+    class_ref: Type[PerformanceTestCase]
 
     def __init__(self, test: PythonTest, python_test_version: str) -> None:
         super().__init__(
-            PythonTestCase.class_factory(
+            PerformanceTestCase.class_factory(
                 test=test, python_test_version=python_test_version
             )
         )
