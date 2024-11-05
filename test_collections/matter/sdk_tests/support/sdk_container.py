@@ -30,7 +30,8 @@ from test_collections.matter.config import matter_settings
 
 from .exec_run_in_container import ExecResultExtended, exec_run_in_container
 from .pics import set_pics_command
-from .python_testing.models.python_testing_hooks_proxy import SDKPythonTestRunnerHooks
+from ..support.sdk_utils.python_testing.python_testing_hooks_proxy import SDKPythonTestRunnerHooks
+# from .python_testing.models.python_testing_hooks_proxy import SDKPythonTestRunnerHooks
 
 # Trace mount
 LOCAL_LOGS_PATH = Path("/var/tmp")
@@ -138,6 +139,9 @@ class SDKContainer(metaclass=Singleton):
         self.logger = logger
         self.manager: BaseManager | None = None
 
+        # Create the BaseManager for multiprocess data share
+        self.manager = self.__create_manager()
+
     @property
     def pics_file_created(self) -> bool:
         return self.__pics_file_created
@@ -183,9 +187,6 @@ class SDKContainer(metaclass=Singleton):
         self.__container = await container_manager.create_container(
             self.image_tag, self.run_parameters
         )
-
-        # Create the BaseManager for multiprocess data share
-        self.manager = self.__create_manager()
 
         self.logger.info(
             f"{self.container_name} container started"
