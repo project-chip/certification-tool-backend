@@ -28,9 +28,11 @@ from app.singleton import Singleton
 from app.test_engine.logger import test_engine_logger as logger
 from test_collections.matter.config import matter_settings
 
+from ..support.sdk_utils.python_testing.python_testing_hooks_proxy import (
+    SDKPythonTestRunnerHooks,
+)
 from .exec_run_in_container import ExecResultExtended, exec_run_in_container
 from .pics import set_pics_command
-from ..support.sdk_utils.python_testing.python_testing_hooks_proxy import SDKPythonTestRunnerHooks
 
 # Trace mount
 LOCAL_LOGS_PATH = Path("/var/tmp")

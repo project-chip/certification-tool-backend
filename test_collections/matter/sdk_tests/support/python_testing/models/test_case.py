@@ -35,9 +35,12 @@ from test_collections.matter.test_environment_config import TestEnvironmentConfi
 
 from ...pics import PICS_FILE_PATH
 from ...sdk_container import SDKContainer
+from ...sdk_utils.python_testing.python_testing_hooks_proxy import (
+    SDKPythonTestResultBase,
+)
 from ...utils import prompt_for_commissioning_mode
 from .python_test_models import PythonTest, PythonTestType
-from ...sdk_utils.python_testing.python_testing_hooks_proxy import SDKPythonTestResultBase
+
 # from .python_testing_hooks_proxy import SDKPythonTestResultBase
 from .utils import (
     EXECUTABLE,
