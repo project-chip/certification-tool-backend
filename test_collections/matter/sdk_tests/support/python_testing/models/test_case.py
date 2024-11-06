@@ -40,8 +40,6 @@ from ...sdk_utils.python_testing.python_testing_hooks_proxy import (
 )
 from ...utils import prompt_for_commissioning_mode
 from .python_test_models import PythonTest, PythonTestType
-
-# from .python_testing_hooks_proxy import SDKPythonTestResultBase
 from .utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
