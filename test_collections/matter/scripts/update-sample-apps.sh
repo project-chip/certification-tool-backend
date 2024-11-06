@@ -22,6 +22,9 @@ source "$TH_SCRIPTS_DIR/utils.sh"
 
 print_start_of_script
 
+print_script_step "Pulling chip-cert-bins docker image"
+$MATTER_PROGRAM_DIR/scripts/update-pull-sdk-docker-image.sh
+
 print_script_step "Updating Sample APPs"
 # TODO: update SDK image to place the apps in a specific folder and then copy that entire folder
 sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v chip-* /apps/; cp -v thermostat-app /apps/; cp -v lit-icd-app /apps/;cp -v fabric-* /apps/; cp -v matter-network-manager-app /apps/"
