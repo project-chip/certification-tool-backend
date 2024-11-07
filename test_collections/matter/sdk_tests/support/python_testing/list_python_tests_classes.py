@@ -104,7 +104,7 @@ async def proccess_commands_sdk_container(commands: list) -> None:
 
         with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
             json_data = json.load(json_file)
-            json_file.close()
+            
             for json_dict in json_data:
                 test_function_count += 1
                 json_dict["path"] = command[0]
@@ -131,7 +131,7 @@ async def proccess_commands_sdk_container(commands: list) -> None:
     print(f">>>>>>>> Total of test functions: {test_function_count}")
     print(
         (
-            ">>>>>>>> Total of test functions (doesn't start with 'test_TC_'): "
+            ">>>>>>>> Total of invalid test functions (don't start with 'test_TC_'): "
             f"{invalid_test_function_count}"
         )
     )

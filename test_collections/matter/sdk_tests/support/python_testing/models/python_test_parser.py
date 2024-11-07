@@ -173,7 +173,7 @@ def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
 
 
 def __test_case_name(function_name: str) -> Optional[str]:
-    """Extract test case names from methods that match the pattern "test_TC_[\\S]+".
+    """Extract test case name from methods that match the pattern "test_TC_[\\S]+".
 
     Args:
         methods (str): Function name.
