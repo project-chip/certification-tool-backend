@@ -14,10 +14,7 @@
 # limitations under the License.
 #
 
-from pathlib import Path
 from typing import Optional
-
-from test_collections.matter.config import matter_settings
 
 from ..models.sdk_test_folder import SDKTestFolder
 from ..paths import SDK_CHECKOUT_PATH, SDK_TESTS_ROOT

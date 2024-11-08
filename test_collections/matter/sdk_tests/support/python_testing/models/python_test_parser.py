@@ -93,13 +93,13 @@ def parse_python_script(path: Path) -> list[PythonTest]:
                 )
             )
 
-        # - PythonTestType.COMMISSIONING: test cases that have a commissioning first 
+        # - PythonTestType.COMMISSIONING: test cases that have a commissioning first
         #   step
-        # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected 
+        # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected
         #   template but don't have a commissioning first step
         # - PythonTestType.LEGACY: test cases that don't follow the expected template
         # - PythonTestType.MANDATORY: Mandatory test cases
-        # We use the desc_[test_name] method as an indicator that the test case follows 
+        # We use the desc_[test_name] method as an indicator that the test case follows
         # the expected template
 
         if test_name in mandatory_python_tcs_public_id:

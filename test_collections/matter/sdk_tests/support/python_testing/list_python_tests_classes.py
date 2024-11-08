@@ -36,7 +36,7 @@ COMPLETE_JSON_OUTPUT_FILE_FOLDER = SDK_TESTS_PATH
 PYTHON_SCRIPTS_PATH = PYTHON_TESTING_PATH / "scripts/sdk"
 PYTHON_SCRIPTS_FOLDER = SDKTestFolder(path=PYTHON_SCRIPTS_PATH, filename_pattern="TC*")
 
-CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"
+CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -118,10 +118,7 @@ async def proccess_commands_sdk_container(commands: list) -> None:
 
     # complete_json.append({"sdk_sha": matter_settings.SDK_SHA})
     # Create a wrapper object with sdk_sha at root level
-    json_output = {
-        "sdk_sha": matter_settings.SDK_SHA,
-        "tests": complete_json
-    }
+    json_output = {"sdk_sha": matter_settings.SDK_SHA, "tests": complete_json}
 
     with open(complete_json_path, "w") as json_file:
         json.dump(json_output, json_file, indent=4, sort_keys=True)
