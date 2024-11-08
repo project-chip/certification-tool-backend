@@ -51,9 +51,7 @@ CUSTOM_PYTHON_TEST_FOLDER = SDKTestFolder(
     path=CUSTOM_PYTHON_TEST_PATH, filename_pattern="TC*"
 )
 
-PYTHON_TESTS_PARSED_FILE = (
-    SDK_TESTS_ROOT / f"python_tests_{matter_settings.SDK_SHA}.json"
-)
+PYTHON_TESTS_PARSED_FILE = SDK_TESTS_ROOT / "python_tests_info.json"
 
 
 def _init_test_suites(
@@ -170,6 +168,7 @@ def custom_python_test_collection(
 ) -> Optional[PythonCollectionDeclaration]:
     """Declare a new collection of test suites."""
     return None
+    # TODO: Implement custom python test collection
     # collection = PythonCollectionDeclaration(
     #     name="Custom SDK Python Tests", folder=python_test_folder
     # )

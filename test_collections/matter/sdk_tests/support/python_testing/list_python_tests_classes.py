@@ -36,9 +36,7 @@ COMPLETE_JSON_OUTPUT_FILE_FOLDER = SDK_TESTS_PATH
 PYTHON_SCRIPTS_PATH = PYTHON_TESTING_PATH / "scripts/sdk"
 PYTHON_SCRIPTS_FOLDER = SDKTestFolder(path=PYTHON_SCRIPTS_PATH, filename_pattern="TC*")
 
-CONTAINER_TH_CLIENT_EXEC = (
-    "python3 /root/python_testing/scripts/sdk/test_harness_client.py"
-)
+CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -104,7 +102,7 @@ async def proccess_commands_sdk_container(commands: list) -> None:
 
         with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
             json_data = json.load(json_file)
-            
+
             for json_dict in json_data:
                 test_function_count += 1
                 json_dict["path"] = command[0]
@@ -116,12 +114,17 @@ async def proccess_commands_sdk_container(commands: list) -> None:
 
     sdk_container.destroy()
 
-    complete_json_path = (
-        COMPLETE_JSON_OUTPUT_FILE_FOLDER
-        / f"python_tests_{matter_settings.SDK_SHA}.json"
-    )
+    complete_json_path = COMPLETE_JSON_OUTPUT_FILE_FOLDER / "python_tests_info.json"
+
+    # complete_json.append({"sdk_sha": matter_settings.SDK_SHA})
+    # Create a wrapper object with sdk_sha at root level
+    json_output = {
+        "sdk_sha": matter_settings.SDK_SHA,
+        "tests": complete_json
+    }
+
     with open(complete_json_path, "w") as json_file:
-        json.dump(complete_json, json_file, indent=4, sort_keys=True)
+        json.dump(json_output, json_file, indent=4, sort_keys=True)
         json_file.close()
 
     print("###########################################################################")

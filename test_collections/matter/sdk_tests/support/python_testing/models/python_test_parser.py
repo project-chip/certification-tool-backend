@@ -65,7 +65,7 @@ def parse_python_script(path: Path) -> list[PythonTest]:
 
     python_tests: list[PythonTest] = []
 
-    for script_info in parsed_scripts:
+    for script_info in parsed_scripts["tests"]:
         test_function = script_info["function"]
         test_name = __test_case_name(test_function)
         if test_name is None:
@@ -90,16 +90,17 @@ def parse_python_script(path: Path) -> list[PythonTest]:
                 MatterTestStep(
                     label=step_description,
                     is_commissioning=is_commssioning,
-                )  # type: ignore
+                )
             )
 
-        # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
-        # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
-        #   but don't have a commissioning first step
+        # - PythonTestType.COMMISSIONING: test cases that have a commissioning first 
+        #   step
+        # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected 
+        #   template but don't have a commissioning first step
         # - PythonTestType.LEGACY: test cases that don't follow the expected template
         # - PythonTestType.MANDATORY: Mandatory test cases
-        # We use the desc_[test_name] method as an indicator that the test case follows the
-        # expected template
+        # We use the desc_[test_name] method as an indicator that the test case follows 
+        # the expected template
 
         if test_name in mandatory_python_tcs_public_id:
             python_test_type = PythonTestType.MANDATORY
