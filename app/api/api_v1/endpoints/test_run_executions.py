@@ -19,6 +19,7 @@ from datetime import datetime
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
+import requests
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -523,6 +524,16 @@ def generate_summary_log(
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail="matter_qa_url must be configured",
+        )
+
+    page = requests.get(f"{matter_qa_url}/home")
+    if page.status_code is not int(HTTPStatus.OK):
+        raise HTTPException(
+            status_code=page.status_code,
+            detail=(
+                "The LogDisplay server is not responding.\n"
+                "Verify if the tool was installed, configured and initiated properly"
+            ),
         )
 
     commissioning_method = project_config.dut_config.pairing_mode

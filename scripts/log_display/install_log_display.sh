@@ -26,7 +26,7 @@ clone_matter_qa() {
         cd $MATTER_QA_PATH
         git sparse-checkout set --cone
         git checkout main
-        git sparse-checkout set tools
+        git sparse-checkout set tools src
     else
         echo "Matter QA repository already present at path $MATTER_QA_PATH"
     fi
@@ -47,8 +47,10 @@ install_python_dependencies() {
     sudo apt install uvicorn
     sudo apt install python-is-python3
     python -m venv $VIRTUAL_ENV
-    $VIRTUAL_ENV/bin/pip install fastapi
-    $VIRTUAL_ENV/bin/pip install pymongo
+    source $VIRTUAL_ENV/bin/activate
+    pip install setuptools
+    pip install $MATTER_QA_PATH/src/
+    deactivate
 }
 
 echo "Log Display install Initiated"

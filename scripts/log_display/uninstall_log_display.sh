@@ -25,7 +25,7 @@ uninstall_mongodb() {
     sudo apt-get purge "mongodb-org*"
     sudo rm -r /var/log/mongodb
     sudo rm -r /var/lib/mongodb
-    echo "Done"
+    echo "MongoDB uninstall Done"
 }
 
 uninstall_python_dependencies() {
@@ -33,11 +33,9 @@ uninstall_python_dependencies() {
     if [ "$VIRTUAL_ENV" != "" ]; then
         deactivate
     fi
-    $VIRTUAL_ENV/bin/pip uninstall pymongo
-    $VIRTUAL_ENV/bin/pip uninstall fastapi
     rm -rf $VIRTUAL_ENV
     sudo apt remove uvicorn
-    echo "Done"
+    echo "Packages uninstall Done"
 
 }
 
@@ -45,7 +43,7 @@ remove_matter_qa_repo() {
     if [ -d $MATTER_QA_PATH ]; then
         echo "Deleting Matter QA repository..."
         sudo rm -rf $MATTER_QA_PATH
-        echo "Done"
+        echo "Matter_QA repository removal Done"
     else
         echo "Matter QA repository not in the default location. Please, remove it manually"
     fi
@@ -54,8 +52,8 @@ remove_matter_qa_repo() {
 echo "Uninstall initiated"
 echo
 
-echo "The dependencies for LogDisplay app are: MongoDB, uvicorn, [pip] fastapi, [pip] pymongo and the Matter QA repository"
-read -p "Are you sure you want to uninstall all those packages? [y/N] " -n 1 -r
+echo "The dependencies for LogDisplay app are: MongoDB, uvicorn and the Python packages"
+read -p "Are you sure you want to uninstall everything? [y/N] " -n 1 -r
 echo
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then

@@ -83,7 +83,7 @@ def create_summary_report(
                             tc_name = line.split(": ")[1]
 
                     if not tc_result:
-                        if line.find("Test Case Completed[") > 0:
+                        if line.find("Test Case Completed [") > 0:
                             extract_datetime(line)
 
                             m = re.search(r"\[([A-Za-z0-9_]+)\]", line)
