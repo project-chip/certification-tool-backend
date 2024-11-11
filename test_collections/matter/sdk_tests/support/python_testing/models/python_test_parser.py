@@ -94,10 +94,10 @@ def parse_python_script(path: Path) -> list[PythonTest]:
             )
 
         # - PythonTestType.MANDATORY: Mandatory test cases
-        # - PythonTestType.LEGACY: Tests that have only one step and with this 
+        # - PythonTestType.LEGACY: Tests that have only one step and with this
         #   name: "Run entire test"
-        # - PythonTestType.COMMISSIONING: Test cases flagged as commissioning 
-        # - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning 
+        # - PythonTestType.COMMISSIONING: Test cases flagged as commissioning
+        # - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning
         if test_name in mandatory_python_tcs_public_id:
             python_test_type = PythonTestType.MANDATORY
         elif len(test_steps) == 1 and test_steps[0].label == "Run entire test":

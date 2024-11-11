@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from pathlib import Path
 from typing import Optional
 
 from ..models.sdk_test_folder import SDKTestFolder
@@ -80,9 +81,9 @@ def _init_test_suites(
 
 
 def _parse_python_script_to_test_case_declarations(
-    python_test_version: str,
+    python_test_version: str, tests_file_path: str
 ) -> list[PythonCaseDeclaration]:
-    python_tests: list[PythonTest] = parse_python_script(PYTHON_TESTS_PARSED_FILE)
+    python_tests: list[PythonTest] = parse_python_script(Path(tests_file_path))
 
     return [
         PythonCaseDeclaration(
@@ -95,12 +96,12 @@ def _parse_python_script_to_test_case_declarations(
 
 
 def __parse_python_tests(
-    python_test_version: str, mandatory: bool
+    python_test_version: str, mandatory: bool, tests_file_path: str
 ) -> list[PythonSuiteDeclaration]:
     suites = _init_test_suites(python_test_version)
 
     test_cases = _parse_python_script_to_test_case_declarations(
-        python_test_version=python_test_version,
+        python_test_version=python_test_version, tests_file_path=tests_file_path
     )
 
     for test_case in test_cases:
@@ -120,7 +121,7 @@ def __parse_python_tests(
 
 
 def __sdk_python_test_collection(
-    name: str, python_test_folder: SDKTestFolder, mandatory: bool
+    name: str, python_test_folder: SDKTestFolder, mandatory: bool, tests_file_path: str
 ) -> PythonCollectionDeclaration:
     collection = PythonCollectionDeclaration(
         name=name, folder=python_test_folder, mandatory=mandatory
@@ -131,6 +132,7 @@ def __sdk_python_test_collection(
     suites = __parse_python_tests(
         python_test_version=python_test_version,
         mandatory=mandatory,
+        tests_file_path=tests_file_path,
     )
 
     for suite in suites:
@@ -142,21 +144,27 @@ def __sdk_python_test_collection(
 
 def sdk_python_test_collection(
     python_test_folder: SDKTestFolder = SDK_PYTHON_TEST_FOLDER,
+    tests_file_path: str = PYTHON_TESTS_PARSED_FILE,
 ) -> PythonCollectionDeclaration:
     """Declare a new collection of test suites."""
     return __sdk_python_test_collection(
-        name="SDK Python Tests", python_test_folder=python_test_folder, mandatory=False
+        name="SDK Python Tests",
+        python_test_folder=python_test_folder,
+        mandatory=False,
+        tests_file_path=tests_file_path,
     )
 
 
 def sdk_mandatory_python_test_collection(
     python_test_folder: SDKTestFolder = SDK_PYTHON_TEST_FOLDER,
+    tests_file_path: str = PYTHON_TESTS_PARSED_FILE,
 ) -> PythonCollectionDeclaration:
     """Declare a new collection of test suites."""
     return __sdk_python_test_collection(
         name="Mandatory SDK Python Tests",
         python_test_folder=python_test_folder,
         mandatory=True,
+        tests_file_path=tests_file_path,
     )
 
 

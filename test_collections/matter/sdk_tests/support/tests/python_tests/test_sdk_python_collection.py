@@ -31,25 +31,27 @@ from ...python_testing.sdk_python_tests import sdk_python_test_collection
 
 @pytest.fixture
 def python_test_collection() -> PythonCollectionDeclaration:
-    test_sdk_python_path = Path(__file__).parent / "test_python_script"
+    test_sdk_python_path = (
+        Path(__file__).parent / "test_python_script/python_tests_info.json"
+    )
     with mock.patch.object(Path, "exists", return_value=True), mock.patch(
         "test_collections.matter.sdk_tests.support.models.sdk_test_folder.open",
         new=mock.mock_open(read_data="unit-test-python-version"),
     ):
         folder = SDKTestFolder(path=test_sdk_python_path, filename_pattern="TC_*")
-        return sdk_python_test_collection(folder)
+        return sdk_python_test_collection(folder, tests_file_path=test_sdk_python_path)
 
 
 def test_sdk_python_test_collection(
     python_test_collection: PythonCollectionDeclaration,
 ) -> None:
     assert python_test_collection.name == "SDK Python Tests"
-    assert len(python_test_collection.test_suites.keys()) == 3
+    assert len(python_test_collection.test_suites.keys()) == 2
     assert python_test_collection.python_test_version == "unit-test-python-version"
 
 
 def test_automated_suite(python_test_collection: PythonCollectionDeclaration) -> None:
-    expected_automated_test_cases = 1
+    expected_automated_test_cases = 2
 
     # Assert automated tests cases
     assert "Python Testing Suite" in python_test_collection.test_suites.keys()

@@ -22,12 +22,13 @@ from ...models.matter_test_models import MatterTest, MatterTestType
 # This file declares Python test models that are used to parse the Python Test Cases.
 ###
 
-# - PythonTestType.COMMISSIONING: Test cases flagged as commissioning 
-# - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning 
-# - PythonTestType.LEGACY: Tests that have only one step and with this 
+
+# - PythonTestType.COMMISSIONING: Test cases flagged as commissioning
+# - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning
+# - PythonTestType.LEGACY: Tests that have only one step and with this
 #   name: "Run entire test"
 # - PythonTestType.MANDATORY: Mandatory test cases
-class PythonTestType(Enum):   
+class PythonTestType(Enum):
     COMMISSIONING = 1
     NO_COMMISSIONING = 2
     LEGACY = 3
