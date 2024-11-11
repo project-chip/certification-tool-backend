@@ -23,12 +23,12 @@ from ...models.matter_test_models import MatterTest, MatterTestType
 ###
 
 
+# - PythonTestType.COMMISSIONING: Test cases flagged as commissioning
+# - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning
+# - PythonTestType.LEGACY: Tests that have only one step and with this
+#   name: "Run entire test"
+# - PythonTestType.MANDATORY: Mandatory test cases
 class PythonTestType(Enum):
-    # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
-    # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
-    #   but don't have a commissioning first step
-    # - PythonTestType.LEGACY: test cases that don't follow the expected template
-    # - PythonTestType.MANDATORY: test cases that are mandatory
     COMMISSIONING = 1
     NO_COMMISSIONING = 2
     LEGACY = 3

@@ -87,12 +87,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
     def step_over(self) -> None:
-        # Python tests that don't follow the template only have the default steps "Start
-        # Python test" and "Show test logs", but inside the file there can be more than
-        # one test case, so the hooks' step methods will continue to be called
-        if len(self.test_steps) == 2:
-            return
-
         self.next_step()
 
     def start(self, count: int) -> None:
@@ -138,16 +132,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             failure_msg += f": {logs}"
 
         self.mark_step_failure(failure_msg)
-
-        # Python tests with only 2 steps are the ones that don't follow the template.
-        # In the case of a test file with multiple test cases, more than one of these
-        # tests can fail and so this method will be called for each of them. These
-        # failures should be reported in the first step and moving to the logs step
-        # should only happen after all test cases are executed.
-        if len(self.test_steps) > 2:
-            # Python tests stop when there's a failure. We need to skip the next steps
-            # and execute only the last one, which shows the logs
-            self.skip_to_last_step()
+        self.skip_to_last_step()
 
     def step_unknown(self) -> None:
         self.__runned += 1
