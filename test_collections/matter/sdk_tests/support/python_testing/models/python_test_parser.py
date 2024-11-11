@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import ast
+import json
 import re
 from pathlib import Path
 from typing import Any, List, Optional, Union
@@ -59,20 +60,68 @@ def parse_python_script(path: Path) -> list[PythonTest]:
     Example: file TC_ACE_1_3.py has the methods test_TC_ACE_1_3, desc_TC_ACE_1_3,
         pics_TC_ACE_1_3 and steps_TC_ACE_1_3.
     """
-    with open(path, "r") as python_file:
-        parsed_python_file = ast.parse(python_file.read())
+    with open(path, "r") as json_file:
+        parsed_scripts = json.load(json_file)
 
-    test_classes = __test_classes(parsed_python_file)
+    python_tests: list[PythonTest] = []
 
-    test_cases: list[PythonTest] = []
-    for c in test_classes:
-        test_methods = __test_methods(c)
-        test_names = __test_case_names(test_methods)
+    for script_info in parsed_scripts["tests"]:
+        test_function = script_info["function"]
+        test_name = __test_case_name(test_function)
+        if test_name is None:
+            logger.info(f"Failed to parse test name [{test_function}].")
+            continue
 
-        for test_name in test_names:
-            test_cases.append(__parse_test_case(test_name, test_methods, c.name, path))
+        test_description = script_info["desc"]
+        test_pics = script_info["pics"]
+        test_path = script_info["path"]
+        test_class_name = script_info["class_name"]
+        parsed_steps = script_info["steps"]
 
-    return test_cases
+        is_commssioning = False
+        test_steps: list[MatterTestStep] = []
+        for index, step in enumerate(parsed_steps):
+            step_description = step["description"]
+
+            if index == 0:
+                is_commssioning = step["is_commissioning"]
+
+            test_steps.append(
+                MatterTestStep(
+                    label=step_description,
+                    is_commissioning=is_commssioning,
+                )
+            )
+
+        # - PythonTestType.MANDATORY: Mandatory test cases
+        # - PythonTestType.LEGACY: Tests that have only one step and with this
+        #   name: "Run entire test"
+        # - PythonTestType.COMMISSIONING: Test cases flagged as commissioning
+        # - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning
+        if test_name in mandatory_python_tcs_public_id:
+            python_test_type = PythonTestType.MANDATORY
+        elif len(test_steps) == 1 and test_steps[0].label == "Run entire test":
+            python_test_type = PythonTestType.LEGACY
+        elif is_commssioning:
+            python_test_type = PythonTestType.COMMISSIONING
+        else:
+            python_test_type = PythonTestType.NO_COMMISSIONING
+
+        python_tests.append(
+            PythonTest(
+                name=test_name,
+                description=test_description,
+                steps=test_steps,
+                config={},  # Currently config is not configured in Python Testing
+                PICS=test_pics,
+                path=test_path,
+                type=MatterTestType.AUTOMATED,
+                class_name=test_class_name,
+                python_test_type=python_test_type,
+            )
+        )
+
+    return python_tests
 
 
 def __test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -123,24 +172,20 @@ def __test_methods(class_def: ast.ClassDef) -> list[FunctionDefType]:
     return all_methods
 
 
-def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
-    """Extract test case names from methods that match the pattern "test_TC_[\\S]+".
+def __test_case_name(function_name: str) -> Optional[str]:
+    """Extract test case name from methods that match the pattern "test_TC_[\\S]+".
 
     Args:
-        methods (list[FunctionDefType]): List of methods to search from.
+        methods (str): Function name.
 
     Returns:
-        list[str]: List of test case names.
+        str: Test case name.
     """
-    test_names: list[str] = []
+    if match := re.match(TC_TEST_FUNCTION_PATTERN, function_name):
+        if name := match["title"]:
+            return name
 
-    for m in methods:
-        if isinstance(m.name, str):
-            if match := re.match(TC_TEST_FUNCTION_PATTERN, m.name):
-                if name := match["title"]:
-                    test_names.append(name)
-
-    return test_names
+    return None
 
 
 def __parse_test_case(

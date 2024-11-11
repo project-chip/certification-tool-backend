@@ -1,0 +1,94 @@
+{
+    "sdk_sha": "aabbccddeeff11223344556677889900",
+    "tests": [
+        {
+            "class_name": "TC_Commissioning_Sample",
+            "desc": "Commissioning Sample TC Description",
+            "function": "test_TC_Commissioning_Sample",
+            "path": "sdk/TC_Commissioning_Sample",
+            "pics": [
+                "MCORE.ROLE.COMMISSIONEE",
+                "OTHER.PICS"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Second step",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Third step",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                }
+            ]
+        },
+        {
+            "class_name": "TC_No_Commissioning_Sample",
+            "desc": "No Commissioning Sample TC Description",
+            "function": "test_TC_No_Commissioning_Sample",
+            "path": "sdk/TC_No_Commissioning_Sample",
+            "pics": [
+                "PICS"
+            ],
+            "steps": [
+                {
+                    "description": "First step",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Second step",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Third step",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                }
+            ]
+        },
+        {
+            "class_name": "TC_SameClass",
+            "desc": "TC TC_SameClass description 1",
+            "function": "test_TC_SC_1_1",
+            "path": "sdk/TC_SameClass",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Step 1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_SameClass",
+            "desc": "TC TC_SameClass description 2",
+            "function": "test_TC_SC_1_2",
+            "path": "sdk/TC_SameClass",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Step 1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        }
+    ]
+}
