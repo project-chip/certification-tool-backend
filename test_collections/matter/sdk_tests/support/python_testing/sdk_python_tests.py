@@ -14,11 +14,17 @@
 # limitations under the License.
 #
 
+import asyncio
 from pathlib import Path
 from typing import Optional
 
 from ..models.sdk_test_folder import SDKTestFolder
 from ..paths import SDK_CHECKOUT_PATH, SDK_TESTS_ROOT
+from .list_python_tests_classes import (
+    COMPLETE_JSON_OUTPUT_FILE_FOLDER,
+    CUSTOM_PYTHON_SCRIPTS_FOLDER,
+    generate_python_test_json_file,
+)
 from .models.python_test_models import PythonTest, PythonTestType
 from .models.python_test_parser import parse_python_script
 from .models.test_declarations import (
@@ -50,6 +56,7 @@ CUSTOM_PYTHON_TEST_FOLDER = SDKTestFolder(
 )
 
 PYTHON_TESTS_PARSED_FILE = SDK_TESTS_ROOT / "python_tests_info.json"
+CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_ROOT / "custom_python_tests_info.json"
 
 
 def _init_test_suites(
@@ -170,26 +177,32 @@ def sdk_mandatory_python_test_collection(
 
 def custom_python_test_collection(
     python_test_folder: SDKTestFolder = CUSTOM_PYTHON_TEST_FOLDER,
+    tests_file_path: Path = CUSTOM_PYTHON_TESTS_PARSED_FILE,
 ) -> Optional[PythonCollectionDeclaration]:
+    asyncio.run(
+        generate_python_test_json_file(
+            test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER,
+            json_output_file=COMPLETE_JSON_OUTPUT_FILE_FOLDER
+            / "custom_python_tests_info.json",
+        )
+    )
+
     """Declare a new collection of test suites."""
-    return None
-    # TODO: Implement custom python test collection
-    # collection = PythonCollectionDeclaration(
-    #     name="Custom SDK Python Tests", folder=python_test_folder
-    # )
+    collection = PythonCollectionDeclaration(
+        name="Custom SDK Python Tests", folder=python_test_folder
+    )
 
-    # suites = __parse_python_tests(
-    #     python_test_version="custom",
-    #     mandatory=False,
-    # )
+    suites = __parse_python_tests(
+        python_test_version="custom", mandatory=False, tests_file_path=tests_file_path
+    )
 
-    # for suite in suites:
-    #     if not suite.test_cases:
-    #         continue
-    #     suite.sort_test_cases()
-    #     collection.add_test_suite(suite)
+    for suite in suites:
+        if not suite.test_cases:
+            continue
+        suite.sort_test_cases()
+        collection.add_test_suite(suite)
 
-    # if not collection.test_suites:
-    #     return None
+    if not collection.test_suites:
+        return None
 
-    # return collection
+    return collection

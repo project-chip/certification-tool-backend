@@ -14,8 +14,13 @@
 # limitations under the License.
 #
 import asyncio
+import contextlib
+import sys
+from importlib import import_module
+from pathlib import Path
 from typing import AsyncGenerator, Generator
 from unittest import mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import pytest_asyncio
@@ -27,12 +32,18 @@ from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+# isort: split - DO NOT MOVE THIS IMPORT, this should be before any app.*
+from .sdk_container_mock import mock_instance  # Mock is already setup when this imports
+
+# isort: split
+
 from app.core.config import settings
 from app.db.base_class import Base
 from app.db.init_db import create_app_database
 from app.main import app as main_app
 from app.test_engine import test_script_manager
 from app.test_engine.test_collection_discovery import discover_test_collections
+from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 
 if settings.SQLALCHEMY_DATABASE_URI is None:
     raise ValueError("Database URI is missing")
@@ -123,3 +134,32 @@ unit tests. Make sure we discover all test collections here.
 test_script_manager.test_script_manager.test_collections = discover_test_collections(
     disabled_collections=[]
 )
+
+
+@contextlib.contextmanager
+def use_real_sdk_container():
+    """Context manager to temporarily use the real SDKContainer"""
+    # Store the mock module
+    mock_module = sys.modules["test_collections.matter.sdk_tests.support.sdk_container"]
+
+    # Remove the mock from sys.modules to force reload
+    del sys.modules["test_collections.matter.sdk_tests.support.sdk_container"]
+
+    try:
+        # Import the real module
+        real_module = import_module(
+            "test_collections.matter.sdk_tests.support.sdk_container"
+        )
+        yield real_module
+    finally:
+        # Restore the mock module
+        sys.modules[
+            "test_collections.matter.sdk_tests.support.sdk_container"
+        ] = mock_module
+
+
+@pytest.fixture
+def real_sdk_container():
+    """Use the real SDKContainer in a test"""
+    with use_real_sdk_container() as real_module:
+        yield real_module.SDKContainer()
