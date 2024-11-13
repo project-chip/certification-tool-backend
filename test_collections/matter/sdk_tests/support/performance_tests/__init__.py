@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Optional
-
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
 
 from .sdk_performance_tests import sdk_performance_test_collection

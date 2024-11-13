@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, List, Optional, Union
 
 from ...models.matter_test_models import MatterTestStep, MatterTestType
-from .python_test_models import PythonTest, PythonTestType
+from .performance_tests_models import PerformanceTest, PerformanceTestType
 
 ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
@@ -31,8 +31,8 @@ TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
 FunctionDefType = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
 
-def parse_python_script(path: Path) -> list[PythonTest]:
-    """Parse a python file into a list of PythonTest models.
+def parse_performance_tests(path: Path) -> list[PerformanceTest]:
+    """Parse a python file into a list of PerformanceTestTest models.
 
     This will also annotate parsed python tests with their file path and test type.
 
@@ -46,15 +46,15 @@ def parse_python_script(path: Path) -> list[PythonTest]:
      * steps_[test_name] - (optional) This method should return a list with the steps'
         descriptions
 
-    Example: file TC_ACE_1_3.py has the methods test_TC_ACE_1_3, desc_TC_ACE_1_3,
-        pics_TC_ACE_1_3 and steps_TC_ACE_1_3.
+    Example: file TC_COMMISSIONING_1_0.py has the methods test_TC_COMMISSIONING_1_0,
+        desc_TC_COMMISSIONING_1_0, and steps_TC_COMMISSIONING_1_0.
     """
     with open(path, "r") as python_file:
         parsed_python_file = ast.parse(python_file.read())
 
     test_classes = __test_classes(parsed_python_file)
 
-    test_cases: list[PythonTest] = []
+    test_cases: list[PerformanceTest] = []
     for c in test_classes:
         test_methods = __test_methods(c)
         test_names = __test_case_names(test_methods)
@@ -132,7 +132,7 @@ def __test_case_names(methods: list[FunctionDefType]) -> list[str]:
 
 def __parse_test_case(
     tc_name: str, methods: list[FunctionDefType], class_name: str, path: Path
-) -> PythonTest:
+) -> PerformanceTest:
     # Currently config is not configured in Python Testing
     tc_config: dict = {}
 
@@ -148,9 +148,6 @@ def __parse_test_case(
     if desc_method:
         tc_desc = __retrieve_description(desc_method)
 
-    # If the python test does not implement the steps template method,
-    # the test case will be presented in UI and the whole test case will be
-    # executed as one step
     steps_method = __get_method_by_name(steps_method_name, methods)
     if steps_method:
         tc_steps = __retrieve_steps(steps_method)
@@ -159,19 +156,7 @@ def __parse_test_case(
     if pics_method:
         tc_pics = __retrieve_pics(pics_method)
 
-    # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
-    # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
-    #   but don't have a commissioning first step
-    # - PythonTestType.LEGACY: test cases that don't follow the expected template
-    # We use the desc_[test_name] method as an indicator that the test case follows the
-    # expected template
-    python_test_type = PythonTestType.LEGACY
-    if len(tc_steps) > 0 and tc_steps[0].is_commissioning:
-        python_test_type = PythonTestType.COMMISSIONING
-    elif desc_method:
-        python_test_type = PythonTestType.NO_COMMISSIONING
-
-    return PythonTest(
+    return PerformanceTest(
         name=tc_name,
         description=tc_desc,
         steps=tc_steps,
@@ -180,7 +165,7 @@ def __parse_test_case(
         path=path,
         type=MatterTestType.AUTOMATED,
         class_name=class_name,
-        python_test_type=python_test_type,
+        performance_test_type=PerformanceTestType.PERFORMANCE,
     )
 
 
@@ -209,7 +194,12 @@ def __retrieve_steps(method: FunctionDefType) -> List[MatterTestStep]:
             ].value.value
 
         python_steps.append(
-            MatterTestStep(label=step_name, is_commissioning=arg_is_commissioning)
+            MatterTestStep(
+                label=step_name,
+                command=None,
+                arguments=None,
+                is_commissioning=arg_is_commissioning,
+            )
         )
 
     return python_steps

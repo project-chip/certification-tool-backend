@@ -16,18 +16,17 @@
 from pathlib import Path
 
 from ..models.sdk_test_folder import SDKTestFolder
-from .models.python_test_models import PythonTestType
-from .models.python_test_parser import parse_python_script
+from .models.performance_tests_parser import parse_performance_tests
 from .models.test_declarations import (
-    PythonCaseDeclaration,
-    PythonCollectionDeclaration,
-    PythonSuiteDeclaration,
+    PerformanceCaseDeclaration,
+    PerformanceCollectionDeclaration,
+    PerformanceSuiteDeclaration,
 )
-from .models.test_suite import SuiteType
+from .models.test_suite import PerformanceSuiteType
 
 ###
 # This file hosts logic to load and parse Stress/Stability test cases, located in
-# `./models/rpc_client/`.
+# `./scripts/sdk/`.
 #
 # This is a temporary solution since those tests should come from SDK.
 #
@@ -38,74 +37,60 @@ STRESS_TEST_FOLDER = SDKTestFolder(path=STRESS_TEST_PATH, filename_pattern="TC_*
 
 
 def _init_test_suites(
-    python_test_version: str,
-) -> dict[SuiteType, PythonSuiteDeclaration]:
+    performance_test_version: str,
+) -> dict[PerformanceSuiteType, PerformanceSuiteDeclaration]:
     return {
-        SuiteType.COMMISSIONING: PythonSuiteDeclaration(
+        PerformanceSuiteType.PERFORMANCE: PerformanceSuiteDeclaration(
             name="Performance Test Suite",
-            suite_type=SuiteType.COMMISSIONING,
-            version=python_test_version,
-        ),
-        SuiteType.NO_COMMISSIONING: PythonSuiteDeclaration(
-            name="Performance Test Suite",
-            suite_type=SuiteType.NO_COMMISSIONING,
-            version=python_test_version,
-        ),
-        SuiteType.LEGACY: PythonSuiteDeclaration(
-            name="Performance Test Suite",
-            suite_type=SuiteType.LEGACY,
-            version=python_test_version,
+            suite_type=PerformanceSuiteType.PERFORMANCE,
+            version=performance_test_version,
         ),
     }
 
 
-def _parse_python_script_to_test_case_declarations(
-    python_test_path: Path, python_test_version: str
-) -> list[PythonCaseDeclaration]:
-    python_tests = parse_python_script(python_test_path)
+def _parse_performance_tests_to_test_case_declarations(
+    performance_test_path: Path, performance_test_version: str
+) -> list[PerformanceCaseDeclaration]:
+    performance_tests = parse_performance_tests(performance_test_path)
 
     return [
-        PythonCaseDeclaration(test=python_test, python_test_version=python_test_version)
-        for python_test in python_tests
+        PerformanceCaseDeclaration(
+            test=performance_test, performance_test_version=performance_test_version
+        )
+        for performance_test in performance_tests
     ]
 
 
 def _parse_all_sdk_python_tests(
-    python_test_files: list[Path], python_test_version: str
-) -> list[PythonSuiteDeclaration]:
+    performance_test_files: list[Path], performance_test_version: str
+) -> list[PerformanceSuiteDeclaration]:
     """Parse all python test files and add them into Automated Suite"""
-    suites = _init_test_suites(python_test_version)
+    suites = _init_test_suites(performance_test_version)
 
-    for python_test_file in python_test_files:
-        test_cases = _parse_python_script_to_test_case_declarations(
-            python_test_path=python_test_file,
-            python_test_version=python_test_version,
+    for performance_test_file in performance_test_files:
+        test_cases = _parse_performance_tests_to_test_case_declarations(
+            performance_test_path=performance_test_file,
+            performance_test_version=performance_test_version,
         )
 
         for test_case in test_cases:
-            python_test_type = test_case.class_ref.python_test.python_test_type
-            if python_test_type == PythonTestType.COMMISSIONING:
-                suites[SuiteType.COMMISSIONING].add_test_case(test_case)
-            elif python_test_type == PythonTestType.NO_COMMISSIONING:
-                suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
-            else:
-                suites[SuiteType.LEGACY].add_test_case(test_case)
+            suites[PerformanceSuiteType.PERFORMANCE].add_test_case(test_case)
 
     return [s for s in list(suites.values()) if len(s.test_cases) != 0]
 
 
 def sdk_performance_test_collection(
-    python_test_folder: SDKTestFolder = STRESS_TEST_FOLDER,
-) -> PythonCollectionDeclaration:
+    performance_test_folder: SDKTestFolder = STRESS_TEST_FOLDER,
+) -> PerformanceCollectionDeclaration:
     """Declare a new collection of test suites."""
-    collection = PythonCollectionDeclaration(
-        name="SDK Performance Tests", folder=python_test_folder
+    collection = PerformanceCollectionDeclaration(
+        name="SDK Performance Tests", folder=performance_test_folder
     )
 
-    files = python_test_folder.file_paths(extension=".py")
-    version = python_test_folder.version
+    files = performance_test_folder.file_paths(extension=".py")
+    version = performance_test_folder.version
     suites = _parse_all_sdk_python_tests(
-        python_test_files=files, python_test_version=version
+        performance_test_files=files, performance_test_version=version
     )
 
     for suite in suites:

@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .test_case import PythonTestCase
-from .test_suite import PythonTestSuite, SuiteType
+from .test_case import PerformanceTest
+from .test_suite import PerformanceSuiteType, PerformanceTestSuite

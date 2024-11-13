@@ -30,6 +30,8 @@ datetime_json_pattern = "%Y-%m-%dT%H:%M:%S.%f"
 def create_summary_report(
     timestamp: str, log_lines: list, commissioning_method: str
 ) -> tuple[str, str]:
+    tc_name = ""
+    tc_suite = ""
     log_lines_list = "\n".join(log_lines)
 
     LOGS_FOLDER = "/test_collections/logs"
@@ -58,8 +60,6 @@ def create_summary_report(
         file_path = os.path.join(CONTAINER_OUT_FOLDER, file_name)
         commissioning_obj: Optional[Commissioning] = None
         file_execution_time = None
-        tc_name = ""
-        tc_suite = ""
         tc_result = None
         tc_execution_in_file = 0
 

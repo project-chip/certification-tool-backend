@@ -22,44 +22,48 @@ from app.test_engine.models.test_declarations import (
 )
 
 from ...models.sdk_test_folder import SDKTestFolder
-from .python_test_models import MatterTestType, PythonTest
+from .performance_tests_models import MatterTestType, PerformanceTest
 from .test_case import PerformanceTestCase
-from .test_suite import PythonTestSuite, SuiteType
+from .test_suite import PerformanceSuiteType, PerformanceTestSuite
 
 
-class PythonCollectionDeclaration(TestCollectionDeclaration):
+class PerformanceCollectionDeclaration(TestCollectionDeclaration):
     def __init__(self, folder: SDKTestFolder, name: str) -> None:
         super().__init__(path=str(folder.path), name=name)
-        self.python_test_version = folder.version
+        self.performance_test_version = folder.version
 
 
-class PythonSuiteDeclaration(TestSuiteDeclaration):
+class PerformanceSuiteDeclaration(TestSuiteDeclaration):
     """Direct initialization for Python Test Suite."""
 
-    class_ref: Type[PythonTestSuite]
+    class_ref: Type[PerformanceTestSuite]
 
-    def __init__(self, name: str, suite_type: SuiteType, version: str) -> None:
+    def __init__(
+        self, name: str, suite_type: PerformanceSuiteType, version: str
+    ) -> None:
         super().__init__(
-            PythonTestSuite.class_factory(
+            PerformanceTestSuite.class_factory(
                 name=name,
                 suite_type=suite_type,
-                python_test_version=version,
+                performance_test_version=version,
             )
         )
 
 
-class PythonCaseDeclaration(TestCaseDeclaration):
+class PerformanceCaseDeclaration(TestCaseDeclaration):
     """Direct initialization for Python Test Case."""
 
     class_ref: Type[PerformanceTestCase]
 
-    def __init__(self, test: PythonTest, python_test_version: str) -> None:
+    def __init__(self, test: PerformanceTest, performance_test_version: str) -> None:
         super().__init__(
             PerformanceTestCase.class_factory(
-                test=test, python_test_version=python_test_version
+                test=test,
+                performance_test_version=performance_test_version,
+                mandatory=False,
             )
         )
 
     @property
     def test_type(self) -> MatterTestType:
-        return self.class_ref.python_test.type
+        return self.class_ref.performance_test.type

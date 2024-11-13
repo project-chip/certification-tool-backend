@@ -23,20 +23,14 @@ from ...models.matter_test_models import MatterTest, MatterTestType
 ###
 
 
-class PythonTestType(Enum):
-    # - PythonTestType.COMMISSIONING: test cases that have a commissioning first step
-    # - PythonTestType.NO_COMMISSIONING: test cases that follow the expected template
-    #   but don't have a commissioning first step
-    # - PythonTestType.LEGACY: test cases that don't follow the expected template
-    COMMISSIONING = 1
-    NO_COMMISSIONING = 2
-    LEGACY = 3
+class PerformanceTestType(Enum):
+    PERFORMANCE = 1
 
 
-class PythonTest(MatterTest):
+class PerformanceTest(MatterTest):
     description: str
     class_name: str
-    python_test_type: PythonTestType
+    performance_test_type: PerformanceTestType
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)

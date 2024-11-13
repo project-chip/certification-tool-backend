@@ -77,7 +77,7 @@ def commission_device(
     config: TestEnvironmentConfig,
     logger: loguru.Logger,
 ) -> None:
-    sdk_container = SDKContainer(logger)
+    sdk_container: SDKContainer = SDKContainer()
 
     command = [f"{RUNNER_CLASS_PATH} commission"]
     command_arguments = generate_command_arguments(config)

@@ -24,19 +24,18 @@ from typing import Any, Type, TypeVar
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
-from app.test_engine.models import TestStep
+from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
-from test_collections.matter.sdk_tests.support.python_testing.models.test_case import (
-    PythonTestCase,
-)
+from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...pics import PICS_FILE_PATH
-from .python_test_models import PythonTest
-from .python_testing_hooks_proxy import (
-    SDKPythonTestResultBase,
-    SDKPythonTestRunnerHooks,
+from ...sdk_container import SDKContainer
+from .performance_tests_hooks_proxy import (
+    SDKPerformanceResultBase,
+    SDKPerformanceRunnerHooks,
 )
+from .performance_tests_models import PerformanceTest
 from .utils import EXECUTABLE, RUNNER_CLASS_PATH, generate_command_arguments
 
 
@@ -53,7 +52,7 @@ class PerformanceTestCaseError(Exception):
     pass
 
 
-class PerformanceTestCase(PythonTestCase):
+class PerformanceTestCase(TestCase, UserPromptSupport):
     """Base class for all Python Test based test cases.
 
     This class provides a class factory that will dynamically declare a new sub-class
@@ -63,18 +62,37 @@ class PerformanceTestCase(PythonTestCase):
     in all instances of such subclass.
     """
 
+    sdk_container: SDKContainer = SDKContainer()
+    performance_test: PerformanceTest
+    performance_test_version: str
+
     def __init__(self, test_case_execution: TestCaseExecution) -> None:
         super().__init__(test_case_execution=test_case_execution)
+        self.test_stop_called = False
         self.step_execution_times = []  # type: ignore[var-annotated]
+
+    def start(self, count: int) -> None:
+        pass
+
+    def stop(self, duration: int) -> None:
+        if not self.test_stop_called:
+            self.current_test_step.mark_as_completed()
 
     def test_start(
         self, filename: str, name: str, count: int, steps: list[str] = []
     ) -> None:
-        self.step_over()
+        self.next_step()
+
+    def test_stop(self, exception: Exception, duration: int) -> None:
+        self.test_stop_called = True
+
+    def test_skipped(self, filename: str, name: str) -> None:
+        self.mark_as_not_applicable()
+        self.skip_to_last_step()
 
     def step_skipped(self, name: str, expression: str) -> None:
         self.current_test_step.mark_as_not_applicable("Test step skipped")
-        self.step_over()
+        self.next_step()
 
     def step_start(self, name: str) -> None:
         pass
@@ -83,7 +101,17 @@ class PerformanceTestCase(PythonTestCase):
         duration_ms = int(duration / 1000)
         self.step_execution_times.append(duration_ms)
         self.analytics = self.generate_analytics_data()
-        self.step_over()
+        self.next_step()
+
+    def step_failure(
+        self, logger: Any, logs: str, duration: int, request: Any, received: Any
+    ) -> None:
+        failure_msg = "Performance test step failure"
+        if logs:
+            failure_msg += f": {logs}"
+
+        self.mark_step_failure(failure_msg)
+        self.skip_to_last_step()
 
     def generate_analytics_data(self) -> dict[str, str]:
         print(self.step_execution_times)
@@ -108,19 +136,23 @@ class PerformanceTestCase(PythonTestCase):
     @classmethod
     def pics(cls) -> set[str]:
         """Test Case level PICS. Read directly from parsed Python Test."""
-        return cls.python_test.PICS
+        return cls.performance_test.PICS
 
     @classmethod
-    def class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
+    def class_factory(
+        cls, test: PerformanceTest, performance_test_version: str, mandatory: bool
+    ) -> Type[T]:
         """Dynamically declares a subclass based on the type of Python test."""
         case_class: Type[PerformanceTestCase] = PerformanceTestCase
 
         return case_class.__class_factory(
-            test=test, python_test_version=python_test_version
+            test=test, performance_test_version=performance_test_version
         )
 
     @classmethod
-    def __class_factory(cls, test: PythonTest, python_test_version: str) -> Type[T]:
+    def __class_factory(
+        cls, test: PerformanceTest, performance_test_version: str
+    ) -> Type[T]:
         """class factory method for PerformanceTestCase."""
         title = cls.__title(test.name)
         class_name = cls.__class_name(test.name)
@@ -129,12 +161,12 @@ class PerformanceTestCase(PythonTestCase):
             class_name,
             (cls,),
             {
-                "python_test": test,
-                "python_test_version": python_test_version,
+                "performance_test": test,
+                "performance_test_version": performance_test_version,
                 "metadata": {
                     "public_id": (
                         test.name
-                        if python_test_version != CUSTOM_TEST_IDENTIFIER
+                        if performance_test_version != CUSTOM_TEST_IDENTIFIER
                         else test.name + "-" + CUSTOM_TEST_IDENTIFIER
                     ),
                     "version": "0.0.1",
@@ -161,6 +193,9 @@ class PerformanceTestCase(PythonTestCase):
             title = identifier.replace("_", "-")
 
         return title
+
+    async def setup(self) -> None:
+        logger.info("Test Setup")
 
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
@@ -195,31 +230,32 @@ class PerformanceTestCase(PythonTestCase):
             for line in f:
                 if any(specific_string in line for specific_string in filter_entries):
                     logger.log(PYTHON_TEST_LEVEL, line)
-            # lines = f.read()
-            # logger.log(PYTHON_TEST_LEVEL, lines)
 
     async def execute(self) -> None:
         try:
-            logger.info("Running Stress & Stability Test: " + self.python_test.name)
+            logger.info(
+                "Running Stress & Stability Test: " + self.performance_test.name
+            )
 
-            BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
+            BaseManager.register("TestRunnerHooks", SDKPerformanceRunnerHooks)
             manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
             manager.start()
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
-            if not self.python_test.path:
+            if not self.performance_test.path:
                 raise PerformanceTestCaseError(
-                    f"Missing file path for python test {self.python_test.name}"
+                    f"Missing file path for python test {self.performance_test.name}"
                 )
 
             # get script path including folder (sdk or custom) and excluding extension
             test_script_relative_path = Path(
-                *self.python_test.path.parts[-2:]
+                *self.performance_test.path.parts[-2:]
             ).with_suffix("")
 
             command = [
                 f"{RUNNER_CLASS_PATH} {test_script_relative_path}"
-                f" {self.python_test.class_name} --tests test_{self.python_test.name}"
+                f" {self.performance_test.class_name}"
+                f" --tests test_{self.performance_test.name}"
             ]
 
             # Generate the command argument by getting the test_parameters from
@@ -255,14 +291,6 @@ class PerformanceTestCase(PythonTestCase):
 
             # Step: Show test logs
 
-            # Python tests that don't follow the template only have the 2 default steps
-            # and, at this point, will still be in the first step because of the
-            # step_over method. So we have to explicitly move on to the next step here.
-            # The tests that do follow the template will have additional steps and will
-            # have already been moved to the correct step by the hooks' step methods.
-            if len(self.test_steps) == 2:
-                self.next_step()
-
             logger.info("---- Start of Performance test logs ----")
             self.handle_logs_temp()
             # Uncomment line bellow when the workaround has a definitive solution
@@ -274,7 +302,12 @@ class PerformanceTestCase(PythonTestCase):
         finally:
             pass
 
-    async def __handle_update(self, update: SDKPythonTestResultBase) -> None:
+    def skip_to_last_step(self) -> None:
+        self.current_test_step.mark_as_completed()
+        self.current_test_step_index = len(self.test_steps) - 1
+        self.current_test_step.mark_as_executing()
+
+    async def __handle_update(self, update: SDKPerformanceResultBase) -> None:
         await self.__call_function_from_name(update.type.value, update.params_dict())
 
     async def __call_function_from_name(self, func_name: str, kwargs: Any) -> None:
@@ -291,7 +324,7 @@ class PerformanceTestCase(PythonTestCase):
 
     def create_test_steps(self) -> None:
         self.test_steps = [TestStep("Start Performance test")]
-        for step in self.python_test.steps:
-            python_test_step = TestStep(step.label)
-            self.test_steps.append(python_test_step)
+        for step in self.performance_test.steps:
+            performance_test_step = TestStep(step.label)
+            self.test_steps.append(performance_test_step)
         self.test_steps.append(TestStep("Show test logs"))
