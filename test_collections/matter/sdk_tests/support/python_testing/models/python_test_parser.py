@@ -60,10 +60,13 @@ def parse_python_script(path: Path) -> list[PythonTest]:
     Example: file TC_ACE_1_3.py has the methods test_TC_ACE_1_3, desc_TC_ACE_1_3,
         pics_TC_ACE_1_3 and steps_TC_ACE_1_3.
     """
+    python_tests: list[PythonTest] = []
+
     with open(path, "r") as json_file:
         parsed_scripts = json.load(json_file)
 
-    python_tests: list[PythonTest] = []
+    if len(parsed_scripts) == 0:
+        return python_tests
 
     for script_info in parsed_scripts["tests"]:
         test_function = script_info["function"]
