@@ -130,7 +130,7 @@ test_script_manager.test_script_manager.test_collections = discover_test_collect
 
 
 @contextlib.contextmanager
-def use_real_sdk_container() -> SDKContainer:
+def use_real_sdk_container() -> Generator:
     """Context manager to temporarily use the real SDKContainer"""
     # Store the mock module
     mock_module = sys.modules["test_collections.matter.sdk_tests.support.sdk_container"]
@@ -152,7 +152,7 @@ def use_real_sdk_container() -> SDKContainer:
 
 
 @pytest.fixture
-def real_sdk_container() -> SDKContainer:
+def real_sdk_container() -> Generator:
     """Use the real SDKContainer in a test"""
-    with use_real_sdk_container() as real_module:
+    with use_real_sdk_container() as real_module:  # noqa
         yield real_module.SDKContainer()

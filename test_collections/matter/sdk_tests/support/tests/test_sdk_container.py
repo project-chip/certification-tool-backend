@@ -27,11 +27,10 @@ from app.tests.utils.docker import make_fake_container
 from test_collections.matter.config import matter_settings
 
 from ..exec_run_in_container import ExecResultExtended
-from ..sdk_container import SDKContainer
 
 
 @pytest.mark.asyncio
-async def test_start(real_sdk_container) -> None: # noqa
+async def test_start(real_sdk_container) -> None:  # noqa
     # Values to verify
     docker_image = f"{matter_settings.SDK_DOCKER_IMAGE}:\
 {matter_settings.SDK_DOCKER_TAG}"
@@ -55,7 +54,7 @@ async def test_start(real_sdk_container) -> None: # noqa
 
 
 @pytest.mark.asyncio
-async def test_not_start_when_running(real_sdk_container: SDKContainer) -> None:
+async def test_not_start_when_running(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
         target=real_sdk_container, attribute="is_running", return_value=True
     ), mock.patch.object(
@@ -68,7 +67,7 @@ async def test_not_start_when_running(real_sdk_container: SDKContainer) -> None:
 
 
 @pytest.mark.asyncio
-async def test_destroy_container_running(real_sdk_container: SDKContainer) -> None:
+async def test_destroy_container_running(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
         target=real_sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
@@ -89,7 +88,7 @@ async def test_destroy_container_running(real_sdk_container: SDKContainer) -> No
 
 
 @pytest.mark.asyncio
-async def test_destroy_container_not_running(real_sdk_container: SDKContainer) -> None:
+async def test_destroy_container_not_running(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
         target=container_manager, attribute="destroy"
     ) as mock_destroy:
@@ -100,7 +99,7 @@ async def test_destroy_container_not_running(real_sdk_container: SDKContainer) -
 
 
 @pytest.mark.asyncio
-async def test_destroy_container_once(real_sdk_container: SDKContainer) -> None:
+async def test_destroy_container_once(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
         target=real_sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
@@ -121,7 +120,7 @@ async def test_destroy_container_once(real_sdk_container: SDKContainer) -> None:
     assert real_sdk_container._SDKContainer__container is None
 
 
-def test_send_command_without_starting(real_sdk_container: SDKContainer) -> None:
+def test_send_command_without_starting(real_sdk_container) -> None:  # noqa
     try:
         real_sdk_container.send_command("--help", prefix="cmd-prefix")
         assert False
@@ -132,7 +131,7 @@ def test_send_command_without_starting(real_sdk_container: SDKContainer) -> None
 
 
 @pytest.mark.asyncio
-async def test_send_command_default_prefix(real_sdk_container: SDKContainer) -> None:
+async def test_send_command_default_prefix(real_sdk_container) -> None:  # noqa
     fake_container = make_fake_container()
     cmd = "--help"
     cmd_prefix = "cmd-prefix"
@@ -172,7 +171,7 @@ async def test_send_command_default_prefix(real_sdk_container: SDKContainer) -> 
 
 
 @pytest.mark.asyncio
-async def test_send_command_custom_prefix(real_sdk_container: SDKContainer) -> None:
+async def test_send_command_custom_prefix(real_sdk_container) -> None:  # noqa
     fake_container = make_fake_container()
     cmd = "--help"
     cmd_prefix = "cat"

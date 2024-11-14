@@ -115,7 +115,7 @@
         "test_collections/matter/python_tests/docs/common_test_failures/",
         "sdk_patch",
         ".devcontainer",
-        "test_collections/matter/sdk_tests/python_tests_info.json"
+        "test_collections/matter/sdk_tests/*.json"
     ],
     "enableFiletypes": [
         "shellscript"

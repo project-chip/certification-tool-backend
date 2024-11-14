@@ -16,6 +16,7 @@
 
 import sys
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 # Constants from the original module
@@ -67,7 +68,7 @@ mock_instance.start = AsyncMock()
 
 # Create mock SDKContainer class
 class MockSDKContainer:
-    def __new__(cls, *args, **kwargs) -> None:
+    def __new__(cls, *args: Any, **kwargs: Any) -> "MockSDKContainer":
         return mock_instance
 
 
