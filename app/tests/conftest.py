@@ -36,7 +36,6 @@ from app.db.init_db import create_app_database
 from app.main import app as main_app
 from app.test_engine import test_script_manager
 from app.test_engine.test_collection_discovery import discover_test_collections
-from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 
 if settings.SQLALCHEMY_DATABASE_URI is None:
     raise ValueError("Database URI is missing")
