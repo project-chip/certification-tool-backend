@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..models.sdk_test_folder import SDKTestFolder
-from ..paths import SDK_CHECKOUT_PATH, SDK_TESTS_ROOT
+from ..paths import SDK_CHECKOUT_PATH
 from .list_python_tests_classes import (
     CUSTOM_PYTHON_SCRIPTS_FOLDER,
     CUSTOM_PYTHON_TESTS_PARSED_FILE,
