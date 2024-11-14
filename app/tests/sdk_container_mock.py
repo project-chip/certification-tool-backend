@@ -60,12 +60,12 @@ mock_instance.start = AsyncMock()
 
 # Create mock SDKContainer class
 class MockSDKContainer:
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs) -> None:
         return mock_instance
 
 
 # Store mock for access
-sys.mock_sdk_container = mock_instance
+sys.mock_sdk_container = mock_instance  # type: ignore
 
 # Create and setup mock module
 mock_module = type(

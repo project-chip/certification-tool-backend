@@ -17,17 +17,17 @@
 # type: ignore
 # Ignore mypy type check for this file
 
-from unittest import TestCase, mock
+from unittest import mock
 
 import pytest
 
 from app.container_manager import container_manager
-from app.tests.conftest import real_sdk_container
+from app.tests.conftest import real_sdk_container  # noqa: F401
 from app.tests.utils.docker import make_fake_container
 from test_collections.matter.config import matter_settings
 
 from ..exec_run_in_container import ExecResultExtended
-from ..sdk_container import SDKContainer, SDKContainerNotRunning
+from ..sdk_container import SDKContainer
 
 
 @pytest.mark.asyncio

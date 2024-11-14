@@ -17,10 +17,8 @@ import asyncio
 import contextlib
 import sys
 from importlib import import_module
-from pathlib import Path
 from typing import AsyncGenerator, Generator
 from unittest import mock
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import pytest_asyncio
@@ -31,11 +29,6 @@ from filelock import FileLock
 from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-
-# isort: split - DO NOT MOVE THIS IMPORT, this should be before any app.*
-from .sdk_container_mock import mock_instance  # Mock is already setup when this imports
-
-# isort: split
 
 from app.core.config import settings
 from app.db.base_class import Base
@@ -137,7 +130,7 @@ test_script_manager.test_script_manager.test_collections = discover_test_collect
 
 
 @contextlib.contextmanager
-def use_real_sdk_container():
+def use_real_sdk_container() -> SDKContainer:
     """Context manager to temporarily use the real SDKContainer"""
     # Store the mock module
     mock_module = sys.modules["test_collections.matter.sdk_tests.support.sdk_container"]
@@ -159,7 +152,7 @@ def use_real_sdk_container():
 
 
 @pytest.fixture
-def real_sdk_container():
+def real_sdk_container() -> SDKContainer:
     """Use the real SDKContainer in a test"""
     with use_real_sdk_container() as real_module:
         yield real_module.SDKContainer()

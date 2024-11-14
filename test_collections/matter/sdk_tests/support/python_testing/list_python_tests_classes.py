@@ -153,7 +153,8 @@ async def proccess_commands_sdk_container(
 
 async def generate_python_test_json_file(
     test_folder: SDKTestFolder = PYTHON_SCRIPTS_FOLDER,
-    json_output_file=COMPLETE_JSON_OUTPUT_FILE_FOLDER / "python_tests_info.json",
+    json_output_file: Path = COMPLETE_JSON_OUTPUT_FILE_FOLDER
+    / "python_tests_info.json",
 ) -> None:
     python_scripts_command_list = get_command_list(test_folder=test_folder)
 
