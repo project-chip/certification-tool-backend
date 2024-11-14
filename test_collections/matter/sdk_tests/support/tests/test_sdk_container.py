@@ -31,7 +31,7 @@ from ..sdk_container import SDKContainer
 
 
 @pytest.mark.asyncio
-async def test_start(real_sdk_container: SDKContainer) -> None:
+async def test_start(real_sdk_container) -> None: # noqa
     # Values to verify
     docker_image = f"{matter_settings.SDK_DOCKER_IMAGE}:\
 {matter_settings.SDK_DOCKER_TAG}"

@@ -38,16 +38,23 @@ LOCAL_RPC_PYTHON_TESTING_PATH = Path(
     LOCAL_TEST_COLLECTIONS_PATH
     + "/sdk_tests/support/python_testing/models/rpc_client/test_harness_client.py"
 )
-DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"
+DOCKER_RPC_PYTHON_TESTING_PATH = Path(
+    "/root/python_testing/scripts/sdk/"
+    "matter_testing_infrastructure/chip/testing/test_harness_client.py"
+)
 
 
 # Exception classes
 class SDKContainerNotRunning(Exception):
-    """Raised when we attempt to use the docker container, but it is not running"""
+    """
+    Raised when we attempt to use the docker container, but it is not running
+    """
 
 
 class SDKContainerRetrieveExitCodeError(Exception):
-    """Raised when there's an error in the attempt to retrieve an execution's exit code"""
+    """
+    Raised when there's an error in the attempt to retrieve an execution's exit code
+    """
 
 
 # Create mock instance
