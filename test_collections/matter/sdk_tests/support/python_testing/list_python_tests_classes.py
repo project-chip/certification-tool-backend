@@ -32,11 +32,21 @@ TEST_INFO_JSON_FILENAME = "test_info.json"
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
 PYTHON_TESTING_PATH = SDK_TESTS_PATH / "sdk_checkout/python_testing"
 JSON_OUTPUT_FILE_PATH = PYTHON_TESTING_PATH / TEST_INFO_JSON_FILENAME
-COMPLETE_JSON_OUTPUT_FILE_FOLDER = SDK_TESTS_PATH
 PYTHON_SCRIPTS_PATH = PYTHON_TESTING_PATH / "scripts/sdk"
 PYTHON_SCRIPTS_FOLDER = SDKTestFolder(path=PYTHON_SCRIPTS_PATH, filename_pattern="TC*")
 
+CUSTOM_PYTHON_SCRIPTS_PATH = PYTHON_TESTING_PATH / "scripts/custom"
+CUSTOM_PYTHON_SCRIPTS_FOLDER = SDKTestFolder(
+    path=CUSTOM_PYTHON_SCRIPTS_PATH, filename_pattern="TC*"
+)
+
+
+PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "python_tests_info.json"
+CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "custom_python_tests_info.json"
+
 CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
+
+sdk_container: SDKContainer = SDKContainer()
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -59,9 +69,9 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
     ]
 
 
-def get_command_list() -> list:
+def get_command_list(test_folder: SDKTestFolder) -> list:
     python_script_commands = []
-    python_test_files = PYTHON_SCRIPTS_FOLDER.file_paths(extension=".py")
+    python_test_files = test_folder.file_paths(extension=".py")
     python_test_files.sort()
 
     for python_test_file in python_test_files:
@@ -79,7 +89,10 @@ def get_command_list() -> list:
     return python_script_commands
 
 
-async def proccess_commands_sdk_container(commands: list) -> None:
+async def proccess_commands_sdk_container(
+    commands: list,
+    json_output_file: Path,
+) -> None:
     complete_json = []
     errors_found: list[str] = []
     test_function_count = 0
@@ -114,20 +127,18 @@ async def proccess_commands_sdk_container(commands: list) -> None:
 
     sdk_container.destroy()
 
-    complete_json_path = COMPLETE_JSON_OUTPUT_FILE_FOLDER / "python_tests_info.json"
-
     # complete_json.append({"sdk_sha": matter_settings.SDK_SHA})
     # Create a wrapper object with sdk_sha at root level
     json_output = {"sdk_sha": matter_settings.SDK_SHA, "tests": complete_json}
 
-    with open(complete_json_path, "w") as json_file:
+    with open(json_output_file, "w") as json_file:
         json.dump(json_output, json_file, indent=4, sort_keys=True)
         json_file.close()
 
     print("###########################################################################")
     print("###############################   REPORT   ################################")
     print("###########################################################################")
-    print(f">>>>>>>> Output JSON file: {complete_json_path}")
+    print(f">>>>>>>> Output JSON file: {json_output_file}")
     print(f">>>>>>>> Total of test functions: {test_function_count}")
     print(
         (
@@ -143,10 +154,16 @@ async def proccess_commands_sdk_container(commands: list) -> None:
     print("###########################################################################")
 
 
-if __name__ == "__main__":
-    python_scripts_command_list = get_command_list()
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(
-        proccess_commands_sdk_container(python_scripts_command_list)
+async def generate_python_test_json_file(
+    test_folder: SDKTestFolder = PYTHON_SCRIPTS_FOLDER,
+    json_output_file: Path = PYTHON_TESTS_PARSED_FILE,
+) -> None:
+    python_scripts_command_list = get_command_list(test_folder=test_folder)
+
+    await proccess_commands_sdk_container(
+        python_scripts_command_list, json_output_file=json_output_file
     )
-    loop.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(generate_python_test_json_file())

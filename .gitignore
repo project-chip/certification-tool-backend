@@ -13,3 +13,4 @@ SerialTests.lock
 test_db_creation.lock
 .sha_information
 test_collections/matter/sdk_tests/sdk_checkout
+test_collections/matter/sdk_tests/custom_python_tests_info.json

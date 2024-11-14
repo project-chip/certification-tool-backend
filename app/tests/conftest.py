@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 import asyncio
+import contextlib
+import sys
+from importlib import import_module
 from typing import AsyncGenerator, Generator
 from unittest import mock
 
@@ -123,3 +126,32 @@ unit tests. Make sure we discover all test collections here.
 test_script_manager.test_script_manager.test_collections = discover_test_collections(
     disabled_collections=[]
 )
+
+
+@contextlib.contextmanager
+def use_real_sdk_container() -> Generator:
+    """Context manager to temporarily use the real SDKContainer"""
+    # Store the mock module
+    mock_module = sys.modules["test_collections.matter.sdk_tests.support.sdk_container"]
+
+    # Remove the mock from sys.modules to force reload
+    del sys.modules["test_collections.matter.sdk_tests.support.sdk_container"]
+
+    try:
+        # Import the real module
+        real_module = import_module(
+            "test_collections.matter.sdk_tests.support.sdk_container"
+        )
+        yield real_module
+    finally:
+        # Restore the mock module
+        sys.modules[
+            "test_collections.matter.sdk_tests.support.sdk_container"
+        ] = mock_module
+
+
+@pytest.fixture
+def real_sdk_container() -> Generator:
+    """Use the real SDKContainer in a test"""
+    with use_real_sdk_container() as real_module:  # noqa
+        yield real_module.SDKContainer()

@@ -22,60 +22,54 @@ from unittest import mock
 import pytest
 
 from app.container_manager import container_manager
+from app.tests.conftest import real_sdk_container  # noqa: F401
 from app.tests.utils.docker import make_fake_container
 from test_collections.matter.config import matter_settings
 
 from ..exec_run_in_container import ExecResultExtended
-from ..sdk_container import SDKContainer, SDKContainerNotRunning
 
 
 @pytest.mark.asyncio
-async def test_start() -> None:
-    sdk_container: SDKContainer = SDKContainer()
-
+async def test_start(real_sdk_container) -> None:  # noqa
     # Values to verify
     docker_image = f"{matter_settings.SDK_DOCKER_IMAGE}:\
 {matter_settings.SDK_DOCKER_TAG}"
 
     with mock.patch.object(
-        target=sdk_container, attribute="is_running", return_value=False
+        target=real_sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
         target=container_manager, attribute="create_container"
     ) as mock_create_container:
-        await sdk_container.start()
+        await real_sdk_container.start()
 
     mock_create_container.assert_called_once_with(
-        docker_image, SDKContainer.run_parameters
+        docker_image, real_sdk_container.run_parameters
     )
-    assert sdk_container._SDKContainer__container is not None
+    assert real_sdk_container._SDKContainer__container is not None
 
     # clean up:
-    sdk_container._SDKContainer__container = None
+    real_sdk_container._SDKContainer__container = None
 
 
 @pytest.mark.asyncio
-async def test_not_start_when_running() -> None:
-    sdk_container: SDKContainer = SDKContainer()
-
+async def test_not_start_when_running(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
-        target=sdk_container, attribute="is_running", return_value=True
+        target=real_sdk_container, attribute="is_running", return_value=True
     ), mock.patch.object(
         target=container_manager, attribute="create_container"
     ) as mock_create_container:
-        await sdk_container.start()
+        await real_sdk_container.start()
 
     mock_create_container.assert_not_called()
-    assert sdk_container._SDKContainer__container is None
+    assert real_sdk_container._SDKContainer__container is None
 
 
 @pytest.mark.asyncio
-async def test_destroy_container_running() -> None:
-    sdk_container: SDKContainer = SDKContainer()
-
+async def test_destroy_container_running(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
-        target=sdk_container, attribute="is_running", return_value=False
+        target=real_sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
@@ -83,35 +77,31 @@ async def test_destroy_container_running() -> None:
     ) as mock_destroy, mock.patch.object(
         target=container_manager, attribute="create_container"
     ):
-        await sdk_container.start()
+        await real_sdk_container.start()
 
-        assert sdk_container._SDKContainer__container is not None
+        assert real_sdk_container._SDKContainer__container is not None
 
-        sdk_container.destroy()
+        real_sdk_container.destroy()
 
     mock_destroy.assert_called()
-    assert sdk_container._SDKContainer__container is None
+    assert real_sdk_container._SDKContainer__container is None
 
 
 @pytest.mark.asyncio
-async def test_destroy_container_not_running() -> None:
-    sdk_container: SDKContainer = SDKContainer()
-
+async def test_destroy_container_not_running(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
         target=container_manager, attribute="destroy"
     ) as mock_destroy:
-        sdk_container.destroy()
+        real_sdk_container.destroy()
 
     mock_destroy.assert_not_called()
-    assert sdk_container._SDKContainer__container is None
+    assert real_sdk_container._SDKContainer__container is None
 
 
 @pytest.mark.asyncio
-async def test_destroy_container_once() -> None:
-    sdk_container: SDKContainer = SDKContainer()
-
+async def test_destroy_container_once(real_sdk_container) -> None:  # noqa
     with mock.patch.object(
-        target=sdk_container, attribute="is_running", return_value=False
+        target=real_sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
@@ -121,32 +111,34 @@ async def test_destroy_container_once() -> None:
         attribute="create_container",
         return_value=make_fake_container(),
     ):
-        await sdk_container.start()
+        await real_sdk_container.start()
 
-        sdk_container.destroy()
-        sdk_container.destroy()
+        real_sdk_container.destroy()
+        real_sdk_container.destroy()
 
     mock_destroy.assert_called_once()
-    assert sdk_container._SDKContainer__container is None
+    assert real_sdk_container._SDKContainer__container is None
 
 
-def test_send_command_without_starting() -> None:
-    sdk_container: SDKContainer = SDKContainer()
-
-    with pytest.raises(SDKContainerNotRunning):
-        sdk_container.send_command("--help", prefix="cmd-prefix")
+def test_send_command_without_starting(real_sdk_container) -> None:  # noqa
+    try:
+        real_sdk_container.send_command("--help", prefix="cmd-prefix")
+        assert False
+    except Exception as e:
+        # Not able to check SDKContainerNotRunning type since it's mocked at conftest.py
+        assert type(e).__name__ == "SDKContainerNotRunning"
+        assert True
 
 
 @pytest.mark.asyncio
-async def test_send_command_default_prefix() -> None:
-    sdk_container: SDKContainer = SDKContainer()
+async def test_send_command_default_prefix(real_sdk_container) -> None:  # noqa
     fake_container = make_fake_container()
     cmd = "--help"
     cmd_prefix = "cmd-prefix"
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     with mock.patch.object(
-        target=sdk_container, attribute="is_running", return_value=False
+        target=real_sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
@@ -160,9 +152,9 @@ async def test_send_command_default_prefix() -> None:
         ),
         return_value=mock_result,
     ) as mock_exec_run:
-        await sdk_container.start()
+        await real_sdk_container.start()
 
-        result = sdk_container.send_command(cmd, prefix=cmd_prefix)
+        result = real_sdk_container.send_command(cmd, prefix=cmd_prefix)
 
     mock_exec_run.assert_called_once_with(
         fake_container,
@@ -174,20 +166,19 @@ async def test_send_command_default_prefix() -> None:
     assert result == mock_result
 
     # clean up:
-    sdk_container._SDKContainer__last_exec_id = None
-    sdk_container._SDKContainer__container = None
+    real_sdk_container._SDKContainer__last_exec_id = None
+    real_sdk_container._SDKContainer__container = None
 
 
 @pytest.mark.asyncio
-async def test_send_command_custom_prefix() -> None:
-    sdk_container: SDKContainer = SDKContainer()
+async def test_send_command_custom_prefix(real_sdk_container) -> None:  # noqa
     fake_container = make_fake_container()
     cmd = "--help"
     cmd_prefix = "cat"
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
     with mock.patch.object(
-        target=sdk_container, attribute="is_running", return_value=False
+        target=real_sdk_container, attribute="is_running", return_value=False
     ), mock.patch.object(
         target=container_manager, attribute="get_container", return_value=None
     ), mock.patch.object(
@@ -201,9 +192,9 @@ async def test_send_command_custom_prefix() -> None:
         ),
         return_value=mock_result,
     ) as mock_exec_run:
-        await sdk_container.start()
+        await real_sdk_container.start()
 
-        result = sdk_container.send_command(cmd, prefix=cmd_prefix)
+        result = real_sdk_container.send_command(cmd, prefix=cmd_prefix)
 
     mock_exec_run.assert_called_once_with(
         fake_container,
@@ -215,5 +206,5 @@ async def test_send_command_custom_prefix() -> None:
     assert result == mock_result
 
     # clean up:
-    sdk_container._SDKContainer__last_exec_id = None
-    sdk_container._SDKContainer__container = None
+    real_sdk_container._SDKContainer__last_exec_id = None
+    real_sdk_container._SDKContainer__container = None
