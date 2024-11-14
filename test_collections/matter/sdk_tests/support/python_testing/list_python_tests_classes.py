@@ -32,7 +32,6 @@ TEST_INFO_JSON_FILENAME = "test_info.json"
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
 PYTHON_TESTING_PATH = SDK_TESTS_PATH / "sdk_checkout/python_testing"
 JSON_OUTPUT_FILE_PATH = PYTHON_TESTING_PATH / TEST_INFO_JSON_FILENAME
-COMPLETE_JSON_OUTPUT_FILE_FOLDER = SDK_TESTS_PATH
 PYTHON_SCRIPTS_PATH = PYTHON_TESTING_PATH / "scripts/sdk"
 PYTHON_SCRIPTS_FOLDER = SDKTestFolder(path=PYTHON_SCRIPTS_PATH, filename_pattern="TC*")
 
@@ -40,6 +39,10 @@ CUSTOM_PYTHON_SCRIPTS_PATH = PYTHON_TESTING_PATH / "scripts/custom"
 CUSTOM_PYTHON_SCRIPTS_FOLDER = SDKTestFolder(
     path=CUSTOM_PYTHON_SCRIPTS_PATH, filename_pattern="TC*"
 )
+
+
+PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "python_tests_info.json"
+CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "custom_python_tests_info.json"
 
 CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
@@ -153,8 +156,7 @@ async def proccess_commands_sdk_container(
 
 async def generate_python_test_json_file(
     test_folder: SDKTestFolder = PYTHON_SCRIPTS_FOLDER,
-    json_output_file: Path = COMPLETE_JSON_OUTPUT_FILE_FOLDER
-    / "python_tests_info.json",
+    json_output_file: Path = PYTHON_TESTS_PARSED_FILE,
 ) -> None:
     python_scripts_command_list = get_command_list(test_folder=test_folder)
 

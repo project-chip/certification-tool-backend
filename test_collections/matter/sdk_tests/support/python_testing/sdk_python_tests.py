@@ -21,8 +21,9 @@ from typing import Optional
 from ..models.sdk_test_folder import SDKTestFolder
 from ..paths import SDK_CHECKOUT_PATH, SDK_TESTS_ROOT
 from .list_python_tests_classes import (
-    COMPLETE_JSON_OUTPUT_FILE_FOLDER,
     CUSTOM_PYTHON_SCRIPTS_FOLDER,
+    CUSTOM_PYTHON_TESTS_PARSED_FILE,
+    PYTHON_TESTS_PARSED_FILE,
     generate_python_test_json_file,
 )
 from .models.python_test_models import PythonTest, PythonTestType
@@ -49,14 +50,6 @@ SDK_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "sdk"
 SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
     path=SDK_PYTHON_TEST_PATH, filename_pattern="TC*"
 )
-
-CUSTOM_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "custom"
-CUSTOM_PYTHON_TEST_FOLDER = SDKTestFolder(
-    path=CUSTOM_PYTHON_TEST_PATH, filename_pattern="TC*"
-)
-
-PYTHON_TESTS_PARSED_FILE = SDK_TESTS_ROOT / "python_tests_info.json"
-CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_ROOT / "custom_python_tests_info.json"
 
 
 def _init_test_suites(
@@ -176,14 +169,13 @@ def sdk_mandatory_python_test_collection(
 
 
 def custom_python_test_collection(
-    python_test_folder: SDKTestFolder = CUSTOM_PYTHON_TEST_FOLDER,
+    python_test_folder: SDKTestFolder = CUSTOM_PYTHON_SCRIPTS_FOLDER,
     tests_file_path: Path = CUSTOM_PYTHON_TESTS_PARSED_FILE,
 ) -> Optional[PythonCollectionDeclaration]:
     asyncio.run(
         generate_python_test_json_file(
-            test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER,
-            json_output_file=COMPLETE_JSON_OUTPUT_FILE_FOLDER
-            / "custom_python_tests_info.json",
+            test_folder=python_test_folder,
+            json_output_file=tests_file_path,
         )
     )
 
