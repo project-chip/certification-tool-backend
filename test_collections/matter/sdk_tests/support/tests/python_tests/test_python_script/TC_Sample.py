@@ -52,7 +52,7 @@ class TC_Commissioning_Sample(MatterBaseTest):
         print("Test execution")
 
     def pics_TC_Commissioning_Sample(self):
-        pics = ["PICS"]
+        pass
 
 
 class TC_No_Commissioning_Sample(MatterBaseTest):
@@ -71,7 +71,7 @@ class TC_No_Commissioning_Sample(MatterBaseTest):
         print("Test execution")
 
     def pics_TC_No_Commissioning_Sample(self):
-        pics = ["PICS"]
+        pass
 
 
 class TC_Legacy_Sample(MatterBaseTest):

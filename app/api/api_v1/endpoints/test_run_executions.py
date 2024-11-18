@@ -14,9 +14,12 @@
 # limitations under the License.
 #
 import json
+import os
+from datetime import datetime
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
+import requests
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -37,6 +40,10 @@ from app.utils import (
     selected_tests_from_execution,
 )
 from app.version import version_information
+from test_collections.matter.sdk_tests.support.performance_tests.utils import (
+    create_summary_report,
+)
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 router = APIRouter()
 
@@ -479,3 +486,87 @@ def import_test_run_execution(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(error),
         )
+
+
+date_pattern_out_file = "%Y_%m_%d_%H_%M_%S"
+
+
+@router.post("/{id}/performance_summary")
+def generate_summary_log(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    project_id: int,
+) -> JSONResponse:
+    """
+    Imports a test run execution to the the given project_id.
+    """
+
+    project = crud.project.get(db=db, id=project_id)
+
+    if not project:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Project not found"
+        )
+
+    project_config = TestEnvironmentConfigMatter(**project.config)
+    matter_qa_url = None
+    LOGS_FOLDER = "/test_collections/logs"
+    HOST_BACKEND = os.getenv("BACKEND_FILEPATH_ON_HOST") or ""
+    HOST_OUT_FOLDER = HOST_BACKEND + LOGS_FOLDER
+
+    if (
+        project_config.test_parameters
+        and "matter_qa_url" in project_config.test_parameters
+    ):
+        matter_qa_url = project_config.test_parameters["matter_qa_url"]
+    else:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail="matter_qa_url must be configured",
+        )
+
+    page = requests.get(f"{matter_qa_url}/home")
+    if page.status_code is not int(HTTPStatus.OK):
+        raise HTTPException(
+            status_code=page.status_code,
+            detail=(
+                "The LogDisplay server is not responding.\n"
+                "Verify if the tool was installed, configured and initiated properly"
+            ),
+        )
+
+    commissioning_method = project_config.dut_config.pairing_mode
+
+    test_run_execution = crud.test_run_execution.get(db=db, id=id)
+    if not test_run_execution:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
+        )
+
+    log_lines_list = log_utils.convert_execution_log_to_list(
+        log=test_run_execution.log, json_entries=False
+    )
+
+    timestamp = ""
+    if test_run_execution.started_at:
+        timestamp = test_run_execution.started_at.strftime(date_pattern_out_file)
+    else:
+        timestamp = datetime.now().strftime(date_pattern_out_file)
+
+    tc_name, execution_time_folder = create_summary_report(
+        timestamp, log_lines_list, commissioning_method
+    )
+
+    target_dir = f"{HOST_OUT_FOLDER}/{execution_time_folder}/{tc_name}"
+    url_report = f"{matter_qa_url}/home/displayLogFolder?dir_path={target_dir}"
+
+    summary_report: dict = {}
+    summary_report["url"] = url_report
+
+    options: dict = {"media_type": "application/json"}
+
+    return JSONResponse(
+        jsonable_encoder(summary_report),
+        **options,
+    )

@@ -13,15 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
+from enum import Enum
+from typing import Any
 
-# Verify if this execution comes from python_tests_validator.
-if not os.getenv("DRY_RUN"):
-    from .python_tests import onboarding_payload_collection
-    from .sdk_tests.support.performance_tests import sdk_performance_collection
-    from .sdk_tests.support.python_testing import (
-        custom_python_collection,
-        sdk_mandatory_python_collection,
-        sdk_python_collection,
-    )
-    from .sdk_tests.support.yaml_tests import custom_collection, sdk_collection
+from ...models.matter_test_models import MatterTest, MatterTestType
+
+###
+# This file declares Python test models that are used to parse the Python Test Cases.
+###
+
+
+class PerformanceTestType(Enum):
+    PERFORMANCE = 1
+
+
+class PerformanceTest(MatterTest):
+    description: str
+    class_name: str
+    performance_test_type: PerformanceTestType
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.type = MatterTestType.AUTOMATED
