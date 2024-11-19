@@ -55,25 +55,30 @@ SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
 def _init_test_suites(
     python_test_version: str,
 ) -> dict[SuiteType, PythonSuiteDeclaration]:
+    # Append `custom` text in order to differ from the regular suite name
+    version: str = ""
+    if python_test_version == "custom":
+        version += "-custom"
+
     return {
         SuiteType.MANDATORY: PythonSuiteDeclaration(
-            name="Python Testing Suite - Mandatories",
+            name="Python Testing Suite - Mandatories" + version,
             suite_type=SuiteType.MANDATORY,
             version=python_test_version,
             mandatory=True,
         ),
         SuiteType.COMMISSIONING: PythonSuiteDeclaration(
-            name="Python Testing Suite",
+            name="Python Testing Suite" + version,
             suite_type=SuiteType.COMMISSIONING,
             version=python_test_version,
         ),
         SuiteType.NO_COMMISSIONING: PythonSuiteDeclaration(
-            name="Python Testing Suite - No commissioning",
+            name="Python Testing Suite - No commissioning" + version,
             suite_type=SuiteType.NO_COMMISSIONING,
             version=python_test_version,
         ),
         SuiteType.LEGACY: PythonSuiteDeclaration(
-            name="Python Testing Suite - Old script format",
+            name="Python Testing Suite - Old script format" + version,
             suite_type=SuiteType.LEGACY,
             version=python_test_version,
         ),
