@@ -85,9 +85,7 @@ class PythonTestSuite(TestSuite):
                 "name": name,
                 "python_test_version": python_test_version,
                 "metadata": {
-                    "public_id": name
-                    if python_test_version != "custom"
-                    else name + "-custom",
+                    "public_id": name,
                     "version": "0.0.1",
                     "title": name,
                     "description": name,
