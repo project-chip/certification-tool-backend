@@ -41,13 +41,17 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
         return PICSApplicableTestCases(test_cases=applicable_tests)
 
     test_collections = test_script_manager.test_collections
-    enabled_pics = set([item.number for item in pics.all_enabled_items()])
+
+    all_pics_definitions = set([item.number for item in pics.all_enabled_items()])
+    disabled_pics = set([item.number for item in pics.all_disabled_items()])
+    all_pics_definitions.update(disabled_pics)
+
 
     applicable_mandatories_tests = __applicable_test_cases(
-        test_collections, enabled_pics, True
+        test_collections, all_pics_definitions, True
     )
     applicable_remaining_tests = __applicable_test_cases(
-        test_collections, enabled_pics, False
+        test_collections, all_pics_definitions, False
     )
 
     # Add first the mandatories test cases
@@ -61,7 +65,7 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
 
 def __applicable_test_cases(
     test_collections: Dict[str, TestCollectionDeclaration],
-    enabled_pics: set[str],
+    pics: set[str],
     mandatory: bool,
 ) -> list:
     applicable_tests: list = []
@@ -74,6 +78,6 @@ def __applicable_test_cases(
                         # Test cases without pics required are always applicable
                         applicable_tests.append(test_case.metadata["title"])
                     elif len(test_case.pics) > 0:
-                        if test_case.pics.issubset(enabled_pics):
+                        if test_case.pics.issubset(pics):
                             applicable_tests.append(test_case.metadata["title"])
     return applicable_tests

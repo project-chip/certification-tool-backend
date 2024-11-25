@@ -28,6 +28,15 @@ class PICSCluster(BaseModel):
     def enabled_items(self) -> list[PICSItem]:
         return list([item for item in self.items.values() if item.enabled])
 
+    def disabled_items(self) -> list[PICSItem]:
+        # Disabled PICS must be represented as "![PICS_DEFINITION]" 
+        # Example: !MCORE.DD.NON_CONCURRENT_CONNECTION
+        return [
+            item
+            for item in self.items.values()
+            if not item.enabled and setattr(item, "number", f"!{item.number}") is None
+        ]
+
 
 class PICS(BaseModel):
     clusters: dict[str, PICSCluster] = {}
@@ -35,6 +44,10 @@ class PICS(BaseModel):
     def all_enabled_items(self) -> list[PICSItem]:
         # flatten all enabled items for all clusters
         return sum([c.enabled_items() for c in self.clusters.values()], [])
+
+    def all_disabled_items(self) -> list[PICSItem]:
+        # flatten all disabled items for all clusters
+        return sum([c.disabled_items() for c in self.clusters.values()], [])
 
 
 class PICSApplicableTestCases(BaseModel):
