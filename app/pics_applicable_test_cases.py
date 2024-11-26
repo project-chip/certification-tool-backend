@@ -46,7 +46,6 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
     disabled_pics = set([item.number for item in pics.all_disabled_items()])
     all_pics_definitions.update(disabled_pics)
 
-
     applicable_mandatories_tests = __applicable_test_cases(
         test_collections, all_pics_definitions, True
     )

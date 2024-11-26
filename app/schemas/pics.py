@@ -29,13 +29,15 @@ class PICSCluster(BaseModel):
         return list([item for item in self.items.values() if item.enabled])
 
     def disabled_items(self) -> list[PICSItem]:
-        # Disabled PICS must be represented as "![PICS_DEFINITION]" 
+        # Disabled PICS must be represented as "![PICS_DEFINITION]"
         # Example: !MCORE.DD.NON_CONCURRENT_CONNECTION
-        return [
-            item
-            for item in self.items.values()
-            if not item.enabled and setattr(item, "number", f"!{item.number}") is None
-        ]
+        disabled_items: list[PICSItem] = []
+        for item in self.items.values():
+            if not item.enabled:
+                item.number = f"!{item.number}"
+                disabled_items.append(item)
+
+        return disabled_items
 
 
 class PICS(BaseModel):
