@@ -15,7 +15,9 @@
 #
 # flake8: noqa
 # Ignore flake8 check for this file
+import json
 from http import HTTPStatus
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +63,49 @@ invalid_dut_config = {
             "chip_use_paa_certs": "false",
             "invalid_arg": "any value",
         },
+    },
+}
+
+project_json_data = {
+    "name": "New Project IMPORTED",
+    "config": {
+        "test_parameters": None,
+        "network": {
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+            "thread": {
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::/64",
+                "network_interface": "eth0",
+                "dataset": {
+                    "channel": "15",
+                    "panid": "0x1234",
+                    "extpanid": "1111111122222222",
+                    "networkkey": "00112233445566778899aabbccddeeff",
+                    "networkname": "DEMO",
+                },
+                "otbr_docker_image": None,
+            },
+        },
+        "dut_config": {
+            "discriminator": "3840",
+            "setup_code": "20202021",
+            "pairing_mode": "onnetwork",
+            "chip_timeout": None,
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    },
+    "pics": {
+        "clusters": {
+            "Access Control cluster": {
+                "name": "Test PICS",
+                "items": {
+                    "ACL.S": {"number": "PICS.S", "enabled": False},
+                    "ACL.C": {"number": "PICS.C", "enabled": True},
+                },
+            }
+        }
     },
 }
 
@@ -372,7 +417,7 @@ def test_applicable_test_cases_empty_pics(client: TestClient, db: Session) -> No
     assert len(content["test_cases"]) == 0
 
 
-def test_project_config(client: TestClient, db: Session) -> None:
+def test_export_project(client: TestClient, db: Session) -> None:
     project = create_random_project_with_pics(db=db, config={})
     project_create_schema = schemas.ProjectCreate(**project.__dict__)
     # retrieve the project config
@@ -384,4 +429,25 @@ def test_project_config(client: TestClient, db: Session) -> None:
         response=response,
         expected_status_code=HTTPStatus.OK,
         expected_content=jsonable_encoder(project_create_schema),
+    )
+
+
+def test_import_project(client: TestClient, db: Session) -> None:
+    imported_file_content = json.dumps(project_json_data).encode("utf-8")
+    data = BytesIO(imported_file_content)
+
+    files = {
+        "import_file": (
+            "project.json",
+            data,
+            "multipart/form-data",
+        )
+    }
+
+    response = client.post(f"{settings.API_V1_STR}/projects/import", files=files)
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content=project_json_data,
     )
