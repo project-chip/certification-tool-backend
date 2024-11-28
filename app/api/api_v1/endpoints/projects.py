@@ -332,7 +332,7 @@ def __persist_pics_update(db: Session, project: Project) -> Project:
     return project
 
 
-@router.get("/{id}/project_config", response_model=schemas.Project)
+@router.get("/{id}/export", response_model=schemas.ProjectCreate)
 def export_project_config(
     *,
     db: Session = Depends(get_db),
@@ -350,11 +350,12 @@ def export_project_config(
     Returns:
         Project: project The project by the informed project id
     """
-    project = __project(db=db, id=id)
+    # Retreive project by project_id using schemas.ProjectCreate schema
+    project = schemas.ProjectCreate(**__project(db=db, id=id).__dict__)
 
     options: dict = {"media_type": "application/json"}
     if download:
-        filename = f"{project.name}-project-config.txt"
+        filename = f"{project.name}-project-config.json"
         options["headers"] = {
             "Content-Disposition": f'attachment; filename="{filename}"'
         }

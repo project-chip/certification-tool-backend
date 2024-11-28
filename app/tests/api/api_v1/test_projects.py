@@ -24,10 +24,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import crud
+from app import crud, models, schemas
 from app.core.config import settings
 from app.default_environment_config import default_environment_config
-from app.models.project import Project
 from app.tests.utils.project import (
     create_random_project,
     create_random_project_archived,
@@ -151,7 +150,7 @@ def test_read_project(client: TestClient, db: Session) -> None:
 def test_read_multiple_project(client: TestClient, db: Session) -> None:
     project1 = create_random_project(db, config={})
     project2 = create_random_project(db, config={})
-    limit = db.scalar(select(func.count(Project.id))) or 0
+    limit = db.scalar(select(func.count(models.Project.id))) or 0
     response = client.get(
         f"{settings.API_V1_STR}/projects?limit={limit}",
     )
@@ -164,7 +163,7 @@ def test_read_multiple_project(client: TestClient, db: Session) -> None:
 
 def test_read_multiple_project_by_archived(client: TestClient, db: Session) -> None:
     archived = create_random_project_archived(db, config={})
-    limit = db.scalar(select(func.count(Project.id))) or 0
+    limit = db.scalar(select(func.count(models.Project.id))) or 0
 
     response = client.get(
         f"{settings.API_V1_STR}/projects?limit={limit}",
@@ -375,13 +374,14 @@ def test_applicable_test_cases_empty_pics(client: TestClient, db: Session) -> No
 
 def test_project_config(client: TestClient, db: Session) -> None:
     project = create_random_project_with_pics(db=db, config={})
+    project_create_schema = schemas.ProjectCreate(**project.__dict__)
     # retrieve the project config
     response = client.get(
-        f"{settings.API_V1_STR}/projects/{project.id}/project_config",
+        f"{settings.API_V1_STR}/projects/{project.id}/export",
     )
 
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
-        expected_content=jsonable_encoder(project),
+        expected_content=jsonable_encoder(project_create_schema),
     )
