@@ -22,6 +22,9 @@ from loguru import logger
 CHIPTOOL_LEVEL = "CHIPTOOL"
 logger.level(CHIPTOOL_LEVEL, no=21, icon="🤖", color="<cyan>")
 
+# Add custom logger for python tests
+PYTHON_TEST_LEVEL = "PYTHON_TEST"
+logger.level(PYTHON_TEST_LEVEL, no=22, icon="🐍", color="<cyan>")
 
 def configure_logger_for_run(title: str) -> str:
     # Reset (Remove all sinks from logger)
