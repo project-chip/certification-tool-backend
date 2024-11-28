@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 from http import HTTPStatus
 from typing import List, Sequence, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -328,3 +331,36 @@ def __persist_pics_update(db: Session, project: Project) -> Project:
     db.commit()
     db.refresh(project)
     return project
+
+
+@router.get("/{id}/project_config", response_model=schemas.Project)
+def export_project_config(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    download: bool = False,
+) -> JSONResponse:
+    """Retrive the project config by id.
+
+    Args:
+        id (int): project id
+
+    Raises:
+        HTTPException: if no project exists for provided project id
+
+    Returns:
+        Project: project The project by the informed project id
+    """
+    project = __project(db=db, id=id)
+
+    options: dict = {"media_type": "application/json"}
+    if download:
+        filename = f"{project.name}-project-config.txt"
+        options["headers"] = {
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+
+    return JSONResponse(
+        jsonable_encoder(project),
+        **options,
+    )

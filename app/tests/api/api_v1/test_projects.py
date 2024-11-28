@@ -371,3 +371,17 @@ def test_applicable_test_cases_empty_pics(client: TestClient, db: Session) -> No
     # the project is created with empty pics
     # expected value: applicable_test_cases == 0
     assert len(content["test_cases"]) == 0
+
+
+def test_project_config(client: TestClient, db: Session) -> None:
+    project = create_random_project_with_pics(db=db, config={})
+    # retrieve the project config
+    response = client.get(
+        f"{settings.API_V1_STR}/projects/{project.id}/project_config",
+    )
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content=jsonable_encoder(project),  # type: ignore
+    )
