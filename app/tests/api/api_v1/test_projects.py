@@ -383,5 +383,5 @@ def test_project_config(client: TestClient, db: Session) -> None:
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
-        expected_content=jsonable_encoder(project),  # type: ignore
+        expected_content=jsonable_encoder(project),
     )
