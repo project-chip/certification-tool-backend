@@ -339,9 +339,9 @@ def export_project_config(
     *,
     db: Session = Depends(get_db),
     id: int,
-    download: bool = False,
 ) -> JSONResponse:
-    """Retrive the project config by id.
+    """
+    Exports the project config by id.
 
     Args:
         id (int): project id
@@ -356,11 +356,8 @@ def export_project_config(
     project = schemas.ProjectCreate(**__project(db=db, id=id).__dict__)
 
     options: dict = {"media_type": "application/json"}
-    if download:
-        filename = f"{project.name}-project-config.json"
-        options["headers"] = {
-            "Content-Disposition": f'attachment; filename="{filename}"'
-        }
+    filename = f"{project.name}-project-config.json"
+    options["headers"] = {"Content-Disposition": f'attachment; filename="{filename}"'}
 
     return JSONResponse(
         jsonable_encoder(project),
@@ -375,14 +372,23 @@ def importproject_config(
     import_file: UploadFile = File(...),
 ) -> models.Project:
     """
-    Imports a test run execution to the the given project_id.
+    Imports the project config
+
+    Args:
+        import_file : The project config file to be imported
+
+    Raises:
+        ValidationError: if the imported project config contains invalid information
+
+    Returns:
+        Project: newly created project record
     """
 
     file_content = import_file.file.read().decode("utf-8")
     file_dict = json.loads(file_content)
 
     try:
-        exported_project: schemas.ProjectCreate = parse_obj_as(
+        imported_project: schemas.ProjectCreate = parse_obj_as(
             schemas.ProjectCreate, file_dict
         )
     except ValidationError as error:
@@ -391,7 +397,7 @@ def importproject_config(
         )
 
     try:
-        return crud.project.create(db=db, obj_in=exported_project)
+        return crud.project.create(db=db, obj_in=imported_project)
     except TestEnvironmentConfigError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
