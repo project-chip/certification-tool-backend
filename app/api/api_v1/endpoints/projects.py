@@ -350,9 +350,9 @@ def export_project_config(
         HTTPException: if no project exists for provided project id
 
     Returns:
-        Project: project The project by the informed project id
+        JSONResponse: json representation of the project with the informed project id
     """
-    # Retreive project by project_id using schemas.ProjectCreate schema
+    # Retrieve project by project_id using schemas.ProjectCreate schema
     project = schemas.ProjectCreate(**__project(db=db, id=id).__dict__)
 
     options: dict = {"media_type": "application/json"}
