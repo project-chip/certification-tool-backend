@@ -95,6 +95,7 @@ async def proccess_commands_sdk_container(
 ) -> None:
     complete_json = []
     errors_found: list[str] = []
+    warnings_found: list[str] = []
     test_function_count = 0
     invalid_test_function_count = 0
 
@@ -110,8 +111,16 @@ async def proccess_commands_sdk_container(
             prefix=CONTAINER_TH_CLIENT_EXEC,
         )
         if result.exit_code != 0:
-            errors_found.append(f"Failed running command: {command}")
-            continue
+            try:
+                with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
+                    json_data = json.load(json_file)
+
+                    errors_found.append(
+                        f"Failed running command: {command}.\n"
+                        f"Error message: {json_data['detail']}"
+                    )
+            finally:
+                continue
 
         with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
             json_data = json.load(json_file)
@@ -123,6 +132,11 @@ async def proccess_commands_sdk_container(
                 function = json_dict["function"]
                 if not function.startswith("test_TC_"):
                     invalid_test_function_count += 1
+                    warnings_found.append(
+                        f"Warning: File path: {json_dict['path']}  "
+                        f"Class: {json_dict['class_name']}. "
+                        f"Invalid test function: {function}"
+                    )
                 complete_json.append(json_dict)
 
     sdk_container.destroy()
@@ -146,11 +160,13 @@ async def proccess_commands_sdk_container(
             f"{invalid_test_function_count}"
         )
     )
+    if len(warnings_found) > 0:
+        print(*warnings_found, sep="\n")
     error_count = len(errors_found)
     print(f">>>>>>>> Total of scripts with error: {error_count}")
     if error_count > 0:
         for i, error in enumerate(errors_found):
-            print(f"Error {i}: {error}")
+            print(f"Error {i+1}: {error}")
     print("###########################################################################")
 
 
