@@ -44,7 +44,6 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
         return PICSApplicableTestCases(test_cases=applicable_tests)
 
     test_collections = test_script_manager.test_collections
-
     enabled_pics = set([item.number for item in pics.all_enabled_items()])
 
     applicable_mandatories_tests = __applicable_test_cases(
