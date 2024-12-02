@@ -45,13 +45,21 @@ def main() -> None:
     # Load python_testing/scripts as a module. This folder is where all python scripts
     # are located
     sys.path.append("/root/python_testing/scripts")
+    sys.path.append("/root/python_testing/scripts/sdk")
 
     test_args = sys.argv[2:]
     config = parse_matter_test_args(test_args)
     if GET_TEST_INFO_ARGUMENT in sys.argv:
-        info = get_test_info_support(
-            script_path=sys.argv[1], class_name=sys.argv[2], config=config
-        )
+        try:
+            info = get_test_info_support(
+                script_path=sys.argv[1], class_name=sys.argv[2], config=config
+            )
+        except Exception as e:
+            error_msg = {"detail": f"{str(e)}"}
+            with open(TEST_INFO_JSON_PATH, "w") as f:
+                json.dump(error_msg, f, indent=4)
+            raise e
+
         with open(TEST_INFO_JSON_PATH, "w") as f:
             json.dump(info, f, indent=4)
     else:
