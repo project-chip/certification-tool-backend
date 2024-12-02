@@ -63,7 +63,8 @@ def main() -> None:
         with open(TEST_INFO_JSON_PATH, "w") as f:
             json.dump(info, f, indent=4)
     else:
-        # TODO: find a better solution. This is a temporary workaround since Python Tests
+        # TODO: find a better solution.
+        # This is a temporary workaround since Python Tests
         # are generating a big amount of log
         with open(EXECUTION_LOG_OUTPUT, "w") as f:
             with redirect_stdout(f):
