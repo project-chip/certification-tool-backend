@@ -18,7 +18,10 @@ from typing import Dict
 from loguru import logger
 
 from app.schemas.pics import PICS, PICSApplicableTestCases
-from app.test_engine.models.test_declarations import TestCollectionDeclaration
+from app.test_engine.models.test_declarations import (
+    TestCaseDeclaration,
+    TestCollectionDeclaration,
+)
 from app.test_engine.test_script_manager import test_script_manager
 
 
@@ -42,15 +45,13 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
 
     test_collections = test_script_manager.test_collections
 
-    all_pics_definitions = set([item.number for item in pics.all_enabled_items()])
-    disabled_pics = set([item.number for item in pics.all_disabled_items()])
-    all_pics_definitions.update(disabled_pics)
+    enabled_pics = set([item.number for item in pics.all_enabled_items()])
 
     applicable_mandatories_tests = __applicable_test_cases(
-        test_collections, all_pics_definitions, True
+        test_collections, enabled_pics, True
     )
     applicable_remaining_tests = __applicable_test_cases(
-        test_collections, all_pics_definitions, False
+        test_collections, enabled_pics, False
     )
 
     # Add first the mandatories test cases
@@ -64,7 +65,7 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
 
 def __applicable_test_cases(
     test_collections: Dict[str, TestCollectionDeclaration],
-    pics: set[str],
+    enabled_pics: set[str],
     mandatory: bool,
 ) -> list:
     applicable_tests: list = []
@@ -77,6 +78,21 @@ def __applicable_test_cases(
                         # Test cases without pics required are always applicable
                         applicable_tests.append(test_case.metadata["title"])
                     elif len(test_case.pics) > 0:
-                        if test_case.pics.issubset(pics):
+                        # Consider only enabled pics for test cases
+                        test_enabled_pics = __retrieve_enabled_pics(test_case)
+
+                        # test_case
+                        if test_enabled_pics.issubset(enabled_pics):
                             applicable_tests.append(test_case.metadata["title"])
     return applicable_tests
+
+
+def __retrieve_enabled_pics(test_case: TestCaseDeclaration) -> set:
+    pics_list: set = set()
+    for pics in test_case.pics:
+        # The '!' char before PICS definition, is how test case flag a PICS as negative
+        # For applicable test cases, we should only consider enabled PICS
+        if not pics.startswith("!"):
+            pics_list.add(pics)
+
+    return pics_list
