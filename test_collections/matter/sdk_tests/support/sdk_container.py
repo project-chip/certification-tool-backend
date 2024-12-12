@@ -15,8 +15,9 @@
 #
 from __future__ import annotations
 
+from multiprocessing.managers import BaseManager
 from pathlib import Path
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
 import loguru
 from docker.models.containers import Container
@@ -134,6 +135,7 @@ class SDKContainer(metaclass=Singleton):
 
         self.__pics_file_created = False
         self.logger = logger
+        self.__manager: BaseManager | None = None
 
     @property
     def pics_file_created(self) -> bool:
@@ -252,3 +254,10 @@ class SDKContainer(metaclass=Singleton):
 
     def reset_pics_state(self) -> None:
         self.__pics_file_created = False
+
+    def retrieve_manager(self, typeid: str, func: Callable[[], object]) -> BaseManager:
+        if self.__manager is None:
+            BaseManager.register(typeid, func)
+            self.__manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
+            self.__manager.start()
+        return self.__manager

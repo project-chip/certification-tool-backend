@@ -17,7 +17,6 @@ import re
 from asyncio import sleep
 from enum import IntEnum
 from inspect import iscoroutinefunction
-from multiprocessing.managers import BaseManager
 from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
@@ -246,9 +245,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         try:
             logger.info("Running Python Test: " + self.python_test.name)
 
-            BaseManager.register("TestRunnerHooks", SDKPythonTestRunnerHooks)
-            manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
-            manager.start()
+            manager = self.sdk_container.retrieve_manager(
+                "TestRunnerHooks", SDKPythonTestRunnerHooks
+            )
             test_runner_hooks = manager.TestRunnerHooks()  # type: ignore
 
             if not self.python_test.path:
