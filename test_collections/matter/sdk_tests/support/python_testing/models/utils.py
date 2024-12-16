@@ -57,8 +57,12 @@ async def generate_command_arguments(
 
     if dut_config.enhanced_setup_flow:
         arguments.append(f"--require-tc-acknowledgements 1")
-        arguments.append(f"--tc-acknowledgements {dut_config.enhanced_setup_flow.tc_user_response}")
-        arguments.append(f"--tc-acknowledgements-version {dut_config.enhanced_setup_flow.tc_version}")
+        arguments.append(
+            f"--tc-acknowledgements {dut_config.enhanced_setup_flow.tc_user_response}"
+        )
+        arguments.append(
+            f"--tc-acknowledgements-version {dut_config.enhanced_setup_flow.tc_version}"
+        )
 
     if omit_commissioning_method:
         arguments.append(f"--in-test-commissioning-method {pairing_mode}")
