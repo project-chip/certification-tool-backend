@@ -56,7 +56,7 @@ async def generate_command_arguments(
         arguments.append("--trace-to json:log")
 
     if dut_config.enhanced_setup_flow:
-        arguments.append(f"--require-tc-acknowledgements 1")
+        arguments.append("--require-tc-acknowledgements 1")
         arguments.append(
             f"--tc-acknowledgements {dut_config.enhanced_setup_flow.tc_user_response}"
         )
