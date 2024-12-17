@@ -170,6 +170,7 @@ async def test_send_command_default_prefix() -> None:
         socket=False,
         stream=False,
         stdin=True,
+        detach=False,
     )
     assert result == mock_result
 
@@ -211,6 +212,7 @@ async def test_send_command_custom_prefix() -> None:
         socket=False,
         stream=False,
         stdin=True,
+        detach=False,
     )
     assert result == mock_result
 
