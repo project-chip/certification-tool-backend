@@ -64,7 +64,8 @@
         "yamls",
         "yamltests",
         "wifipaf",
-        "WIFIPAF"
+        "WIFIPAF",
+        "pidof"
     ],
     "ignoreWords": [
         "bdist",
