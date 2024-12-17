@@ -23,7 +23,7 @@ class MatterSettings(BaseSettings):
 
     # SDK Docker Image
     SDK_DOCKER_IMAGE: str = "connectedhomeip/chip-cert-bins"
-    SDK_DOCKER_TAG: str = "f2e5de7e7978dd0748ba014f7b6ce593dad2fc88"
+    SDK_DOCKER_TAG: str = "f2e5de7_latest"
     # SDK SHA: used to fetch test YAML from SDK.
     SDK_SHA: str = "f2e5de7e7978dd0748ba014f7b6ce593dad2fc88"
 
