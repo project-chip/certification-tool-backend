@@ -28,6 +28,7 @@ from chip.testing.matter_testing import (
     get_test_info,
     parse_matter_test_args,
     run_tests,
+    TestStep
 )
 
 COMMISSION_ARGUMENT = "commission"
