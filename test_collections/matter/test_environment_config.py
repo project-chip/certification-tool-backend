@@ -102,7 +102,7 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                         f" {valid_properties}"
                     )
 
-            # All DutConfig fields but chip_timeout are mandatory
+            # All DutConfig fields but chip_timeout and enhanced_setup_flow are mandatory
             mandatory_fields = valid_properties.copy()
             mandatory_fields.remove("chip_timeout")
             mandatory_fields.remove("enhanced_setup_flow")
