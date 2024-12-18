@@ -30,7 +30,8 @@ class UploadFile(Protocol):
     filename: Optional[str]
 
     @property
-    def content_type(self) -> Optional[str]: ...
+    def content_type(self) -> Optional[str]:
+        ...
 
 
 @runtime_checkable
