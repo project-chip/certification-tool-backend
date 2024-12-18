@@ -34,6 +34,6 @@ if not os.getenv("DRY_RUN"):
         sdk_mandatory_python_test_collection()
     )
 
-    custom_python_collection: Optional[TestCollectionDeclaration] = (
-        custom_python_test_collection()
-    )
+    custom_python_collection: Optional[
+        TestCollectionDeclaration
+    ] = custom_python_test_collection()
