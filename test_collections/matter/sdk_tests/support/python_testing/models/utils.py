@@ -34,7 +34,7 @@ from test_collections.matter.test_environment_config import (
 from ...sdk_container import SDKContainer
 
 # Command line params
-RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/test_harness_client.py"
+RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 EXECUTABLE = "python3"
 
 

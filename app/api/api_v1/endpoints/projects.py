@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 from http import HTTPStatus
 from typing import List, Sequence, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError, parse_obj_as
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -328,3 +332,74 @@ def __persist_pics_update(db: Session, project: Project) -> Project:
     db.commit()
     db.refresh(project)
     return project
+
+
+@router.get("/{id}/export", response_model=schemas.ProjectCreate)
+def export_project_config(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+) -> JSONResponse:
+    """
+    Exports the project config by id.
+
+    Args:
+        id (int): project id
+
+    Raises:
+        HTTPException: if no project exists for provided project id
+
+    Returns:
+        JSONResponse: json representation of the project with the informed project id
+    """
+    # Retrieve project by project_id using schemas.ProjectCreate schema
+    project = schemas.ProjectCreate(**__project(db=db, id=id).__dict__)
+
+    options: dict = {"media_type": "application/json"}
+    filename = f"{project.name}-project-config.json"
+    options["headers"] = {"Content-Disposition": f'attachment; filename="{filename}"'}
+
+    return JSONResponse(
+        jsonable_encoder(project),
+        **options,
+    )
+
+
+@router.post("/import", response_model=schemas.Project)
+def importproject_config(
+    *,
+    db: Session = Depends(get_db),
+    import_file: UploadFile = File(...),
+) -> models.Project:
+    """
+    Imports the project config
+
+    Args:
+        import_file : The project config file to be imported
+
+    Raises:
+        ValidationError: if the imported project config contains invalid information
+
+    Returns:
+        Project: newly created project record
+    """
+
+    file_content = import_file.file.read().decode("utf-8")
+    file_dict = json.loads(file_content)
+
+    try:
+        imported_project: schemas.ProjectCreate = parse_obj_as(
+            schemas.ProjectCreate, file_dict
+        )
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(error)
+        )
+
+    try:
+        return crud.project.create(db=db, obj_in=imported_project)
+    except TestEnvironmentConfigError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )

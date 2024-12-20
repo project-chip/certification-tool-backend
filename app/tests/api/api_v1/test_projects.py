@@ -15,7 +15,9 @@
 #
 # flake8: noqa
 # Ignore flake8 check for this file
+import json
 from http import HTTPStatus
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -24,10 +26,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import crud
+from app import crud, models, schemas
 from app.core.config import settings
 from app.default_environment_config import default_environment_config
-from app.models.project import Project
 from app.tests.utils.project import (
     create_random_project,
     create_random_project_archived,
@@ -62,6 +63,49 @@ invalid_dut_config = {
             "chip_use_paa_certs": "false",
             "invalid_arg": "any value",
         },
+    },
+}
+
+project_json_data = {
+    "name": "New Project IMPORTED",
+    "config": {
+        "test_parameters": None,
+        "network": {
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+            "thread": {
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::/64",
+                "network_interface": "eth0",
+                "dataset": {
+                    "channel": "15",
+                    "panid": "0x1234",
+                    "extpanid": "1111111122222222",
+                    "networkkey": "00112233445566778899aabbccddeeff",
+                    "networkname": "DEMO",
+                },
+                "otbr_docker_image": None,
+            },
+        },
+        "dut_config": {
+            "discriminator": "3840",
+            "setup_code": "20202021",
+            "pairing_mode": "onnetwork",
+            "chip_timeout": None,
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    },
+    "pics": {
+        "clusters": {
+            "Access Control cluster": {
+                "name": "Test PICS",
+                "items": {
+                    "ACL.S": {"number": "PICS.S", "enabled": False},
+                    "ACL.C": {"number": "PICS.C", "enabled": True},
+                },
+            }
+        }
     },
 }
 
@@ -151,7 +195,7 @@ def test_read_project(client: TestClient, db: Session) -> None:
 def test_read_multiple_project(client: TestClient, db: Session) -> None:
     project1 = create_random_project(db, config={})
     project2 = create_random_project(db, config={})
-    limit = db.scalar(select(func.count(Project.id))) or 0
+    limit = db.scalar(select(func.count(models.Project.id))) or 0
     response = client.get(
         f"{settings.API_V1_STR}/projects?limit={limit}",
     )
@@ -164,7 +208,7 @@ def test_read_multiple_project(client: TestClient, db: Session) -> None:
 
 def test_read_multiple_project_by_archived(client: TestClient, db: Session) -> None:
     archived = create_random_project_archived(db, config={})
-    limit = db.scalar(select(func.count(Project.id))) or 0
+    limit = db.scalar(select(func.count(models.Project.id))) or 0
 
     response = client.get(
         f"{settings.API_V1_STR}/projects?limit={limit}",
@@ -371,3 +415,39 @@ def test_applicable_test_cases_empty_pics(client: TestClient, db: Session) -> No
     # the project is created with empty pics
     # expected value: applicable_test_cases == 0
     assert len(content["test_cases"]) == 0
+
+
+def test_export_project(client: TestClient, db: Session) -> None:
+    project = create_random_project_with_pics(db=db, config={})
+    project_create_schema = schemas.ProjectCreate(**project.__dict__)
+    # retrieve the project config
+    response = client.get(
+        f"{settings.API_V1_STR}/projects/{project.id}/export",
+    )
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content=jsonable_encoder(project_create_schema),
+    )
+
+
+def test_import_project(client: TestClient, db: Session) -> None:
+    imported_file_content = json.dumps(project_json_data).encode("utf-8")
+    data = BytesIO(imported_file_content)
+
+    files = {
+        "import_file": (
+            "project.json",
+            data,
+            "multipart/form-data",
+        )
+    }
+
+    response = client.post(f"{settings.API_V1_STR}/projects/import", files=files)
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_content=project_json_data,
+    )
