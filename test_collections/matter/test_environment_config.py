@@ -46,6 +46,11 @@ class NetworkConfig(BaseModel):
     thread: Union[ThreadAutoConfig, ThreadExternalConfig]
 
 
+class EnhancedSetupFlowConfig(BaseModel):
+    tc_version: int
+    tc_user_response: int
+
+
 class DutConfig(BaseModel):
     discriminator: str
     setup_code: str
@@ -53,6 +58,7 @@ class DutConfig(BaseModel):
     chip_timeout: Optional[str]
     chip_use_paa_certs: bool = False
     trace_log: bool = True
+    enhanced_setup_flow: Optional[EnhancedSetupFlowConfig] = None
 
 
 class TestEnvironmentConfigMatter(TestEnvironmentConfig):
@@ -96,9 +102,11 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                         f" {valid_properties}"
                     )
 
-            # All DutConfig fields but chip_timeout are mandatory
+            # All DutConfig fields but chip_timeout and enhanced_setup_flow are
+            # mandatory
             mandatory_fields = valid_properties.copy()
             mandatory_fields.remove("chip_timeout")
+            mandatory_fields.remove("enhanced_setup_flow")
             for field in mandatory_fields:
                 if field not in dut_config:
                     raise TestEnvironmentConfigMatterError(
