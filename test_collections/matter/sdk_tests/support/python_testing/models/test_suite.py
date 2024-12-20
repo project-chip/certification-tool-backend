@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from enum import Enum
+from pathlib import Path
 from typing import Type, TypeVar
 
 from app.schemas.test_environment_config import ThreadAutoConfig
@@ -28,7 +29,7 @@ from test_collections.matter.test_environment_config import (
     TestEnvironmentConfigMatter,
 )
 
-from ...sdk_container import SDKContainer
+from ...sdk_container import ADMIN_STORAGE_FILE, SDKContainer
 from ...utils import PromptOption, prompt_for_commissioning_mode
 from .utils import DUTCommissioningError, commission_device
 
@@ -145,4 +146,10 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
             await self.border_router.start_device(matter_config.network.thread)
             await self.border_router.form_thread_topology()
 
-        await commission_device(matter_config, logger)
+        if ADMIN_STORAGE_FILE.exists():
+            self.sdk_container.copy_file_to_container(
+                host_file_path=ADMIN_STORAGE_FILE,
+                destination_container_path=Path("/root"),
+            )
+        else:
+            await commission_device(matter_config, logger)

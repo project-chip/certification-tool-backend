@@ -14,7 +14,10 @@
 # limitations under the License.
 #
 import asyncio
+import io
+import tarfile
 from asyncio import TimeoutError, wait_for
+from pathlib import Path
 from typing import Dict, Optional
 
 import docker
@@ -120,6 +123,51 @@ class ContainerManager(object, metaclass=Singleton):
 
             # Sleep first to give container some time
             await asyncio.sleep(sleep_interval)
+
+    def copy_file_from_container(
+        self, container: Container, container_file_path: Path, destination_path: Path
+    ) -> None:
+        try:
+            stream, _ = container.get_archive(str(container_file_path))
+            file_data = io.BytesIO(
+                b"".join(stream)
+            ) 
+
+            with tarfile.open(fileobj=file_data) as tar:
+                for member in tar.getmembers():
+                    extracted_file = tar.extractfile(member)
+                    if extracted_file is not None:
+                        with open(
+                            f"{str(destination_path)}/{container_file_path.name}",
+                            "wb",
+                        ) as f:
+                            f.write(extracted_file.read())
+
+        except docker.errors.NotFound:
+            print(f"Container '{container.name}' not found.")
+        except docker.errors.APIError as e:
+            print(f"Erro while accessing the Docker API: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+
+    def copy_file_to_container(
+        self,
+        container: Container,
+        host_file_path: Path,
+        destination_container_path: Path,
+    ) -> None:
+        try:
+            file_data = io.BytesIO()
+            with tarfile.open(fileobj=file_data, mode="w") as tar:
+                tar.add(host_file_path, arcname=f"{host_file_path.name}")
+            file_data.seek(0)
+
+            container.put_archive(f"{destination_container_path}", file_data)
+
+        except docker.errors.APIError as e:
+            print(f"Erro while accessing the Docker API: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
 
 container_manager: ContainerManager = ContainerManager()

@@ -35,7 +35,7 @@ from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...pics import PICS_FILE_PATH
-from ...sdk_container import SDKContainer
+from ...sdk_container import ADMIN_STORAGE_FILE, SDKContainer
 from ...utils import prompt_for_commissioning_mode
 from .python_test_models import PythonTest, PythonTestType
 from .python_testing_hooks_proxy import (
@@ -372,9 +372,16 @@ class LegacyPythonTestCase(PythonTestCase):
             case PromptOption.YES:
                 logger.info("User chose prompt option YES")
                 logger.info("Commission DUT")
-                await commission_device(
-                    TestEnvironmentConfigMatter(**self.config), logger
-                )
+
+                if ADMIN_STORAGE_FILE.exists():
+                    self.sdk_container.copy_file_to_container(
+                        host_file_path=ADMIN_STORAGE_FILE,
+                        destination_container_path=Path("/root"),
+                    )
+                else:
+                    await commission_device(
+                        TestEnvironmentConfigMatter(**self.config), logger
+                    )
 
             case PromptOption.NO:
                 logger.info("User chose prompt option NO")

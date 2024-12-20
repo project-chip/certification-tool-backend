@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Generator, cast
 
 import loguru
@@ -121,6 +122,11 @@ async def commission_device(
     handle_logs(cast(Generator, exec_result.output), logger)
 
     exit_code = sdk_container.exec_exit_code(exec_result.exec_id)
+
+    sdk_container.copy_file_from_container(
+        container_file_path=Path("/root/admin_storage.json"),
+        destination_path=Path("/app/backend/"),
+    )
 
     if exit_code:
         raise DUTCommissioningError("Failed to commission DUT")
