@@ -15,7 +15,6 @@
 #
 # flake8: noqa
 # Ignore flake8 check for this file
-import os
 from pathlib import Path
 from unittest import mock
 
@@ -24,7 +23,7 @@ from ...python_testing.models.python_test_parser import parse_python_script
 
 def test_python_file_parser() -> None:
     parent_path = Path(__file__).parent
-    file_path = os.path.join(parent_path, "test_python_script/python_tests_info.json")
+    file_path = parent_path.joinpath("test_python_script/python_tests_info.json")
 
     tests = parse_python_script(file_path)
 
