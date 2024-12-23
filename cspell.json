@@ -117,7 +117,8 @@
         "sdk_patch",
         ".devcontainer",
         "test_collections/matter/sdk_tests/*.json",
-        "test_collections/matter/sdk_tests/support/performance_tests/"
+        "test_collections/matter/sdk_tests/support/performance_tests/",
+        "test_collections/matter/config.py"
     ],
     "enableFiletypes": [
         "shellscript"
