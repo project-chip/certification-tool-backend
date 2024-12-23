@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2023-2024 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,7 +55,19 @@ async def generate_command_arguments(
     if dut_config.trace_log:
         arguments.append("--trace-to json:log")
 
-    if not omit_commissioning_method:
+    if dut_config.enhanced_setup_flow:
+        arguments.append("--require-tc-acknowledgements 1")
+        arguments.append(
+            f"--tc-acknowledgements {dut_config.enhanced_setup_flow.tc_user_response}"
+        )
+        arguments.append(
+            f"--tc-acknowledgements-version {dut_config.enhanced_setup_flow.tc_version}"
+        )
+
+    if omit_commissioning_method:
+        arguments.append(f"--in-test-commissioning-method {pairing_mode}")
+
+    else:
         arguments.append(f"--commissioning-method {pairing_mode}")
 
         if pairing_mode == DutPairingModeEnum.BLE_WIFI:
