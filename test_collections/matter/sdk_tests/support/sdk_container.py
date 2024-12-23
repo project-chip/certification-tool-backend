@@ -291,13 +291,3 @@ class SDKContainer(metaclass=Singleton):
 
     def reset_pics_state(self) -> None:
         self.__pics_file_created = False
-<<<<<<< Updated upstream
-=======
-
-    def retrieve_manager(self, typeid: str, func: Callable[[], object]) -> BaseManager:
-        if self.__manager is None:
-            BaseManager.register(typeid, func)
-            self.__manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
-            self.__manager.start()
-        return self.__manager
->>>>>>> Stashed changes
