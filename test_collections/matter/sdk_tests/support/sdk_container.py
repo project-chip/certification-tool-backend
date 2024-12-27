@@ -88,8 +88,6 @@ DOCKER_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH = (
     "/root/python_testing/scripts/sdk/simulated_accessory.py"
 )
 
-ADMIN_STORAGE_FILE = Path("/app/backend/admin_storage.json")
-
 
 class SDKContainerNotRunning(Exception):
     """Raised when we attempt to use the docker container, but it is not running"""
@@ -295,12 +293,16 @@ class SDKContainer(metaclass=Singleton):
         self.__pics_file_created = False
 
     def copy_file_from_container(
-        self, container_file_path: Path, destination_path: Path
+        self,
+        container_file_path: Path,
+        destination_path: Path,
+        container_file_name: str,
     ) -> None:
         container_manager.copy_file_from_container(
             container=self.__container,
             container_file_path=container_file_path,
             destination_path=destination_path,
+            container_file_name=container_file_name,
         )
 
     def copy_file_to_container(

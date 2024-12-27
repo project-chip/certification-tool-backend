@@ -35,7 +35,7 @@ from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...pics import PICS_FILE_PATH
-from ...sdk_container import ADMIN_STORAGE_FILE, SDKContainer
+from ...sdk_container import SDKContainer
 from ...utils import prompt_for_commissioning_mode
 from .python_test_models import PythonTest, PythonTestType
 from .python_testing_hooks_proxy import (
@@ -45,8 +45,10 @@ from .python_testing_hooks_proxy import (
 from .utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
+    DUTCommissioningError,
     commission_device,
     generate_command_arguments,
+    should_perform_new_commissioning,
 )
 
 
@@ -343,13 +345,27 @@ class PythonTestCase(TestCase, UserPromptSupport):
 class NoCommissioningPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+        user_response = await prompt_for_commissioning_mode(
+            self, logger, None, self.cancel
+        )
+        if user_response == PromptOption.NO:
+            raise DUTCommissioningError(
+                "User chose prompt option FAILED for DUT is in Commissioning Mode"
+            )
 
 
 class LegacyPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+
+        user_response = await prompt_for_commissioning_mode(
+            self, logger, None, self.cancel
+        )
+        if user_response == PromptOption.NO:
+            raise DUTCommissioningError(
+                "User chose prompt option FAILED for DUT is in Commissioning Mode"
+            )
+
         await self.prompt_about_commissioning()
 
     async def prompt_about_commissioning(self) -> None:
@@ -371,17 +387,16 @@ class LegacyPythonTestCase(PythonTestCase):
         match prompt_response.response:
             case PromptOption.YES:
                 logger.info("User chose prompt option YES")
-                logger.info("Commission DUT")
 
-                if ADMIN_STORAGE_FILE.exists():
-                    self.sdk_container.copy_file_to_container(
-                        host_file_path=ADMIN_STORAGE_FILE,
-                        destination_container_path=Path("/root"),
-                    )
-                else:
-                    await commission_device(
-                        TestEnvironmentConfigMatter(**self.config), logger
-                    )
+                # If a local copy of admin_storage.json file exists, prompt user if the
+                # execution should retrieve the previous commissioning information or
+                # if it should perform a new commissioning
+                config = TestEnvironmentConfigMatter(**self.config)
+                if await should_perform_new_commissioning(
+                    self, config=config, logger=logger
+                ):
+                    logger.info("Commission DUT")
+                    await commission_device(config, logger)
 
             case PromptOption.NO:
                 logger.info("User chose prompt option NO")

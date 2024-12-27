@@ -125,28 +125,28 @@ class ContainerManager(object, metaclass=Singleton):
             await asyncio.sleep(sleep_interval)
 
     def copy_file_from_container(
-        self, container: Container, container_file_path: Path, destination_path: Path
+        self,
+        container: Container,
+        container_file_path: Path,
+        destination_path: Path,
+        container_file_name: str,
     ) -> None:
         try:
+            logger.info(
+                "### File Copy: CONTAINER->HOST"
+                f" From Container Path: {str(container_file_path)}"
+                f" To Host Path: {str(destination_path)}/{container_file_name}"
+                f" Container Name: {str(container.name)}"
+            )
             stream, _ = container.get_archive(str(container_file_path))
-            file_data = io.BytesIO(
-                b"".join(stream)
-            ) 
-
-            with tarfile.open(fileobj=file_data) as tar:
-                for member in tar.getmembers():
-                    extracted_file = tar.extractfile(member)
-                    if extracted_file is not None:
-                        with open(
-                            f"{str(destination_path)}/{container_file_path.name}",
-                            "wb",
-                        ) as f:
-                            f.write(extracted_file.read())
-
-        except docker.errors.NotFound:
-            print(f"Container '{container.name}' not found.")
+            with open(
+                f"{str(destination_path)}/{container_file_name}",
+                "wb",
+            ) as f:
+                for d in stream:
+                    f.write(d)
         except docker.errors.APIError as e:
-            print(f"Erro while accessing the Docker API: {e}")
+            print(f"Error while accessing the Docker API: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
 
@@ -157,15 +157,27 @@ class ContainerManager(object, metaclass=Singleton):
         destination_container_path: Path,
     ) -> None:
         try:
-            file_data = io.BytesIO()
-            with tarfile.open(fileobj=file_data, mode="w") as tar:
-                tar.add(host_file_path, arcname=f"{host_file_path.name}")
-            file_data.seek(0)
+            logger.info(
+                "### File Copy: HOST->CONTAINER"
+                f" From Host Path: {str(host_file_path)}"
+                f" To Container Path: {destination_container_path}"
+                f" Container Name: {str(container.name)}"
+            )
 
-            container.put_archive(f"{destination_container_path}", file_data)
+            tar_stream = io.BytesIO()
+            with tarfile.open(f"{host_file_path}", mode="r") as tar_in:
+                with tarfile.open(fileobj=tar_stream, mode="w") as tar_out:
+                    for member in tar_in.getmembers():
+                        # Put the file with the expected name
+                        member.name = destination_container_path.name
+                        tar_out.addfile(member, tar_in.extractfile(member))
+
+            # Prepare the tar file
+            tar_stream.seek(0)
+            container.put_archive(f"{destination_container_path.parent}", tar_stream)
 
         except docker.errors.APIError as e:
-            print(f"Erro while accessing the Docker API: {e}")
+            print(f"Error while accessing the Docker API: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
 

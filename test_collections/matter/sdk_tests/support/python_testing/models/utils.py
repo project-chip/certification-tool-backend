@@ -33,10 +33,20 @@ from test_collections.matter.test_environment_config import (
 )
 
 from ...sdk_container import SDKContainer
+from ...utils import (
+    ADMIN_STORAGE_FILE_CONTAINER_DEFAULT_PATH,
+    ADMIN_STORAGE_FILE_DEFAULT_NAME,
+    ADMIN_STORAGE_FILE_HOST,
+    ADMIN_STORAGE_FILE_HOST_PATH,
+    PromptOption,
+    prompt_re_use_commissioning,
+)
 
 # Command line params
 RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 EXECUTABLE = "python3"
+
+TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
 
 
 async def generate_command_arguments(
@@ -102,6 +112,35 @@ class DUTCommissioningError(Exception):
     pass
 
 
+def __retrieve_storage_path(config: TestEnvironmentConfigMatte):
+    storage_path = ADMIN_STORAGE_FILE_CONTAINER_DEFAULT_PATH.joinpath(
+        ADMIN_STORAGE_FILE_DEFAULT_NAME
+    )
+
+    if (
+        config.test_parameters
+        and config.test_parameters[TEST_PARAMETER_STORAGE_PATH_KEY]
+    ):
+        storage_path = Path(config.test_parameters[TEST_PARAMETER_STORAGE_PATH_KEY])
+    return storage_path
+
+
+def __copy_admin_storage_file(
+    config: TestEnvironmentConfigMatter,
+    logger: loguru.Logger,
+) -> None:
+    sdk_container = SDKContainer(logger)
+
+    storage_path = __retrieve_storage_path(config)
+
+    logger.info(f"Copy file '{storage_path}' from container")
+    sdk_container.copy_file_from_container(
+        container_file_path=Path(storage_path),
+        destination_path=ADMIN_STORAGE_FILE_HOST_PATH,
+        container_file_name=ADMIN_STORAGE_FILE_DEFAULT_NAME,
+    )
+
+
 async def commission_device(
     config: TestEnvironmentConfigMatter,
     logger: loguru.Logger,
@@ -123,13 +162,12 @@ async def commission_device(
 
     exit_code = sdk_container.exec_exit_code(exec_result.exec_id)
 
-    sdk_container.copy_file_from_container(
-        container_file_path=Path("/root/admin_storage.json"),
-        destination_path=Path("/app/backend/"),
-    )
-
     if exit_code:
         raise DUTCommissioningError("Failed to commission DUT")
+
+    # Copy admin_storage.json file from container, in case user want in the next
+    # execution re-use this information
+    __copy_admin_storage_file(config, logger)
 
 
 async def __thread_dataset_hex(
@@ -151,3 +189,29 @@ async def __thread_dataset_hex(
         hex_dataset = border_router.active_dataset
 
     return hex_dataset
+
+
+async def should_perform_new_commissioning(
+    prompt_support: UserPromptSupport,
+    config: TestEnvironmentConfigMatter,
+    logger: loguru.Logger,
+) -> bool:
+    sdk_container = SDKContainer(logger)
+
+    # If the admin storage file exists, prompt user if the execution should retrieve
+    # the previous commissioning information or if it should perform a
+    # new commissioning
+    if ADMIN_STORAGE_FILE_HOST.exists():
+        user_response = await prompt_re_use_commissioning(prompt_support, logger)
+        if user_response == PromptOption.PASS:
+            logger.info(f"Copying file {str(ADMIN_STORAGE_FILE_HOST)} to container")
+
+            storage_path = __retrieve_storage_path(config)
+
+            sdk_container.copy_file_to_container(
+                host_file_path=ADMIN_STORAGE_FILE_HOST,
+                destination_container_path=storage_path,
+            )
+            return False
+
+    return True
