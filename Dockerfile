@@ -62,7 +62,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 RUN curl -sSL https://get.docker.com/ | sh
 
 # Install nodejs, npm and spell checker
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y nodejs
 RUN npm install -g npm@latest
 RUN npm install -g cspell@latest
