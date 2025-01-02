@@ -23,6 +23,7 @@ import loguru
 
 from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
+from app.user_prompt_support import UserPromptSupport
 from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
     ThreadBorderRouter,
 )
@@ -112,7 +113,7 @@ class DUTCommissioningError(Exception):
     pass
 
 
-def __retrieve_storage_path(config: TestEnvironmentConfigMatter):
+def __retrieve_storage_path(config: TestEnvironmentConfigMatter) -> Path:
     storage_path = ADMIN_STORAGE_FILE_CONTAINER_DEFAULT_PATH.joinpath(
         ADMIN_STORAGE_FILE_DEFAULT_NAME
     )
