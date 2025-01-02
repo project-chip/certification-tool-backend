@@ -218,11 +218,11 @@ async def test_should_raise_DUTCommissioningError_prompt_commissioning_failed() 
     test = python_test_instance(name="test_name", path=Path("path"))
     test.python_test_type = PythonTestType.MANDATORY
 
-    test_case = LegacyPythonTestCase.class_factory(
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
         test=test,
         python_test_version="version",
         mandatory=False,
-    )(test_case_execution) # type: ignore
+    )(test_case_execution)
 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
@@ -288,11 +288,11 @@ async def test_legacy_python_test_case_no_new_commissioning() -> None:
     test = python_test_instance(name="test_name", path=Path("path"))
     test.python_test_type = PythonTestType.MANDATORY
 
-    test_case = LegacyPythonTestCase.class_factory(
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
         test=test,
         python_test_version="version",
         mandatory=False,
-    )(test_case_execution) # type: ignore
+    )(test_case_execution)
 
     mock_prompt_response_no = mock.Mock()
     mock_prompt_response_no.response = PromptOption.NO
@@ -379,11 +379,11 @@ async def test_legacy_python_test_case_new_commissioning() -> None:
     test = python_test_instance(name="test_name", path=Path("path"))
     test.python_test_type = PythonTestType.MANDATORY
 
-    test_case = LegacyPythonTestCase.class_factory(
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
         test=test,
         python_test_version="version",
         mandatory=False,
-    )(test_case_execution) # type: ignore
+    )(test_case_execution)
 
     mock_prompt_response_yes = mock.Mock()
     mock_prompt_response_yes.response = PromptOption.YES
