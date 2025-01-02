@@ -112,7 +112,7 @@ class DUTCommissioningError(Exception):
     pass
 
 
-def __retrieve_storage_path(config: TestEnvironmentConfigMatte):
+def __retrieve_storage_path(config: TestEnvironmentConfigMatter):
     storage_path = ADMIN_STORAGE_FILE_CONTAINER_DEFAULT_PATH.joinpath(
         ADMIN_STORAGE_FILE_DEFAULT_NAME
     )

@@ -32,6 +32,7 @@ from ...python_testing.models.test_suite import (
     SuiteType,
 )
 from ...sdk_container import SDKContainer
+from ...utils import PromptOption
 
 
 def test_python_suite_class_factory_name() -> None:
@@ -107,7 +108,6 @@ async def test_suite_setup_log_python_version() -> None:
 
     for type in list(SuiteType):
         python_test_version = "best_version"
-        # Create a subclass of PythonTestSuite
         suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
             suite_type=type,
             name="SomeSuite",
@@ -116,6 +116,10 @@ async def test_suite_setup_log_python_version() -> None:
         )
 
         suite_instance = suite_class(TestSuiteExecution())
+
+        # Mock prompt response
+        mock_prompt_response = mock.Mock()
+        mock_prompt_response.response = PromptOption.PASS
 
         with mock.patch.object(
             target=test_engine_logger, attribute="info"
@@ -136,6 +140,9 @@ async def test_suite_setup_log_python_version() -> None:
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
+        ), mock.patch(
+            "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+            return_value=mock_prompt_response,
         ):
             await suite_instance.setup()
 
@@ -159,6 +166,10 @@ async def test_suite_setup_without_pics() -> None:
 
         suite_instance = suite_class(TestSuiteExecution())
 
+        # Mock prompt response
+        mock_prompt_response = mock.Mock()
+        mock_prompt_response.response = PromptOption.PASS
+
         with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.pics",
@@ -178,6 +189,9 @@ async def test_suite_setup_without_pics() -> None:
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
+        ), mock.patch(
+            "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+            return_value=mock_prompt_response,
         ):
             await suite_instance.setup()
 
@@ -188,6 +202,10 @@ async def test_suite_setup_without_pics() -> None:
 @pytest.mark.asyncio
 async def test_suite_setup_with_pics() -> None:
     sdk_container: SDKContainer = SDKContainer()
+
+    # Mock prompt response
+    mock_prompt_response = mock.Mock()
+    mock_prompt_response.response = PromptOption.PASS
 
     for type in list(SuiteType):
         python_test_version = "best_version"
@@ -220,6 +238,9 @@ async def test_suite_setup_with_pics() -> None:
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
+        ), mock.patch(
+            "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+            return_value=mock_prompt_response,
         ):
             await suite_instance.setup()
 
@@ -242,6 +263,10 @@ async def test_commissioning_suite_setup_with_pics() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
+    # Mock prompt response
+    mock_prompt_response = mock.Mock()
+    mock_prompt_response.response = PromptOption.PASS
+
     with mock.patch.object(target=sdk_container, attribute="start"), mock.patch(
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.pics",
@@ -257,6 +282,9 @@ async def test_commissioning_suite_setup_with_pics() -> None:
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
+    ), mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        return_value=mock_prompt_response,
     ):
         await suite_instance.setup()
 
@@ -279,6 +307,10 @@ async def test_commissioning_suite_setup() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
+    # Mock prompt response
+    mock_prompt_response = mock.Mock()
+    mock_prompt_response.response = PromptOption.PASS
+
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -293,6 +325,181 @@ async def test_commissioning_suite_setup() -> None:
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
+    ), mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        return_value=mock_prompt_response,
     ):
         await suite_instance.setup()
         python_suite_setup.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_commissioning_suite_setup_fail() -> None:
+    """Test that when prompt_for_commissioning_mode returns FAIL, the setup process
+    should raise DUTCommissioningError.
+    """
+    from test_collections.matter.sdk_tests.support.python_testing.models.utils import (
+        DUTCommissioningError,
+    )
+
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+
+    suite_instance = suite_class(TestSuiteExecution())
+
+    # Mock prompt response
+    mock_prompt_response = mock.Mock()
+    mock_prompt_response.response = PromptOption.FAIL
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup"
+    ) as python_suite_setup, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.FAIL,
+    ) as mock_prompt_commissioning, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device"
+    ) as mock_commission_device, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=default_environment_config.__dict__,
+    ), mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        return_value=mock_prompt_response,
+    ):
+        # Verifica se a exceção correta é lançada
+        with pytest.raises(DUTCommissioningError) as exc_info:
+            await suite_instance.setup()
+
+        # Verifica a mensagem de erro
+        assert (
+            str(exc_info.value)
+            == "User chose prompt option FAILED for DUT is in Commissioning Mode"
+        )
+
+        # Verifica se prompt_for_commissioning_mode foi chamado
+        mock_prompt_commissioning.assert_called_once()
+
+        # Verifica se commission_device NÃO foi chamado
+        mock_commission_device.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_should_perform_new_commissioning_yes() -> None:
+    """Test that when should_perform_new_commissioning returns True,
+    the setup process performs a new commissioning.
+    """
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+
+    suite_instance = suite_class(TestSuiteExecution())
+
+    # Mock prompt response para "NO" (queremos fazer um novo comissionamento)
+    mock_prompt_response = mock.Mock()
+    mock_prompt_response.response = PromptOption.FAIL  # NO = FAIL neste contexto
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup"
+    ) as python_suite_setup, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.PASS,
+    ) as mock_prompt_commissioning, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device"
+    ) as mock_commission_device, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=default_environment_config.__dict__,
+    ), mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        return_value=mock_prompt_response,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".should_perform_new_commissioning",
+        return_value=True,
+    ) as mock_should_perform_new_commissioning:
+        await suite_instance.setup()
+
+        # Verifica se should_perform_new_commissioning foi chamado
+        mock_should_perform_new_commissioning.assert_called_once()
+
+        # Verifica se o setup base foi chamado
+        python_suite_setup.assert_called_once()
+
+        # Verifica se o prompt de comissionamento foi chamado e retornou PASS
+        mock_prompt_commissioning.assert_called_once()
+        assert mock_prompt_commissioning.return_value == PromptOption.PASS
+
+        # Verifica se commission_device foi chamado
+        mock_commission_device.assert_called_once()
+        assert mock_commission_device.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_should_perform_new_commissioning_no() -> None:
+    """Test that when should_perform_new_commissioning returns False,
+    the setup process skips the new commissioning.
+    """
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+
+    suite_instance = suite_class(TestSuiteExecution())
+
+    # Mock prompt response para "YES" (queremos reutilizar o comissionamento)
+    mock_prompt_response = mock.Mock()
+    mock_prompt_response.response = PromptOption.PASS  # YES = PASS neste contexto
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup"
+    ) as python_suite_setup, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.PASS,
+    ) as mock_prompt_commissioning, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device"
+    ) as mock_commission_device, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=default_environment_config.__dict__,
+    ), mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        return_value=mock_prompt_response,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".should_perform_new_commissioning",
+        return_value=False,
+    ) as mock_should_perform_new_commissioning:
+        await suite_instance.setup()
+
+        # Verifica se should_perform_new_commissioning foi chamado
+        mock_should_perform_new_commissioning.assert_called_once()
+
+        # Verifica se o setup base foi chamado
+        python_suite_setup.assert_called_once()
+
+        # Verifica se o prompt de comissionamento foi chamado
+        mock_prompt_commissioning.assert_called_once()
+
+        # Verifica que commission_device NÃO foi chamado
+        mock_commission_device.assert_not_called()
