@@ -374,20 +374,15 @@ async def test_commissioning_suite_setup_fail() -> None:
         "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
         return_value=mock_prompt_response,
     ):
-        # Verifica se a exceção correta é lançada
         with pytest.raises(DUTCommissioningError) as exc_info:
             await suite_instance.setup()
 
-        # Verifica a mensagem de erro
         assert (
             str(exc_info.value)
             == "User chose prompt option FAILED for DUT is in Commissioning Mode"
         )
 
-        # Verifica se prompt_for_commissioning_mode foi chamado
         mock_prompt_commissioning.assert_called_once()
-
-        # Verifica se commission_device NÃO foi chamado
         mock_commission_device.assert_not_called()
 
 
@@ -405,9 +400,9 @@ async def test_should_perform_new_commissioning_yes() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
-    # Mock prompt response para "NO" (queremos fazer um novo comissionamento)
+    # Mock prompt response para "NO" - No commissioning
     mock_prompt_response = mock.Mock()
-    mock_prompt_response.response = PromptOption.FAIL  # NO = FAIL neste contexto
+    mock_prompt_response.response = PromptOption.FAIL
 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
@@ -434,17 +429,13 @@ async def test_should_perform_new_commissioning_yes() -> None:
     ) as mock_should_perform_new_commissioning:
         await suite_instance.setup()
 
-        # Verifica se should_perform_new_commissioning foi chamado
         mock_should_perform_new_commissioning.assert_called_once()
 
-        # Verifica se o setup base foi chamado
         python_suite_setup.assert_called_once()
 
-        # Verifica se o prompt de comissionamento foi chamado e retornou PASS
         mock_prompt_commissioning.assert_called_once()
         assert mock_prompt_commissioning.return_value == PromptOption.PASS
 
-        # Verifica se commission_device foi chamado
         mock_commission_device.assert_called_once()
         assert mock_commission_device.call_count == 1
 
@@ -463,9 +454,9 @@ async def test_should_perform_new_commissioning_no() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
-    # Mock prompt response para "YES" (queremos reutilizar o comissionamento)
+    # Mock prompt response para "YES" - Perform the commissioning
     mock_prompt_response = mock.Mock()
-    mock_prompt_response.response = PromptOption.PASS  # YES = PASS neste contexto
+    mock_prompt_response.response = PromptOption.PASS
 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
@@ -492,14 +483,9 @@ async def test_should_perform_new_commissioning_no() -> None:
     ) as mock_should_perform_new_commissioning:
         await suite_instance.setup()
 
-        # Verifica se should_perform_new_commissioning foi chamado
         mock_should_perform_new_commissioning.assert_called_once()
 
-        # Verifica se o setup base foi chamado
         python_suite_setup.assert_called_once()
 
-        # Verifica se o prompt de comissionamento foi chamado
         mock_prompt_commissioning.assert_called_once()
-
-        # Verifica que commission_device NÃO foi chamado
         mock_commission_device.assert_not_called()

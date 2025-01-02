@@ -332,7 +332,6 @@ async def test_legacy_python_test_case_new_commissioning() -> None:
     2. prompt_about_commissioning returns NO
     3. No commissioning should be performed
     """
-    # Configurando a hierarquia completa de execução
     project = Project(name="test_project")
     project.config = {
         "matter_node_id": 1234,
@@ -386,7 +385,6 @@ async def test_legacy_python_test_case_new_commissioning() -> None:
         mandatory=False,
     )(test_case_execution)
 
-    # Criando dois mocks de resposta diferentes
     mock_prompt_response_yes = mock.Mock()
     mock_prompt_response_yes.response = PromptOption.YES
 
@@ -396,7 +394,6 @@ async def test_legacy_python_test_case_new_commissioning() -> None:
     mock_config = mock.Mock()
     mock_config.__dict__ = project.config
 
-    # Criando um mock para simular o output do commission_device
     mock_exec_result = mock.Mock()
     mock_exec_result.output = (bytes(f"log line {i}", "utf-8") for i in range(3))
 
