@@ -106,8 +106,8 @@ async def prompt_re_use_commissioning(
     prompt_response = await __prompt_pass_fail_options(
         prompt_support=prompt_support,
         logger=logger,
-        prompt="Do you want to re-use previous commissioning information?\n"
-        "If you select NO, a new commissioning will performed",
+        prompt="Do you want to re-use the previous commissioning information?\n"
+        "If you select NO, a new commissioning will be performed",
         options=options,
         on_success=None,
         on_failure=None,
