@@ -42,10 +42,9 @@ from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
 )
+from .utils import EXECUTABLE, RUNNER_CLASS_PATH, DUTCommissioningError
+from .utils import PromptOption as PromptOptionUtils
 from .utils import (
-    EXECUTABLE,
-    RUNNER_CLASS_PATH,
-    DUTCommissioningError,
     commission_device,
     generate_command_arguments,
     should_perform_new_commissioning,
@@ -348,7 +347,7 @@ class NoCommissioningPythonTestCase(PythonTestCase):
         user_response = await prompt_for_commissioning_mode(
             self, logger, None, self.cancel
         )
-        if user_response == PromptOption.NO:
+        if user_response == PromptOptionUtils.FAIL:
             raise DUTCommissioningError(
                 "User chose prompt option FAILED for DUT is in Commissioning Mode"
             )
@@ -361,7 +360,7 @@ class LegacyPythonTestCase(PythonTestCase):
         user_response = await prompt_for_commissioning_mode(
             self, logger, None, self.cancel
         )
-        if user_response == PromptOption.NO:
+        if user_response == PromptOptionUtils.FAIL:
             raise DUTCommissioningError(
                 "User chose prompt option FAILED for DUT is in Commissioning Mode"
             )

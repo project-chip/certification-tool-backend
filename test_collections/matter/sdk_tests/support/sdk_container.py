@@ -296,13 +296,13 @@ class SDKContainer(metaclass=Singleton):
         self,
         container_file_path: Path,
         destination_path: Path,
-        container_file_name: str,
+        destination_file_name: str,
     ) -> None:
         container_manager.copy_file_from_container(
             container=self.__container,
             container_file_path=container_file_path,
             destination_path=destination_path,
-            container_file_name=container_file_name,
+            destination_file_name=destination_file_name,
         )
 
     def copy_file_to_container(

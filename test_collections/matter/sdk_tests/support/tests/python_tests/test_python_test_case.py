@@ -32,10 +32,9 @@ from app.user_prompt_support import UserPromptSupport
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...python_testing.models import PythonTestCase
 from ...python_testing.models.python_test_models import PythonTest, PythonTestType
-from ...python_testing.models.test_case import LegacyPythonTestCase, PromptOption
+from ...python_testing.models.test_case import LegacyPythonTestCase
 from ...python_testing.models.utils import DUTCommissioningError
-
-# from ...utils import PromptOption
+from ...utils import PromptOption
 
 
 def python_test_instance(
@@ -227,7 +226,7 @@ async def test_should_raise_DUTCommissioningError_prompt_commissioning_failed() 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
         ".prompt_for_commissioning_mode",
-        return_value=PromptOption.NO,
+        return_value=PromptOption.FAIL,
     ), pytest.raises(DUTCommissioningError):
         await test_case.setup()
 
@@ -295,7 +294,7 @@ async def test_legacy_python_test_case_no_new_commissioning() -> None:
     )(test_case_execution)
 
     mock_prompt_response_no = mock.Mock()
-    mock_prompt_response_no.response = PromptOption.NO
+    mock_prompt_response_no.response = PromptOption.FAIL
 
     mock_config = mock.Mock()
     mock_config.__dict__ = project.config
@@ -303,7 +302,7 @@ async def test_legacy_python_test_case_no_new_commissioning() -> None:
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
         ".prompt_for_commissioning_mode",
-        return_value=PromptOption.YES,
+        return_value=PromptOption.PASS,
     ) as mock_prompt_commissioning, mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.utils"
         ".commission_device"
@@ -386,10 +385,10 @@ async def test_legacy_python_test_case_new_commissioning() -> None:
     )(test_case_execution)
 
     mock_prompt_response_yes = mock.Mock()
-    mock_prompt_response_yes.response = PromptOption.YES
+    mock_prompt_response_yes.response = PromptOption.PASS
 
     mock_prompt_response_no = mock.Mock()
-    mock_prompt_response_no.response = PromptOption.NO
+    mock_prompt_response_no.response = PromptOption.FAIL
 
     mock_config = mock.Mock()
     mock_config.__dict__ = project.config
@@ -400,7 +399,7 @@ async def test_legacy_python_test_case_new_commissioning() -> None:
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
         ".prompt_for_commissioning_mode",
-        return_value=PromptOption.YES,
+        return_value=PromptOption.PASS,
     ) as mock_prompt_commissioning, mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
         ".commission_device",

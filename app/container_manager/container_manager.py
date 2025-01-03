@@ -129,18 +129,18 @@ class ContainerManager(object, metaclass=Singleton):
         container: Container,
         container_file_path: Path,
         destination_path: Path,
-        container_file_name: str,
+        destination_file_name: str,
     ) -> None:
         try:
             logger.info(
                 "### File Copy: CONTAINER->HOST"
                 f" From Container Path: {str(container_file_path)}"
-                f" To Host Path: {str(destination_path)}/{container_file_name}"
+                f" To Host Path: {str(destination_path)}/{destination_file_name}"
                 f" Container Name: {str(container.name)}"
             )
             stream, _ = container.get_archive(str(container_file_path))
             with open(
-                f"{str(destination_path)}/{container_file_name}",
+                f"{str(destination_path)}/{destination_file_name}",
                 "wb",
             ) as f:
                 for d in stream:

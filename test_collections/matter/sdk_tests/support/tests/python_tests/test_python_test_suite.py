@@ -25,6 +25,9 @@ from app.models.test_suite_execution import TestSuiteExecution
 from app.schemas import PICS
 from app.test_engine.logger import test_engine_logger
 from app.tests.utils.test_pics_data import create_random_pics
+from test_collections.matter.sdk_tests.support.python_testing.models.utils import (
+    DUTCommissioningError,
+)
 
 from ...python_testing.models.test_suite import (
     CommissioningPythonTestSuite,
@@ -338,9 +341,6 @@ async def test_commissioning_suite_setup_fail() -> None:
     """Test that when prompt_for_commissioning_mode returns FAIL, the setup process
     should raise DUTCommissioningError.
     """
-    from test_collections.matter.sdk_tests.support.python_testing.models.utils import (
-        DUTCommissioningError,
-    )
 
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
         suite_type=SuiteType.COMMISSIONING,
@@ -400,10 +400,6 @@ async def test_should_perform_new_commissioning_yes() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
-    # Mock prompt response para "NO" - No commissioning
-    mock_prompt_response = mock.Mock()
-    mock_prompt_response.response = PromptOption.FAIL
-
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -420,9 +416,6 @@ async def test_should_perform_new_commissioning_yes() -> None:
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
     ), mock.patch(
-        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
-        return_value=mock_prompt_response,
-    ), mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".should_perform_new_commissioning",
         return_value=True,
@@ -430,14 +423,9 @@ async def test_should_perform_new_commissioning_yes() -> None:
         await suite_instance.setup()
 
         mock_should_perform_new_commissioning.assert_called_once()
-
         python_suite_setup.assert_called_once()
-
         mock_prompt_commissioning.assert_called_once()
-        assert mock_prompt_commissioning.return_value == PromptOption.PASS
-
         mock_commission_device.assert_called_once()
-        assert mock_commission_device.call_count == 1
 
 
 @pytest.mark.asyncio
@@ -454,10 +442,6 @@ async def test_should_perform_new_commissioning_no() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
-    # Mock prompt response para "YES" - Perform the commissioning
-    mock_prompt_response = mock.Mock()
-    mock_prompt_response.response = PromptOption.PASS
-
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -473,9 +457,6 @@ async def test_should_perform_new_commissioning_no() -> None:
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
-    ), mock.patch(
-        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
-        return_value=mock_prompt_response,
     ), mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".should_perform_new_commissioning",

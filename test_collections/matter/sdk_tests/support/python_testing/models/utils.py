@@ -138,7 +138,7 @@ def __copy_admin_storage_file(
     sdk_container.copy_file_from_container(
         container_file_path=Path(storage_path),
         destination_path=ADMIN_STORAGE_FILE_HOST_PATH,
-        container_file_name=ADMIN_STORAGE_FILE_DEFAULT_NAME,
+        destination_file_name=ADMIN_STORAGE_FILE_DEFAULT_NAME,
     )
 
 
