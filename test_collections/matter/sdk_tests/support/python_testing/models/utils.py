@@ -166,8 +166,8 @@ async def commission_device(
     if exit_code:
         raise DUTCommissioningError("Failed to commission DUT")
 
-    # Copy admin_storage.json file from container, in case user want in the next
-    # execution re-use this information
+    # Copy admin_storage.json file from container, in case the user wants to
+    # re-use this information in the next execution
     __copy_admin_storage_file(config, logger)
 
 
