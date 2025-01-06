@@ -14,7 +14,10 @@
 # limitations under the License.
 #
 import asyncio
+import io
+import tarfile
 from asyncio import TimeoutError, wait_for
+from pathlib import Path
 from typing import Dict, Optional
 
 import docker
@@ -120,6 +123,63 @@ class ContainerManager(object, metaclass=Singleton):
 
             # Sleep first to give container some time
             await asyncio.sleep(sleep_interval)
+
+    def copy_file_from_container(
+        self,
+        container: Container,
+        container_file_path: Path,
+        destination_path: Path,
+        destination_file_name: str,
+    ) -> None:
+        try:
+            logger.info(
+                "### File Copy: CONTAINER->HOST"
+                f" From Container Path: {str(container_file_path)}"
+                f" To Host Path: {str(destination_path)}/{destination_file_name}"
+                f" Container Name: {str(container.name)}"
+            )
+            stream, _ = container.get_archive(str(container_file_path))
+            with open(
+                f"{str(destination_path)}/{destination_file_name}",
+                "wb",
+            ) as f:
+                for d in stream:
+                    f.write(d)
+        except docker.errors.APIError as e:
+            print(f"Error while accessing the Docker API: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+
+    def copy_file_to_container(
+        self,
+        container: Container,
+        host_file_path: Path,
+        destination_container_path: Path,
+    ) -> None:
+        try:
+            logger.info(
+                "### File Copy: HOST->CONTAINER"
+                f" From Host Path: {str(host_file_path)}"
+                f" To Container Path: {destination_container_path}"
+                f" Container Name: {str(container.name)}"
+            )
+
+            tar_stream = io.BytesIO()
+            with tarfile.open(f"{host_file_path}", mode="r") as tar_in:
+                with tarfile.open(fileobj=tar_stream, mode="w") as tar_out:
+                    for member in tar_in.getmembers():
+                        # Put the file with the expected name
+                        member.name = destination_container_path.name
+                        tar_out.addfile(member, tar_in.extractfile(member))
+
+            # Prepare the tar file
+            tar_stream.seek(0)
+            container.put_archive(f"{destination_container_path.parent}", tar_stream)
+
+        except docker.errors.APIError as e:
+            print(f"Error while accessing the Docker API: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
 
 container_manager: ContainerManager = ContainerManager()

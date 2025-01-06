@@ -21,12 +21,20 @@ from unittest import mock
 
 import pytest
 
+from app.default_environment_config import default_environment_config
+from app.models.project import Project
 from app.models.test_case_execution import TestCaseExecution
+from app.models.test_run_execution import TestRunExecution
+from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger
+from app.user_prompt_support import UserPromptSupport
 
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...python_testing.models import PythonTestCase
 from ...python_testing.models.python_test_models import PythonTest, PythonTestType
+from ...python_testing.models.test_case import LegacyPythonTestCase
+from ...python_testing.models.utils import DUTCommissioningError
+from ...utils import PromptOption
 
 
 def python_test_instance(
@@ -197,3 +205,215 @@ def test_multiple_steps_for_python_tests() -> None:
             s for s in instance.test_steps if s.name == test_step.label
         ]
         assert len(steps_from_python) == no_steps
+
+
+@pytest.mark.asyncio
+async def test_should_raise_DUTCommissioningError_prompt_commissioning_failed() -> None:
+    """Test when user responds FAIL to commissioning mode prompt.
+
+    Should raise DUTCommissioningError.
+    """
+    test_case_execution = TestCaseExecution()
+    test = python_test_instance(name="test_name", path=Path("path"))
+    test.python_test_type = PythonTestType.MANDATORY
+
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
+        test=test,
+        python_test_version="version",
+        mandatory=False,
+    )(test_case_execution)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.FAIL,
+    ), pytest.raises(DUTCommissioningError):
+        await test_case.setup()
+
+
+@pytest.mark.asyncio
+async def test_legacy_python_test_case_no_new_commissioning() -> None:
+    """Test when user doesn't want to perform new commissioning.
+
+    Flow:
+    1. prompt_for_commissioning_mode returns YES
+    2. prompt_about_commissioning returns NO
+    3. No commissioning should be performed
+    """
+    project = Project(name="test_project")
+    project.config = {
+        "matter_node_id": 1234,
+        "matter_discriminator": 5678,
+        "matter_setup_pin": "12345678",
+        "matter_use_operational_credentials": False,
+        "network": {
+            "wifi": {
+                "ssid": "test_ssid",
+                "password": "test_password",
+            },
+            "thread": {
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:11:11:11::/64",
+                "network_interface": "wpan0",
+                "dataset": {
+                    "channel": 15,
+                    "panid": "0x1234",
+                    "xpanid": "1111111122222222",
+                    "masterkey": "00112233445566778899aabbccddeeff",
+                },
+                "operational_dataset_hex": "0e080000000000010000000300001235",
+            },
+        },
+        "dut_config": {
+            "discriminator": 5678,
+            "setup_code": "12345678",
+            "pairing_mode": "onnetwork",
+            "chip_timeout": 10000,
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    }
+
+    test_run_execution = TestRunExecution()
+    test_run_execution.project = project
+
+    test_suite_execution = TestSuiteExecution()
+    test_suite_execution.test_run_execution = test_run_execution
+
+    test_case_execution = TestCaseExecution()
+    test_case_execution.test_suite_execution = test_suite_execution
+
+    test = python_test_instance(name="test_name", path=Path("path"))
+    test.python_test_type = PythonTestType.MANDATORY
+
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
+        test=test,
+        python_test_version="version",
+        mandatory=False,
+    )(test_case_execution)
+
+    mock_prompt_response_no = mock.Mock()
+    mock_prompt_response_no.response = PromptOption.FAIL
+
+    mock_config = mock.Mock()
+    mock_config.__dict__ = project.config
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.PASS,
+    ) as mock_prompt_commissioning, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".commission_device"
+    ) as mock_commission_device, mock.patch(
+        "test_collections.matter.test_environment_config.TestEnvironmentConfigMatter",
+        return_value=mock_config,
+    ), mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        side_effect=[mock_prompt_response_no, mock_prompt_response_no],
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case.logger"
+    ) as mock_logger:
+        await test_case.setup()
+
+        mock_prompt_commissioning.assert_called_once()
+        mock_commission_device.assert_not_called()
+        mock_logger.info.assert_any_call("User chose prompt option NO")
+
+
+@pytest.mark.asyncio
+async def test_legacy_python_test_case_new_commissioning() -> None:
+    """Test when user doesn't want to perform new commissioning.
+
+    Flow:
+    1. prompt_for_commissioning_mode returns YES
+    2. prompt_about_commissioning returns NO
+    3. No commissioning should be performed
+    """
+    project = Project(name="test_project")
+    project.config = {
+        "matter_node_id": 1234,
+        "matter_discriminator": 5678,
+        "matter_setup_pin": "12345678",
+        "matter_use_operational_credentials": False,
+        "network": {
+            "wifi": {
+                "ssid": "test_ssid",
+                "password": "test_password",
+            },
+            "thread": {
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:11:11:11::/64",
+                "network_interface": "wpan0",
+                "dataset": {
+                    "channel": 15,
+                    "panid": "0x1234",
+                    "xpanid": "1111111122222222",
+                    "masterkey": "00112233445566778899aabbccddeeff",
+                },
+                "operational_dataset_hex": "0e080000000000010000000300001235",
+            },
+        },
+        "dut_config": {
+            "discriminator": 5678,
+            "setup_code": "12345678",
+            "pairing_mode": "onnetwork",
+            "chip_timeout": 10000,
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    }
+
+    test_run_execution = TestRunExecution()
+    test_run_execution.project = project
+
+    test_suite_execution = TestSuiteExecution()
+    test_suite_execution.test_run_execution = test_run_execution
+
+    test_case_execution = TestCaseExecution()
+    test_case_execution.test_suite_execution = test_suite_execution
+
+    test = python_test_instance(name="test_name", path=Path("path"))
+    test.python_test_type = PythonTestType.MANDATORY
+
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
+        test=test,
+        python_test_version="version",
+        mandatory=False,
+    )(test_case_execution)
+
+    mock_prompt_response_yes = mock.Mock()
+    mock_prompt_response_yes.response = PromptOption.PASS
+
+    mock_prompt_response_no = mock.Mock()
+    mock_prompt_response_no.response = PromptOption.FAIL
+
+    mock_config = mock.Mock()
+    mock_config.__dict__ = project.config
+
+    mock_exec_result = mock.Mock()
+    mock_exec_result.output = (bytes(f"log line {i}", "utf-8") for i in range(3))
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.PASS,
+    ) as mock_prompt_commissioning, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".commission_device",
+        return_value=mock_exec_result,
+    ) as mock_commission_device, mock.patch(
+        "test_collections.matter.test_environment_config.TestEnvironmentConfigMatter",
+        return_value=mock_config,
+    ), mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        side_effect=[mock_prompt_response_yes, mock_prompt_response_no],
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case.logger"
+    ) as mock_logger:
+        await test_case.setup()
+
+        mock_prompt_commissioning.assert_called_once()
+        mock_commission_device.assert_called()
