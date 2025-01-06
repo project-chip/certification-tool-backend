@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from enum import Enum
-from pathlib import Path
 from typing import Type, TypeVar
 
 from app.schemas.test_environment_config import ThreadAutoConfig
