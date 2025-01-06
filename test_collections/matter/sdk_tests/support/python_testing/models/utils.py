@@ -40,7 +40,7 @@ from ...utils import (
     ADMIN_STORAGE_FILE_HOST,
     ADMIN_STORAGE_FILE_HOST_PATH,
     PromptOption,
-    prompt_re_use_commissioning,
+    prompt_reuse_commissioning,
 )
 
 # Command line params
@@ -167,7 +167,7 @@ async def commission_device(
         raise DUTCommissioningError("Failed to commission DUT")
 
     # Copy admin_storage.json file from container, in case the user wants to
-    # re-use this information in the next execution
+    # reuse this information in the next execution
     __copy_admin_storage_file(config, logger)
 
 
@@ -203,7 +203,7 @@ async def should_perform_new_commissioning(
     # the previous commissioning information or if it should perform a
     # new commissioning
     if ADMIN_STORAGE_FILE_HOST.exists():
-        user_response = await prompt_re_use_commissioning(prompt_support, logger)
+        user_response = await prompt_reuse_commissioning(prompt_support, logger)
         if user_response == PromptOption.PASS:
             logger.info(f"Copying file {str(ADMIN_STORAGE_FILE_HOST)} to container")
 

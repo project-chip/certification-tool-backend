@@ -26,7 +26,8 @@ from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
 ADMIN_STORAGE_FILE_DEFAULT_NAME = "admin_storage.json"
-ADMIN_STORAGE_FILE_HOST_PATH = Path("/app/backend")
+# Retrieve the root folder
+ADMIN_STORAGE_FILE_HOST_PATH = Path(__file__).parents[3].parent
 ADMIN_STORAGE_FILE_HOST = ADMIN_STORAGE_FILE_HOST_PATH.joinpath(
     ADMIN_STORAGE_FILE_DEFAULT_NAME
 )
@@ -94,7 +95,7 @@ async def prompt_for_commissioning_mode(
     return prompt_response
 
 
-async def prompt_re_use_commissioning(
+async def prompt_reuse_commissioning(
     prompt_support: UserPromptSupport,
     logger: loguru.Logger,
 ) -> PromptOption:
@@ -106,7 +107,7 @@ async def prompt_re_use_commissioning(
     prompt_response = await __prompt_pass_fail_options(
         prompt_support=prompt_support,
         logger=logger,
-        prompt="Do you want to re-use the previous commissioning information?\n"
+        prompt="Do you want to reuse the previous commissioning information?\n"
         "If you select NO, a new commissioning will be performed",
         options=options,
         on_success=None,

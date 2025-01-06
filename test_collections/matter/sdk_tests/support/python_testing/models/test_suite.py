@@ -30,11 +30,7 @@ from test_collections.matter.test_environment_config import (
 )
 
 from ...sdk_container import SDKContainer
-from ...utils import (
-    PromptOption,
-    prompt_for_commissioning_mode,
-    prompt_re_use_commissioning,
-)
+from ...utils import PromptOption, prompt_for_commissioning_mode
 from .utils import (
     DUTCommissioningError,
     commission_device,
