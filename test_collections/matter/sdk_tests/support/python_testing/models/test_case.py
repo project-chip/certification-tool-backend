@@ -42,11 +42,12 @@ from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
 )
+from .utils import EXECUTABLE, RUNNER_CLASS_PATH, DUTCommissioningError
+from .utils import PromptOption as PromptOptionUtils
 from .utils import (
-    EXECUTABLE,
-    RUNNER_CLASS_PATH,
     commission_device,
     generate_command_arguments,
+    should_perform_new_commissioning,
 )
 
 
@@ -343,13 +344,27 @@ class PythonTestCase(TestCase, UserPromptSupport):
 class NoCommissioningPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+        user_response = await prompt_for_commissioning_mode(
+            self, logger, None, self.cancel
+        )
+        if user_response == PromptOptionUtils.FAIL:
+            raise DUTCommissioningError(
+                "User chose prompt option FAILED for DUT is in Commissioning Mode"
+            )
 
 
 class LegacyPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+
+        user_response = await prompt_for_commissioning_mode(
+            self, logger, None, self.cancel
+        )
+        if user_response == PromptOptionUtils.FAIL:
+            raise DUTCommissioningError(
+                "User chose prompt option FAILED for DUT is in Commissioning Mode"
+            )
+
         await self.prompt_about_commissioning()
 
     async def prompt_about_commissioning(self) -> None:
@@ -371,10 +386,16 @@ class LegacyPythonTestCase(PythonTestCase):
         match prompt_response.response:
             case PromptOption.YES:
                 logger.info("User chose prompt option YES")
-                logger.info("Commission DUT")
-                await commission_device(
-                    TestEnvironmentConfigMatter(**self.config), logger
-                )
+
+                # If a local copy of admin_storage.json file exists, prompt user if the
+                # execution should retrieve the previous commissioning information or
+                # if it should perform a new commissioning
+                config = TestEnvironmentConfigMatter(**self.config)
+                if await should_perform_new_commissioning(
+                    self, config=config, logger=logger
+                ):
+                    logger.info("Commission DUT")
+                    await commission_device(config, logger)
 
             case PromptOption.NO:
                 logger.info("User chose prompt option NO")

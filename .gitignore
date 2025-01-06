@@ -4,6 +4,7 @@ htmlcov
 __pycache__
 app.egg-info
 logs
+admin_storage.json
 /docker-stack.yml
 .DS_Store
 app/chip-tool/chip-tool
