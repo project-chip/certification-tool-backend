@@ -107,7 +107,8 @@ async def test_test_run_execution_response_log(
     for i, (resp_msg, db_msg) in enumerate(zip(response_messages, db_messages)):
         if resp_msg != db_msg:
             pytest.fail(
-                f"Message mismatch at index {i}:\nResponse: {resp_msg}\nDatabase: {db_msg}"
+                f"Message mismatch at index {i}:\n"
+                f"Response: {resp_msg}\nDatabase: {db_msg}"
             )
 
 
