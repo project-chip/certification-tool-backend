@@ -101,6 +101,8 @@
         "zinfo",
         "MCORE",
         "elts",
+        "xpanid",
+        "wpan",
         "PBKDF",
     ],
     "allowCompoundWords": true,
