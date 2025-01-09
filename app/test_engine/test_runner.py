@@ -164,8 +164,6 @@ class TestRunner(object, metaclass=Singleton):
             test_engine_logger.info(f"Project config: {self.test_run.project.config}")
             test_engine_logger.info(f"Project PICS: {self.test_run.project.pics}")
 
-
-
             # Execute each test suite asynchronously
             self.__state = TestRunnerState.RUNNING
 
