@@ -161,8 +161,8 @@ class TestRunner(object, metaclass=Singleton):
             test_engine_logger.info(f"TH Version: {version_information.version}")
             test_engine_logger.info(f"TH SHA: {version_information.sha}")
             test_engine_logger.info(f"TH SDK SHA: {version_information.sdk_sha}")
-            test_engine_logger.info(f"Project config: {self.test_run.project.config}")
-            test_engine_logger.info(f"Project PICS: {self.test_run.project.pics}")
+            test_engine_logger.info(f"Project config:\n{self.test_run.project.config}")
+            test_engine_logger.info(f"Project PICS:\n{self.test_run.project.pics}")
 
             # Execute each test suite asynchronously
             self.__state = TestRunnerState.RUNNING
