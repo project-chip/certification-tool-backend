@@ -104,7 +104,8 @@
         "PBKDF",
         "elts",
         "xpanid",
-        "wpan"
+        "wpan",
+        "PBKDF",
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
