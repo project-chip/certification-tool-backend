@@ -15,8 +15,11 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-LOG_FILENAME=$(date +"log-test-collections-matter-prestart_%F-%H-%M-%S")
-LOG_PATH="./logs/$LOG_FILENAME"
+ # Paths
+SDK_TESTS_DIR=$(dirname "$0")/sdk_tests
 
-PRESTART_SCRIPT_PATH="$(dirname $0)/internal-prestart.sh"
-.$PRESTART_SCRIPT_PATH $* | tee $LOG_PATH
+cd $SDK_TESTS_DIR
+
+# Fetch code from SDK
+./scripts/fetch_sdk_tests_and_runner.sh
+

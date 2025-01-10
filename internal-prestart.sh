@@ -15,9 +15,28 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-LOG_FILENAME=$(date +"log-backend-prestart_%F-%H-%M-%S")
-LOG_PATH="./logs/$LOG_FILENAME"
+# Let the DB start
+python ./app/backend_pre_start.py
 
-PRESTART_SCRIPT_PATH="$(dirname $0)/internal-prestart.sh"
-.$PRESTART_SCRIPT_PATH $* | tee $LOG_PATH
+# Run migrations
+alembic upgrade head
 
+# Create initial data in DB
+python ./app/initial_data.py
+
+# Run Prestart scripts in test collections
+for dir in ./test_collections/*
+do
+    if [ -d $dir ]; then 
+        prestart=$dir/prestart.sh
+
+        # Only run prestart.sh if present and it's executable
+        if [ -x $prestart ]; then 
+            echo "Running prestart script: $prestart"
+            $prestart
+        fi
+    fi
+done
+
+# We echo "complete" to ensure this scripts last command has exit code 0.
+echo "Prestart Complete"
