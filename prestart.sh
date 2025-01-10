@@ -18,6 +18,4 @@
 LOG_FILENAME=$(date +"log-backend-prestart_%F-%H-%M-%S")
 LOG_PATH="./logs/$LOG_FILENAME"
 
-PRESTART_SCRIPT_PATH="$(dirname $0)/internal-prestart.sh"
-.$PRESTART_SCRIPT_PATH $* | tee $LOG_PATH
-
+./internal-prestart.sh $* | tee $LOG_PATH
