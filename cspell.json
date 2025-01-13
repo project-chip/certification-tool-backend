@@ -97,7 +97,9 @@
         "repr",
         "zinfo",
         "MCORE",
-        "elts"
+        "elts",
+        "PBKDF",
+        "mobly",
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
