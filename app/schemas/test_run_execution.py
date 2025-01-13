@@ -82,6 +82,13 @@ class TestRunExecutionWithChildren(TestRunExecution):
     test_suite_executions: Optional[List[TestSuiteExecution]]
 
 
+class TestRunExecutionUpdate(TestRunExecutionBase):
+    pass
+
+    class Config:
+        orm_mode = True
+
+
 # Additional Properties properties stored in DB
 class TestRunExecutionInDB(TestRunExecutionInDBBase):
     operator_id: Optional[int]

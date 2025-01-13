@@ -31,6 +31,7 @@ from app.api import DEFAULT_404_MESSAGE
 from app.crud.crud_test_run_execution import ImportError
 from app.db.session import get_db
 from app.models.test_run_execution import TestRunExecution
+from app.schemas.test_run_execution import TestRunExecutionUpdate
 from app.test_engine import TEST_ENGINE_ABORTING_TESTING_MESSAGE
 from app.test_engine.test_runner import AbortError, LoadingError, TestRunner
 from app.test_engine.test_script_manager import TestNotFound
@@ -97,6 +98,31 @@ def create_test_run_execution(
         db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
     )
     return test_run_execution
+
+
+@router.put("/{id}/rename", response_model=schemas.TestRunExecutionWithChildren)
+def rename_test_run_execution(
+    *, db: Session = Depends(get_db), id: int, new_execution_name: str
+) -> TestRunExecution:
+    """Rename the name of a test run execution."""
+
+    if len(new_execution_name.strip()) == 0:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail="The new execution name must be informed.",
+        )
+
+    test_run_execution = read_test_run_execution(db=db, id=id)
+
+    test_run_execution_in = TestRunExecutionUpdate.from_orm(test_run_execution)
+    test_run_execution_in.title = new_execution_name.strip()
+
+    try:
+        return crud.test_run_execution.update(
+            db=db, db_obj=test_run_execution, obj_in=test_run_execution_in
+        )
+    except HTTPException:
+        raise
 
 
 @router.post("/abort-testing", response_model=Dict[str, str])
