@@ -19,7 +19,7 @@ import subprocess
 import time
 
 from chip import ChipDeviceCtrl
-from matter_testing_support import (
+from chip.testing.matter_testing import (
     MatterBaseTest,
     TestStep,
     async_test_body,
