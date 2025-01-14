@@ -38,12 +38,14 @@
         "libgirepository",
         "loguru",
         "mandatories",
+        "mobly",
         "MANYTOONE",
         "mypy",
         "noqa",
         "onnetwork",
         "otbr",
         "panid",
+        "pidof",
         "PIXIT",
         "pkill",
         "pydantic",
@@ -100,7 +102,8 @@
         "MCORE",
         "elts",
         "xpanid",
-        "wpan"
+        "wpan",
+        "PBKDF"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
