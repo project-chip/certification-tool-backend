@@ -38,12 +38,14 @@
         "libgirepository",
         "loguru",
         "mandatories",
+        "mobly",
         "MANYTOONE",
         "mypy",
         "noqa",
         "onnetwork",
         "otbr",
         "panid",
+        "pidof",
         "PIXIT",
         "pkill",
         "pydantic",
@@ -99,7 +101,6 @@
         "MCORE",
         "elts",
         "PBKDF",
-        "mobly",
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
@@ -117,7 +118,9 @@
         "test_collections/matter/python_tests/docs/common_test_failures/",
         "sdk_patch",
         ".devcontainer",
-        "test_collections/matter/sdk_tests/*.json"
+        "test_collections/matter/sdk_tests/*.json",
+        "test_collections/matter/sdk_tests/support/performance_tests/",
+        "test_collections/matter/config.py"
     ],
     "enableFiletypes": [
         "shellscript"
