@@ -101,6 +101,8 @@
         "zinfo",
         "MCORE",
         "elts",
+        "PBKDF",
+        "elts",
         "xpanid",
         "wpan",
         "PBKDF"
