@@ -261,7 +261,7 @@ class PerformanceTestCase(TestCase, UserPromptSupport):
             # Generate the command argument by getting the test_parameters from
             # project configuration
             # comissioning method is omitted because it's handled by the test suite
-            command_arguments = generate_command_arguments(
+            command_arguments = await generate_command_arguments(
                 config=TestEnvironmentConfigMatter(**self.config),
                 omit_commissioning_method=True,
             )

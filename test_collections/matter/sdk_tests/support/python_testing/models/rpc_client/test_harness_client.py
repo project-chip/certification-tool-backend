@@ -25,10 +25,10 @@ from multiprocessing.managers import BaseManager
 from chip.testing.matter_testing import (
     CommissionDeviceTest,
     MatterTestConfig,
+    TestStep,
     get_test_info,
     parse_matter_test_args,
     run_tests,
-    TestStep
 )
 
 COMMISSION_ARGUMENT = "commission"

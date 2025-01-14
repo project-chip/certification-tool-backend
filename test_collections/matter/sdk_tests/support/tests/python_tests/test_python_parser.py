@@ -22,9 +22,8 @@ from ...python_testing.models.python_test_parser import parse_python_script
 
 
 def test_python_file_parser() -> None:
-    file_path = Path(
-        "/app/backend/test_collections/matter/sdk_tests/support/tests/python_tests/test_python_script/python_tests_info.json"
-    )
+    parent_path = Path(__file__).parent
+    file_path = parent_path.joinpath("test_python_script/python_tests_info.json")
 
     tests = parse_python_script(file_path)
 
