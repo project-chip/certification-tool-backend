@@ -132,6 +132,7 @@ def __retrieve_storage_path(config: TestEnvironmentConfigMatter) -> Path:
 
     if (
         config.test_parameters
+        and TEST_PARAMETER_STORAGE_PATH_KEY in config.test_parameters
         and config.test_parameters[TEST_PARAMETER_STORAGE_PATH_KEY]
     ):
         storage_path = Path(config.test_parameters[TEST_PARAMETER_STORAGE_PATH_KEY])
