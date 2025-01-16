@@ -49,7 +49,7 @@ PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH="$PYTHON_TESTING_TEST_COLLECTION_PAT
 CURRENT_SDK_CHECKOUT_VERSION="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/.version"
 
 install_matter_wheels () {
-  pip install ${TEST_COLLECTIONS_SDK_CHECKOUT_PATH}/sdk_runner/*.whl --force-reinstall
+  pip install ${TEST_COLLECTIONS_SDK_CHECKOUT_PATH}/sdk_runner/*.whl --force-reinstall $@
 }
 
 for arg in "$@"
@@ -87,7 +87,7 @@ else
     else
         echo "Current version of test yaml are up to date with SDK: $SDK_SHA"
         # Need to install wheels after docker restart.
-        install_matter_wheels
+        install_matter_wheels --no-deps
         exit 0
     fi
 fi
