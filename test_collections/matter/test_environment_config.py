@@ -30,7 +30,7 @@ class DutPairingModeEnum(str, Enum):
     BLE_WIFI = "ble-wifi"
     BLE_THREAD = "ble-thread"
     WIFIPAF_WIFI = "wifipaf-wifi"
-
+    NFC_THREAD = "nfc-thread"
 
 class WiFiConfig(BaseModel):
     ssid: str

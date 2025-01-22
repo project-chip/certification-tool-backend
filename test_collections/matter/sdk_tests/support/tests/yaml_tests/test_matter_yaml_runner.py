@@ -452,3 +452,39 @@ async def test_pairing_ble_thread_command_params() -> None:
     # clean up:
     matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
     chip_server._ChipServer__node_id = None
+
+@pytest.mark.asyncio
+async def test_pairing_nfc_thread_command_params() -> None:
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
+    if original_trace_setting_value is True:
+        matter_settings.CHIP_TOOL_TRACE = False
+
+    # Attributes
+    runner: MatterYAMLRunner = MatterYAMLRunner()
+    chip_server: ChipServer = ChipServer()
+    hex_dataset = "c0ffee"
+    setup_code = "0123456"
+
+    with mock.patch.object(
+        target=runner,
+        attribute="send_websocket_command",
+        return_value='{"results": []}',
+        # '{  "results": [{ "error": "FAILURE" }]
+    ) as mock_send_websocket_command:
+        result = await runner.pairing_nfc_thread(
+            hex_dataset=hex_dataset,
+            setup_code=setup_code,
+        )
+
+    expected_params = (
+        f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code}"
+    )
+    expected_command = f"pairing nfc-thread {expected_params}"
+
+    assert result is True
+    mock_send_websocket_command.assert_awaited_once_with(expected_command)
+
+    # clean up:
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
+    chip_server._ChipServer__node_id = None
+

@@ -66,6 +66,10 @@ async def generate_command_arguments(
             dataset_hex = await __thread_dataset_hex(config.network.thread)
             arguments.append(f"--thread-dataset-hex {dataset_hex}")
 
+        if pairing_mode == DutPairingModeEnum.NFC_THREAD:
+            dataset_hex = await __thread_dataset_hex(config.network.thread)
+            arguments.append(f"--thread-dataset-hex {dataset_hex}")
+
     # Retrieve arguments from test_parameters
     if test_parameters:
         # If manual-code or qr-code and also discriminator and passcode are provided,
