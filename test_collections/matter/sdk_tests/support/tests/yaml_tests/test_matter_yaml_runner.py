@@ -453,6 +453,7 @@ async def test_pairing_ble_thread_command_params() -> None:
     matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
     chip_server._ChipServer__node_id = None
 
+
 @pytest.mark.asyncio
 async def test_pairing_nfc_thread_command_params() -> None:
     original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
@@ -476,9 +477,7 @@ async def test_pairing_nfc_thread_command_params() -> None:
             setup_code=setup_code,
         )
 
-    expected_params = (
-        f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code}"
-    )
+    expected_params = f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code}"
     expected_command = f"pairing nfc-thread {expected_params}"
 
     assert result is True
@@ -487,4 +486,3 @@ async def test_pairing_nfc_thread_command_params() -> None:
     # clean up:
     matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
     chip_server._ChipServer__node_id = None
-

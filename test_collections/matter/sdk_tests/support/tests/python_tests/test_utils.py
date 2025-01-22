@@ -225,6 +225,7 @@ async def test_generate_command_arguments_ble_thread_for_external_network() -> N
         "--storage_path /root/admin_storage.json",
     ] == arguments
 
+
 @pytest.mark.asyncio
 async def test_generate_command_arguments_nfc_thread() -> None:
     # Mock config
@@ -313,6 +314,7 @@ async def test_generate_command_arguments_nfc_thread_for_external_network() -> N
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
+
 
 @pytest.mark.asyncio
 async def test_generate_command_arguments_no_test_parameter_informed() -> None:

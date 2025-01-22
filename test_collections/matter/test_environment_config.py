@@ -32,6 +32,7 @@ class DutPairingModeEnum(str, Enum):
     WIFIPAF_WIFI = "wifipaf-wifi"
     NFC_THREAD = "nfc-thread"
 
+
 class WiFiConfig(BaseModel):
     ssid: str
     password: str

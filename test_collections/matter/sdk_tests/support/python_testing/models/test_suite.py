@@ -139,10 +139,9 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         # start a new OTBR container app with the according Thread topology for all
         # tests in the Python Tests Suite.
         if (
-            (matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD or
-             matter_config.dut_config.pairing_mode == DutPairingModeEnum.NFC_THREAD)
-            and isinstance(matter_config.network.thread, ThreadAutoConfig)
-        ):
+            matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
+            or matter_config.dut_config.pairing_mode == DutPairingModeEnum.NFC_THREAD
+        ) and isinstance(matter_config.network.thread, ThreadAutoConfig):
             await self.border_router.start_device(matter_config.network.thread)
             await self.border_router.form_thread_topology()
 
