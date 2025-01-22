@@ -48,7 +48,7 @@ class NetworkConfig(BaseModel):
 
 
 class DutConfig(BaseModel):
-    discriminator: str
+    discriminator: Optional[str]
     setup_code: str
     pairing_mode: DutPairingModeEnum
     chip_timeout: Optional[str]
@@ -89,6 +89,29 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
             if not isinstance(dut_config, dict):
                 dut_config = dut_config.__dict__
 
+            # Discriminator field must be informed when pairing_mode is other
+            # than nfc_thread
+            if (
+                dut_config
+                and dut_config["pairing_mode"] != DutPairingModeEnum.NFC_THREAD
+                and "discriminator" not in dut_config
+            ):
+                raise TestEnvironmentConfigMatterError(
+                    "The discriminator is mandatory for pairing mode "
+                    f" {dut_config['pairing_mode']}"
+                )
+
+            # Discriminator field must NOT be informed when pairing_mode is nfc_thread
+            if (
+                dut_config
+                and dut_config["pairing_mode"] == DutPairingModeEnum.NFC_THREAD
+                and "discriminator" in dut_config
+            ):
+                raise TestEnvironmentConfigMatterError(
+                    "The discriminator must not be informed for pairing mode "
+                    f"{dut_config['pairing_mode']}"
+                )
+
             # Check if the informed field in dut_config is valid
             for field, _ in dut_config.items():
                 if field not in valid_properties:
@@ -100,6 +123,11 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
             # All DutConfig fields but chip_timeout are mandatory
             mandatory_fields = valid_properties.copy()
             mandatory_fields.remove("chip_timeout")
+
+            # discriminator is not mandatory for nfc_thread pairing mode
+            if dut_config["pairing_mode"] == DutPairingModeEnum.NFC_THREAD:
+                mandatory_fields.remove("discriminator")
+
             for field in mandatory_fields:
                 if field not in dut_config:
                     raise TestEnvironmentConfigMatterError(
