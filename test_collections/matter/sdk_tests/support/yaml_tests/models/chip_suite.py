@@ -133,7 +133,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
     async def __pair_with_dut_onnetwork(self) -> bool:
         return await self.runner.pairing_on_network(
             setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            discriminator=self.config_matter.dut_config.discriminator,  # type: ignore
         )
 
     async def __pair_with_dut_ble_wifi(self) -> bool:
@@ -144,7 +144,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
             ssid=self.config_matter.network.wifi.ssid,
             password=self.config_matter.network.wifi.password,
             setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            discriminator=self.config_matter.dut_config.discriminator,  # type: ignore
         )
 
     async def __pair_with_dut_wifipaf_wifi(self) -> bool:
@@ -155,7 +155,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
             ssid=self.config_matter.network.wifi.ssid,
             password=self.config_matter.network.wifi.password,
             setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            discriminator=self.config_matter.dut_config.discriminator,  # type: ignore
         )
 
     async def __pair_with_dut_ble_thread(self) -> bool:
@@ -175,7 +175,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         return await self.runner.pairing_ble_thread(
             hex_dataset=hex_dataset,
             setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            discriminator=self.config_matter.dut_config.discriminator,  # type: ignore
         )
 
     async def __pair_with_dut_nfc_thread(self) -> bool:
