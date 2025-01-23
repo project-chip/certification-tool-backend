@@ -22,10 +22,10 @@ class MatterSettings(BaseSettings):
     SDK_CONTAINER_NAME: str = "th-sdk"
 
     # SDK Docker Image
-    SDK_DOCKER_IMAGE: str = "ghcr.io/rquidute/chip-cert-bins"
-    SDK_DOCKER_TAG: str = "017e8b59aed3809c5fdb601950bdb44d53e721b2"
+    SDK_DOCKER_IMAGE: str = "connectedhomeip/chip-cert-bins"
+    SDK_DOCKER_TAG: str = "ebf0be48787a05e85fdc904aca9dd361fdf8f81a"
     # SDK SHA: used to fetch tests (YAML and Python) from SDK.
-    SDK_SHA: str = "017e8b59aed3809c5fdb601950bdb44d53e721b2"
+    SDK_SHA: str = "ebf0be48787a05e85fdc904aca9dd361fdf8f81a"
 
     class Config:
         case_sensitive = True

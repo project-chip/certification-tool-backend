@@ -44,7 +44,7 @@ from ...utils import (
 )
 
 # Command line params
-RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
+RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/test_harness_client.py"
 EXECUTABLE = "python3"
 
 TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
