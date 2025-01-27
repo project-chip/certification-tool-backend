@@ -227,6 +227,96 @@ async def test_generate_command_arguments_ble_thread_for_external_network() -> N
 
 
 @pytest.mark.asyncio
+async def test_generate_command_arguments_nfc_thread() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+
+    mock_config.test_parameters = {
+        "paa-trust-store-path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        setup_code="8765",
+        pairing_mode=DutPairingModeEnum.NFC_THREAD,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    with mock.patch(
+        (
+            "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+            ".__thread_dataset_hex"
+        ),
+        return_value=(
+            "0e08000000000001000035060004001fffe00708fd47156040435d2b041069c13cc038488"
+            "0328b9d2d7a6ee891150c0402a0f7f8000300000f01021234020811111111222222220510"
+            "00112233445566778899aabbccddeeff030444454d4f"
+        ),
+    ):
+        arguments = await generate_command_arguments(
+            config=mock_config, omit_commissioning_method=False
+        )
+
+        assert [
+            "--trace-to json:log",
+            "--commissioning-method nfc-thread",
+            (
+                "--thread-dataset-hex 0e08000000000001000035060004001fffe00708fd4715604"
+                "0435d2b041069c13cc0384880328b9d2d7a6ee891150c0402a0f7f8000300000f01021"
+                "23402081111111122222222051000112233445566778899aabbccddeeff030444454d4"
+                "f"
+            ),
+            "--passcode 8765",
+            "--paa-trust-store-path /paa-root-certs",
+            "--storage_path /root/admin_storage.json",
+        ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_nfc_thread_for_external_network() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+
+    mock_config.test_parameters = {
+        "paa-trust-store-path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        setup_code="8765",
+        pairing_mode=DutPairingModeEnum.NFC_THREAD,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    mock_config.network.thread = ThreadExternalConfig(
+        operational_dataset_hex=(
+            "0e08000000000001000035060004001fffe00708fd17e4031e5ea4f20410d477d767e424a5"
+            "f2ef25c16fc9b621e90c0402a0f7f8000300000f0102123402081111111122222222051000"
+            "112233445566778899aabbccddeeff030444454d4f"
+        )
+    )
+
+    arguments = await generate_command_arguments(
+        config=mock_config, omit_commissioning_method=False
+    )
+
+    assert [
+        "--trace-to json:log",
+        "--commissioning-method nfc-thread",
+        (
+            "--thread-dataset-hex 0e08000000000001000035060004001fffe00708fd17e4031e5ea"
+            "4f20410d477d767e424a5f2ef25c16fc9b621e90c0402a0f7f8000300000f0102123402081"
+            "111111122222222051000112233445566778899aabbccddeeff030444454d4f"
+        ),
+        "--passcode 8765",
+        "--paa-trust-store-path /paa-root-certs",
+        "--storage_path /root/admin_storage.json",
+    ] == arguments
+
+
+@pytest.mark.asyncio
 async def test_generate_command_arguments_no_test_parameter_informed() -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)  # type: ignore

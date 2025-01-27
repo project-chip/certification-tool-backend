@@ -59,6 +59,7 @@ PAIRING_MODE_ONNETWORK = "onnetwork-long"
 PAIRING_MODE_BLE_WIFI = "ble-wifi"
 PAIRING_MODE_BLE_THREAD = "ble-thread"
 PAIRING_MODE_WIFIPAF_WIFI = "wifipaf-wifi"
+PAIRING_MODE_NFC_THREAD = "nfc-thread"
 PAIRING_MODE_UNPAIR = "unpair"
 
 # Websocket runner
@@ -321,6 +322,18 @@ class MatterYAMLRunner(metaclass=Singleton):
             f"hex:{hex_dataset}",
             setup_code,
             discriminator,
+        )
+
+    async def pairing_nfc_thread(
+        self,
+        hex_dataset: str,
+        setup_code: str,
+    ) -> bool:
+        return await self.pairing(
+            PAIRING_MODE_NFC_THREAD,
+            hex(self.chip_server.node_id),
+            f"hex:{hex_dataset}",
+            setup_code,
         )
 
     def set_pics(self, pics: PICS) -> None:
