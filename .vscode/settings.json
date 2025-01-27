@@ -12,7 +12,7 @@
         "editor.defaultFormatter": "ms-python.black-formatter", // black
         "editor.formatOnSave": true, // black
         "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
+            "source.organizeImports": true // isort
         },
     },
     // black

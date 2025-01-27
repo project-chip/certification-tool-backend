@@ -192,11 +192,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 "python_test": test,
                 "python_test_version": python_test_version,
                 "metadata": {
-                    "public_id": (
-                        test.name
-                        if python_test_version != CUSTOM_TEST_IDENTIFIER
-                        else test.name + "-" + CUSTOM_TEST_IDENTIFIER
-                    ),
+                    "public_id": test.name
+                    if python_test_version != CUSTOM_TEST_IDENTIFIER
+                    else test.name + "-" + CUSTOM_TEST_IDENTIFIER,
                     "version": "0.0.1",
                     "title": title,
                     "description": test.description,

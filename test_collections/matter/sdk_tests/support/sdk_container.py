@@ -65,31 +65,6 @@ DOCKER_RPC_PYTHON_TESTING_PATH = (
     "/root/python_testing/scripts/sdk/test_harness_client.py"
 )
 
-# Stress/Stability Test Script (For now it is injected on SDK container.)
-LOCAL_STRESS_TEST_SCRIPT_PATH = Path(
-    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/performance_tests/scripts/sdk/"
-    "TC_COMMISSIONING_1_0.py"
-)
-DOCKER_STRESS_TEST_SCRIPT_PATH = (
-    "/root/python_testing/scripts/sdk/TC_COMMISSIONING_1_0.py"
-)
-
-LOCAL_STRESS_TEST_ACCESSORY_MANAGER_SCRIPT_PATH = Path(
-    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/performance_tests/scripts/sdk/"
-    "accessory_manager.py"
-)
-DOCKER_STRESS_TEST_ACCESSORY_MANAGER_SCRIPT_PATH = (
-    "/root/python_testing/scripts/sdk/accessory_manager.py"
-)
-
-LOCAL_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH = Path(
-    LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/performance_tests/scripts/sdk/"
-    "simulated_accessory.py"
-)
-DOCKER_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH = (
-    "/root/python_testing/scripts/sdk/simulated_accessory.py"
-)
-
 
 class SDKContainerNotRunning(Exception):
     """Raised when we attempt to use the docker container, but it is not running"""
@@ -143,18 +118,6 @@ class SDKContainer(metaclass=Singleton):
             },
             LOCAL_RPC_PYTHON_TESTING_PATH: {
                 "bind": DOCKER_RPC_PYTHON_TESTING_PATH,
-                "mode": "rw",
-            },
-            LOCAL_STRESS_TEST_SCRIPT_PATH: {
-                "bind": DOCKER_STRESS_TEST_SCRIPT_PATH,
-                "mode": "rw",
-            },
-            LOCAL_STRESS_TEST_ACCESSORY_MANAGER_SCRIPT_PATH: {
-                "bind": DOCKER_STRESS_TEST_ACCESSORY_MANAGER_SCRIPT_PATH,
-                "mode": "rw",
-            },
-            LOCAL_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH: {
-                "bind": DOCKER_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH,
                 "mode": "rw",
             },
         },
@@ -230,7 +193,6 @@ class SDKContainer(metaclass=Singleton):
         prefix: str,
         is_stream: bool = False,
         is_socket: bool = False,
-        is_detach: bool = False,
     ) -> ExecResultExtended:
         if self.__container is None:
             raise SDKContainerNotRunning()
@@ -249,7 +211,6 @@ class SDKContainer(metaclass=Singleton):
             socket=is_socket,
             stream=is_stream,
             stdin=True,
-            detach=is_detach,
         )
 
         return result

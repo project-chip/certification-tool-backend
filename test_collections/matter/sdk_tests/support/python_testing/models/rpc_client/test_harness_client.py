@@ -39,35 +39,7 @@ EXECUTION_LOG_OUTPUT = "/root/python_testing/test_output.txt"
 
 
 class TestRunnerHooks:
-    def start(self, count: int):
-        print("=====> hooks.start")
-
-    def stop(self, duration: int):
-        print("=====> hooks.stop")
-
-    def test_start(self, filename: str, name: str, count: int, steps: list[str] = []):
-        print("=====> hooks.test_start")
-
-    def test_stop(self, exception: Exception, duration: int):
-        print("=====> hooks.test_stop")
-
-    def step_skipped(self, name: str, expression: str):
-        print("=====> hooks.step_skipped")
-
-    def step_start(self, name: str):
-        print("=====> hooks.step_start")
-
-    def step_success(self, logger, logs, duration: int, request: TestStep):
-        print("=====> hooks.step_success")
-
-    def step_failure(self, logger, logs, duration: int, request: TestStep, received):
-        print("=====> hooks.start")
-
-    def step_unknown(self):
-        print("=====> hooks.step_failure")
-
-    async def step_manual(self):
-        print("=====> hooks.step_manual")
+    pass
 
 
 def main() -> None:
@@ -76,12 +48,7 @@ def main() -> None:
     sys.path.append("/root/python_testing/scripts")
     sys.path.append("/root/python_testing/scripts/sdk")
 
-    test_args1 = sys.argv[2:]
-
-    test_args = configure_interactions(test_args1)
-
-    print(test_args)
-
+    test_args = sys.argv[2:]
     config = parse_matter_test_args(test_args)
     if GET_TEST_INFO_ARGUMENT in sys.argv:
         try:
@@ -116,40 +83,12 @@ def get_test_info_support(script_path: str, class_name: str, config: MatterTestC
     test_info = get_test_info(TestClassReference, config)
     return json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
 
-    try:
-        subprocess.check_call("kill $(pidof  chip-all-clusters-app)", shell=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error while trying to remove rogue simulators: {e}")
-
-
-def configure_interactions(args) -> []:
-    result = args
-    try:
-        position = sys.argv.index("--interactions")
-        interactions_value = sys.argv[position + 1]
-        result = args + ["--int-arg", f"interactions:{interactions_value}"]
-    except ValueError:
-        pass
-    return result
-
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
-    manual_execution = 0  # false
-
-    try:
-        manual_execution = sys.argv.index("--cmd-line")
-    except ValueError:
-        pass
-
-    if manual_execution:
-        test_runner_hooks = TestRunnerHooks()
-    else:
-        BaseManager.register(TestRunnerHooks.__name__)
-        manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
-        manager.connect()
-        test_runner_hooks = (
-            manager.TestRunnerHooks()
-        )  # shared object proxy # type: ignore
+    BaseManager.register(TestRunnerHooks.__name__)
+    manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
+    manager.connect()
+    test_runner_hooks = manager.TestRunnerHooks()  # shared object proxy # type: ignore
 
     try:
         # For a script_path like 'custom/TC_XYZ' the module is 'custom.TC_XYZ'
