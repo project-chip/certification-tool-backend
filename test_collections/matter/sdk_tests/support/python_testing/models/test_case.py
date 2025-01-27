@@ -15,7 +15,6 @@
 #
 import re
 from asyncio import sleep
-from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
@@ -42,14 +41,15 @@ from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
 )
-from .utils import EXECUTABLE, RUNNER_CLASS_PATH, DUTCommissioningError
-from .utils import PromptOption
 from .utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
+    DUTCommissioningError,
+    PromptOption,
     commission_device,
     generate_command_arguments,
     should_perform_new_commissioning,
 )
-
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -385,7 +385,8 @@ class LegacyPythonTestCase(PythonTestCase):
                     )
                     if user_response == PromptOption.FAIL:
                         raise DUTCommissioningError(
-                            "User chose prompt option FAILED for DUT is in Commissioning Mode"
+                            "User chose prompt option FAILED for DUT is in "
+                            "Commissioning Mode"
                         )
 
                     logger.info("User chose prompt option YES")
@@ -400,7 +401,8 @@ class LegacyPythonTestCase(PythonTestCase):
                 )
                 if user_response == PromptOption.FAIL:
                     raise DUTCommissioningError(
-                        "User chose prompt option FAILED for DUT is in Commissioning Mode"
+                        "User chose prompt option FAILED for DUT is in "
+                        "Commissioning Mode"
                     )
 
             case _:
