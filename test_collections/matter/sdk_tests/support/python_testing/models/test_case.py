@@ -380,6 +380,7 @@ class LegacyPythonTestCase(PythonTestCase):
                 if await should_perform_new_commissioning(
                     self, config=config, logger=logger
                 ):
+                    logger.info("User chose prompt option YES")
                     user_response = await prompt_for_commissioning_mode(
                         self, logger, None, self.cancel
                     )
@@ -388,8 +389,6 @@ class LegacyPythonTestCase(PythonTestCase):
                             "User chose prompt option FAILED for DUT is in "
                             "Commissioning Mode"
                         )
-
-                    logger.info("User chose prompt option YES")
 
                     logger.info("Commission DUT")
                     await commission_device(config, logger)

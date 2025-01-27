@@ -144,6 +144,7 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         if await should_perform_new_commissioning(
             self, config=matter_config, logger=logger
         ):
+            logger.info("User chose prompt option YES")
             user_response = await prompt_for_commissioning_mode(
                 self, logger, None, self.cancel
             )
