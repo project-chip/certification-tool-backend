@@ -442,6 +442,10 @@ async def test_should_perform_new_commissioning_no() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
+    # Mock prompt response
+    mock_prompt_response = mock.Mock()
+    mock_prompt_response.response = PromptOption.PASS
+
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -461,12 +465,13 @@ async def test_should_perform_new_commissioning_no() -> None:
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".should_perform_new_commissioning",
         return_value=False,
-    ) as mock_should_perform_new_commissioning:
+    ) as mock_should_perform_new_commissioning, mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        return_value=mock_prompt_response,
+    ):
         await suite_instance.setup()
 
         mock_should_perform_new_commissioning.assert_called_once()
-
         python_suite_setup.assert_called_once()
-
-        mock_prompt_commissioning.assert_called_once()
+        mock_prompt_commissioning.assert_not_called()
         mock_commission_device.assert_not_called()

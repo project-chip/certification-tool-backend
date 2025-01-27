@@ -208,7 +208,7 @@ def test_multiple_steps_for_python_tests() -> None:
 
 
 @pytest.mark.asyncio
-async def test_should_raise_DUTCommissioningError_prompt_commissioning_failed() -> None:
+async def test_should_raise_DUTCommissioningError_prompt_commissioning_failed_no_commissioned_test() -> None:
     """Test when user responds FAIL to commissioning mode prompt.
 
     Should raise DUTCommissioningError.
@@ -223,12 +223,104 @@ async def test_should_raise_DUTCommissioningError_prompt_commissioning_failed() 
         mandatory=False,
     )(test_case_execution)
 
+    mock_prompt_response_no = mock.Mock()
+    mock_prompt_response_no.response = PromptOption.FAIL
+
     with mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        side_effect=[mock_prompt_response_no],
+    ), mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
         ".prompt_for_commissioning_mode",
         return_value=PromptOption.FAIL,
-    ), pytest.raises(DUTCommissioningError):
+    ), pytest.raises(
+        DUTCommissioningError
+    ):
         await test_case.setup()
+
+
+@pytest.mark.asyncio
+async def test_should_raise_DUTCommissioningError_prompt_commissioning_failed_commissioned_test() -> None:
+    """Test when user responds FAIL to commissioning mode prompt.
+
+    Should raise DUTCommissioningError.
+    """
+    project = Project(name="test_project")
+    project.config = {
+        "matter_node_id": 1234,
+        "matter_discriminator": 5678,
+        "matter_setup_pin": "12345678",
+        "matter_use_operational_credentials": False,
+        "network": {
+            "wifi": {
+                "ssid": "test_ssid",
+                "password": "test_password",
+            },
+            "thread": {
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:11:11:11::/64",
+                "network_interface": "wpan0",
+                "dataset": {
+                    "channel": 15,
+                    "panid": "0x1234",
+                    "xpanid": "1111111122222222",
+                    "masterkey": "00112233445566778899aabbccddeeff",
+                },
+                "operational_dataset_hex": "0e080000000000010000000300001235",
+            },
+        },
+        "dut_config": {
+            "discriminator": 5678,
+            "setup_code": "12345678",
+            "pairing_mode": "onnetwork",
+            "chip_timeout": 10000,
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    }
+
+    test_run_execution = TestRunExecution()
+    test_run_execution.project = project
+
+    test_suite_execution = TestSuiteExecution()
+    test_suite_execution.test_run_execution = test_run_execution
+
+    test_case_execution = TestCaseExecution()
+    test_case_execution.test_suite_execution = test_suite_execution
+
+    test = python_test_instance(name="test_name", path=Path("path"))
+    test.python_test_type = PythonTestType.MANDATORY
+
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
+        test=test,
+        python_test_version="version",
+        mandatory=False,
+    )(test_case_execution)
+
+    mock_prompt_response_yes = mock.Mock()
+    mock_prompt_response_yes.response = PromptOption.PASS
+
+    mock_prompt_response_no = mock.Mock()
+    mock_prompt_response_no.response = PromptOption.FAIL
+
+    with mock.patch(
+        "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
+        side_effect=[mock_prompt_response_yes],
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".should_perform_new_commissioning",
+        return_value=True,
+    ) as mock_should_perform_new_commissioning, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.FAIL,
+    ), pytest.raises(
+        DUTCommissioningError
+    ):
+        await test_case.setup()
+
+        mock_should_perform_new_commissioning.assert_called_once()
 
 
 @pytest.mark.asyncio

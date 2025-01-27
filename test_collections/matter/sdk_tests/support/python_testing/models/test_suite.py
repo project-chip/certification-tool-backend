@@ -126,15 +126,6 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
         await super().setup()
 
-        user_response = await prompt_for_commissioning_mode(
-            self, logger, None, self.cancel
-        )
-
-        if user_response == PromptOption.FAIL:
-            raise DUTCommissioningError(
-                "User chose prompt option FAILED for DUT is in Commissioning Mode"
-            )
-
         matter_config = TestEnvironmentConfigMatter(**self.config)
 
         # If in BLE-Thread mode and a Thread Auto-Config was provided by the user,
@@ -153,5 +144,15 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         if await should_perform_new_commissioning(
             self, config=matter_config, logger=logger
         ):
+            logger.info("User chose prompt option YES")
+            user_response = await prompt_for_commissioning_mode(
+                self, logger, None, self.cancel
+            )
+
+            if user_response == PromptOption.FAIL:
+                raise DUTCommissioningError(
+                    "User chose prompt option FAILED for DUT is in Commissioning Mode"
+                )
+
             logger.info("Commission DUT")
             await commission_device(matter_config, logger=logger)
