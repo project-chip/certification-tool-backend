@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from app.crud import operator as crud_operator
 from app.crud import project as crud_project
 from app.crud import test_run_config as crud_test_run_config
-from app.crud.base import CRUDBaseCreate, CRUDBaseDelete, CRUDBaseRead
+from app.crud.base import CRUDBaseCreate, CRUDBaseDelete, CRUDBaseRead, CRUDBaseUpdate
 from app.models import Project, TestCaseExecution, TestRunExecution, TestSuiteExecution
 from app.schemas import (
     TestRunConfigCreate,
@@ -35,6 +35,7 @@ from app.schemas.test_run_config import TestRunConfigInDB
 from app.schemas.test_run_execution import (
     TestRunExecutionCreate,
     TestRunExecutionStats,
+    TestRunExecutionUpdate,
     TestRunExecutionWithStats,
 )
 from app.schemas.test_selection import TestSelection
@@ -51,6 +52,7 @@ class CRUDTestRunExecution(
     CRUDBaseRead[TestRunExecution],
     CRUDBaseDelete[TestRunExecution],
     CRUDBaseCreate[TestRunExecution, TestRunExecutionCreate],
+    CRUDBaseUpdate[TestRunExecution, TestRunExecutionUpdate],
 ):
     def get_multi(
         self,

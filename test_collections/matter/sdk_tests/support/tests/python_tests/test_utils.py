@@ -423,6 +423,7 @@ async def test_generate_command_arguments_omit_comissioning_method() -> None:
 
     assert [
         "--trace-to json:log",
+        "--in-test-commissioning-method on-network",
         "--discriminator 456",
         "--passcode 8765",
     ] == arguments

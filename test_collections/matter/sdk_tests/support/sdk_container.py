@@ -291,3 +291,25 @@ class SDKContainer(metaclass=Singleton):
 
     def reset_pics_state(self) -> None:
         self.__pics_file_created = False
+
+    def copy_file_from_container(
+        self,
+        container_file_path: Path,
+        destination_path: Path,
+        destination_file_name: str,
+    ) -> None:
+        container_manager.copy_file_from_container(
+            container=self.__container,
+            container_file_path=container_file_path,
+            destination_path=destination_path,
+            destination_file_name=destination_file_name,
+        )
+
+    def copy_file_to_container(
+        self, host_file_path: Path, destination_container_path: Path
+    ) -> None:
+        container_manager.copy_file_to_container(
+            container=self.__container,
+            host_file_path=host_file_path,
+            destination_container_path=destination_container_path,
+        )

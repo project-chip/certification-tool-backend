@@ -31,6 +31,7 @@ from app.models.test_enums import TestStateEnum
 from app.schemas.test_run_config import TestRunConfigCreate
 from app.schemas.test_run_execution import (
     TestRunExecutionCreate,
+    TestRunExecutionUpdate,
     TestRunExecutionWithStats,
 )
 from app.tests.utils.operator import operator_base_dict
@@ -76,6 +77,20 @@ def test_get_test_run_execution(db: Session) -> None:
     assert test_run_execution.id == stored_test_run_execution.id
     assert test_run_execution.title == stored_test_run_execution.title
     assert test_run_execution.description == stored_test_run_execution.description
+
+
+def test_update_test_run_execution(db: Session) -> None:
+    run = create_random_test_run_execution(db=db)
+
+    renamed_title = "New Title"
+
+    test_run_execution_update = TestRunExecutionUpdate(title=renamed_title)
+
+    test_run_updated = crud.test_run_execution.update(
+        db=db, db_obj=run, obj_in=test_run_execution_update
+    )
+
+    assert test_run_updated.title == renamed_title
 
 
 def test_test_run_archive(db: Session) -> None:

@@ -86,7 +86,13 @@ class ChipSuite(TestSuite, UserPromptSupport):
         self.__dut_commissioned_successfully = False
         if self.server_type == ChipServerType.CHIP_TOOL:
             logger.info("Commission DUT")
-            await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+            user_response = await prompt_for_commissioning_mode(
+                self, logger, None, self.cancel
+            )
+            if user_response == PromptOption.FAIL:
+                raise DUTCommissioningError(
+                    "User chose prompt option FAILED for DUT is in Commissioning Mode"
+                )
             await self.__commission_dut_allowing_retries()
         elif self.server_type == ChipServerType.CHIP_APP:
             logger.info("Verify Test suite prerequisites")

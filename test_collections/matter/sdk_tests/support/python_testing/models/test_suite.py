@@ -30,7 +30,11 @@ from test_collections.matter.test_environment_config import (
 
 from ...sdk_container import SDKContainer
 from ...utils import PromptOption, prompt_for_commissioning_mode
-from .utils import DUTCommissioningError, commission_device
+from .utils import (
+    DUTCommissioningError,
+    commission_device,
+    should_perform_new_commissioning,
+)
 
 
 class SuiteType(Enum):
@@ -131,8 +135,6 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
                 "User chose prompt option FAILED for DUT is in Commissioning Mode"
             )
 
-        logger.info("Commission DUT")
-
         matter_config = TestEnvironmentConfigMatter(**self.config)
 
         # If in BLE-Thread or NFC-Thread mode and a Thread Auto-Config was provided by
@@ -145,4 +147,11 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
             await self.border_router.start_device(matter_config.network.thread)
             await self.border_router.form_thread_topology()
 
-        await commission_device(matter_config, logger)
+        # If a local copy of admin_storage.json file exists, prompt user if the
+        # execution should retrieve the previous commissioning information or
+        # if it should perform a new commissioning
+        if await should_perform_new_commissioning(
+            self, config=matter_config, logger=logger
+        ):
+            logger.info("Commission DUT")
+            await commission_device(matter_config, logger=logger)

@@ -64,7 +64,8 @@
         "yamls",
         "yamltests",
         "wifipaf",
-        "WIFIPAF"
+        "WIFIPAF",
+        "pidof"
     ],
     "ignoreWords": [
         "bdist",
@@ -100,6 +101,10 @@
         "zinfo",
         "MCORE",
         "elts",
+        "PBKDF",
+        "elts",
+        "xpanid",
+        "wpan",
         "PBKDF",
     ],
     "allowCompoundWords": true,
