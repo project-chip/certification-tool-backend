@@ -76,8 +76,10 @@ def main() -> None:
     sys.path.append("/root/python_testing/scripts")
     sys.path.append("/root/python_testing/scripts/sdk")
 
-    test_args_aux = sys.argv[2:]
-    test_args = configure_interactions(test_args_aux)
+    test_args1 = sys.argv[2:]
+
+    test_args = configure_interactions(test_args1)
+
     print(test_args)
 
     config = parse_matter_test_args(test_args)
