@@ -15,7 +15,6 @@
 #
 import re
 from asyncio import sleep
-from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
@@ -42,19 +41,15 @@ from .python_testing_hooks_proxy import (
     SDKPythonTestResultBase,
     SDKPythonTestRunnerHooks,
 )
-from .utils import EXECUTABLE, RUNNER_CLASS_PATH, DUTCommissioningError
-from .utils import PromptOption as PromptOptionUtils
 from .utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
+    DUTCommissioningError,
+    PromptOption,
     commission_device,
     generate_command_arguments,
     should_perform_new_commissioning,
 )
-
-
-class PromptOption(IntEnum):
-    YES = 1
-    NO = 2
-
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -347,7 +342,7 @@ class NoCommissioningPythonTestCase(PythonTestCase):
         user_response = await prompt_for_commissioning_mode(
             self, logger, None, self.cancel
         )
-        if user_response == PromptOptionUtils.FAIL:
+        if user_response == PromptOption.FAIL:
             raise DUTCommissioningError(
                 "User chose prompt option FAILED for DUT is in Commissioning Mode"
             )
@@ -356,14 +351,6 @@ class NoCommissioningPythonTestCase(PythonTestCase):
 class LegacyPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-
-        user_response = await prompt_for_commissioning_mode(
-            self, logger, None, self.cancel
-        )
-        if user_response == PromptOptionUtils.FAIL:
-            raise DUTCommissioningError(
-                "User chose prompt option FAILED for DUT is in Commissioning Mode"
-            )
 
         await self.prompt_about_commissioning()
 
@@ -376,29 +363,46 @@ class LegacyPythonTestCase(PythonTestCase):
 
         prompt = "Should the DUT be commissioned to run this test case?"
         options = {
-            "YES": PromptOption.YES,
-            "NO": PromptOption.NO,
+            "YES": PromptOption.PASS,
+            "NO": PromptOption.FAIL,
         }
         prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
         logger.info(f'User prompt: "{prompt}"')
         prompt_response = await self.send_prompt_request(prompt_request)
 
         match prompt_response.response:
-            case PromptOption.YES:
-                logger.info("User chose prompt option YES")
+            case PromptOption.PASS:
+                config = TestEnvironmentConfigMatter(**self.config)
 
                 # If a local copy of admin_storage.json file exists, prompt user if the
                 # execution should retrieve the previous commissioning information or
                 # if it should perform a new commissioning
-                config = TestEnvironmentConfigMatter(**self.config)
                 if await should_perform_new_commissioning(
                     self, config=config, logger=logger
                 ):
+                    logger.info("User chose prompt option YES")
+                    user_response = await prompt_for_commissioning_mode(
+                        self, logger, None, self.cancel
+                    )
+                    if user_response == PromptOption.FAIL:
+                        raise DUTCommissioningError(
+                            "User chose prompt option FAILED for DUT is in "
+                            "Commissioning Mode"
+                        )
+
                     logger.info("Commission DUT")
                     await commission_device(config, logger)
 
-            case PromptOption.NO:
+            case PromptOption.FAIL:
                 logger.info("User chose prompt option NO")
+                user_response = await prompt_for_commissioning_mode(
+                    self, logger, None, self.cancel
+                )
+                if user_response == PromptOption.FAIL:
+                    raise DUTCommissioningError(
+                        "User chose prompt option FAILED for DUT is in "
+                        "Commissioning Mode"
+                    )
 
             case _:
                 raise ValueError(
