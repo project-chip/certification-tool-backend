@@ -20,6 +20,7 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
 
 from ...chip.chip_server import ChipServerType
+from ...utils import ADMIN_STORAGE_FILE_HOST
 from ...yaml_tests.models.chip_suite import ChipSuite
 
 
@@ -50,6 +51,12 @@ class YamlTestSuite(TestSuite):
     async def setup(self) -> None:
         """Override Setup to log YAML version."""
         logger.info(f"YAML Version: {self.yaml_version}")
+
+        # If admin_storage.json file exists, it should be removed since the
+        # commissioning information will be overwritten and this information will be no
+        # longer valid
+        if ADMIN_STORAGE_FILE_HOST.exists():
+            ADMIN_STORAGE_FILE_HOST.unlink()
 
     @classmethod
     def class_factory(
