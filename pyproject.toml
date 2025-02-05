@@ -13,32 +13,28 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
-[tool.poetry]
-name = "certification-tool-cli"
+[project]
+name = "app"
 version = "0.1.0"
 description = "A CLI tool for accessing CHIP Test Harness"
-
 authors = []
-
 readme = "README.md"
+requires-python = "^3.10"
+dependencies = [
+    "httpx>=0.15.4,<0.19.0",
+    "attrs>=20.1.0,<22.0.0",
+    "python-dateutil@^2.8.0",
+    "websockets@^10.0",
+    "click@^8.0.1",
+    "pydantic@^1.4",
+    "types-click@^7.1.5",
+    "fastapi@^0.68.1",
+    "loguru@^0.5.3",
+    "aioconsole@^0.3.2",
+    "PyYAML@^6.0.1",
+]
 
-
-[tool.poetry.dependencies]
-python = "^3.10"
-httpx = ">=0.15.4,<0.19.0"
-attrs = ">=20.1.0,<22.0.0"
-python-dateutil = "^2.8.0"
-websockets = "^10.0"
-click = "^8.0.1"
-pydantic = "^1.4"
-types-click = "^7.1.5"
-fastapi = "^0.68.1"
-loguru = "^0.5.3"
-aioconsole = "^0.3.2"
-PyYAML = "^6.0.1"
-
-
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 mypy = "^1.2.0"
 black = "^22.3.0"
 isort = "^5.12.0"

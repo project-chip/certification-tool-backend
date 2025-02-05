@@ -29,6 +29,7 @@ class DutConfig(BaseModel):
     discriminator: "str" = Field(..., alias="discriminator")
     setup_code: "str" = Field(..., alias="setup_code")
     pairing_mode: "DutPairingModeEnum" = Field(..., alias="pairing_mode")
+    trace_log: "bool" = Field(..., alias="trace_log")
     chip_timeout: "Optional[str]" = Field(None, alias="chip_timeout")
     chip_use_paa_certs: "Optional[bool]" = Field(False, alias="chip_use_paa_certs")
 
