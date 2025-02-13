@@ -1,5 +1,5 @@
 {
-    "sdk_sha": "7d67dc904758bb68989596f401a843a31e81911d",
+    "sdk_sha": "bee4835caec835bb09e37e0caa3d776419b7f0b6",
     "tests": [
         {
             "class_name": "TCP_Tests",
@@ -13552,6 +13552,237 @@
                     "expectation": "Verify that Tolerance is in the range of 0 to 2048",
                     "is_commissioning": false,
                     "test_plan_number": 7
+                }
+            ]
+        },
+        {
+            "class_name": "TC_TSTAT_2_2",
+            "desc": "42.2.2. [TC-TSTAT-2.2] Setpoint Test Cases with server as DUT",
+            "function": "test_TC_TSTAT_2_2",
+            "path": "sdk/TC_TSTAT_2_2",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "Test Harness Client reads  attribute OccupiedCoolingSetpoint from the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "2a"
+                },
+                {
+                    "description": "Test Harness Client then attempts Writes OccupiedCoolingSetpoint to a value below the MinCoolSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "2b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxCoolSetpointLimit to OccupiedCoolingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "2c"
+                },
+                {
+                    "description": "Test Harness Reads OccupiedHeatingSetpoint attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "3a"
+                },
+                {
+                    "description": "Test Harness Writes OccupiedHeatingSetpoint to value below the MinHeatSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "3b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxHeatSetpointLimit to OccupiedHeatingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "3c"
+                },
+                {
+                    "description": "Test Harness Reads UnoccupiedCoolingSetpoint attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "4a"
+                },
+                {
+                    "description": "Test Harness Writes UnoccupiedCoolingSetpoint to value below the MinCoolSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "4b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxCoolSetpointLimit to UnoccupiedCoolingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "4c"
+                },
+                {
+                    "description": "Test Harness Reads UnoccupiedHeatingSetpoint attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5a"
+                },
+                {
+                    "description": "Test Harness Writes UnoccupiedHeatingSetpoint to value below the MinHeatSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxHeatSetpointLimit to UnoccupiedHeatingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5c"
+                },
+                {
+                    "description": "Test Harness Reads MinHeatSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "6a"
+                },
+                {
+                    "description": "Test Harness Writes a value back that is different but violates the deadband",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "6b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxHeatSetpointLimit to MinHeatSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "6c"
+                },
+                {
+                    "description": "Test Harness Reads MaxHeatSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "7a"
+                },
+                {
+                    "description": "Test Harness Writes the limit of AbsMinHeatSetpointLimit to MinHeatSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "7b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of AbsMaxHeatSetpointLimit to MaxHeatSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "7c"
+                },
+                {
+                    "description": "Test Harness Reads MinCoolSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8a"
+                },
+                {
+                    "description": "Test Harness Writes MinCoolSetpointLimit to value below the AbsMinCoolSetpointLimit ",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxCoolSetpointLimit to MinCoolSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8c"
+                },
+                {
+                    "description": "Test Harness Reads MaxCoolSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "9a"
+                },
+                {
+                    "description": "Test Harness Writes MaxCoolSetpointLimit to value below the AbsMinCoolSetpointLimit ",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "9b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of AbsMaxCoolSetpointLimit to MaxCoolSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "9c"
+                },
+                {
+                    "description": "Test Harness Writes (sets back) default value of MinHeatSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "10a"
+                },
+                {
+                    "description": "Test Harness Writes (sets back) default value of MinCoolSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "10b"
+                },
+                {
+                    "description": "Test Harness Reads MinSetpointDeadBand attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "11a"
+                },
+                {
+                    "description": "Test Harness Writes the value below MinSetpointDeadBand",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "11b"
+                },
+                {
+                    "description": "Test Harness Writes the min limit of MinSetpointDeadBand",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "11c"
+                },
+                {
+                    "description": "Test Harness Reads ControlSequenceOfOperation from Server DUT, if TSTAT.S.F01 is true",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "12"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "13"
+                },
+                {
+                    "description": "Sets OccupiedHeatingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "14"
+                },
+                {
+                    "description": "Test Harness Sends SetpointRaise Command Cool Only",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "15"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "16"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "17"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "18"
                 }
             ]
         },
