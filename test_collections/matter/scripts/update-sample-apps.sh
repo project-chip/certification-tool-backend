@@ -49,4 +49,14 @@ sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp 
 echo "Setting Sample APPs ownership"
 sudo chown -R `whoami` ~/apps
 
+# TODO: Remove after Matter 1.4.1 release. This file should be include in sdk image
+# Copying test_dcl_server.py to /home/ubuntu/apps folder
+if [[ -f "/home/ubuntu/apps/test_dcl_server.py" ]]; then
+    echo "Removing /home/ubuntu/apps/test_dcl_server.py file"
+    rm /home/ubuntu/apps/test_dcl_server.py 
+fi
+
+wget https://raw.githubusercontent.com/project-chip/connectedhomeip/refs/heads/master/examples/chip-tool/commands/dcl/test_dcl_server.py -nc -P /home/ubuntu/apps
+chmod +x /home/ubuntu/apps/test_dcl_server.py 
+
 print_end_of_script
