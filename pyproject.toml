@@ -23,15 +23,15 @@ requires-python = "^3.10"
 dependencies = [
     "httpx>=0.15.4,<0.19.0",
     "attrs>=20.1.0,<22.0.0",
-    "python-dateutil@^2.8.0",
-    "websockets@^10.0",
-    "click@^8.0.1",
-    "pydantic@^1.4",
-    "types-click@^7.1.5",
-    "fastapi@^0.68.1",
-    "loguru@^0.5.3",
-    "aioconsole@^0.3.2",
-    "PyYAML@^6.0.1",
+    "python-dateutil>=2.8.0,<3.0.0",
+    "websockets>=10.0,<11.0",
+    "click>=8.0.1,<9.0.0",
+    "pydantic>=1.4,<2.0",
+    "types-click>=7.1.5,<8.0.0",
+    "fastapi>=0.68.1,<1.0.0",
+    "loguru>=0.5.3,<1.0.0",
+    "aioconsole>=0.3.2,<1.0.0",
+    "PyYAML>=6.0.1,<7.0.0",
 ]
 
 [tool.poetry.group.dev.dependencies]
