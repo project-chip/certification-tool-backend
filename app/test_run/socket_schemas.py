@@ -29,6 +29,7 @@ class MessageTypeEnum(str, Enum):
     PROMPT_RESPONSE = "prompt_response"
     OPTIONS_REQUEST = "options_request"
     TEST_UPDATE = "test_update"
+    FILE_UPLOAD_REQUEST = "file_upload_request"
     TIME_OUT_NOTIFICATION = "time_out_notification"
     TEST_LOG_RECORDS = "test_log_records"
     INVALID_MESSAGE = "invalid_message"
