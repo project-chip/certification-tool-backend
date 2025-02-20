@@ -38,6 +38,11 @@ class WiFiConfig(BaseModel):
     password: str
 
 
+class NFCReaderConfig(BaseModel):
+    usb_reader_bus: int
+    usb_reader_device: int
+
+
 class ThreadExternalConfig(BaseModel):
     operational_dataset_hex: str
 
@@ -45,6 +50,7 @@ class ThreadExternalConfig(BaseModel):
 class NetworkConfig(BaseModel):
     wifi: WiFiConfig
     thread: Union[ThreadAutoConfig, ThreadExternalConfig]
+    nfc_reader: NFCReaderConfig
 
 
 class EnhancedSetupFlowConfig(BaseModel):
