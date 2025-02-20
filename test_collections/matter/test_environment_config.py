@@ -40,7 +40,7 @@ class WiFiConfig(BaseModel):
 
 class NFCReaderConfig(BaseModel):
     usb_reader_bus: str
-    usb_reader_device: int
+    usb_reader_device: str
 
 
 class ThreadExternalConfig(BaseModel):
@@ -50,7 +50,7 @@ class ThreadExternalConfig(BaseModel):
 class NetworkConfig(BaseModel):
     wifi: WiFiConfig
     thread: Union[ThreadAutoConfig, ThreadExternalConfig]
-    nfc_reader: NFCReaderConfig
+    nfc_reader: Optional[NFCReaderConfig]
 
 
 class EnhancedSetupFlowConfig(BaseModel):
