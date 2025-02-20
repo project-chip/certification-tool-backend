@@ -39,7 +39,7 @@ class WiFiConfig(BaseModel):
 
 
 class NFCReaderConfig(BaseModel):
-    usb_reader_bus: int
+    usb_reader_bus: str
     usb_reader_device: int
 
 
