@@ -103,8 +103,16 @@ class PythonTestSuite(TestSuite):
         logger.info("Suite Setup")
         logger.info(f"Python Test Version: {self.python_test_version}")
 
-        logger.info("Setting up SDK container")
-        await self.sdk_container.start()
+        matter_config = TestEnvironmentConfigMatter(**self.config)
+        pairing_mode = matter_config.dut_config.pairing_mode
+        if pairing_mode == and "nfc_thread" matter_config.network.nfc_reader and matter_config.network.nfc_reader.usb_reader_bus and usb_reader_bus.usb_reader_device:
+            usb_reader_bus = matter_config.network.nfc_reader.usb_reader_bus
+            usb_reader_device = matter_config.network.nfc_reader.usb_reader_device
+            logger.info("Setting up SDK container with NFC Reader access")
+            await self.sdk_container.start_with_usb_access(usb_reader_bus, usb_reader_device)
+        else:
+            logger.info("Setting up SDK container")
+            await self.sdk_container.start()
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
