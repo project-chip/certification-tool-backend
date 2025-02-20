@@ -191,7 +191,7 @@ class SDKContainer(metaclass=Singleton):
         else:
             return container_manager.is_running(self.__container)
 
-    async def start(self) -> None:
+    async def start(self, usb_reader_bus: str = None, usb_reader_device: str = None) -> None:
         """Creates the SDK container.
 
         Returns only when the container is created.

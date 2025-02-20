@@ -109,7 +109,7 @@ class PythonTestSuite(TestSuite):
             usb_reader_bus = matter_config.network.nfc_reader.usb_reader_bus
             usb_reader_device = matter_config.network.nfc_reader.usb_reader_device
             logger.info("Setting up SDK container with NFC Reader access")
-            await self.sdk_container.start_with_usb_access(usb_reader_bus, usb_reader_device)
+            await self.sdk_container.start(usb_reader_bus, usb_reader_device)
         else:
             logger.info("Setting up SDK container")
             await self.sdk_container.start()
