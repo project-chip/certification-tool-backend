@@ -105,7 +105,7 @@ class PythonTestSuite(TestSuite):
 
         matter_config = TestEnvironmentConfigMatter(**self.config)
         pairing_mode = matter_config.dut_config.pairing_mode
-        if pairing_mode == and "nfc_thread" matter_config.network.nfc_reader and matter_config.network.nfc_reader.usb_reader_bus and usb_reader_bus.usb_reader_device:
+        if pairing_mode == "nfc_thread" and matter_config.network.nfc_reader and matter_config.network.nfc_reader.usb_reader_bus and usb_reader_bus.usb_reader_device:
             usb_reader_bus = matter_config.network.nfc_reader.usb_reader_bus
             usb_reader_device = matter_config.network.nfc_reader.usb_reader_device
             logger.info("Setting up SDK container with NFC Reader access")
