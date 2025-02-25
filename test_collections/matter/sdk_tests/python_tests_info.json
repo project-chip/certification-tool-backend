@@ -1,5 +1,5 @@
 {
-    "sdk_sha": "53981524b98431003bfb17f6a7595a723843650b",
+    "sdk_sha": "7eab37898aa5805294686c536477be5a802627d0",
     "tests": [
         {
             "class_name": "TCP_Tests",
@@ -10489,6 +10489,12 @@
             "pics": [],
             "steps": [
                 {
+                    "description": "Commission DUT if not done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 0
+                },
+                {
                     "description": "TH subscribes to PartsList attribute of the Descriptor cluster of DUT_FSA endpoint 0.",
                     "expectation": "",
                     "is_commissioning": false,
@@ -10617,6 +10623,12 @@
             "path": "sdk/TC_MCORE_FS_1_5",
             "pics": [],
             "steps": [
+                {
+                    "description": "Commission DUT if not done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 0
+                },
                 {
                     "description": "TH subscribes to PartsList attribute of the Descriptor cluster of DUT_FSA endpoint 0.",
                     "expectation": "",
