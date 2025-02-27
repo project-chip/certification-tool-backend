@@ -71,6 +71,9 @@ class ChipSuite(TestSuite, UserPromptSupport):
         logger.info("Setting up SDK container")
         await self.sdk_container.start()
 
+        if (self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD):
+            self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
+
         logger.info("Setting up test runner")
         await self.runner.setup(
             self.server_type, self.config_matter.dut_config.chip_use_paa_certs
