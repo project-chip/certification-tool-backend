@@ -1,18 +1,32 @@
 {
-    "sdk_sha": "f99a2c3b16d3d26f91a0c5efb2770d1c488697d1",
+    "sdk_sha": "7eab37898aa5805294686c536477be5a802627d0",
     "tests": [
         {
             "class_name": "TCP_Tests",
             "desc": "test_TC_SC_8_1",
             "function": "test_TC_SC_8_1",
             "path": "sdk/TCP_Tests",
-            "pics": [],
+            "pics": [
+                "MCORE.SC.TCP"
+            ],
             "steps": [
                 {
-                    "description": "Run entire test",
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH initiates a CASE session establishment with DUT, requesting a session supporting large payloads.",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verifying that a session is set up with an underlying TCP connection established with DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
                 }
             ]
         },
@@ -21,13 +35,27 @@
             "desc": "test_TC_SC_8_2",
             "function": "test_TC_SC_8_2",
             "path": "sdk/TCP_Tests",
-            "pics": [],
+            "pics": [
+                "MCORE.SC.TCP"
+            ],
             "steps": [
                 {
-                    "description": "Run entire test",
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH initiates a CASE session establishment with DUT, requesting a session supporting large payloads.",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verifying that the session established with DUT allows large payloads.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
                 }
             ]
         },
@@ -36,13 +64,39 @@
             "desc": "test_TC_SC_8_3",
             "function": "test_TC_SC_8_3",
             "path": "sdk/TCP_Tests",
-            "pics": [],
+            "pics": [
+                "MCORE.SC.TCP"
+            ],
             "steps": [
                 {
-                    "description": "Run entire test",
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH initiates a CASE session establishment with DUT, requesting a session supporting large payloads.",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verifying that a session is set up with an underlying TCP connection established with DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH closes the TCP connection with DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Verifying that the secure session with DUT is inactive.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
                 }
             ]
         },
@@ -51,13 +105,57 @@
             "desc": "test_TC_SC_8_4",
             "function": "test_TC_SC_8_4",
             "path": "sdk/TCP_Tests",
-            "pics": [],
+            "pics": [
+                "MCORE.SC.TCP"
+            ],
             "steps": [
                 {
-                    "description": "Run entire test",
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH initiates a CASE session establishment with DUT, requesting a session supporting large payloads.",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verifying that a session is set up with an underlying TCP connection established with DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH closes the TCP connection with DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Verifyng that the secure session with DUT is inactive.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH re-initiates CASE session establishment over TCP with DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "Verifying that a session is set up with an underlying TCP connection established with DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "Verifying that the large-payload secure session with DUT is active.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
                 }
             ]
         },
@@ -66,13 +164,45 @@
             "desc": "test_TC_SC_8_5",
             "function": "test_TC_SC_8_5",
             "path": "sdk/TCP_Tests",
-            "pics": [],
+            "pics": [
+                "MCORE.SC.TCP"
+            ],
             "steps": [
                 {
-                    "description": "Run entire test",
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH initiates a CASE session establishment with DUT, requesting a session supporting large payloads.",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verifying that a session is set up with an underlying TCP connection established with DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Verifying that the large-payload secure session with DUT is active.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH initiates an InvokeCommandRequest with DUT over the established session.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Verifying successful invocation with DUT over the established session without any error.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
                 }
             ]
         },
@@ -81,13 +211,45 @@
             "desc": "test_TC_SC_8_6",
             "function": "test_TC_SC_8_6",
             "path": "sdk/TCP_Tests",
-            "pics": [],
+            "pics": [
+                "MCORE.SC.TCP"
+            ],
             "steps": [
                 {
-                    "description": "Run entire test",
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH initiates a CASE session establishment with DUT, requesting a session supporting large payloads.",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verifying that a session is set up with an underlying TCP connection established with DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Verifying that the large-payload secure session with DUT is active.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH initiates a Read of all attributes of all clusters of DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Verifying wildcard read was successful with DUT over the established session without any error.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
                 }
             ]
         },
@@ -96,13 +258,45 @@
             "desc": "test_TC_SC_8_7",
             "function": "test_TC_SC_8_7",
             "path": "sdk/TCP_Tests",
-            "pics": [],
+            "pics": [
+                "MCORE.SC.TCP"
+            ],
             "steps": [
                 {
-                    "description": "Run entire test",
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH initiates a CASE session establishment with DUT, requesting a session supporting large payloads.",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verifying that a session is set up with an underlying TCP connection established with DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Verifying that the large-payload secure session with DUT is active.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH initiates a regularly-sized InvokeCommandRequest with DUT, specifying that either a MRP or TCP-based session is usable.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Verifying successful invocation with DUT over the established TCP-based session without any error.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
                 }
             ]
         },
@@ -1813,6 +2007,189 @@
             ]
         },
         {
+            "class_name": "TC_CADMIN_1_19",
+            "desc": "test_TC_CADMIN_1_19",
+            "function": "test_TC_CADMIN_1_19",
+            "path": "sdk/TC_CADMIN_1_19",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "TH_CR1 reads the BasicCommissioningInfo attribute from the General Commissioning cluster and saves the MaxCumulativeFailsafeSeconds field as max_window_duration.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read. Save the number of fabrics in the list as initial_number_of_fabrics",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 reads the SupportedFabrics attribute from the Node Operational Credentials cluster. Save max_fabrics",
+                    "expectation": "Verify that max_fabrics is larger than initial_number_of_fabrics. If not, instruct the tester to remove one non-test-harness fabric and re-start the test.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Repeat the following steps (5a and 5b) max_fabrics - initial_number_of_fabrics times",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": "4a"
+                },
+                {
+                    "description": "TH creates a controller on a new fabric and commissions DUT_CE using that controller",
+                    "expectation": "Commissioning is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": "4b"
+                },
+                {
+                    "description": "TH reads the CommissionedFabrics attributes from the Node Operational Credentials cluster.",
+                    "expectation": "Verify this is equal to max_fabrics",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH creates a controller on a new fabric and commissions DUT_CE using that controller",
+                    "expectation": "Verify DUT_CE responds with NOCResponse with a StatusCode field value of TableFull(5)",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "Repeat the following steps (9a and 9b) for each controller (TH_CRn) created by this test",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "The controller reads the CurrentFabricIndex from the Node Operational Credentials cluster. Save as fabric_index.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8a"
+                },
+                {
+                    "description": "TH_CR1 sends the RemoveFabric command to DUT_CE",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": "8b"
+                },
+                {
+                    "description": "TH reads the CommissionedFabrics attributes from the Node Operational Credentials cluster.",
+                    "expectation": "Verify this is equal to initial_number_of_fabrics.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CADMIN_1_22_24",
+            "desc": "test_TC_CADMIN_1_22",
+            "function": "test_TC_CADMIN_1_22",
+            "path": "sdk/TC_CADMIN_1_22_24",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 900 seconds",
+                    "expectation": "DUT_CE opens its Commissioning window to allow a second commissioning",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 sends an RevokeCommissioning command to the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH_CR1 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 901 seconds",
+                    "expectation": "DUT_CE does not open its Commissioning window to allow a second commissioning. DUT_CE shows 'Failed to open commissioning window. Global status 0x85'",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR1 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CADMIN_1_22_24",
+            "desc": "test_TC_CADMIN_1_24",
+            "function": "test_TC_CADMIN_1_24",
+            "path": "sdk/TC_CADMIN_1_22_24",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 180 seconds",
+                    "expectation": "DUT_CE opens its Commissioning window to allow a second commissioning",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Wait for the commissioning window in step 2 to timeout",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH_CR1 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 179 seconds",
+                    "expectation": "DUT_CE does not open its Commissioning window to allow a second commissioning. DUT_CE shows 'Failed to open commissioning window. Global status 0x85'",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR1 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                }
+            ]
+        },
+        {
             "class_name": "TC_CADMIN_1_9",
             "desc": "test_TC_CADMIN_1_9",
             "function": "test_TC_CADMIN_1_9",
@@ -2628,6 +3005,120 @@
             ]
         },
         {
+            "class_name": "TC_CGEN_2_10",
+            "desc": "[TC-CGEN-2.10] Verification that required terms can't be unset from TCAcknowledgements with SetTCAcknowledgements [DUT as Server]",
+            "function": "test_TC_CGEN_2_10",
+            "path": "sdk/TC_CGEN_2_10",
+            "pics": [
+                "CGEN.S",
+                "CGEN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH reads from the DUT the attribute TCAcceptedVersion. Store the value as acceptedVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgements. Store the value as userAcknowledgements.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH Sends the SetTCAcknowledgements command to the DUT with the fields set as follows:\n* TCVersion: 0\n* TCUserResponse: 65535",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcceptedVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgements.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH Sends the SetTCAcknowledgements command to the DUT with the fields set as follows:\n* TCVersion: acceptedVersion + 1\n* TCUserResponse: 0",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcceptedVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgements.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CGEN_2_11",
+            "desc": "[TC-CGEN-2.11] Verification that TCAcknowledgements and TCAcceptedVersion can be updated after being commissioned [DUT as Server]",
+            "function": "test_TC_CGEN_2_11",
+            "path": "sdk/TC_CGEN_2_11",
+            "pics": [
+                "CGEN.S",
+                "CGEN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH begins commissioning the DUT and performs the following steps in order:\n* Security setup using PASE\n* Setup fail-safe timer, with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds and the Breadcrumb value as 1\n* Configure information- UTC time, regulatory, etc.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH sends SetTCAcknowledgements to DUT with the following values:\n* TCVersion: PIXIT.CGEN.TCRevision\n* TCUserResponse: PIXIT.CGEN.RequiredTCAcknowledgements",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH Sends the SetTCAcknowledgements command to the DUT with the fields set as follows:\n* TCVersion: PIXIT.CGEN.TCRevision + 1\n* TCUserResponse: PIXIT.CGEN.RequiredTCAcknowledgements",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcceptedVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH Sends the SetTCAcknowledgements command to the DUT with the fields set as follows:\n* TCVersion: PIXIT.CGEN.TCRevision + 1\n* TCUserResponse: 65535",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgements.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                }
+            ]
+        },
+        {
             "class_name": "TC_CGEN_2_4",
             "desc": "test_TC_CGEN_2_4",
             "function": "test_TC_CGEN_2_4",
@@ -2639,6 +3130,306 @@
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CGEN_2_5",
+            "desc": "[TC-CGEN-2.5] Verification for SetTCAcknowledgements [DUT as Server]",
+            "function": "test_TC_CGEN_2_5",
+            "path": "sdk/TC_CGEN_2_5",
+            "pics": [
+                "CGEN.S",
+                "CGEN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH begins commissioning the DUT and performs the following steps in order:\n* Security setup using PASE\n* Setup fail-safe timer, with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds and the Breadcrumb value as 1\n* Configure information- UTC time, regulatory, etc.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads TCAcknowledgementsRequired attribute from the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads TCUpdateDeadline attribute from the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads the FeatureMap from the General Commissioning Cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH sends SetTCAcknowledgements to DUT with the following values:\n* TCVersion: PIXIT.CGEN.TCRevision\n* TCUserResponse: PIXIT.CGEN.RequiredTCAcknowledgements",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH reads TCAcknowledgementsRequired attribute from the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH continues commissioning with the DUT and performs the steps from 'Operation CSR exchange' through 'Security setup using CASE'",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcceptedVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgements.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCMinRequiredVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgementsRequired.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CGEN_2_6",
+            "desc": "[TC-CGEN-2.6] Verification for CommissioningComplete no terms accepted when required [DUT as Server]",
+            "function": "test_TC_CGEN_2_6",
+            "path": "sdk/TC_CGEN_2_6",
+            "pics": [
+                "CGEN.S",
+                "CGEN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH starts commissioning the DUT. It performs all commissioning steps from 'Device discovery and establish commissioning channel' to 'Security setup using CASE', except for TC configuration with SetTCAcknowledgements.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CGEN_2_7",
+            "desc": "[TC-CGEN-2.7] Verification for CommissioningComplete when SetTCAcknowledgements provides invalid terms [DUT as Server]",
+            "function": "test_TC_CGEN_2_7",
+            "path": "sdk/TC_CGEN_2_7",
+            "pics": [
+                "CGEN.S",
+                "CGEN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH begins commissioning the DUT and performs the following steps in order:\n* Security setup using PASE\n* Setup fail-safe timer, with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds and the Breadcrumb value as 1\n* Configure information- UTC time, regulatory, etc.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCMinRequiredVersion. Store the value as minVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends SetTCAcknowledgements to DUT with the following values:\n* TCVersion: minVersion\n* TCUserResponse: 0",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH continues commissioning with the DUT and performs the steps from 'Operation CSR exchange' through 'Security setup using CASE'",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH sends SetTCAcknowledgements to DUT with the following values:\n* TCVersion: PIXIT.CGEN.TCRevision\n* TCUserResponse: PIXIT.CGEN.RequiredTCAcknowledgements",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CGEN_2_8",
+            "desc": "[TC-CGEN-2.8] Verification that TCAcknowledgements is reset after Factory Reset [DUT as Server]",
+            "function": "test_TC_CGEN_2_8",
+            "path": "sdk/TC_CGEN_2_8",
+            "pics": [
+                "CGEN.S",
+                "CGEN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH begins commissioning the DUT and performs the following steps in order:\n* Security setup using PASE\n* Setup fail-safe timer, with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds and the Breadcrumb value as 1\n* Configure information- UTC time, regulatory, etc.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH sends SetTCAcknowledgements to DUT with the following values:\n* TCVersion: PIXIT.CGEN.TCRevision\n* TCUserResponse: PIXIT.CGEN.RequiredTCAcknowledgements",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH continues commissioning steps with the DUT and performs steps 'Operation CSR exchange' through 'Security setup using CASE'",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "DUT is factory reset.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Perform the necessary actions to put the DUT into a commissionable state.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH begins commissioning the DUT and performs the steps 'Device discovery and establish commissioning channel' through 'Security setup using CASE', skipping 'Configure information- TC Acknowledgements'",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcceptedVersion.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgements.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads from the DUT the attribute TCAcknowledgementsRequired.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CGEN_2_9",
+            "desc": "[TC-CGEN-2.9] Verification that TCAcknowledgements is reset after all fabrics removed [DUT as Server]",
+            "function": "test_TC_CGEN_2_9",
+            "path": "sdk/TC_CGEN_2_9",
+            "pics": [
+                "CGEN.S",
+                "CGEN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH begins commissioning the DUT and performs the following steps in order:\n* Security setup using PASE\n* Setup fail-safe timer, with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds and the Breadcrumb value as 1\n* Configure information- UTC time, regulatory, etc.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH sends SetTCAcknowledgements to DUT with the following values:\n* TCVersion: PIXIT.CGEN.TCRevision\n* TCUserResponse: PIXIT.CGEN.RequiredTCAcknowledgements",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH continues commissioning with the DUT and performs the steps from 'Operation CSR exchange' through 'Security setup using CASE'",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH removes all fabrics from DUT with RemoveFabric.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Perform the necessary actions to put the DUT into a commissionable state.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH begins commissioning the DUT and performs all steps from 'Device discovery and establish commissioning channel' through 'Security setup using CASE', skipping the 'Configure TC acknowledgements' step",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH sends CommissioningComplete to DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
                 }
             ]
         },
@@ -5069,47 +5860,6 @@
             ]
         },
         {
-            "class_name": "TC_DGSW_2_1",
-            "desc": "[TC-DGSW-2.1] Attributes with Server as DUT",
-            "function": "test_TC_DGSW_2_1",
-            "path": "sdk/TC_DGSW_2_1",
-            "pics": [
-                "DGSW.S"
-            ],
-            "steps": [
-                {
-                    "description": "Commissioning, already done",
-                    "expectation": "",
-                    "is_commissioning": true,
-                    "test_plan_number": 1
-                },
-                {
-                    "description": "Read the ThreadMetrics attribute",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 2
-                },
-                {
-                    "description": "Read the CurrentHeapFree attribute",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 3
-                },
-                {
-                    "description": "Read the CurrentHeapUsed attribute",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 4
-                },
-                {
-                    "description": "Read the CurrentHeapHighWatermark attribute",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 5
-                }
-            ]
-        },
-        {
             "class_name": "TC_DRLK_2_12",
             "desc": "test_TC_DRLK_2_12",
             "function": "test_TC_DRLK_2_12",
@@ -6005,96 +6755,6 @@
             ]
         },
         {
-            "class_name": "TC_DeviceBasicComposition",
-            "desc": "test_all_commands_reported_are_executable",
-            "function": "test_all_commands_reported_are_executable",
-            "path": "sdk/TC_DeviceBasicComposition",
-            "pics": [],
-            "steps": [
-                {
-                    "description": "Run entire test",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 1
-                }
-            ]
-        },
-        {
-            "class_name": "TC_DeviceBasicComposition",
-            "desc": "test_all_endpoints_have_valid_composition",
-            "function": "test_all_endpoints_have_valid_composition",
-            "path": "sdk/TC_DeviceBasicComposition",
-            "pics": [],
-            "steps": [
-                {
-                    "description": "Run entire test",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 1
-                }
-            ]
-        },
-        {
-            "class_name": "TC_DeviceBasicComposition",
-            "desc": "test_all_event_strings_valid",
-            "function": "test_all_event_strings_valid",
-            "path": "sdk/TC_DeviceBasicComposition",
-            "pics": [],
-            "steps": [
-                {
-                    "description": "Run entire test",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 1
-                }
-            ]
-        },
-        {
-            "class_name": "TC_DeviceBasicComposition",
-            "desc": "test_all_schema_mandatory_elements_present",
-            "function": "test_all_schema_mandatory_elements_present",
-            "path": "sdk/TC_DeviceBasicComposition",
-            "pics": [],
-            "steps": [
-                {
-                    "description": "Run entire test",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 1
-                }
-            ]
-        },
-        {
-            "class_name": "TC_DeviceBasicComposition",
-            "desc": "test_all_schema_scalars",
-            "function": "test_all_schema_scalars",
-            "path": "sdk/TC_DeviceBasicComposition",
-            "pics": [],
-            "steps": [
-                {
-                    "description": "Run entire test",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 1
-                }
-            ]
-        },
-        {
-            "class_name": "TC_DeviceBasicComposition",
-            "desc": "test_dump_all_pics_for_all_endpoints",
-            "function": "test_dump_all_pics_for_all_endpoints",
-            "path": "sdk/TC_DeviceBasicComposition",
-            "pics": [],
-            "steps": [
-                {
-                    "description": "Run entire test",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 1
-                }
-            ]
-        },
-        {
             "class_name": "TC_DeviceConformance",
             "desc": "test_TC_IDM_10_2",
             "function": "test_TC_IDM_10_2",
@@ -6128,6 +6788,21 @@
             "class_name": "TC_DeviceConformance",
             "desc": "test_TC_IDM_10_5",
             "function": "test_TC_IDM_10_5",
+            "path": "sdk/TC_DeviceConformance",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Run entire test",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_DeviceConformance",
+            "desc": "test_TC_IDM_10_6",
+            "function": "test_TC_IDM_10_6",
             "path": "sdk/TC_DeviceConformance",
             "pics": [],
             "steps": [
@@ -8807,6 +9482,41 @@
             ]
         },
         {
+            "class_name": "Test_TC_FLABEL_2_1",
+            "desc": "[TC-FLABEL-2.1] Fixed Label Cluster [DUT-server]",
+            "function": "test_TC_FLABEL_2_1",
+            "path": "sdk/TC_FLABEL_2_1",
+            "pics": [
+                "FLABEL.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT to TH",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads LabelList from the DUT",
+                    "expectation": "Read is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH tries to write LabelList attribute",
+                    "expectation": "Write fails with UNSUPPORTED_WRITE",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Verify LabelList hasn't changed",
+                    "expectation": "LabelList matches initial read",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                }
+            ]
+        },
+        {
             "class_name": "TC_ICDM_2_1",
             "desc": "[TC_ICDM_2_1]  attributes with DUT as Server",
             "function": "test_TC_ICDM_2_1",
@@ -9779,6 +10489,12 @@
             "pics": [],
             "steps": [
                 {
+                    "description": "Commission DUT if not done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 0
+                },
+                {
                     "description": "TH subscribes to PartsList attribute of the Descriptor cluster of DUT_FSA endpoint 0.",
                     "expectation": "",
                     "is_commissioning": false,
@@ -9907,6 +10623,12 @@
             "path": "sdk/TC_MCORE_FS_1_5",
             "pics": [],
             "steps": [
+                {
+                    "description": "Commission DUT if not done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 0
+                },
                 {
                     "description": "TH subscribes to PartsList attribute of the Descriptor cluster of DUT_FSA endpoint 0.",
                     "expectation": "",
@@ -10660,6 +11382,302 @@
                     "expectation": "Verify DUT responds w/ status SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 8
+                }
+            ]
+        },
+        {
+            "class_name": "TC_OPCREDS_3_4",
+            "desc": " UpdateNOC-Error Condition [DUT-Server]",
+            "function": "test_TC_OPCREDS_3_4",
+            "path": "sdk/TC_OPCREDS_3_4",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commission DUT to TH1 if not already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a fabric-filtered read. Save the NOCs as nocs.",
+                    "expectation": null,
+                    "is_commissioning": "- Verify that the returned list has a single entry.\n- Save the NOC field as noc_original and the ICAC field as icac_original.\n",
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute attribute from the Node Operational Credentials cluster",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the returned list has a single entry. Save the entry as trusted_root_original",
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster with the following fields: NOCValue and ICACValue",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with FAILSAFE_REQUIRED",
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH1 sends the ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 900",
+                    "expectation": null,
+                    "is_commissioning": "Verify that DUT sends ArmFailSafeResponse with the ErrorCode set to OK",
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster with the following fields: NOCValue and ICACValue",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with a NOCResponse with the StatusCode field set to MissingCsr",
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH1 sends the CSRRequest command with the IsForUpdateNOC field set to false",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT returns a CSRResponse and save as csr_not_update",
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH1 generates a new NOC chain with ICAC with the following properties",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with CONSTRAINT_ERROR",
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH1 sends the CSRequest command with the IsForUpdateNOC field set to true",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT returns a CSRResponse and save as csr_not_update",
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with a NOCResponse with the StatusCode field set to InvalidPublicKey",
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH1 generates a new Trusted Root Certificate and Private Key and saves as new_root_cert and new_root_key so that TH can generate an NOC for UpdateNOC that doesn\u2019t chain to the original root",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH1 generates a new NOC and ICAC",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with a NOCResponse with the StatusCode field set to InvalidNOC",
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH1 generates a new NOC and ICAC",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with a NOCResponse with the StatusCode field set to InvalidNOC",
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "TH1 generates a new NOC and ICAC",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with a NOCResponse with the StatusCode field set to InvalidNOC",
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "TH1 sends the AddTrustedRootCertificate command to DUT again with the RootCACertificate field set to new_root_cert",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with CONSTRAINT_ERROR",
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "TH1 sends the ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 0",
+                    "expectation": null,
+                    "is_commissioning": "Verify that DUT sends ArmFailSafeResponse with the ErrorCode set to OK",
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "TH1 sends the OpenCommissioningWindow command to the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
+                },
+                {
+                    "description": "TH1 connects to the DUT over PASE and sends the ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 900. Steps 24-26 are all performed over the PASE connection.",
+                    "expectation": null,
+                    "is_commissioning": "Verify that DUT sends ArmFailSafeResponse with the ErrorCode set to OK",
+                    "test_plan_number": 23
+                },
+                {
+                    "description": "TH1 sends the CSRequest command over PASE with the IsForUpdateNOC field set to true",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT returns a CSRResponse and save as csr_pase",
+                    "test_plan_number": 24
+                },
+                {
+                    "description": "TH1 generates a new NOC chain with ICAC with the following properties: new NOC and ICAC using icac_pase",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 25
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster over PASE",
+                    "expectation": null,
+                    "is_commissioning": "Verify that the DUT responds with UNSUPPORTED_ACCESS",
+                    "test_plan_number": 26
+                }
+            ]
+        },
+        {
+            "class_name": "TC_OPCREDS_3_5",
+            "desc": "test_TC_OPCREDS_3_5",
+            "function": "test_TC_OPCREDS_3_5",
+            "path": "sdk/TC_OPCREDS_3_5",
+            "pics": [
+                "OPCREDS.S"
+            ],
+            "steps": [
+                {
+                    "description": "TH0 adds TH1 over CASE",
+                    "expectation": "Commissioning is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the returned list has a single entry. Save the NOC field as noc_original and the ICAC field as icac_original",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster",
+                    "expectation": "Verify that at least one of the trusted_root_certificates in the returned list matches the RCAC",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 900",
+                    "expectation": "Verify that DUT sends ArmFailSafeResponse with the ErrorCode set to OK",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH1 Sends CSRRequest command with the IsForUpdateNOC field set to true",
+                    "expectation": "Verify that the DUT returns a CSRResponse and save as csr_update1",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH1 generates a new NOC and ICAC with the following properties:\n\n                            - new NOC is generated from the NOCSR returned in csr_update1. The subject is set to match noc_original. The NOC is signed by the new ICA. Save as noc_update1\n\n                            - new ICAC must be distinguishable from icac_original. This can be accomplished by changing any of the following: the subject, subject public key or validity. The certificate must be valid. ICAC is signed by the original key for trusted_root_original. Save as icac_update1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster with the following fields:\n\n                            - NOCValue is set to noc_update1\n\n                            - ICACValue is to set icac_update1",
+                    "expectation": "Verify that the DUT responds with a NOCResponse having its StatusCode field set to Ok",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the returned list has a single entry. Verify that the NOC field matches noc_update1 and the ICAC field matches icac_update1",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 0",
+                    "expectation": "Verify that DUT sends ArmFailSafeResponse with the ErrorCode set to OK",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the returned list has a single entry. Verify that the NOC field matches noc_original and the ICAC field matches icac_original, due to the explicit expiry of the fail-safe done in the previous step, which is expected to have reverted the updated credentials back to their original value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 900",
+                    "expectation": "Verify that DUT sends ArmFailSafeResponse with the ErrorCode set to OK",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH1 Sends CSRRequest command with the IsForUpdateNOC field set to true",
+                    "expectation": "Verify that the DUT returns a CSRResponse and save as csr_update2",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH1 generates a new NOC and ICAC with the following properties:\n\n                                - new NOC is generated from the NOCSR returned in csr_update2. The subject is set to match noc_original. The NOC is signed by new ICA. Save as noc_update2\n\n                                - new ICAC must be distinguishable from icac_original and icac_update1. This can be accomplished by changing any of the following: the subject, subject public key or validity. The certificate must be valid. ICAC is signed by the original key for trusted_root_original. Save as icac_update2",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH1 sends the UpdateNOC command to the Node Operational Credentials cluster with the following fields:\n\n                                - NOCValue is set to noc_update2\n\n                                - ICACValue is to set icac_update2",
+                    "expectation": "Verify that the DUT responds with a NOCResponse having its StatusCode field set to Ok",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the returned list has a single entry. Verify that the NOC field matches noc_update2 and the ICAC field matches icac_update2",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "TH1 sends the CommissioningComplete command to the General Commissioning cluster",
+                    "expectation": "Verify that the DUT returns a CommissioningCompleteResponse with the ErrorCode set to OK",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 0 to verify that the CommissioningComplete command successfully persisted the failsafe context.",
+                    "expectation": "Verify that DUT sends ArmFailSafeResponse with the ErrorCode set to OK",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the returned list has a single entry. Verify that the NOC field matches noc_update2 and the ICAC field matches icac_update2",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "TH1 reads its fabric index from the CurrentFabricIndex attribute and saves as fabric_idx",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "TH0 sends the RemoveFabric command with the fabric index set to fabric_idx",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
                 }
             ]
         },
@@ -12165,6 +13183,81 @@
             ]
         },
         {
+            "class_name": "TC_SC_4_3",
+            "desc": "test_TC_SC_4_3",
+            "function": "test_TC_SC_4_3",
+            "path": "sdk/TC_SC_4_3",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "DUT is commissioned on the same fabric as TH.",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads ServerList attribute from the Descriptor cluster on EP0. ",
+                    "expectation": "If the ICD Management cluster ID (70,0x46) is present in the list, set supports_icd to true, otherwise set supports_icd to false.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "If supports_icd is true, TH reads ActiveModeThreshold from the ICD Management cluster on EP0 and saves as active_mode_threshold.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "If supports_icd is true, TH reads FeatureMap from the ICD Management cluster on EP0. If the LITS feature is set, set supports_lit to true. Otherwise set supports_lit to false.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH constructs the instance name for the DUT as the 64-bit compressed Fabric identifier, and the assigned 64-bit Node identifier, each expressed as a fixed-length sixteen-character hexadecimal string, encoded as ASCII (UTF-8) text using capital letters, separated by a hyphen.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH performs a query for the SRV record against the qname instance_qname.",
+                    "expectation": "Verify SRV record is returned",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH performs a query for the TXT record against the qname instance_qname.",
+                    "expectation": "Verify TXT record is returned",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH performs a query for the AAAA record against the target listed in the SRV record",
+                    "expectation": "Verify AAAA record is returned",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH verifies the following from the returned records:",
+                    "expectation": "TH verifies the following from the returned records: The hostname must be a fixed-length twelve-character (or sixteen-character) hexadecimal string, encoded as ASCII (UTF-8) text using capital letters.. ICD TXT key: \u2022 If supports_lit is false, verify that the ICD key is NOT present in the TXT record \u2022 If supports_lit is true, verify the ICD key IS present in the TXT record, and it has the value of 0 or 1 (ASCII) SII TXT key: \u2022 If supports_icd is true and supports_lit is false, set sit_mode to true \u2022 If supports_icd is true and supports_lit is true, set sit_mode to true if ICD=0 otherwise set sit_mode to false \u2022 If supports_icd is false, set sit_mode to false \u2022 If sit_mode is true, verify that the SII key IS present in the TXT record \u2022 if the SII key is present, verify it is a decimal value with no leading zeros and is less than or equal to 3600000 (1h in ms) SAI TXT key: \u2022 if supports_icd is true, verify that the SAI key is present in the TXT record \u2022 If the SAI key is present, verify it is a decimal value with no leading zeros and is less than or equal to 3600000 (1h in ms)",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH performs a DNS-SD browse for _I<hhhh>._sub._matter._tcp.local, where <hhhh> is the 64-bit compressed Fabric identifier, expressed as a fixed-length, sixteencharacter hexadecimal string, encoded as ASCII (UTF-8) text using capital letters.",
+                    "expectation": "Verify DUT returns a PTR record with DNS-SD instance name set to instance_name",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH performs a DNS-SD browse for _matter._tcp.local",
+                    "expectation": "Verify DUT returns a PTR record with DNS-SD instance name set to instance_name",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                }
+            ]
+        },
+        {
             "class_name": "TC_SC_7_1",
             "desc": "test_TC_SC_7_1",
             "function": "test_TC_SC_7_1",
@@ -12648,6 +13741,77 @@
             ]
         },
         {
+            "class_name": "TC_TCCM_1_2",
+            "desc": "[TC-TCCM-1.2] Cluster attributes with DUT as Server",
+            "function": "test_TC_TCCM_1_2",
+            "path": "sdk/TC_TCCM_1_2",
+            "pics": [
+                "TCCM.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads from the DUT the SupportedModes attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentMode attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads from the DUT the OnMode attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads from the DUT the StartUpMode attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                }
+            ]
+        },
+        {
+            "class_name": "TC_TCTL_2_3",
+            "desc": "[TC-TCTL-2.3] Optional temperature level attributes with DUT as Server",
+            "function": "test_TC_TCTL_2_3",
+            "path": "sdk/TC_TCTL_2_3",
+            "pics": [
+                "TCTL.S",
+                "TCTL.S.F01"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads from the DUT the SelectedTemperatureLevel attribute",
+                    "expectation": "Verify that the DUT response contains the value of _SelectedTemperatureLevel_ with a range of 0 to 31",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads from the DUT the SupportedTemperatureLevels attribute and verifies string lengths",
+                    "expectation": "Verify that the DUT response contains a _SupportedTemperatureLevels_ list\n\n* List length has to be equal or less than 32 \n* Each temperature level should be a string\n* Length of each temperature level string has to be equal or less than 16\n",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                }
+            ]
+        },
+        {
             "class_name": "TC_TIMESYNC_2_1",
             "desc": "test_TC_TIMESYNC_2_1",
             "function": "test_TC_TIMESYNC_2_1",
@@ -12920,8 +14084,239 @@
             ]
         },
         {
+            "class_name": "TC_TSTAT_2_2",
+            "desc": "42.2.2. [TC-TSTAT-2.2] Setpoint Test Cases with server as DUT",
+            "function": "test_TC_TSTAT_2_2",
+            "path": "sdk/TC_TSTAT_2_2",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "Test Harness Client reads  attribute OccupiedCoolingSetpoint from the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "2a"
+                },
+                {
+                    "description": "Test Harness Client then attempts Writes OccupiedCoolingSetpoint to a value below the MinCoolSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "2b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxCoolSetpointLimit to OccupiedCoolingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "2c"
+                },
+                {
+                    "description": "Test Harness Reads OccupiedHeatingSetpoint attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "3a"
+                },
+                {
+                    "description": "Test Harness Writes OccupiedHeatingSetpoint to value below the MinHeatSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "3b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxHeatSetpointLimit to OccupiedHeatingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "3c"
+                },
+                {
+                    "description": "Test Harness Reads UnoccupiedCoolingSetpoint attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "4a"
+                },
+                {
+                    "description": "Test Harness Writes UnoccupiedCoolingSetpoint to value below the MinCoolSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "4b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxCoolSetpointLimit to UnoccupiedCoolingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "4c"
+                },
+                {
+                    "description": "Test Harness Reads UnoccupiedHeatingSetpoint attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5a"
+                },
+                {
+                    "description": "Test Harness Writes UnoccupiedHeatingSetpoint to value below the MinHeatSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxHeatSetpointLimit to UnoccupiedHeatingSetpoint attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5c"
+                },
+                {
+                    "description": "Test Harness Reads MinHeatSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "6a"
+                },
+                {
+                    "description": "Test Harness Writes a value back that is different but violates the deadband",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "6b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxHeatSetpointLimit to MinHeatSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "6c"
+                },
+                {
+                    "description": "Test Harness Reads MaxHeatSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "7a"
+                },
+                {
+                    "description": "Test Harness Writes the limit of AbsMinHeatSetpointLimit to MinHeatSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "7b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of AbsMaxHeatSetpointLimit to MaxHeatSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "7c"
+                },
+                {
+                    "description": "Test Harness Reads MinCoolSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8a"
+                },
+                {
+                    "description": "Test Harness Writes MinCoolSetpointLimit to value below the AbsMinCoolSetpointLimit ",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of MaxCoolSetpointLimit to MinCoolSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8c"
+                },
+                {
+                    "description": "Test Harness Reads MaxCoolSetpointLimit attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "9a"
+                },
+                {
+                    "description": "Test Harness Writes MaxCoolSetpointLimit to value below the AbsMinCoolSetpointLimit ",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "9b"
+                },
+                {
+                    "description": "Test Harness Writes the limit of AbsMaxCoolSetpointLimit to MaxCoolSetpointLimit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "9c"
+                },
+                {
+                    "description": "Test Harness Writes (sets back) default value of MinHeatSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "10a"
+                },
+                {
+                    "description": "Test Harness Writes (sets back) default value of MinCoolSetpointLimit",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "10b"
+                },
+                {
+                    "description": "Test Harness Reads MinSetpointDeadBand attribute from Server DUT and verifies that the value is within range",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "11a"
+                },
+                {
+                    "description": "Test Harness Writes the value below MinSetpointDeadBand",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "11b"
+                },
+                {
+                    "description": "Test Harness Writes the min limit of MinSetpointDeadBand",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "11c"
+                },
+                {
+                    "description": "Test Harness Reads ControlSequenceOfOperation from Server DUT, if TSTAT.S.F01 is true",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "12"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "13"
+                },
+                {
+                    "description": "Sets OccupiedHeatingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "14"
+                },
+                {
+                    "description": "Test Harness Sends SetpointRaise Command Cool Only",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "15"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "16"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "17"
+                },
+                {
+                    "description": "Sets OccupiedCoolingSetpoint to default value",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "18"
+                }
+            ]
+        },
+        {
             "class_name": "TC_TSTAT_4_2",
-            "desc": "3.2.4 [TC-TSTAT-4-2] Preset write and command attributes test case with server as DUT",
+            "desc": "3.2.4 [TC-TSTAT-4-2] Test cases to read/write attributes and invoke commands for Preset feature with server as DUT",
             "function": "test_TC_TSTAT_4_2",
             "path": "sdk/TC_TSTAT_4_2",
             "pics": [
@@ -13035,6 +14430,39 @@
                     "expectation": "Verify that the write request returned RESOURCE_EXHAUSTED (0x89).",
                     "is_commissioning": false,
                     "test_plan_number": "18"
+                }
+            ]
+        },
+        {
+            "class_name": "TC_TestAttrAvail",
+            "desc": "test_TC_TestAttrAvail",
+            "function": "test_TC_TestAttrAvail",
+            "path": "sdk/TC_TestAttrAvail",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Checking OperationalState attribute is available on endpoint",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Checking Operational Resume command is available on endpoint",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Checking Timezone feature is available on endpoint",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
                 }
             ]
         },
@@ -13212,46 +14640,58 @@
             ],
             "steps": [
                 {
-                    "description": "Commissioning, already done",
+                    "description": "Commission DUT if required",
                     "expectation": "",
                     "is_commissioning": true,
                     "test_plan_number": 1
                 },
                 {
-                    "description": "Send Open command",
+                    "description": "Set up a subscription to all attributes on the DUT",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "Read TargetState attribute",
-                    "expectation": "",
+                    "description": "Send a close command to the DUT and wait until the CurrentState is closed",
+                    "expectation": "DUT returns SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Read CurrentState attribute",
-                    "expectation": "",
+                    "description": "Send Open command",
+                    "expectation": "DUT returns SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Send Close command",
-                    "expectation": "",
+                    "description": "Wait until TH receives the following reports (ordering does not matter): TargetState set to NULL, CurrentState set to Open",
+                    "expectation": "Expected attribute reports are received",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Read TargetState attribute",
-                    "expectation": "",
+                    "description": "Read CurrentState and TargetState attribute",
+                    "expectation": "CurrentState is Open, TargetState is NULL",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Read CurrentState attribute",
-                    "expectation": "",
+                    "description": "Send Close command",
+                    "expectation": "DUT returns SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 7
+                },
+                {
+                    "description": "Wait until TH receives the following reports  (ordering does not matter): TargetState set to NULL, CurrentState set to Closed",
+                    "expectation": "Expected attribute reports are received",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "Read CurrentState and TargetState attribute",
+                    "expectation": "CurrentState is Closed, TargetState is NULL",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
                 }
             ]
         },
@@ -13265,52 +14705,58 @@
             ],
             "steps": [
                 {
-                    "description": "Commissioning, already done",
+                    "description": "Commission DUT if required",
                     "expectation": "",
                     "is_commissioning": true,
                     "test_plan_number": 1
                 },
                 {
-                    "description": "Read FeatureMap attribute",
+                    "description": "Set up a subscription to all attributes on the DUT",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "Send Open command with TargetLevel set to 100",
-                    "expectation": "",
+                    "description": "Send a close command to the DUT and wait until the CurrentState is closed",
+                    "expectation": "DUT returns SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Read TargetLevel attribute",
-                    "expectation": "",
+                    "description": "TH sends command Open command with TargetLevel field set to 100 and the remaining fields not populated.",
+                    "expectation": "Verify DUT responds w/ status SUCCESS(0x00).",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Read CurrentLevel attribute",
-                    "expectation": "",
+                    "description": "Wait until TH receives the following reports (ordering does not matter): TargetState set to NULL, TargetLevel set to NULL, CurrentState set to Open, CurrentLevel set to 100",
+                    "expectation": "Expected reports are received",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Send Close command",
-                    "expectation": "",
+                    "description": "Read CurrentState, CurrentLevel, TargetState and TargetLevel attributes",
+                    "expectation": "CurrentState is Open, CurrentLevel is 100, TargetState is NULL, TargetLevel is NULL",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Read TargetLevel attribute",
-                    "expectation": "",
+                    "description": "Send Close command",
+                    "expectation": "DUT returns SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Read CurrentLevel attribute",
-                    "expectation": "",
+                    "description": "Wait until TH receives the following reports (ordering does not matter): TargetState set to NULL, TargetLevel set to NULL, CurrentState set to Closed, CurrentLevel set to 0",
+                    "expectation": "Expected reports are received",
                     "is_commissioning": false,
                     "test_plan_number": 8
+                },
+                {
+                    "description": "Read CurrentState, CurrentLevel, TargetState and TargetLevel attributes",
+                    "expectation": "CurrentState is Closed, CurrentLevel is 0, TargetState is NULL, TargetLevel is NULL",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
                 }
             ]
         },
@@ -13324,58 +14770,88 @@
             ],
             "steps": [
                 {
-                    "description": "Commissioning, already done",
+                    "description": "Commission DUT if required",
                     "expectation": "",
                     "is_commissioning": true,
                     "test_plan_number": 1
                 },
                 {
                     "description": "Read AttributeList attribute",
-                    "expectation": "",
+                    "expectation": "Verify that the DUT response contains the AttributeList attribute.",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "Read DefaultOpenLevel attribute, if supported",
+                    "description": "If the DefaultOpenLevel is not supported, skip all remaining steps in this test",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Send Open command",
+                    "description": "TH reads from the DUT the DefaultOpenLevel attribute. Store the value as defaultOpenLevel.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Read TargetLevel attribute",
-                    "expectation": "",
+                    "description": "Set up a subscription to all attributes on the DUT",
+                    "expectation": "Subscription is successful",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Read CurrentLevel attribute",
-                    "expectation": "",
+                    "description": "Send a close command to the DUT and wait until the CurrentState is reported as closed",
+                    "expectation": "DUT returns SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Send Close command",
-                    "expectation": "",
+                    "description": "Send Open command with no fields populated",
+                    "expectation": "DUT returns SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Read TargetLevel attribute",
-                    "expectation": "",
+                    "description": "Wait until TH receives the following reports (ordering does not matter): TargetState set to NULL, TargetLevel set to NULL, CurrentState set to Open, CurrentLevel set to defaultOpenLevel",
+                    "expectation": "Expected attribute reports are received",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Read CurrentLevel attribute",
-                    "expectation": "",
+                    "description": "Read CurrentState and TargetState attribute",
+                    "expectation": "CurrentState is Open, TargetState is NULL",
                     "is_commissioning": false,
                     "test_plan_number": 9
+                },
+                {
+                    "description": "Read CurrentLevel and TargetLevel attribute",
+                    "expectation": "CurrentLevel is defaultOpenLevel, TargetLevel is NULL",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "Send Close command",
+                    "expectation": "DUT returns SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "Wait until TH receives the following reports (ordering does not matter): TargetState set to NULL, TargetLevel set to NULL, CurrentState set to Closed, CurrentLevel set to 0",
+                    "expectation": "Expected attribute reports are received",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "Read CurrentState and TargetState attribute",
+                    "expectation": "CurrentState is Closed, TargetState is NULL",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "Read CurrentLevel and TargetLevel attribute",
+                    "expectation": "CurrentLevel is 0, TargetLevel is NULL",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
                 }
             ]
         },
@@ -13814,6 +15290,49 @@
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 9
+                }
+            ]
+        },
+        {
+            "class_name": "TC_WASHERCTRL_2_1",
+            "desc": "[TC-WASHERCTRL-2.1] Optional Spin attributes with DUT as Server",
+            "function": "test_TC_WASHERCTRL_2_1",
+            "path": "sdk/TC_WASHERCTRL_2_1",
+            "pics": [
+                "WASHERCTRL.S.F00",
+                "WASHERCTRL.S.A0000",
+                "WASHERCTRL.S.A0001"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads from the DUT the SpinSpeeds attribute",
+                    "expectation": "Verify that the DUT response contains a list of strings. The maximum size of the list is 16.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads from the DUT the SpinSpeedCurrent attribute",
+                    "expectation": "Verify that the DUT response contains a uint8 with value between 0 and numSpinSpeeds-1 inclusive.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH writes a supported SpinSpeedCurrent attribute that is a valid index into the listof spin speeds (0 to numSpinSpeeds - 1) and then read the SpinSpeedCurrent value",
+                    "expectation": "Verify DUT responds w/ status SUCCESS(0x00) and the SpinSpeedCurrent value was set accordingly",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH writes an unsupported SpinSpeedCurrent attribute that is other than 0 to DUT",
+                    "expectation": "Verify that the DUT response contains Status CONSTRAINT_ERROR response",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
                 }
             ]
         },

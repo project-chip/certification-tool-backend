@@ -116,6 +116,17 @@ def get_test_info_support(script_path: str, class_name: str, config: MatterTestC
     test_info = get_test_info(TestClassReference, config)
     return json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
 
+
+def configure_interactions(args) -> []:
+    result = args
+    try:
+        position = sys.argv.index("--interactions")
+        interactions_value = sys.argv[position + 1]
+        result = args + ["--int-arg", f"interactions:{interactions_value}"]
+    except ValueError:
+        pass
+    return result
+
     try:
         subprocess.check_call("kill $(pidof  chip-all-clusters-app)", shell=True)
     except subprocess.CalledProcessError as e:
