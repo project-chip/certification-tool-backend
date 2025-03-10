@@ -23,6 +23,9 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
 )
 from app.test_engine.test_script_manager import test_script_manager
+from test_collections.matter.sdk_tests.support.performance_tests.sdk_performance_tests import (  # noqa
+    STRESS_TEST_COLLECTION,
+)
 
 
 def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
@@ -68,6 +71,11 @@ def __applicable_test_cases(
     mandatory: bool,
 ) -> list:
     applicable_tests: list = []
+
+    # The Performance Test Collection should not be considered for the PICS.
+    # NOTE: The second parameter for the dictionary's "pop" method is provided so we may
+    # prevent a conditional exception when the following key is not present.
+    test_collections.pop(STRESS_TEST_COLLECTION, None)
 
     for test_collection in test_collections.values():
         if test_collection.mandatory == mandatory:
