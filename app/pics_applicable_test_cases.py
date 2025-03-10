@@ -46,14 +46,15 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
         logger.debug(f"Applicable test cases: {applicable_tests}")
         return PICSApplicableTestCases(test_cases=applicable_tests)
 
-    test_collections = test_script_manager.test_collections
+    # Getting a copy of Test Collections Dict so we may add/remove items safely
+    test_collections_copy = test_script_manager.test_collections.copy()
     enabled_pics = set([item.number for item in pics.all_enabled_items()])
 
     applicable_mandatories_tests = __applicable_test_cases(
-        test_collections, enabled_pics, True
+        test_collections_copy, enabled_pics, True
     )
     applicable_remaining_tests = __applicable_test_cases(
-        test_collections, enabled_pics, False
+        test_collections_copy, enabled_pics, False
     )
 
     # Add first the mandatories test cases
@@ -72,7 +73,7 @@ def __applicable_test_cases(
 ) -> list:
     applicable_tests: list = []
 
-    # The Performance Test Collection should not be considered for the PICS.
+    # The 'Performance Tests' Collection should not be considered for the PICS tests.
     # NOTE: The second parameter for the dictionary's "pop" method is provided so we may
     # prevent a conditional exception when the following key is not present.
     test_collections.pop(STRESS_TEST_COLLECTION, None)
