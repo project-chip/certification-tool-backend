@@ -32,6 +32,8 @@ from .models.test_suite import PerformanceSuiteType
 #
 ###
 
+STRESS_TEST_COLLECTION = "SDK Performance Tests"
+STRESS_TEST_SUITE = "Performance Test Suite"
 STRESS_TEST_PATH = Path(__file__).resolve().parent / "scripts/sdk/"
 STRESS_TEST_FOLDER = SDKTestFolder(path=STRESS_TEST_PATH, filename_pattern="TC_*")
 
@@ -41,7 +43,7 @@ def _init_test_suites(
 ) -> dict[PerformanceSuiteType, PerformanceSuiteDeclaration]:
     return {
         PerformanceSuiteType.PERFORMANCE: PerformanceSuiteDeclaration(
-            name="Performance Test Suite",
+            name=STRESS_TEST_SUITE,
             suite_type=PerformanceSuiteType.PERFORMANCE,
             version=performance_test_version,
         ),
@@ -84,7 +86,7 @@ def sdk_performance_test_collection(
 ) -> PerformanceCollectionDeclaration:
     """Declare a new collection of test suites."""
     collection = PerformanceCollectionDeclaration(
-        name="SDK Performance Tests", folder=performance_test_folder
+        name=STRESS_TEST_COLLECTION, folder=performance_test_folder
     )
 
     files = performance_test_folder.file_paths(extension=".py")
