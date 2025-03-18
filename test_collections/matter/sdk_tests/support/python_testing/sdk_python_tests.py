@@ -13,12 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+import asyncio
 from pathlib import Path
 from typing import Optional
 
 from ..models.sdk_test_folder import SDKTestFolder
 from ..paths import SDK_CHECKOUT_PATH
-from .models.python_test_models import PythonTestType
+from .list_python_tests_classes import (
+    CUSTOM_PYTHON_SCRIPTS_FOLDER,
+    CUSTOM_PYTHON_TESTS_PARSED_FILE,
+    PYTHON_TESTS_PARSED_FILE,
+    generate_python_test_json_file,
+)
+from .models.python_test_models import PythonTest, PythonTestType
 from .models.python_test_parser import parse_python_script
 from .models.test_declarations import (
     PythonCaseDeclaration,
@@ -43,34 +51,34 @@ SDK_PYTHON_TEST_FOLDER = SDKTestFolder(
     path=SDK_PYTHON_TEST_PATH, filename_pattern="TC*"
 )
 
-CUSTOM_PYTHON_TEST_PATH = PYTHON_TEST_PATH / "custom"
-CUSTOM_PYTHON_TEST_FOLDER = SDKTestFolder(
-    path=CUSTOM_PYTHON_TEST_PATH, filename_pattern="TC*"
-)
-
 
 def _init_test_suites(
     python_test_version: str,
 ) -> dict[SuiteType, PythonSuiteDeclaration]:
+    # Append `custom` text in order to differ from the regular suite name
+    version: str = ""
+    if python_test_version == "custom":
+        version += "-custom"
+
     return {
         SuiteType.MANDATORY: PythonSuiteDeclaration(
-            name="Python Testing Suite - Mandatories",
+            name="Python Testing Suite - Mandatories" + version,
             suite_type=SuiteType.MANDATORY,
             version=python_test_version,
             mandatory=True,
         ),
         SuiteType.COMMISSIONING: PythonSuiteDeclaration(
-            name="Python Testing Suite",
+            name="Python Testing Suite" + version,
             suite_type=SuiteType.COMMISSIONING,
             version=python_test_version,
         ),
         SuiteType.NO_COMMISSIONING: PythonSuiteDeclaration(
-            name="Python Testing Suite - No commissioning",
+            name="Python Testing Suite - No commissioning" + version,
             suite_type=SuiteType.NO_COMMISSIONING,
             version=python_test_version,
         ),
         SuiteType.LEGACY: PythonSuiteDeclaration(
-            name="Python Testing Suite - Old script format",
+            name="Python Testing Suite - Old script format" + version,
             suite_type=SuiteType.LEGACY,
             version=python_test_version,
         ),
@@ -78,9 +86,9 @@ def _init_test_suites(
 
 
 def _parse_python_script_to_test_case_declarations(
-    python_test_path: Path, python_test_version: str
+    python_test_version: str, tests_file_path: Path
 ) -> list[PythonCaseDeclaration]:
-    python_tests = parse_python_script(python_test_path)
+    python_tests: list[PythonTest] = parse_python_script(tests_file_path)
 
     return [
         PythonCaseDeclaration(
@@ -93,46 +101,43 @@ def _parse_python_script_to_test_case_declarations(
 
 
 def __parse_python_tests(
-    python_test_files: list[Path], python_test_version: str, mandatory: bool
+    python_test_version: str, mandatory: bool, tests_file_path: Path
 ) -> list[PythonSuiteDeclaration]:
     suites = _init_test_suites(python_test_version)
 
-    for python_test_file in python_test_files:
-        test_cases = _parse_python_script_to_test_case_declarations(
-            python_test_path=python_test_file,
-            python_test_version=python_test_version,
-        )
+    test_cases = _parse_python_script_to_test_case_declarations(
+        python_test_version=python_test_version, tests_file_path=tests_file_path
+    )
 
-        for test_case in test_cases:
-            python_test_type = test_case.class_ref.python_test.python_test_type
-            if mandatory:
-                if python_test_type == PythonTestType.MANDATORY:
-                    suites[SuiteType.MANDATORY].add_test_case(test_case)
-            else:
-                if python_test_type == PythonTestType.COMMISSIONING:
-                    suites[SuiteType.COMMISSIONING].add_test_case(test_case)
-                elif python_test_type == PythonTestType.NO_COMMISSIONING:
-                    suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
-                elif python_test_type != PythonTestType.MANDATORY:
-                    suites[SuiteType.LEGACY].add_test_case(test_case)
+    for test_case in test_cases:
+        python_test_type = test_case.class_ref.python_test.python_test_type
+        if mandatory:
+            if python_test_type == PythonTestType.MANDATORY:
+                suites[SuiteType.MANDATORY].add_test_case(test_case)
+        else:
+            if python_test_type == PythonTestType.COMMISSIONING:
+                suites[SuiteType.COMMISSIONING].add_test_case(test_case)
+            elif python_test_type == PythonTestType.NO_COMMISSIONING:
+                suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
+            elif python_test_type != PythonTestType.MANDATORY:
+                suites[SuiteType.LEGACY].add_test_case(test_case)
 
     return [s for s in list(suites.values()) if len(s.test_cases) != 0]
 
 
 def __sdk_python_test_collection(
-    name: str, python_test_folder: SDKTestFolder, mandatory: bool
+    name: str, python_test_folder: SDKTestFolder, mandatory: bool, tests_file_path: Path
 ) -> PythonCollectionDeclaration:
     collection = PythonCollectionDeclaration(
         name=name, folder=python_test_folder, mandatory=mandatory
     )
 
-    python_test_files = python_test_folder.file_paths(extension=".py")
     python_test_version = python_test_folder.version
 
     suites = __parse_python_tests(
-        python_test_files=python_test_files,
         python_test_version=python_test_version,
         mandatory=mandatory,
+        tests_file_path=tests_file_path,
     )
 
     for suite in suites:
@@ -144,37 +149,48 @@ def __sdk_python_test_collection(
 
 def sdk_python_test_collection(
     python_test_folder: SDKTestFolder = SDK_PYTHON_TEST_FOLDER,
+    tests_file_path: Path = PYTHON_TESTS_PARSED_FILE,
 ) -> PythonCollectionDeclaration:
     """Declare a new collection of test suites."""
     return __sdk_python_test_collection(
-        name="SDK Python Tests", python_test_folder=python_test_folder, mandatory=False
+        name="SDK Python Tests",
+        python_test_folder=python_test_folder,
+        mandatory=False,
+        tests_file_path=tests_file_path,
     )
 
 
 def sdk_mandatory_python_test_collection(
     python_test_folder: SDKTestFolder = SDK_PYTHON_TEST_FOLDER,
+    tests_file_path: Path = PYTHON_TESTS_PARSED_FILE,
 ) -> PythonCollectionDeclaration:
     """Declare a new collection of test suites."""
     return __sdk_python_test_collection(
         name="Mandatory SDK Python Tests",
         python_test_folder=python_test_folder,
         mandatory=True,
+        tests_file_path=tests_file_path,
     )
 
 
 def custom_python_test_collection(
-    python_test_folder: SDKTestFolder = CUSTOM_PYTHON_TEST_FOLDER,
+    python_test_folder: SDKTestFolder = CUSTOM_PYTHON_SCRIPTS_FOLDER,
+    tests_file_path: Path = CUSTOM_PYTHON_TESTS_PARSED_FILE,
 ) -> Optional[PythonCollectionDeclaration]:
+    asyncio.run(
+        generate_python_test_json_file(
+            test_folder=python_test_folder,
+            json_output_file=tests_file_path,
+        )
+    )
+
     """Declare a new collection of test suites."""
     collection = PythonCollectionDeclaration(
         name="Custom SDK Python Tests", folder=python_test_folder
     )
 
-    python_test_files = python_test_folder.file_paths(extension=".py")
     suites = __parse_python_tests(
-        python_test_files=python_test_files,
-        python_test_version="custom",
-        mandatory=False,
+        python_test_version="custom", mandatory=False, tests_file_path=tests_file_path
     )
 
     for suite in suites:

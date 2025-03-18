@@ -29,8 +29,12 @@ from test_collections.matter.test_environment_config import (
 )
 
 from ...sdk_container import SDKContainer
-from ...utils import prompt_for_commissioning_mode
-from .utils import commission_device
+from ...utils import PromptOption, prompt_for_commissioning_mode
+from .utils import (
+    DUTCommissioningError,
+    commission_device,
+    should_perform_new_commissioning,
+)
 
 
 class SuiteType(Enum):
@@ -85,9 +89,9 @@ class PythonTestSuite(TestSuite):
                 "name": name,
                 "python_test_version": python_test_version,
                 "metadata": {
-                    "public_id": (
-                        name if python_test_version != "custom" else name + "-custom"
-                    ),
+                    "public_id": name
+                    if python_test_version != "custom"
+                    else name + "-custom",
                     "version": "0.0.1",
                     "title": name,
                     "description": name,
@@ -124,10 +128,6 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
         await super().setup()
 
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
-
-        logger.info("Commission DUT")
-
         matter_config = TestEnvironmentConfigMatter(**self.config)
 
         # If in BLE-Thread mode and a Thread Auto-Config was provided by the user,
@@ -140,4 +140,21 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
             await self.border_router.start_device(matter_config.network.thread)
             await self.border_router.form_thread_topology()
 
-        await commission_device(matter_config, logger)
+        # If a local copy of admin_storage.json file exists, prompt user if the
+        # execution should retrieve the previous commissioning information or
+        # if it should perform a new commissioning
+        if await should_perform_new_commissioning(
+            self, config=matter_config, logger=logger
+        ):
+            logger.info("User chose prompt option YES")
+            user_response = await prompt_for_commissioning_mode(
+                self, logger, None, self.cancel
+            )
+
+            if user_response == PromptOption.FAIL:
+                raise DUTCommissioningError(
+                    "User chose prompt option FAILED for DUT is in Commissioning Mode"
+                )
+
+            logger.info("Commission DUT")
+            await commission_device(matter_config, logger=logger)

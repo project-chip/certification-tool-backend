@@ -15,7 +15,6 @@
 #
 import re
 from asyncio import sleep
-from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
@@ -45,15 +44,12 @@ from .python_testing_hooks_proxy import (
 from .utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
+    DUTCommissioningError,
+    PromptOption,
     commission_device,
     generate_command_arguments,
+    should_perform_new_commissioning,
 )
-
-
-class PromptOption(IntEnum):
-    YES = 1
-    NO = 2
-
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
@@ -87,12 +83,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
     def step_over(self) -> None:
-        # Python tests that don't follow the template only have the default steps "Start
-        # Python test" and "Show test logs", but inside the file there can be more than
-        # one test case, so the hooks' step methods will continue to be called
-        if len(self.test_steps) == 2:
-            return
-
         self.next_step()
 
     def start(self, count: int) -> None:
@@ -115,7 +105,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.skip_to_last_step()
 
     def step_skipped(self, name: str, expression: str) -> None:
-        self.current_test_step.mark_as_not_applicable("Test step skipped")
+        # From TH perspective, Legacy test cases shows only 2 steps in UI
+        # but it may have several in the script file.
+        # So TH should not skip the step in order to keep the test execution flow
+        skiped_msg = "Test step skipped"
+        if self.python_test.python_test_type == PythonTestType.LEGACY:
+            logger.info(skiped_msg)
+        else:
+            self.current_test_step.mark_as_not_applicable(skiped_msg)
 
     def step_start(self, name: str) -> None:
         self.step_over()
@@ -131,16 +128,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             failure_msg += f": {logs}"
 
         self.mark_step_failure(failure_msg)
-
-        # Python tests with only 2 steps are the ones that don't follow the template.
-        # In the case of a test file with multiple test cases, more than one of these
-        # tests can fail and so this method will be called for each of them. These
-        # failures should be reported in the first step and moving to the logs step
-        # should only happen after all test cases are executed.
-        if len(self.test_steps) > 2:
-            # Python tests stop when there's a failure. We need to skip the next steps
-            # and execute only the last one, which shows the logs
-            self.skip_to_last_step()
+        self.skip_to_last_step()
 
     def step_unknown(self) -> None:
         self.__runned += 1
@@ -351,13 +339,19 @@ class PythonTestCase(TestCase, UserPromptSupport):
 class NoCommissioningPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+        user_response = await prompt_for_commissioning_mode(
+            self, logger, None, self.cancel
+        )
+        if user_response == PromptOption.FAIL:
+            raise DUTCommissioningError(
+                "User chose prompt option FAILED for DUT is in Commissioning Mode"
+            )
 
 
 class LegacyPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        await prompt_for_commissioning_mode(self, logger, None, self.cancel)
+
         await self.prompt_about_commissioning()
 
     async def prompt_about_commissioning(self) -> None:
@@ -369,23 +363,46 @@ class LegacyPythonTestCase(PythonTestCase):
 
         prompt = "Should the DUT be commissioned to run this test case?"
         options = {
-            "YES": PromptOption.YES,
-            "NO": PromptOption.NO,
+            "YES": PromptOption.PASS,
+            "NO": PromptOption.FAIL,
         }
         prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
         logger.info(f'User prompt: "{prompt}"')
         prompt_response = await self.send_prompt_request(prompt_request)
 
         match prompt_response.response:
-            case PromptOption.YES:
-                logger.info("User chose prompt option YES")
-                logger.info("Commission DUT")
-                await commission_device(
-                    TestEnvironmentConfigMatter(**self.config), logger
-                )
+            case PromptOption.PASS:
+                config = TestEnvironmentConfigMatter(**self.config)
 
-            case PromptOption.NO:
+                # If a local copy of admin_storage.json file exists, prompt user if the
+                # execution should retrieve the previous commissioning information or
+                # if it should perform a new commissioning
+                if await should_perform_new_commissioning(
+                    self, config=config, logger=logger
+                ):
+                    logger.info("User chose prompt option YES")
+                    user_response = await prompt_for_commissioning_mode(
+                        self, logger, None, self.cancel
+                    )
+                    if user_response == PromptOption.FAIL:
+                        raise DUTCommissioningError(
+                            "User chose prompt option FAILED for DUT is in "
+                            "Commissioning Mode"
+                        )
+
+                    logger.info("Commission DUT")
+                    await commission_device(config, logger)
+
+            case PromptOption.FAIL:
                 logger.info("User chose prompt option NO")
+                user_response = await prompt_for_commissioning_mode(
+                    self, logger, None, self.cancel
+                )
+                if user_response == PromptOption.FAIL:
+                    raise DUTCommissioningError(
+                        "User chose prompt option FAILED for DUT is in "
+                        "Commissioning Mode"
+                    )
 
             case _:
                 raise ValueError(

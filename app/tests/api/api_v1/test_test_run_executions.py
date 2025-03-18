@@ -402,6 +402,72 @@ def test_create_test_run_execution_without_selected_tests_fails(
     )
 
 
+def test_rename_test_run_execution_succeeds(client: TestClient, db: Session) -> None:
+    renamed_title = "TestRunExecutionFoo"
+    selected_tests = {
+        "sample_tests": {
+            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3}
+        }
+    }
+    test_run_execution = create_random_test_run_execution(
+        db=db, selected_tests=selected_tests
+    )
+    response = client.put(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/"
+        f"rename?new_execution_name={renamed_title}"
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    content = response.json()
+    assert isinstance(content, dict)
+    assert content.get("title") == renamed_title
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.OK,
+        expected_keys=["title"],
+    )
+
+
+def test_rename_not_valid_test_run_execution_fails(
+    client: TestClient, db: Session
+) -> None:
+    renamed_title = "TestRunExecutionFoo"
+    response = client.put(
+        f"{settings.API_V1_STR}/test_run_executions/-999/"
+        f"rename?new_execution_name={renamed_title}"
+    )
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.NOT_FOUND,
+        expected_keys=["detail"],
+    )
+
+
+def test_rename_empty_execution_name_fails(client: TestClient, db: Session) -> None:
+    renamed_title = " "
+    selected_tests = {
+        "sample_tests": {
+            "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3}
+        }
+    }
+    test_run_execution = create_random_test_run_execution(
+        db=db, selected_tests=selected_tests
+    )
+
+    response = client.put(
+        f"{settings.API_V1_STR}/test_run_executions/{test_run_execution.id}/"
+        f"rename?new_execution_name={renamed_title}"
+    )
+
+    validate_json_response(
+        response=response,
+        expected_status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+        expected_keys=["detail"],
+    )
+
+
 def test_repeat_existing_test_run_execution_with_two_suites_succeeds(
     client: TestClient, db: Session
 ) -> None:

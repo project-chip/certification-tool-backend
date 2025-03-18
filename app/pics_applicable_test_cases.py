@@ -13,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Dict
+from typing import Dict, Tuple
 
 from loguru import logger
 
 from app.schemas.pics import PICS, PICSApplicableTestCases
-from app.test_engine.models.test_declarations import TestCollectionDeclaration
+from app.test_engine.models.test_declarations import (
+    TestCaseDeclaration,
+    TestCollectionDeclaration,
+)
 from app.test_engine.test_script_manager import test_script_manager
 
 
@@ -74,6 +77,27 @@ def __applicable_test_cases(
                         # Test cases without pics required are always applicable
                         applicable_tests.append(test_case.metadata["title"])
                     elif len(test_case.pics) > 0:
-                        if test_case.pics.issubset(enabled_pics):
+                        test_enabled_pics, test_disabled_pics = __retrieve_pics(
+                            test_case
+                        )
+
+                        # Checking if the test case is applicable
+                        if test_enabled_pics.issubset(
+                            enabled_pics
+                        ) and test_disabled_pics.isdisjoint(enabled_pics):
                             applicable_tests.append(test_case.metadata["title"])
     return applicable_tests
+
+
+def __retrieve_pics(test_case: TestCaseDeclaration) -> Tuple[set, set]:
+    enabled_pics_list: set = set()
+    disabled_pics_list: set = set()
+    for pics in test_case.pics:
+        # The '!' char before PICS definition, is how test case flag a PICS as negative
+        if pics.startswith("!"):
+            # Ignore ! char while adding the pics into disabled_pics_list structure
+            disabled_pics_list.add(pics[1:])
+        else:
+            enabled_pics_list.add(pics)
+
+    return enabled_pics_list, disabled_pics_list

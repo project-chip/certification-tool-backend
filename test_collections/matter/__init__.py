@@ -18,7 +18,6 @@ import os
 # Verify if this execution comes from python_tests_validator.
 if not os.getenv("DRY_RUN"):
     from .python_tests import onboarding_payload_collection
-    from .sdk_tests.support.performance_tests import sdk_performance_collection
     from .sdk_tests.support.python_testing import (
         custom_python_collection,
         sdk_mandatory_python_collection,

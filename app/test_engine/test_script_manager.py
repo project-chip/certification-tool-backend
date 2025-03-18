@@ -157,7 +157,6 @@ class TestScriptManager(object, metaclass=Singleton):
     ) -> List[TestCaseExecution]:
         # Return Value
         suite_test_cases = []
-
         for test_case_id, iterations in selected_test_cases.items():
             # Create pending test cases for each iteration
             test_case_declaration = self.__test_case_declaration(
@@ -175,7 +174,6 @@ class TestScriptManager(object, metaclass=Singleton):
                 test_cases = self.__pending_test_cases_for_iterations(
                     test_case=test_case_declaration, iterations=iterations
                 )
-
             suite_test_cases.extend(test_cases)
 
         return suite_test_cases
