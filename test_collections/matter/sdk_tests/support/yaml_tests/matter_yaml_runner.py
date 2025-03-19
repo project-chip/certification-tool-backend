@@ -186,7 +186,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         self,
         test_step_interface: TestRunnerHooks,
         test_parser_hooks: TestParserHooks,
-        test_id: str,
+        test_path: str,
         server_type: ChipServerType,
         timeout: Optional[str] = None,
         test_parameters: Optional[dict[str, Any]] = None,
@@ -194,7 +194,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         """Run the test with the associated id using the right executable/container
 
         Args:
-            test_id (str): Test Id to be run
+            test_path (str): The path of teh test to be run
             server_type (ChipServerType): Type of the binary that needs to be run
 
         Raises:
@@ -228,11 +228,6 @@ class MatterYAMLRunner(metaclass=Singleton):
         if self.__pics_file_created:
             pics_path = f"{PICS_FILE_PATH}"
             self.logger.info(f"Using PICS file: {pics_path}")
-
-        if server_type == ChipServerType.CHIP_TOOL:
-            test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
-        else:
-            test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
 
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)
         parser_builder_config = TestParserBuilderConfig(

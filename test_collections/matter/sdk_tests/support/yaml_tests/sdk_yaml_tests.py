@@ -51,19 +51,24 @@ CUSTOM_YAML_TEST_FOLDER = SDKTestFolder(
 
 
 def _init_test_suites(yaml_version: str) -> dict[SuiteType, YamlSuiteDeclaration]:
+    # Append `custom` text in order to differ from the regular suite name
+    version: str = ""
+    if yaml_version == "custom":
+        version += "-custom"
+
     return {
         SuiteType.MANUAL: YamlSuiteDeclaration(
-            name="FirstManualSuite",
+            name="FirstManualSuite" + version,
             suite_type=SuiteType.MANUAL,
             version=yaml_version,
         ),
         SuiteType.AUTOMATED: YamlSuiteDeclaration(
-            name="FirstChipToolSuite",
+            name="FirstChipToolSuite" + version,
             suite_type=SuiteType.AUTOMATED,
             version=yaml_version,
         ),
         SuiteType.SIMULATED: YamlSuiteDeclaration(
-            name="FirstAppSuite",
+            name="FirstAppSuite" + version,
             suite_type=SuiteType.SIMULATED,
             version=yaml_version,
         ),
