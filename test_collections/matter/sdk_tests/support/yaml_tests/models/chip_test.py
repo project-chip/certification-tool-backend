@@ -237,11 +237,10 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
             raise TestError("Unable to execute test as SDK container is not available")
 
     async def execute(self) -> None:
-        test_name = f"Test_{self.chip_test_identifier}"
         await self.runner.run_test(
             test_step_interface=self,
             test_parser_hooks=self,
-            test_id=test_name,
+            test_path=str(self.yaml_test.path),
             server_type=self.server_type,
             test_parameters=self.test_parameters,
         )

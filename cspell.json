@@ -105,7 +105,9 @@
         "elts",
         "xpanid",
         "wpan",
-        "PBKDF"
+        "PBKDF",
+        "PCSC",
+        "pcscd"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
