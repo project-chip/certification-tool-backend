@@ -194,7 +194,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         """Run the test with the associated id using the right executable/container
 
         Args:
-            test_path (str): The path of teh test to be run
+            test_path (str): The path of the test to be run
             server_type (ChipServerType): Type of the binary that needs to be run
 
         Raises:
