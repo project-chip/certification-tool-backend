@@ -226,8 +226,26 @@ def unarchive_project(
     return crud.project.unarchive(db=db, db_obj=__project(db=db, id=id))
 
 
+def __upload_pics(file, db, id):
+    cluster = PICSParser.parse(file=file.file)
+    
+    project = __project(db=db, id=id)
+    project.pics.clusters[cluster.name] = cluster
+    
+    return __persist_pics_update(db=db, project=project)
+
+
+def __persist_dmp_test_skip(file, db, id, data):
+    # dmp_test_skip = PICSParser.parse(file=file.file)
+    
+    project = __project(db=db, id=id)
+    project.config["dmp_test_skip"] = data["DMPTestCasesToSkip"]
+    # project.config["dmp_test_skip"] = "valor"
+    
+    return __persist_dmp(db=db, project=project)
+
 @router.put("/{id}/upload_pics", response_model=schemas.Project)
-def upload_pics(
+async def upload_pics(
     *,
     db: Session = Depends(get_db),
     file: UploadFile = File(...),
@@ -246,13 +264,18 @@ def upload_pics(
     Returns:
         Project: project record that was updated with the PICS information
     """
-    cluster = PICSParser.parse(file=file.file)
+    try:
+        if file.filename.endswith(".json"):
+            content = await file.read()
+            data = json.loads(content)
+            print(data)
 
-    project = __project(db=db, id=id)
-    project.pics.clusters[cluster.name] = cluster
+            return __persist_dmp_test_skip(file, db, id, data)
+        else:
+            return __upload_pics(file, db, id)
 
-    return __persist_pics_update(db=db, project=project)
-
+    except json.JSONDecodeError:
+        print("This is NOT a JSON file")   
 
 @router.delete("/{id}/pics_cluster_type", response_model=schemas.Project)
 def remove_pics_cluster_type(
@@ -333,6 +356,19 @@ def __persist_pics_update(db: Session, project: Project) -> Project:
     db.refresh(project)
     return project
 
+def __persist_dmp(db: Session, project: Project) -> Project:
+    """Stores the DMP fle content in DB.
+
+    project.dmp_test_skip is stored in a JSON column mapped to PICS schema, this column is
+    not Mutable, so SQLAlchemy doesn't know when PICS changed.
+
+    Using `flag_modified` marks the property, so SQLAlchemy will update the field on
+    commit.
+    """
+    flag_modified(project, "config")
+    db.commit()
+    db.refresh(project)
+    return project
 
 @router.get("/{id}/export", response_model=schemas.ProjectCreate)
 def export_project_config(
