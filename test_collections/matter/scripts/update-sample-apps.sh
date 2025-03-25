@@ -43,7 +43,7 @@ fi
 
 
 print_script_step "Updating Sample APPs"
-sudo docker run -t -v ~/apps:/apps -v ~/mock_server:/mock_server $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v apps/* /apps/; cp -v -r mock_server/* /mock_server/"
+sudo docker run -t -v ~/apps:/apps -v ~/mock_server:/mock_server $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; rm -v /mock_server/*; cp -v apps/* /apps/; cp -v -r mock_server/* /mock_server/"
 echo "Setting Sample APPs ownership"
 sudo chown -R `whoami` ~/apps
 
