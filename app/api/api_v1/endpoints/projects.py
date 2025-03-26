@@ -33,9 +33,12 @@ from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
 from app.schemas.test_environment_config import TestEnvironmentConfigError
-from app.utils import TEST_ENVIRONMENT_CONFIG_NAME
+from app.utils import TEST_ENVIRONMENT_CONFIG_NAME, parse_dmp_file
 
 router = APIRouter()
+
+DMP_TEST_SKIP_FILENAME = "dmp-test-skip"
+DMP_TEST_SKIP_CONFIG_NODE = "dmp-test-skip"
 
 
 @router.get("/", response_model=List[schemas.Project])
@@ -228,21 +231,21 @@ def unarchive_project(
 
 def __upload_pics(file, db, id):
     cluster = PICSParser.parse(file=file.file)
-    
+
     project = __project(db=db, id=id)
     project.pics.clusters[cluster.name] = cluster
-    
-    return __persist_pics_update(db=db, project=project)
+
+    return __persist_update_not_mutable(db=db, project=project, field="pics")
 
 
-def __persist_dmp_test_skip(file, db, id, data):
-    # dmp_test_skip = PICSParser.parse(file=file.file)
-    
+def __persist_dmp_test_skip(file, db, id):
+    skip_test_list = parse_dmp_file(xml_file=file.file)
+
     project = __project(db=db, id=id)
-    project.config["dmp_test_skip"] = data["DMPTestCasesToSkip"]
-    # project.config["dmp_test_skip"] = "valor"
-    
-    return __persist_dmp(db=db, project=project)
+    project.config[DMP_TEST_SKIP_CONFIG_NODE] = skip_test_list
+
+    return __persist_update_not_mutable(db=db, project=project, field="config")
+
 
 @router.put("/{id}/upload_pics", response_model=schemas.Project)
 async def upload_pics(
@@ -251,31 +254,31 @@ async def upload_pics(
     file: UploadFile = File(...),
     id: int,
 ) -> models.Project:
-    """Upload PICS file of a project based on project identifier.
+    """Upload PICS or dmp-test-skip.xml file of a project based on project identifier.
 
     Args:
         id (int): project id
-        file : the PICS file to upload
+        file : the PICS or dmp-test-skip.xml file to upload or the
 
     Raises:
         HTTPException: if no project exists for provided project id (or)
                        if the PICS file is invalid
 
     Returns:
-        Project: project record that was updated with the PICS information
+        Project: project record that was updated with the PICS and dmp_test_skip
+        information.
     """
     try:
-        if file.filename.endswith(".json"):
-            content = await file.read()
-            data = json.loads(content)
-            print(data)
-
-            return __persist_dmp_test_skip(file, db, id, data)
+        if file.filename.startswith(DMP_TEST_SKIP_FILENAME):
+            return __persist_dmp_test_skip(file, db, id)
         else:
             return __upload_pics(file, db, id)
+    except:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=f"Not able to parser {file.filename} file",
+        )
 
-    except json.JSONDecodeError:
-        print("This is NOT a JSON file")   
 
 @router.delete("/{id}/pics_cluster_type", response_model=schemas.Project)
 def remove_pics_cluster_type(
@@ -304,7 +307,7 @@ def remove_pics_cluster_type(
     # delete the PICS cluster.
     del project.pics.clusters[cluster_name]
 
-    return __persist_pics_update(db=db, project=project)
+    return __persist_update_not_mutable(db=db, project=project, field="pics")
 
 
 @router.get(
@@ -342,33 +345,24 @@ def __project(db: Session, id: int) -> Project:
     return project
 
 
-def __persist_pics_update(db: Session, project: Project) -> Project:
-    """Update Project PICS in DB.
+def __persist_update_not_mutable(db: Session, project: Project, field: str) -> Project:
+    """Update Project JSON fields in DB.
 
-    project.pics is stored in a JSON column mapped to PICS schema, this column is
-    not Mutable, so SQLAlchemy doesn't know when PICS changed.
+    Project contains JSON columns (like 'pics' and 'config') mapped to their respective
+    schemas.
+    These columns are not Mutable by default, so SQLAlchemy doesn't track changes
+    to their content.
 
-    Using `flag_modified` marks the property, so SQLAlchemy will update the field on
-    commit.
+    Using `flag_modified` explicitly marks the JSON property as changed, ensuring
+    SQLAlchemy will update the field on commit. This is necessary for any nested
+    modifications to JSON column data.
     """
-    flag_modified(project, "pics")
+
+    flag_modified(project, field)
     db.commit()
     db.refresh(project)
     return project
 
-def __persist_dmp(db: Session, project: Project) -> Project:
-    """Stores the DMP fle content in DB.
-
-    project.dmp_test_skip is stored in a JSON column mapped to PICS schema, this column is
-    not Mutable, so SQLAlchemy doesn't know when PICS changed.
-
-    Using `flag_modified` marks the property, so SQLAlchemy will update the field on
-    commit.
-    """
-    flag_modified(project, "config")
-    db.commit()
-    db.refresh(project)
-    return project
 
 @router.get("/{id}/export", response_model=schemas.ProjectCreate)
 def export_project_config(

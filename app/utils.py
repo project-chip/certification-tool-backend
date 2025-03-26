@@ -17,10 +17,11 @@ import ast
 import importlib
 import os
 import re
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import IO, Any, Dict, Optional, Tuple, Type
 
 import emails
 from emails.template import JinjaTemplate
@@ -268,6 +269,21 @@ def __retrieve_program_conf() -> Tuple[Optional[Type], Optional[Path]]:
             return ProgramConfigClassReference, default_config_file
 
     return None, None
+
+
+def parse_dmp_file(xml_file: IO):
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Find all test elements and get their names
+    tests = []
+    for test in root.findall("test"):
+        test_name = test.get("name")
+        if test_name:
+            tests.append(test_name)
+
+    return tests
 
 
 program_class, program_config_path = __retrieve_program_conf()
