@@ -38,6 +38,9 @@ TEST_ENVIRONMENT_CONFIG_PYTHON = "test_environment_config.py"
 TEST_ENVIRONMENT_CONFIG_MODULE = "test_environment_config"
 TEST_ENVIRONMENT_CONFIG_BASE_CLASS_NAME = "TestEnvironmentConfig"
 
+DMP_TEST_SKIP_FILENAME = "dmp-test-skip"
+DMP_TEST_SKIP_CONFIG_NODE = "dmp_test_skip"
+
 
 class InvalidProgramConfigurationError(Exception):
     """'Exception raised when the program configuration is invalid"""
@@ -276,7 +279,7 @@ def parse_dmp_file(xml_file: IO):
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
-    # Find all test elements and get their names
+    # Find all test elements and the test names
     tests = []
     for test in root.findall("test"):
         test_name = test.get("name")

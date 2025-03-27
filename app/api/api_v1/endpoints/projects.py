@@ -33,12 +33,14 @@ from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
 from app.schemas.test_environment_config import TestEnvironmentConfigError
-from app.utils import TEST_ENVIRONMENT_CONFIG_NAME, parse_dmp_file
+from app.utils import (
+    DMP_TEST_SKIP_CONFIG_NODE,
+    DMP_TEST_SKIP_FILENAME,
+    TEST_ENVIRONMENT_CONFIG_NAME,
+    parse_dmp_file,
+)
 
 router = APIRouter()
-
-DMP_TEST_SKIP_FILENAME = "dmp-test-skip"
-DMP_TEST_SKIP_CONFIG_NODE = "dmp-test-skip"
 
 
 @router.get("/", response_model=List[schemas.Project])
@@ -229,22 +231,25 @@ def unarchive_project(
     return crud.project.unarchive(db=db, db_obj=__project(db=db, id=id))
 
 
-def __upload_pics(file, db, id):
+def __upload_pics(file: UploadFile, db: Session, project: Project) -> Project:
     cluster = PICSParser.parse(file=file.file)
 
-    project = __project(db=db, id=id)
     project.pics.clusters[cluster.name] = cluster
 
     return __persist_update_not_mutable(db=db, project=project, field="pics")
 
 
-def __persist_dmp_test_skip(file, db, id):
-    skip_test_list = parse_dmp_file(xml_file=file.file)
+def __persist_dmp_test_skip(file: UploadFile, db: Session, project: Project) -> Project:
+    try:
+        skip_test_list = parse_dmp_file(xml_file=file.file)
+        project.config[DMP_TEST_SKIP_CONFIG_NODE] = skip_test_list
 
-    project = __project(db=db, id=id)
-    project.config[DMP_TEST_SKIP_CONFIG_NODE] = skip_test_list
-
-    return __persist_update_not_mutable(db=db, project=project, field="config")
+        return __persist_update_not_mutable(db=db, project=project, field="config")
+    except:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=f"Not able to parser {file.filename} file",
+        )
 
 
 @router.put("/{id}/upload_pics", response_model=schemas.Project)
@@ -258,7 +263,7 @@ async def upload_pics(
 
     Args:
         id (int): project id
-        file : the PICS or dmp-test-skip.xml file to upload or the
+        file : the PICS or dmp-test-skip.xml file to upload
 
     Raises:
         HTTPException: if no project exists for provided project id (or)
@@ -268,15 +273,22 @@ async def upload_pics(
         Project: project record that was updated with the PICS and dmp_test_skip
         information.
     """
+    project = __project(db=db, id=id)
+
     try:
-        if file.filename.startswith(DMP_TEST_SKIP_FILENAME):
-            return __persist_dmp_test_skip(file, db, id)
+        if file and file.filename and file.filename.startswith(DMP_TEST_SKIP_FILENAME):
+            return __persist_dmp_test_skip(file=file, db=db, project=project)
         else:
-            return __upload_pics(file, db, id)
-    except:
+            return __upload_pics(file=file, db=db, project=project)
+    except PICSError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail=f"Not able to parser {file.filename} file",
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=f"Not able to parse {file.filename} file: {str(e)}",
         )
 
 
