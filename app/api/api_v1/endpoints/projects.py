@@ -15,13 +15,13 @@
 #
 import json
 import traceback
-from loguru import logger
 from http import HTTPStatus
 from typing import List, Sequence, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from loguru import logger
 from pydantic import ValidationError, parse_obj_as
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
