@@ -14,12 +14,14 @@
 # limitations under the License.
 #
 import json
+import traceback
 from http import HTTPStatus
 from typing import List, Sequence, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from loguru import logger
 from pydantic import ValidationError, parse_obj_as
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
@@ -33,7 +35,12 @@ from app.pics_applicable_test_cases import applicable_test_cases_list
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
 from app.schemas.test_environment_config import TestEnvironmentConfigError
-from app.utils import TEST_ENVIRONMENT_CONFIG_NAME
+from app.utils import (
+    DMP_TEST_SKIP_CONFIG_NODE,
+    DMP_TEST_SKIP_FILENAME,
+    TEST_ENVIRONMENT_CONFIG_NAME,
+    parse_dmp_file,
+)
 
 router = APIRouter()
 
@@ -226,32 +233,66 @@ def unarchive_project(
     return crud.project.unarchive(db=db, db_obj=__project(db=db, id=id))
 
 
+def __upload_pics(file: UploadFile, db: Session, project: Project) -> Project:
+    cluster = PICSParser.parse(file=file.file)
+
+    project.pics.clusters[cluster.name] = cluster
+
+    return __persist_update_not_mutable(db=db, project=project, field="pics")
+
+
+def __persist_dmp_test_skip(file: UploadFile, db: Session, project: Project) -> Project:
+    try:
+        skip_test_list = parse_dmp_file(xml_file=file.file)
+        project.config[DMP_TEST_SKIP_CONFIG_NODE] = skip_test_list
+
+        return __persist_update_not_mutable(db=db, project=project, field="config")
+    except Exception:
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=f"Not able to parse {file.filename} file",
+        )
+
+
 @router.put("/{id}/upload_pics", response_model=schemas.Project)
-def upload_pics(
+async def upload_pics(
     *,
     db: Session = Depends(get_db),
     file: UploadFile = File(...),
     id: int,
 ) -> models.Project:
-    """Upload PICS file of a project based on project identifier.
+    """Upload PICS or dmp-test-skip.xml file of a project based on project identifier.
 
     Args:
         id (int): project id
-        file : the PICS file to upload
+        file : the PICS or dmp-test-skip.xml file to upload
 
     Raises:
         HTTPException: if no project exists for provided project id (or)
                        if the PICS file is invalid
 
     Returns:
-        Project: project record that was updated with the PICS information
+        Project: project record that was updated with the PICS and dmp_test_skip
+        information.
     """
-    cluster = PICSParser.parse(file=file.file)
-
     project = __project(db=db, id=id)
-    project.pics.clusters[cluster.name] = cluster
 
-    return __persist_pics_update(db=db, project=project)
+    try:
+        if file and file.filename and file.filename.startswith(DMP_TEST_SKIP_FILENAME):
+            return __persist_dmp_test_skip(file=file, db=db, project=project)
+        else:
+            return __upload_pics(file=file, db=db, project=project)
+    except PICSError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=f"Not able to parse {file.filename} file: {str(e)}",
+        )
 
 
 @router.delete("/{id}/pics_cluster_type", response_model=schemas.Project)
@@ -281,7 +322,7 @@ def remove_pics_cluster_type(
     # delete the PICS cluster.
     del project.pics.clusters[cluster_name]
 
-    return __persist_pics_update(db=db, project=project)
+    return __persist_update_not_mutable(db=db, project=project, field="pics")
 
 
 @router.get(
@@ -319,16 +360,20 @@ def __project(db: Session, id: int) -> Project:
     return project
 
 
-def __persist_pics_update(db: Session, project: Project) -> Project:
-    """Update Project PICS in DB.
+def __persist_update_not_mutable(db: Session, project: Project, field: str) -> Project:
+    """Update Project JSON fields in DB.
 
-    project.pics is stored in a JSON column mapped to PICS schema, this column is
-    not Mutable, so SQLAlchemy doesn't know when PICS changed.
+    Project contains JSON columns (like 'pics' and 'config') mapped to their respective
+    schemas.
+    These columns are not Mutable by default, so SQLAlchemy doesn't track changes
+    to their content.
 
-    Using `flag_modified` marks the property, so SQLAlchemy will update the field on
-    commit.
+    Using `flag_modified` explicitly marks the JSON property as changed, ensuring
+    SQLAlchemy will update the field on commit. This is necessary for any nested
+    modifications to JSON column data.
     """
-    flag_modified(project, "pics")
+
+    flag_modified(project, field)
     db.commit()
     db.refresh(project)
     return project

@@ -35,6 +35,7 @@ from app.tests.utils.project import (
 )
 from app.tests.utils.test_pics_data import create_random_project_with_pics
 from app.tests.utils.validate_json_response import validate_json_response
+from app.utils import DMP_TEST_SKIP_CONFIG_NODE, DMP_TEST_SKIP_FILENAME
 
 invalid_dut_config = {
     "name": "foo",
@@ -360,17 +361,59 @@ def test_operations_missing_test_run(client: TestClient, db: Session) -> None:
     )
 
 
-def test_upload_pics(client: TestClient, db: Session) -> None:
+def test_upload_pics_success(client: TestClient, db: Session) -> None:
+    """Test successful upload of a valid PICS file."""
     project = create_random_project(db, config={})
     pics_file = Path(__file__).parent.parent.parent / "utils" / "test_pics.xml"
-    upload_files = {"file": pics_file.read_text()}
+    upload_files = {"file": ("test_pics.xml", pics_file.read_text(), "application/xml")}
     response = client.put(
         f"{settings.API_V1_STR}/projects/{project.id}/upload_pics",
         files=upload_files,
     )
 
     content = response.json()
+    assert response.status_code == HTTPStatus.OK
     assert content["pics"] is not None
+    assert "clusters" in content["pics"]
+    assert "On/Off" in content["pics"]["clusters"]
+    assert len(content["pics"]["clusters"]["On/Off"]["items"]) > 0
+
+
+def test_upload_pics_nonexistent_project(client: TestClient, db: Session) -> None:
+    """Test upload with a non-existent project ID."""
+    pics_file = Path(__file__).parent.parent.parent / "utils" / "test_pics.xml"
+    upload_files = {"file": ("test_pics.xml", pics_file.read_text(), "application/xml")}
+    response = client.put(
+        f"{settings.API_V1_STR}/projects/999999/upload_pics",
+        files=upload_files,
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert "Project not found" in response.json()["detail"]
+
+
+def test_upload_dmp_test_skip(client: TestClient, db: Session) -> None:
+    """Test successful upload of a dmp-test-skip file."""
+    project = create_random_project(db, config={})
+    dmp_file = (
+        Path(__file__).parent.parent.parent / "utils" / "test_pics.xml"
+    )  # Using same file for test
+    upload_files = {
+        "file": (
+            f"{DMP_TEST_SKIP_FILENAME}.xml",
+            dmp_file.read_text(),
+            "application/xml",
+        )
+    }
+    response = client.put(
+        f"{settings.API_V1_STR}/projects/{project.id}/upload_pics",
+        files=upload_files,
+    )
+
+    content = response.json()
+    assert response.status_code == HTTPStatus.OK
+    assert "config" in content
+    assert DMP_TEST_SKIP_CONFIG_NODE in content["config"]
 
 
 def test_pics_cluster_type(client: TestClient, db: Session) -> None:
@@ -451,3 +494,35 @@ def test_import_project(client: TestClient, db: Session) -> None:
         expected_status_code=HTTPStatus.OK,
         expected_content=project_json_data,
     )
+
+
+def test_upload_pics_empty_file(client: TestClient, db: Session) -> None:
+    """Test upload with an empty file."""
+    project = create_random_project(db, config={})
+    upload_files = {"file": ("test_pics.xml", "", "application/xml")}
+    response = client.put(
+        f"{settings.API_V1_STR}/projects/{project.id}/upload_pics",
+        files=upload_files,
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert "Not able to parse" in response.json()["detail"]
+
+
+def test_upload_pics_duplicate_cluster(client: TestClient, db: Session) -> None:
+    """Test upload with a PICS file that would create a duplicate cluster."""
+    project = create_random_project_with_pics(db=db, config={})
+    pics_file = Path(__file__).parent.parent.parent / "utils" / "test_pics.xml"
+    upload_files = {"file": ("test_pics.xml", pics_file.read_text(), "application/xml")}
+    response = client.put(
+        f"{settings.API_V1_STR}/projects/{project.id}/upload_pics",
+        files=upload_files,
+    )
+
+    content = response.json()
+    assert response.status_code == HTTPStatus.OK
+    assert content["pics"] is not None
+    assert "clusters" in content["pics"]
+    assert "On/Off" in content["pics"]["clusters"]
+    # Verify that the cluster was updated, not duplicated
+    assert len(content["pics"]["clusters"]) == 1
