@@ -274,7 +274,7 @@ def __retrieve_program_conf() -> Tuple[Optional[Type], Optional[Path]]:
     return None, None
 
 
-def parse_dmp_file(xml_file: IO):
+def parse_dmp_file(xml_file: IO) -> list[str]:
     # Parse the XML file
     tree = ET.parse(xml_file)
     root = tree.getroot()

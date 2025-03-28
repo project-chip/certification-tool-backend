@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import json
+import traceback
 from http import HTTPStatus
 from typing import List, Sequence, Union
 
@@ -245,10 +246,11 @@ def __persist_dmp_test_skip(file: UploadFile, db: Session, project: Project) -> 
         project.config[DMP_TEST_SKIP_CONFIG_NODE] = skip_test_list
 
         return __persist_update_not_mutable(db=db, project=project, field="config")
-    except:
+    except Exception:
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail=f"Not able to parser {file.filename} file",
+            detail=f"Not able to parse {file.filename} file",
         )
 
 
