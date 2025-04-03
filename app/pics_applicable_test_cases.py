@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 import json
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 from loguru import logger
 
@@ -69,7 +69,6 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
     try:
         with open(json_file_path, "r") as file:
             data = json.load(file)
-            # Convert the list to a set before returning
             return set(data.get("PlatformTestCasesToRun", []))
     except FileNotFoundError:
         raise FileNotFoundError(f"File {json_file_path} not found")
@@ -78,17 +77,17 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
 
 
 def __handle_platform_certification(
-    enabled_pics: set[str], applicable_remaining_tests: set[str]
+    enabled_pics: set[str], applicable_remaining_tests: set[str], dmp_test_skip: list
 ) -> set[str]:
     """
     Handle platform certification test cases based on PICS configuration.
 
     Args:
         enabled_pics: Set of enabled PICS
-        applicable_remaining_tests: Current list of applicable test cases
+        applicable_remaining_tests: Current set of applicable test cases
 
     Returns:
-        Updated list of applicable test cases
+        Updated set of applicable test cases
 
     Raises:
         PlatformTestError: If both PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are enabled
@@ -104,13 +103,14 @@ def __handle_platform_certification(
             platform_tests = __read_platform_test_cases("platform-test.json")
             applicable_remaining_tests.update(platform_tests)
         elif PICS_PLAT_CERT_DERIVED in enabled_pics:
-            dmp_tests = set()
-            applicable_remaining_tests.difference_update(dmp_tests)
+            applicable_remaining_tests.difference_update(dmp_test_skip)
 
     return applicable_remaining_tests
 
 
-def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
+def applicable_test_cases_set(
+    pics: PICS, dmp_test_skip: list
+) -> PICSApplicableTestCases:
     """Returns the applicable test cases for this project given the set of PICS"
 
     Args:
@@ -141,14 +141,13 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
 
     # Handle platform certification test cases
     applicable_remaining_tests = __handle_platform_certification(
-        enabled_pics, applicable_remaining_tests
+        enabled_pics, applicable_remaining_tests, dmp_test_skip
     )
 
     # Combine all applicable tests
     applicable_tests = applicable_mandatories_tests | applicable_remaining_tests
 
     logger.debug(f"Applicable test cases: {applicable_tests}")
-    # Converte the applicable_tests set from set to list
     return PICSApplicableTestCases(test_cases=list(applicable_tests))
 
 
@@ -185,14 +184,14 @@ def __applicable_test_cases(
 
 
 def __retrieve_pics(test_case: TestCaseDeclaration) -> Tuple[set, set]:
-    enabled_pics_list: set[str] = set()
-    disabled_pics_list: set[str] = set()
+    enabled_pics: set[str] = set()
+    disabled_pics: set[str] = set()
     for pics in test_case.pics:
         # The '!' char before PICS definition, is how test case flag a PICS as negative
         if pics.startswith("!"):
-            # Ignore ! char while adding the pics into disabled_pics_list structure
-            disabled_pics_list.add(pics[1:])
+            # Ignore ! char while adding the pics into disabled_pics_set structure
+            disabled_pics.add(pics[1:])
         else:
-            enabled_pics_list.add(pics)
+            enabled_pics.add(pics)
 
-    return enabled_pics_list, disabled_pics_list
+    return enabled_pics, disabled_pics
