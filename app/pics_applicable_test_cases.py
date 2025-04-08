@@ -190,7 +190,7 @@ def __retrieve_pics(test_case: TestCaseDeclaration) -> Tuple[set, set]:
     for pics in test_case.pics:
         # The '!' char before PICS definition, is how test case flag a PICS as negative
         if pics.startswith("!"):
-            # Ignore ! char while adding the pics into disabled_pics_set structure
+            # Ignore ! char while adding the pics into disabled_pics structure
             disabled_pics.add(pics[1:])
         else:
             enabled_pics.add(pics)
