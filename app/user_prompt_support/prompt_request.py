@@ -61,3 +61,8 @@ class MessagePromptRequest(PromptRequest):
     @property
     def messageType(self) -> MessageTypeEnum:
         return MessageTypeEnum.MESSAGE_REQUEST
+
+class StreamVerificationPromptRequest(OptionsSelectPromptRequest):
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.STREAM_VERIFICATION_REQUEST

@@ -162,7 +162,7 @@ class YamlTestCase(TestCase):
         Disabled steps are ignored.
         (Such tests will be marked as 'Steps Disabled' elsewhere)
 
-        UserPrompt are special cases that will prompt test operator for input.
+        UserPrompt, PromptWithResponse or VerifyVideoStream are special cases that will prompt test operator for input.
         """
         if yaml_step.disabled:
             test_engine_logger.info(
@@ -171,7 +171,7 @@ class YamlTestCase(TestCase):
             return
 
         step = TestStep(yaml_step.label)
-        if yaml_step.command == "UserPrompt":
+        if yaml_step.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"]:
             step = ManualVerificationTestStep(
                 name=yaml_step.label,
                 verification=yaml_step.verification,
