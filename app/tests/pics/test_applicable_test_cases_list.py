@@ -244,7 +244,7 @@ def test_applicable_test_cases_set_with_dmp_cert_test_removed(mock_manager) -> N
 
     applicable_test_cases = applicable_test_cases_set(pics, [])
 
-    # Verify that the mandatory test case was included in the result, but later when
+    # Verify that the test case was included in the result, but later when
     # TC-Any is listed in dmp_test_skip the test should not be listed
     assert "TC-Any" in applicable_test_cases.test_cases
 
