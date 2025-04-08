@@ -100,6 +100,7 @@ def __handle_platform_certification(
             )
 
         if PICS_PLAT_CERT in enabled_pics:
+            # TODO Need to fetch platform-test.json repo
             platform_tests = __read_platform_test_cases("platform-test.json")
             applicable_remaining_tests.update(platform_tests)
         elif PICS_PLAT_CERT_DERIVED in enabled_pics:
