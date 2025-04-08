@@ -19,6 +19,7 @@ from .prompt_request import (
     PromptRequest,
     TextInputPromptRequest,
     UploadFilePromptRequest,
+    StreamVerificationPromptRequest
 )
 from .prompt_response import PromptResponse
 from .uploaded_file_support import UploadedFileSupport, UploadFile

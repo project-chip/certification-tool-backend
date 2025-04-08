@@ -17,6 +17,8 @@ import asyncio
 
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
+from loguru import logger
+import socket
 
 from app.socket_connection_manager import SocketConnectionManager
 
@@ -41,3 +43,21 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
     except WebSocketDisconnect:
         socket_connection_manager.disconnect(websocket)
+
+@router.websocket("/ws/video")
+async def websocket_video_endpoint(websocket: WebSocket) -> None:
+    try:
+        await websocket.accept()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        sock.bind(('0.0.0.0', 5000))
+        logger.info("UDP socket bound successfully")
+        loop = asyncio.get_event_loop()
+        while True:
+            try:
+                data, addr = await loop.run_in_executor(None, sock.recvfrom, 65536)
+                #send data to ws
+                await websocket.send_bytes(data)
+            except Exception as e:
+                break
+    except Exception as e:
+        logger.info(f"Failed with exception {e}")

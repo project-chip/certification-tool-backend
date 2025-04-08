@@ -33,6 +33,7 @@ class MessageTypeEnum(str, Enum):
     TIME_OUT_NOTIFICATION = "time_out_notification"
     TEST_LOG_RECORDS = "test_log_records"
     INVALID_MESSAGE = "invalid_message"
+    STREAM_VERIFICATION_REQUEST = "stream_verification_request"
 
 
 # Enum keys used with messages at the top level
