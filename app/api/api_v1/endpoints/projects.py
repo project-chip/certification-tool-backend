@@ -351,7 +351,9 @@ def applicable_test_cases(
     try:
         return applicable_test_cases_set(
             pics=project_data.pics,
-            dmp_test_skip=project_data.config.get(DMP_TEST_SKIP_CONFIG_NODE, []),
+            dmp_test_skip=project_data.config.get(  # type: ignore
+                DMP_TEST_SKIP_CONFIG_NODE, []
+            ),
         )
     except Exception as e:
         logger.error(f"Error getting applicable test cases: {str(e)}")

@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# type: ignore
+# Ignore mypy type check for this file
 import json
-import os
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
