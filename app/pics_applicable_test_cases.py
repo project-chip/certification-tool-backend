@@ -52,11 +52,10 @@ class InvalidJSONError(PlatformTestError):
 
 def __read_platform_test_cases(json_file_path: str) -> set[str]:
     """
-    Read platform test cases from either a JSON file or a JSON string.
+    Read platform test cases from a JSON file.
 
     Args:
         json_file_path: Path to the JSON file containing platform test cases
-        json_string: Direct JSON string containing platform test cases
 
     Returns:
         Set of test case IDs
