@@ -61,7 +61,6 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
         Set of test case IDs
 
     Raises:
-        PlatformTestError: If neither or both parameters are provided
         FileNotFoundError: If the specified file doesn't exist
         InvalidJSONError: If the JSON format is invalid
     """
