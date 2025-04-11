@@ -32,6 +32,7 @@ class SuiteType(Enum):
     SIMULATED = 1
     AUTOMATED = 2
     MANUAL = 3
+    CAMERA_AUTOMATED = 4
 
 
 # Custom Type variable used to annotate the factory methods of classmethod.
@@ -69,6 +70,8 @@ class YamlTestSuite(TestSuite):
             suite_class = ManualYamlTestSuite
         elif suite_type == SuiteType.SIMULATED:
             suite_class = SimulatedYamlTestSuite
+        elif suite_type == SuiteType.CAMERA_AUTOMATED:
+            suite_class = ChipCameraYamlTestSuite
         elif suite_type == SuiteType.AUTOMATED:
             suite_class = ChipYamlTestSuite
 
@@ -108,6 +111,15 @@ class ChipYamlTestSuite(YamlTestSuite, ChipSuite):
 
     async def setup(self) -> None:
         """Due top multi inheritance, we need to call setup on both super classes."""
+        await YamlTestSuite.setup(self)
+        await ChipSuite.setup(self)
+
+class ChipCameraYamlTestSuite(YamlTestSuite, ChipSuite):
+    server_type = ChipServerType.CHIP_CAMERA_CONTROLLER
+
+    async def setup(self) -> None:
+        """Due top multi inheritance, we need to call setup on both super classes."""
+        self.server_type = ChipServerType.CHIP_CAMERA_CONTROLLER
         await YamlTestSuite.setup(self)
         await ChipSuite.setup(self)
 

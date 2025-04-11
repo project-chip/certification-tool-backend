@@ -67,6 +67,11 @@ def _init_test_suites(yaml_version: str) -> dict[SuiteType, YamlSuiteDeclaration
             suite_type=SuiteType.SIMULATED,
             version=yaml_version,
         ),
+        SuiteType.CAMERA_AUTOMATED: YamlSuiteDeclaration(
+            name="CameraAppTestSuite",
+            suite_type=SuiteType.CAMERA_AUTOMATED,
+            version=yaml_version,
+        )
     }
 
 
@@ -80,10 +85,11 @@ def _parse_yaml_to_test_case_declaration(
 def _parse_all_yaml(
     yaml_files: list[Path], yaml_version: str
 ) -> list[YamlSuiteDeclaration]:
-    """Parse all yaml files and organize them in the 3 test suites:
+    """Parse all yaml files and organize them in the 4 test suites:
     - Automated and Semi-Automated using Chip-Tool
     - Simulated using Chip-App1
     - Manual
+    - Automated and Semi-Automated using chip-camera-controller
     """
     suites = _init_test_suites(yaml_version)
 
@@ -98,7 +104,11 @@ def _parse_all_yaml(
             elif test_case.test_type == MatterTestType.SIMULATED:
                 suites[SuiteType.SIMULATED].add_test_case(test_case)
             else:
-                suites[SuiteType.AUTOMATED].add_test_case(test_case)
+                if test_case.suite_type == SuiteType.CAMERA_AUTOMATED:
+                  suites[SuiteType.CAMERA_AUTOMATED].add_test_case(test_case)
+                else:
+                  suites[SuiteType.AUTOMATED].add_test_case(test_case)
+
         except YamlParserException:
             # If an exception was raised during parse process, the yaml file will be
             # ignored and the loop will continue with the next yaml file

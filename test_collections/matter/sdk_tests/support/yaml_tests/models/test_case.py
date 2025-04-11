@@ -29,6 +29,7 @@ from ...chip.chip_server import ChipServerType
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...yaml_tests.models.chip_test import ChipManualPromptTest, ChipTest
 from .yaml_test_models import YamlTest
+from .test_suite import SuiteType
 
 # Custom type variable used to annotate the factory method in YamlTestCase.
 T = TypeVar("T", bound="YamlTestCase")
@@ -81,11 +82,18 @@ class YamlTestCase(TestCase):
         if test.type == MatterTestType.MANUAL:
             case_class = YamlManualTestCase
         elif test.type == MatterTestType.SEMI_AUTOMATED:
-            case_class = YamlSemiAutomatedChipTestCase
+            if test.suite_type == SuiteType.CAMERA_AUTOMATED:
+                case_class = YamlCameraSemiAutomatedChipTestCase
+            else:
+                case_class = YamlSemiAutomatedChipTestCase
+
         elif test.type == MatterTestType.SIMULATED:
             case_class = YamlSimulatedTestCase
         else:  # Automated
-            case_class = YamlChipTestCase
+            if test.suite_type == SuiteType.CAMERA_AUTOMATED:
+                case_class = YamlCameraChipTestCase
+            else:
+                case_class = YamlChipTestCase
 
         return case_class.__class_factory(test=test, yaml_version=yaml_version)
 
@@ -162,7 +170,7 @@ class YamlTestCase(TestCase):
         Disabled steps are ignored.
         (Such tests will be marked as 'Steps Disabled' elsewhere)
 
-        UserPrompt are special cases that will prompt test operator for input.
+        UserPrompt, PromptWithResponse or VerifyVideoStream are special cases that will prompt test operator for input.
         """
         if yaml_step.disabled:
             test_engine_logger.info(
@@ -171,7 +179,7 @@ class YamlTestCase(TestCase):
             return
 
         step = TestStep(yaml_step.label)
-        if yaml_step.command == "UserPrompt":
+        if yaml_step.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"]:
             step = ManualVerificationTestStep(
                 name=yaml_step.label,
                 verification=yaml_step.verification,
@@ -203,6 +211,22 @@ class YamlChipTestCase(YamlTestCase, ChipTest):
         self.test_steps = [TestStep("Start chip-tool test")]
         for step in self.yaml_test.steps:
             self._append_automated_test_step(step)
+
+class YamlCameraChipTestCase(YamlTestCase, ChipTest):
+    """Automated test cases using chip-camera-controller."""
+
+    server_type = ChipServerType.CHIP_CAMERA_CONTROLLER
+
+    def create_test_steps(self) -> None:
+        self.test_steps = [TestStep("Start chip-camera-controller test")]
+        for step in self.yaml_test.steps:
+            self._append_automated_test_step(step)
+
+
+class YamlCameraSemiAutomatedChipTestCase(YamlChipTestCase, ChipManualPromptTest):
+    """Camera Semi-Automated test cases, need special step for users to attach logs
+    for manual steps, so inheriting from ChipManualPromptTest.
+    """
 
 
 class YamlSemiAutomatedChipTestCase(YamlChipTestCase, ChipManualPromptTest):

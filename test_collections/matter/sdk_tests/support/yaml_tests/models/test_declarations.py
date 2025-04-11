@@ -26,6 +26,7 @@ from ...models.sdk_test_folder import SDKTestFolder
 from .test_case import YamlTestCase
 from .test_suite import SuiteType, YamlTestSuite
 from .yaml_test_models import YamlTest
+from typing import Optional
 
 
 class YamlCollectionDeclaration(TestCollectionDeclaration):
@@ -53,11 +54,13 @@ class YamlCaseDeclaration(TestCaseDeclaration):
     """Direct initialization for YAML Test Case."""
 
     class_ref: Type[YamlTestCase]
+    suite_type: Optional[SuiteType] = None
 
     def __init__(self, test: YamlTest, yaml_version: str) -> None:
         super().__init__(
             YamlTestCase.class_factory(test=test, yaml_version=yaml_version)
         )
+        self.suite_type = test.suite_type
 
     @property
     def test_type(self) -> MatterTestType:
