@@ -89,7 +89,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
             self.runner.reset_pics_state()
 
         self.__dut_commissioned_successfully = False
-        if self.server_type == ChipServerType.CHIP_TOOL:
+        if self.server_type == ChipServerType.CHIP_TOOL or self.server_type == ChipServerType.CHIP_CAMERA_CONTROLLER:
             logger.info("Commission DUT")
             user_response = await prompt_for_commissioning_mode(
                 self, logger, None, self.cancel
@@ -227,7 +227,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         # Only unpair if commissioning was successfull during setup
         if self.__dut_commissioned_successfully:
             # Unpair is not applicable for simulated apps case
-            if self.server_type == ChipServerType.CHIP_TOOL:
+            if self.server_type == ChipServerType.CHIP_TOOL or self.server_type == ChipServerType.CHIP_CAMERA_CONTROLLER:
                 logger.info("Unpairing DUT from server")
                 await self.runner.unpair()
             elif self.server_type == ChipServerType.CHIP_APP:
