@@ -75,14 +75,15 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
 
 
 def __handle_platform_certification(
-    enabled_pics: set[str], applicable_remaining_tests: set[str], dmp_test_skip: list
+    enabled_pics: set[str], applicable_tests_combined: set[str], dmp_test_skip: list
 ) -> set[str]:
     """
     Handle platform certification test cases based on PICS configuration.
 
     Args:
         enabled_pics: Set of enabled PICS
-        applicable_remaining_tests: Current set of applicable test cases
+        applicable_tests_combined: Current set of applicable test cases
+        dmp_test_skip: List of test cases to skip
 
     Returns:
         Updated set of applicable test cases
@@ -98,13 +99,31 @@ def __handle_platform_certification(
             )
 
         if PICS_PLAT_CERT in enabled_pics:
-            # TODO Need to fetch platform-test.json repo
+            # TODO Need to fetch platform-test.json from repo
             platform_tests = __read_platform_test_cases("platform-test.json")
-            applicable_remaining_tests.update(platform_tests)
-        elif PICS_PLAT_CERT_DERIVED in enabled_pics:
-            applicable_remaining_tests.difference_update(dmp_test_skip)
 
-    return applicable_remaining_tests
+            # Only add platform tests that don't already exist with any suffix
+            for test in platform_tests:
+                # Check if the test exists with any suffix
+                test_exists = any(
+                    existing_test.startswith(f"{test} (")
+                    for existing_test in applicable_tests_combined
+                )
+                if not test_exists:
+                    applicable_tests_combined.add(test)
+        elif PICS_PLAT_CERT_DERIVED in enabled_pics:
+            # Create a new list with dmp_test_skip plus the same tests with
+            # " (Semi-automated)" and " (Steps Disabled)" suffixes
+            # These suffixes may be added during the test parsing process
+            extended_skip_list = dmp_test_skip.copy()
+            for test in dmp_test_skip:
+                extended_skip_list.append(f"{test} (Semi-automated)")
+                extended_skip_list.append(f"{test} (Steps Disabled)")
+
+            # Remove tests from the extended list from applicable_tests_combined
+            applicable_tests_combined.difference_update(extended_skip_list)
+
+    return applicable_tests_combined
 
 
 def applicable_test_cases_set(
@@ -138,13 +157,15 @@ def applicable_test_cases_set(
         test_collections_copy, enabled_pics, False
     )
 
-    # Handle platform certification test cases
-    applicable_remaining_tests = __handle_platform_certification(
-        enabled_pics, applicable_remaining_tests, dmp_test_skip
+    # Combine all applicable tests
+    applicable_tests_combined = (
+        applicable_mandatories_tests | applicable_remaining_tests
     )
 
-    # Combine all applicable tests
-    applicable_tests = applicable_mandatories_tests | applicable_remaining_tests
+    # Handle platform certification test cases
+    applicable_tests = __handle_platform_certification(
+        enabled_pics, applicable_tests_combined, dmp_test_skip
+    )
 
     logger.debug(f"Applicable test cases: {applicable_tests}")
     return PICSApplicableTestCases(test_cases=list(applicable_tests))
@@ -167,7 +188,7 @@ def __applicable_test_cases(
             for test_suite in test_collection.test_suites.values():
                 for test_case in test_suite.test_cases.values():
                     if not test_case.pics:
-                        # Test cases without PICS required are always applicable
+                        # Test cases without PICS are always applicable
                         applicable_tests.add(test_case.metadata["title"])
                     else:
                         test_enabled_pics, test_disabled_pics = __retrieve_pics(

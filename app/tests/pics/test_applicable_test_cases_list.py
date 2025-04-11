@@ -325,3 +325,41 @@ def test_applicable_test_cases_set_with_negative_pics(mock_manager) -> None:
 
     # Verify that the test case was not included in the result
     assert "TC-1" not in applicable_test_cases.test_cases
+
+
+@patch("app.pics_applicable_test_cases.__applicable_test_cases")
+def test_applicable_test_cases_set_with_mocked_internal_calls(
+    mock_applicable_test_cases,
+) -> None:
+    # Create PICS with platform certification derived enabled
+    pics = PICS()
+    cluster = PICSCluster(name="Platform")
+    cluster.items["MCORE.PLAT_CERT_DONE"] = PICSItem(
+        number="MCORE.PLAT_CERT_DONE", enabled=True
+    )
+    pics.clusters["Platform"] = cluster
+
+    # Mock the internal __applicable_test_cases function to return specific test cases
+    # First call is for mandatory tests, second call is for non-mandatory tests
+    mock_applicable_test_cases.side_effect = [
+        {"TC-MANDATORY-1", "TC-MANDATORY-2", "TC-SKIP-1"},  # Mandatory tests
+        {"TC-OPTIONAL-1", "TC-OPTIONAL-2", "TC-SKIP-2"},  # Optional tests
+    ]
+
+    # Create a set of applicable test cases with some that should be skipped
+    dmp_test_skip = ["TC-SKIP-1", "TC-SKIP-2"]
+
+    applicable_test_cases = applicable_test_cases_set(pics, dmp_test_skip)
+
+    # Verify that the mock was called twice (once for mandatory, once for optional)
+    assert mock_applicable_test_cases.call_count == 2
+
+    # Verify that the test cases in dmp_test_skip were excluded from the result
+    assert "TC-SKIP-1" not in applicable_test_cases.test_cases
+    assert "TC-SKIP-2" not in applicable_test_cases.test_cases
+
+    # Verify that other test cases were included
+    assert "TC-MANDATORY-1" in applicable_test_cases.test_cases
+    assert "TC-MANDATORY-2" in applicable_test_cases.test_cases
+    assert "TC-OPTIONAL-1" in applicable_test_cases.test_cases
+    assert "TC-OPTIONAL-2" in applicable_test_cases.test_cases
