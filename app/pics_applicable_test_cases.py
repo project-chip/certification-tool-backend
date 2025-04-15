@@ -100,6 +100,7 @@ def __handle_platform_certification(
 
         if PICS_PLAT_CERT in enabled_pics:
             # TODO Need to fetch platform-test.json from repo
+            # Issue: https://github.com/project-chip/certification-tool/issues/571
             platform_tests = __read_platform_test_cases("platform-test.json")
 
             # Only add platform tests that don't already exist with any suffix
