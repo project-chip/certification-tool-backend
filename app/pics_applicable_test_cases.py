@@ -91,38 +91,37 @@ def __handle_platform_certification(
     Raises:
         PlatformTestError: If both PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are enabled
     """
-    if PICS_PLAT_CERT in enabled_pics or PICS_PLAT_CERT_DERIVED in enabled_pics:
-        if PICS_PLAT_CERT in enabled_pics and PICS_PLAT_CERT_DERIVED in enabled_pics:
-            raise PlatformTestError(
-                "Invalid configuration: PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are "
-                "mutually exclusive. Please enable only one of them"
+    if PICS_PLAT_CERT in enabled_pics and PICS_PLAT_CERT_DERIVED in enabled_pics:
+        raise PlatformTestError(
+            "Invalid configuration: PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are "
+            "mutually exclusive. Please enable only one of them"
+        )
+
+    if PICS_PLAT_CERT in enabled_pics:
+        # TODO Need to fetch platform-test.json from repo
+        # Issue: https://github.com/project-chip/certification-tool/issues/571
+        platform_tests = __read_platform_test_cases("platform-test.json")
+
+        # Only add platform tests that don't already exist with any suffix
+        for test in platform_tests:
+            # Check if the test exists with any suffix
+            test_exists = any(
+                existing_test.startswith(f"{test} (")
+                for existing_test in applicable_tests_combined
             )
+            if not test_exists:
+                applicable_tests_combined.add(test)
+    elif PICS_PLAT_CERT_DERIVED in enabled_pics:
+        # Create a new list with dmp_test_skip plus the same tests with
+        # " (Semi-automated)" and " (Steps Disabled)" suffixes
+        # These suffixes may be added during the test parsing process
+        extended_skip_list = dmp_test_skip.copy()
+        for test in dmp_test_skip:
+            extended_skip_list.append(f"{test} (Semi-automated)")
+            extended_skip_list.append(f"{test} (Steps Disabled)")
 
-        if PICS_PLAT_CERT in enabled_pics:
-            # TODO Need to fetch platform-test.json from repo
-            # Issue: https://github.com/project-chip/certification-tool/issues/571
-            platform_tests = __read_platform_test_cases("platform-test.json")
-
-            # Only add platform tests that don't already exist with any suffix
-            for test in platform_tests:
-                # Check if the test exists with any suffix
-                test_exists = any(
-                    existing_test.startswith(f"{test} (")
-                    for existing_test in applicable_tests_combined
-                )
-                if not test_exists:
-                    applicable_tests_combined.add(test)
-        elif PICS_PLAT_CERT_DERIVED in enabled_pics:
-            # Create a new list with dmp_test_skip plus the same tests with
-            # " (Semi-automated)" and " (Steps Disabled)" suffixes
-            # These suffixes may be added during the test parsing process
-            extended_skip_list = dmp_test_skip.copy()
-            for test in dmp_test_skip:
-                extended_skip_list.append(f"{test} (Semi-automated)")
-                extended_skip_list.append(f"{test} (Steps Disabled)")
-
-            # Remove tests from the extended list from applicable_tests_combined
-            applicable_tests_combined.difference_update(extended_skip_list)
+        # Remove tests from the extended list from applicable_tests_combined
+        applicable_tests_combined.difference_update(extended_skip_list)
 
     return applicable_tests_combined
 
