@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 from typing import Dict, Tuple
 
 from loguru import logger
@@ -27,8 +28,107 @@ from test_collections.matter.sdk_tests.support.performance_tests.sdk_performance
     STRESS_TEST_COLLECTION,
 )
 
+PICS_PLAT_CERT = "MCORE.PLAT_CERT"
+PICS_PLAT_CERT_DERIVED = "MCORE.PLAT_CERT_DONE"
 
-def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
+
+class PlatformTestError(Exception):
+    """Base exception for platform test errors"""
+
+    pass
+
+
+class FileNotFoundError(PlatformTestError):
+    """Exception raised when test file is not found"""
+
+    pass
+
+
+class InvalidJSONError(PlatformTestError):
+    """Exception raised when JSON is invalid"""
+
+    pass
+
+
+def __read_platform_test_cases(json_file_path: str) -> set[str]:
+    """
+    Read platform test cases from a JSON file.
+
+    Args:
+        json_file_path: Path to the JSON file containing platform test cases
+
+    Returns:
+        Set of test case IDs
+
+    Raises:
+        FileNotFoundError: If the specified file doesn't exist
+        InvalidJSONError: If the JSON format is invalid
+    """
+    try:
+        with open(json_file_path, "r") as file:
+            data = json.load(file)
+            return set(data.get("PlatformTestCasesToRun", []))
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File {json_file_path} not found")
+    except json.JSONDecodeError:
+        raise InvalidJSONError(f"Invalid JSON format in {json_file_path}")
+
+
+def __handle_platform_certification(
+    enabled_pics: set[str], applicable_tests_combined: set[str], dmp_test_skip: list
+) -> set[str]:
+    """
+    Handle platform certification test cases based on PICS configuration.
+
+    Args:
+        enabled_pics: Set of enabled PICS
+        applicable_tests_combined: Current set of applicable test cases
+        dmp_test_skip: List of test cases to skip
+
+    Returns:
+        Updated set of applicable test cases
+
+    Raises:
+        PlatformTestError: If both PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are enabled
+    """
+    if PICS_PLAT_CERT in enabled_pics and PICS_PLAT_CERT_DERIVED in enabled_pics:
+        raise PlatformTestError(
+            "Invalid configuration: PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are "
+            "mutually exclusive. Please enable only one of them"
+        )
+
+    if PICS_PLAT_CERT in enabled_pics:
+        # TODO Need to fetch platform-test.json from repo
+        # Issue: https://github.com/project-chip/certification-tool/issues/571
+        platform_tests = __read_platform_test_cases("platform-test.json")
+
+        # Only add platform tests that don't already exist with any suffix
+        for test in platform_tests:
+            # Check if the test exists with any suffix
+            test_exists = any(
+                existing_test.startswith(f"{test} (")
+                for existing_test in applicable_tests_combined
+            )
+            if not test_exists:
+                applicable_tests_combined.add(test)
+    elif PICS_PLAT_CERT_DERIVED in enabled_pics:
+        # Create a new list with dmp_test_skip plus the same tests with
+        # " (Semi-automated)" and " (Steps Disabled)" suffixes
+        # These suffixes may be added during the test parsing process
+        extended_skip_list = dmp_test_skip.copy()
+        for test in dmp_test_skip:
+            extended_skip_list.append(f"{test} (Semi-automated)")
+            extended_skip_list.append(f"{test} (Steps Disabled)")
+
+        # Remove tests from the extended list from applicable_tests_combined
+        applicable_tests_combined.difference_update(extended_skip_list)
+
+    return applicable_tests_combined
+
+
+def applicable_test_cases_set(
+    pics: PICS, dmp_test_skip: list
+) -> PICSApplicableTestCases:
     """Returns the applicable test cases for this project given the set of PICS"
 
     Args:
@@ -38,9 +138,9 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
         PICSApplicableTestCases: List of test cases that are applicable
           for this Project
     """
-    applicable_tests: list = []
+    applicable_tests: set = set()
 
-    if len(pics.clusters) == 0:
+    if not pics.clusters:
         # If the user has not uploaded any PICS
         # i.e, there are no PICS associated with the project then return empty set
         logger.debug(f"Applicable test cases: {applicable_tests}")
@@ -57,21 +157,26 @@ def applicable_test_cases_list(pics: PICS) -> PICSApplicableTestCases:
         test_collections_copy, enabled_pics, False
     )
 
-    # Add first the mandatories test cases
-    applicable_tests.extend(applicable_mandatories_tests)
-    # Add the remaining test cases
-    applicable_tests.extend(applicable_remaining_tests)
+    # Combine all applicable tests
+    applicable_tests_combined = (
+        applicable_mandatories_tests | applicable_remaining_tests
+    )
+
+    # Handle platform certification test cases
+    applicable_tests = __handle_platform_certification(
+        enabled_pics, applicable_tests_combined, dmp_test_skip
+    )
 
     logger.debug(f"Applicable test cases: {applicable_tests}")
-    return PICSApplicableTestCases(test_cases=applicable_tests)
+    return PICSApplicableTestCases(test_cases=list(applicable_tests))
 
 
 def __applicable_test_cases(
     test_collections: Dict[str, TestCollectionDeclaration],
     enabled_pics: set[str],
     mandatory: bool,
-) -> list:
-    applicable_tests: list = []
+) -> set:
+    applicable_tests: set = set()
 
     # The 'Performance Tests' Collection should not be considered for the PICS tests.
     # NOTE: The second parameter for the dictionary's "pop" method is provided so we may
@@ -82,10 +187,10 @@ def __applicable_test_cases(
         if test_collection.mandatory == mandatory:
             for test_suite in test_collection.test_suites.values():
                 for test_case in test_suite.test_cases.values():
-                    if len(test_case.pics) == 0:
-                        # Test cases without pics required are always applicable
-                        applicable_tests.append(test_case.metadata["title"])
-                    elif len(test_case.pics) > 0:
+                    if not test_case.pics:
+                        # Test cases without PICS are always applicable
+                        applicable_tests.add(test_case.metadata["title"])
+                    else:
                         test_enabled_pics, test_disabled_pics = __retrieve_pics(
                             test_case
                         )
@@ -94,19 +199,19 @@ def __applicable_test_cases(
                         if test_enabled_pics.issubset(
                             enabled_pics
                         ) and test_disabled_pics.isdisjoint(enabled_pics):
-                            applicable_tests.append(test_case.metadata["title"])
+                            applicable_tests.add(test_case.metadata["title"])
     return applicable_tests
 
 
 def __retrieve_pics(test_case: TestCaseDeclaration) -> Tuple[set, set]:
-    enabled_pics_list: set = set()
-    disabled_pics_list: set = set()
+    enabled_pics: set[str] = set()
+    disabled_pics: set[str] = set()
     for pics in test_case.pics:
         # The '!' char before PICS definition, is how test case flag a PICS as negative
         if pics.startswith("!"):
-            # Ignore ! char while adding the pics into disabled_pics_list structure
-            disabled_pics_list.add(pics[1:])
+            # Ignore ! char while adding the pics into disabled_pics structure
+            disabled_pics.add(pics[1:])
         else:
-            enabled_pics_list.add(pics)
+            enabled_pics.add(pics)
 
-    return enabled_pics_list, disabled_pics_list
+    return enabled_pics, disabled_pics

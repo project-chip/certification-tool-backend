@@ -31,7 +31,7 @@ from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.pics.pics_parser import PICSParser
-from app.pics_applicable_test_cases import applicable_test_cases_list
+from app.pics_applicable_test_cases import applicable_test_cases_set
 from app.schemas.pics import PICSError
 from app.schemas.project import Project as Proj
 from app.schemas.test_environment_config import TestEnvironmentConfigError
@@ -348,7 +348,19 @@ def applicable_test_cases(
 
     project_data = Proj.from_orm(project)
 
-    return applicable_test_cases_list(pics=project_data.pics)
+    try:
+        return applicable_test_cases_set(
+            pics=project_data.pics,
+            dmp_test_skip=project_data.config.get(  # type: ignore
+                DMP_TEST_SKIP_CONFIG_NODE, []
+            ),
+        )
+    except Exception as e:
+        logger.error(f"Error getting applicable test cases: {str(e)}")
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail=f"Error getting applicable test cases: {str(e)}",
+        )
 
 
 def __project(db: Session, id: int) -> Project:

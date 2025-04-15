@@ -149,6 +149,9 @@ class YamlTestCase(TestCase):
         """
         title = identifier
 
+        # Note: Any suffix added here must also be reflected in the
+        # __handle_platform_certification method located in
+        # app/pics_applicable_test_cases.py to ensure consistency.
         if test_yaml.type == MatterTestType.SEMI_AUTOMATED:
             title += " (Semi-automated)"
 
