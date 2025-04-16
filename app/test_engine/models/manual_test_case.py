@@ -22,12 +22,12 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.user_prompt_support import (
     OptionsSelectPromptRequest,
     PromptResponse,
+    StreamVerificationPromptRequest,
+    TextInputPromptRequest,
     UploadFile,
     UploadFilePromptRequest,
     UserPromptSupport,
-    TextInputPromptRequest,
     UserResponseStatusEnum,
-    StreamVerificationPromptRequest
 )
 
 from .test_case import TestCase
@@ -53,8 +53,10 @@ class ManualVerificationTestStep(TestStep, UserPromptSupport):
     def __init__(self, name: str, verification: Optional[str] = None) -> None:
         super().__init__(name=name)
         self.verification = verification
-    
-    async def prompt_verification_step_with_response(self, textInputPrompt: TextInputPromptRequest)->str:
+
+    async def prompt_verification_step_with_response(
+        self, textInputPrompt: TextInputPromptRequest
+    ) -> str:
         """Prompt user to verify the video stream.
 
         Returns:
