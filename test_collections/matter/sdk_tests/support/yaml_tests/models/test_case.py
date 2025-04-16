@@ -28,8 +28,8 @@ from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from ...chip.chip_server import ChipServerType
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...yaml_tests.models.chip_test import ChipManualPromptTest, ChipTest
-from .yaml_test_models import YamlTest
 from .test_suite import SuiteType
+from .yaml_test_models import YamlTest
 
 # Custom type variable used to annotate the factory method in YamlTestCase.
 T = TypeVar("T", bound="YamlTestCase")
@@ -170,7 +170,8 @@ class YamlTestCase(TestCase):
         Disabled steps are ignored.
         (Such tests will be marked as 'Steps Disabled' elsewhere)
 
-        UserPrompt, PromptWithResponse or VerifyVideoStream are special cases that will prompt test operator for input.
+        UserPrompt, PromptWithResponse or VerifyVideoStream are special cases that will
+        prompt test operator for input.
         """
         if yaml_step.disabled:
             test_engine_logger.info(
@@ -179,7 +180,11 @@ class YamlTestCase(TestCase):
             return
 
         step = TestStep(yaml_step.label)
-        if yaml_step.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"]:
+        if yaml_step.command in [
+            "UserPrompt",
+            "PromptWithResponse",
+            "VerifyVideoStream",
+        ]:
             step = ManualVerificationTestStep(
                 name=yaml_step.label,
                 verification=yaml_step.verification,

@@ -122,7 +122,6 @@ class ChipServer(metaclass=Singleton):
         self.__use_paa_certs = use_paa_certs
         self.__server_type = server_type
 
-
         if server_type == ChipServerType.CHIP_CAMERA_CONTROLLER:
             prefix = CHIP_CAMERA_CONTROLLER_EXE
             command = ["interactive", "server"]

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Type
+from typing import Optional, Type
 
 from app.test_engine.models.test_declarations import (
     TestCaseDeclaration,
@@ -26,7 +26,6 @@ from ...models.sdk_test_folder import SDKTestFolder
 from .test_case import YamlTestCase
 from .test_suite import SuiteType, YamlTestSuite
 from .yaml_test_models import YamlTest
-from typing import Optional
 
 
 class YamlCollectionDeclaration(TestCollectionDeclaration):
