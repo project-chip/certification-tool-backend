@@ -15,6 +15,7 @@
 #
 from pathlib import Path
 from shutil import copyfile
+import json
 
 from pydantic import BaseModel
 
@@ -35,6 +36,14 @@ config_file = Path.joinpath(config_root, "config.json")
 # copy example file if no config file present
 if not config_file.is_file():
     example_config_file = Path.joinpath(config_root, "config.json.example")
-    copyfile(example_config_file, config_file)
+    with open(example_config_file, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    json_content = "".join(line for line in lines if not line.lstrip().startswith("#")).strip()
+    try:
+        json.loads(json_content)
+        with open(config_file, "w", encoding="utf-8") as f:
+            f.write(json_content)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON after comment removal: {e}")
 
 config = Config.parse_file(config_file)
