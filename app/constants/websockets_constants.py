@@ -21,6 +21,9 @@ INVALID_JSON_ERROR_STR = "The message received is not a valid JSON object"
 MISSING_TYPE_ERROR_STR = "The message is missing a type key"
 NO_HANDLER_FOR_MSG_ERROR_STR = "There is no handler registered for this message type"
 
+UDP_SOCKET_PORT = 5000
+UDP_SOCKET_INTERFACE = "0.0.0.0"
+
 
 # Enum Keys for different types of messages currently supported by the tool
 class MessageTypeEnum(str, Enum):

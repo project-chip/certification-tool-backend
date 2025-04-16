@@ -30,10 +30,14 @@ from app.test_engine.models.manual_test_case import (
     ManualLogUploadStep,
     ManualVerificationTestStep,
 )
-from app.user_prompt_support.prompt_request import MessagePromptRequest, PromptRequest, TextInputPromptRequest
+from app.user_prompt_support.prompt_request import (
+    MessagePromptRequest,
+    TextInputPromptRequest,
+)
 from app.user_prompt_support.uploaded_file_support import UploadFile
 from app.user_prompt_support.user_prompt_manager import user_prompt_manager
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
+
 from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
 from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
@@ -170,7 +174,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
     def step_unknown(self) -> None:
         self.__runned += 1
 
-    async def step_manual(self, request) -> None:
+    async def step_manual(self, request: TestStep) -> None:
         step = self.current_test_step
         if not isinstance(step, ManualVerificationTestStep):
             raise TestError(f"Unexpected user prompt found in test step: {step.name}")
@@ -178,7 +182,8 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         try:
             if request and request.command == "VerifyVideoStream":
                 await asyncio.wait_for(
-                    self.__prompt_stream_verification_manual_step(step), OUTCOME_TIMEOUT_S
+                    self.__prompt_stream_verification_manual_step(step),
+                    OUTCOME_TIMEOUT_S,
                 )
             else:
                 await asyncio.wait_for(
@@ -197,14 +202,26 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         step = self.current_test_step
         if not isinstance(step, ManualVerificationTestStep):
             raise TestError(f"Unexpected user prompt found in test step: {step.name}")
-        userPrompt = TextInputPromptRequest(prompt=msg, timeout=EXTENDED_PROMPT_TIMEOUT_S, default_value=default_value, placeholder_text="Input", regex_pattern=None)
+
+        if placeholder is None:
+            placeholder = "Enter value.."
+
+        userPrompt = TextInputPromptRequest(
+            prompt=msg,
+            timeout=EXTENDED_PROMPT_TIMEOUT_S,
+            default_value=default_value,
+            placeholder_text=placeholder,
+            regex_pattern=None,
+        )
         response = await self.__prompt_user_manual_step_with_response(step, userPrompt)
-        if response == None:
-            raise ValueError("Did not receive any input value")
+        if response is None:
+            raise ValueError("Failed to receive user input")
         return response
 
     # Other methods
-    async def __prompt_user_manual_step_with_response(self, step: ManualVerificationTestStep, prompt: PromptRequest) -> str:
+    async def __prompt_user_manual_step_with_response(
+        self, step: ManualVerificationTestStep, prompt: TextInputPromptRequest
+    ) -> str:
         result = await step.prompt_verification_step_with_response(prompt)
 
         if not result:
@@ -218,11 +235,15 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         if not result:
             self.current_test_step.append_failure("Manual Test Step Failure.")
 
-    async def __prompt_stream_verification_manual_step(self, step: ManualVerificationTestStep) -> None:
+    async def __prompt_stream_verification_manual_step(
+        self, step: ManualVerificationTestStep
+    ) -> None:
         result = await step.prompt_stream_verification_step()
 
         if not result:
-            self.current_test_step.append_failure("Video Verification Test Step Failure.")
+            self.current_test_step.append_failure(
+                "Video Verification Test Step Failure."
+            )
 
     def __report_failures(self, logger: Any, request: TestStep, received: Any) -> None:
         """

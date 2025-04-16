@@ -17,9 +17,9 @@ from .constants import UserResponseStatusEnum
 from .prompt_request import (
     OptionsSelectPromptRequest,
     PromptRequest,
+    StreamVerificationPromptRequest,
     TextInputPromptRequest,
     UploadFilePromptRequest,
-    StreamVerificationPromptRequest
 )
 from .prompt_response import PromptResponse
 from .uploaded_file_support import UploadedFileSupport, UploadFile

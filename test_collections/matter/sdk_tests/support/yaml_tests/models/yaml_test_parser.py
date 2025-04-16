@@ -50,8 +50,12 @@ def _test_type(test: YamlTest) -> MatterTestType:
     if all(s.disabled is True for s in steps):
         return MatterTestType.MANUAL
 
-    # if any step has a UserPrompt, PromptWithResponse or VerifyVideoStream command, categorize as semi-automated
-    if any(s.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"] for s in steps):
+    # if any step has a UserPrompt, PromptWithResponse or VerifyVideoStream command,
+    # categorize as semi-automated
+    if any(
+        s.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"]
+        for s in steps
+    ):
         return MatterTestType.SEMI_AUTOMATED
 
     # Otherwise Automated
