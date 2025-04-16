@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 import asyncio
+import socket
 
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from loguru import logger
-import socket
 
+from app.constants.websockets_constants import UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT
 from app.socket_connection_manager import SocketConnectionManager
 
 router = APIRouter()
@@ -44,20 +45,28 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         socket_connection_manager.disconnect(websocket)
 
+
 @router.websocket("/ws/video")
 async def websocket_video_endpoint(websocket: WebSocket) -> None:
     try:
         await websocket.accept()
+        logger.info(f'Websocket connected: "{websocket}".')
+    except RuntimeError as e:
+        logger.info(f'Failed to connect with error: "{e}".')
+        raise e
+
+    try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-        sock.bind(('0.0.0.0', 5000))
+        sock.bind((UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT))
         logger.info("UDP socket bound successfully")
         loop = asyncio.get_event_loop()
         while True:
-            try:
-                data, addr = await loop.run_in_executor(None, sock.recvfrom, 65536)
-                #send data to ws
-                await websocket.send_bytes(data)
-            except Exception as e:
-                break
+            data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
+            # send data to ws
+            await websocket.send_bytes(data)
+    except WebSocketDisconnect:
+        logger.info(f'Websocket for video stream disconnected: "{websocket}".')
     except Exception as e:
-        logger.info(f"Failed with exception {e}")
+        logger.info(f"Failed with {e}")
+    finally:
+        await websocket.close()
