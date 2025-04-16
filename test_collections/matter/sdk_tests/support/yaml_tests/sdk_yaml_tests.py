@@ -76,7 +76,7 @@ def _init_test_suites(yaml_version: str) -> dict[SuiteType, YamlSuiteDeclaration
             name="CameraAppTestSuite",
             suite_type=SuiteType.CAMERA_AUTOMATED,
             version=yaml_version,
-        )
+        ),
     }
 
 
@@ -110,9 +110,9 @@ def _parse_all_yaml(
                 suites[SuiteType.SIMULATED].add_test_case(test_case)
             else:
                 if test_case.suite_type == SuiteType.CAMERA_AUTOMATED:
-                  suites[SuiteType.CAMERA_AUTOMATED].add_test_case(test_case)
+                    suites[SuiteType.CAMERA_AUTOMATED].add_test_case(test_case)
                 else:
-                  suites[SuiteType.AUTOMATED].add_test_case(test_case)
+                    suites[SuiteType.AUTOMATED].add_test_case(test_case)
 
         except YamlParserException:
             # If an exception was raised during parse process, the yaml file will be

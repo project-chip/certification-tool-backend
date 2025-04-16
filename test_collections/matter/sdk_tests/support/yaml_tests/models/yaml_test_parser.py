@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import re
 from pathlib import Path
 
 from loguru import logger
 from pydantic import ValidationError
 
 from ...models.matter_test_models import MatterTestType
-from .yaml_test_models import YamlTest
 from .test_suite import SuiteType
-import re
+from .yaml_test_models import YamlTest
 
 
 class YamlParserException(Exception):
@@ -60,8 +60,12 @@ def _get_types(test: YamlTest) -> tuple[MatterTestType, SuiteType]:
     if all(s.disabled is True for s in steps):
         return MatterTestType.MANUAL, SuiteType.MANUAL
 
-    # if any step has a UserPrompt, PromptWithResponse or VerifyVideoStream command, categorize as semi-automated
-    if any(s.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"] for s in steps):
+    # if any step has a UserPrompt, PromptWithResponse or VerifyVideoStream command,
+    # categorize as semi-automated
+    if any(
+        s.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"]
+        for s in steps
+    ):
         if re.search(camera_test_pattern, test.name):
             return MatterTestType.SEMI_AUTOMATED, SuiteType.CAMERA_AUTOMATED
         else:
@@ -72,7 +76,8 @@ def _get_types(test: YamlTest) -> tuple[MatterTestType, SuiteType]:
     if re.search(camera_test_pattern, test.name):
         return MatterTestType.AUTOMATED, SuiteType.CAMERA_AUTOMATED
     else:
-        return MatterTestType.AUTOMATED, SuiteType.AUTOMATED    
+        return MatterTestType.AUTOMATED, SuiteType.AUTOMATED
+
 
 def parse_yaml_test(path: Path) -> YamlTest:
     """Parse a single YAML file into YamlTest model.
