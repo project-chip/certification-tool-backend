@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Any
+from typing import Any, Optional
 
 from pydantic_yaml import YamlModelMixin
 
 from ...models.matter_test_models import MatterTest
+from .test_suite import SuiteType
 
 ###
 # This file declares YAML models that are used to parse the YAML Test Cases.
@@ -25,5 +26,7 @@ from ...models.matter_test_models import MatterTest
 
 
 class YamlTest(YamlModelMixin, MatterTest):
+    suite_type: Optional[SuiteType] = None
+
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(steps=kwargs["tests"], **kwargs)

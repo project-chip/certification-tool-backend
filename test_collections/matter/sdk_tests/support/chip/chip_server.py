@@ -34,6 +34,8 @@ from ..sdk_container import DOCKER_LOGS_PATH, DOCKER_PAA_CERTS_PATH, SDKContaine
 CHIP_TOOL_EXE = "./chip-tool"
 CHIP_TOOL_ARG_PAA_CERTS_PATH = "--paa-trust-store-path"
 
+CHIP_CAMERA_CONTROLLER_EXE = "./chip-camera-controller"
+
 # Chip App Parameters
 CHIP_APP_EXE = "./chip-app1"
 
@@ -49,6 +51,7 @@ class UnsupportedChipServerType(Exception):
 class ChipServerType(str, Enum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
+    CHIP_CAMERA_CONTROLLER = "chip-camera-controller"
 
 
 class ChipServer(metaclass=Singleton):
@@ -119,7 +122,10 @@ class ChipServer(metaclass=Singleton):
         self.__use_paa_certs = use_paa_certs
         self.__server_type = server_type
 
-        if server_type == ChipServerType.CHIP_TOOL:
+        if server_type == ChipServerType.CHIP_CAMERA_CONTROLLER:
+            prefix = CHIP_CAMERA_CONTROLLER_EXE
+            command = ["interactive", "server"]
+        elif server_type == ChipServerType.CHIP_TOOL:
             prefix = CHIP_TOOL_EXE
             command = ["interactive", "server"]
         elif server_type == ChipServerType.CHIP_APP:

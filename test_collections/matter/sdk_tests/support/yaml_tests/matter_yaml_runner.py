@@ -228,7 +228,7 @@ class MatterYAMLRunner(metaclass=Singleton):
             pics_path = f"{PICS_FILE_PATH}"
             self.logger.info(f"Using PICS file: {pics_path}")
 
-        if server_type == ChipServerType.CHIP_TOOL:
+        if server_type == ChipServerType.CHIP_TOOL or server_type == ChipServerType.CHIP_CAMERA_CONTROLLER:
             test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
         else:
             test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
@@ -238,7 +238,8 @@ class MatterYAMLRunner(metaclass=Singleton):
             [test_path], parser_config, test_parser_hooks
         )
 
-        if server_type == ChipServerType.CHIP_TOOL:
+        #Reuse chip-tool adapter for camera-controller
+        if server_type == ChipServerType.CHIP_TOOL or server_type == ChipServerType.CHIP_CAMERA_CONTROLLER:
             adapter = ChipToolAdapter.Adapter(parser_config.definitions)
         elif server_type == ChipServerType.CHIP_APP:
             adapter = ChipAppAdapter.Adapter(parser_config.definitions)
