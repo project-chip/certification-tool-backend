@@ -103,12 +103,12 @@ def test_test_type_all_disabled_steps() -> None:
     disabled_step = MatterTestStep(label="Disabled Test Step", disabled=True)
     five_disabled_steps_test = yaml_test_instance(tests=[disabled_step] * 5)
 
-    type = _test_type(five_disabled_steps_test)
+    type, _ = _test_type(five_disabled_steps_test)
     assert type == MatterTestType.MANUAL
 
     # simulated in path overrides test type to simulated
     five_disabled_steps_test.path = Path("TC_XX_Simulated.yaml")
-    type = _test_type(five_disabled_steps_test)
+    type, _ = _test_type(five_disabled_steps_test)
     assert type == MatterTestType.SIMULATED
 
 
@@ -117,12 +117,12 @@ def test_test_type_some_disabled_steps() -> None:
     enabled_step = MatterTestStep(label="Enabled Test Step", disabled=False)
     test = yaml_test_instance(tests=[disabled_step, enabled_step])
 
-    type = _test_type(test)
+    type, _ = _test_type(test)
     assert type == MatterTestType.AUTOMATED
 
     # simulated in path overrides test type to simulated
     test.path = Path("TC_XX_Simulated.yaml")
-    type = _test_type(test)
+    type, _ = _test_type(test)
     assert type == MatterTestType.SIMULATED
 
 
@@ -130,12 +130,12 @@ def test_test_type_all_enabled_steps_no_prompts() -> None:
     enabled_step = MatterTestStep(label="Enabled Test Step")
     five_enabled_steps_test = yaml_test_instance(tests=[enabled_step] * 5)
 
-    type = _test_type(five_enabled_steps_test)
+    type, _ = _test_type(five_enabled_steps_test)
     assert type == MatterTestType.AUTOMATED
 
     # simulated in path overrides test type to simulated
     five_enabled_steps_test.path = Path("TC_XX_Simulated.yaml")
-    type = _test_type(five_enabled_steps_test)
+    type, _ = _test_type(five_enabled_steps_test)
     assert type == MatterTestType.SIMULATED
 
 
@@ -144,10 +144,10 @@ def test_test_type_all_enabled_steps_some_prompts() -> None:
     prompt_step = MatterTestStep(label="Prompt Test Step", command="UserPrompt")
     test = yaml_test_instance(tests=[enabled_step, prompt_step])
 
-    type = _test_type(test)
+    type, _ = _test_type(test)
     assert type == MatterTestType.SEMI_AUTOMATED
 
     # simulated in path overrides test type to simulated
     test.path = Path("TC_XX_Simulated.yaml")
-    type = _test_type(test)
+    type, _ = _test_type(test)
     assert type == MatterTestType.SIMULATED

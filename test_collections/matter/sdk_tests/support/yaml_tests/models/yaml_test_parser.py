@@ -28,8 +28,8 @@ class YamlParserException(Exception):
     """Raised when an error occurs during the parser of yaml file."""
 
 
-def _get_types(test: YamlTest) -> tuple[MatterTestType, SuiteType]:
-    """Determine the type of a test based on the parsed yaml.
+def _test_type(test: YamlTest) -> tuple[MatterTestType, SuiteType]:
+    """Determine the type of a test and test suite based on the parsed yaml.
 
     This is mainly determined by the number of disabled test steps.
 
@@ -89,7 +89,7 @@ def parse_yaml_test(path: Path) -> YamlTest:
             yaml_str = file.read()
             test = YamlTest.parse_raw(yaml_str, proto="yaml")
             test.path = path
-            test_type, suite_type = _get_types(test)
+            test_type, suite_type = _test_type(test)
             test.type = test_type
             test.suite_type = suite_type
         except ValidationError as e:

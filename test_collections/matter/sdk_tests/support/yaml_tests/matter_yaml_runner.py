@@ -233,9 +233,9 @@ class MatterYAMLRunner(metaclass=Singleton):
             server_type == ChipServerType.CHIP_TOOL
             or server_type == ChipServerType.CHIP_CAMERA_CONTROLLER
         ):
-            test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
+            test_path = f"{YAML_TESTS_PATH}/{test_path}.yaml"
         else:
-            test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
+            test_path = f"{YAML_TESTS_PATH}/{test_path}_Simulated.yaml"
 
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)
         parser_builder_config = TestParserBuilderConfig(
