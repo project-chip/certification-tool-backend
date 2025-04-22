@@ -206,6 +206,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         return await self.runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
             setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,  # type: ignore
         )
 
     async def __start_border_router(

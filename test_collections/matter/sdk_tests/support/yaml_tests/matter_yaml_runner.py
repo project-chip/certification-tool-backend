@@ -323,12 +323,14 @@ class MatterYAMLRunner(metaclass=Singleton):
         self,
         hex_dataset: str,
         setup_code: str,
+        discriminator: str,
     ) -> bool:
         return await self.pairing(
             PAIRING_MODE_NFC_THREAD,
             hex(self.chip_server.node_id),
             f"hex:{hex_dataset}",
             setup_code,
+            discriminator,
         )
 
     def set_pics(self, pics: PICS) -> None:
