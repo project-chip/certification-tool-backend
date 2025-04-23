@@ -102,8 +102,7 @@ async def generate_command_arguments(
             and "qr-code" not in test_parameters.keys()
         ):
             # Retrieve arguments from dut_config
-            if pairing_mode != DutPairingModeEnum.NFC_THREAD:
-                arguments.append(f"--discriminator {dut_config.discriminator}")
+            arguments.append(f"--discriminator {dut_config.discriminator}")
             arguments.append(f"--passcode {dut_config.setup_code}")
 
         for name, value in test_parameters.items():
@@ -111,8 +110,7 @@ async def generate_command_arguments(
             arguments.append(f"--{name} {arg_value}")
     else:
         # Retrieve arguments from dut_config
-        if pairing_mode != DutPairingModeEnum.NFC_THREAD:
-            arguments.append(f"--discriminator {dut_config.discriminator}")
+        arguments.append(f"--discriminator {dut_config.discriminator}")
         arguments.append(f"--passcode {dut_config.setup_code}")
 
     return arguments

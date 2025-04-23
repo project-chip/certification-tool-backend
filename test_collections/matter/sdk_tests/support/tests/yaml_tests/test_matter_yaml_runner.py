@@ -465,6 +465,7 @@ async def test_pairing_nfc_thread_command_params() -> None:
     chip_server: ChipServer = ChipServer()
     hex_dataset = "c0ffee"
     setup_code = "0123456"
+    discriminator = "1234"
 
     with mock.patch.object(
         target=runner,
@@ -475,9 +476,12 @@ async def test_pairing_nfc_thread_command_params() -> None:
         result = await runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
             setup_code=setup_code,
+            discriminator=discriminator,
         )
 
-    expected_params = f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code}"
+    expected_params = (
+        f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code} {discriminator}"
+    )
     expected_command = f"pairing nfc-thread {expected_params}"
 
     assert result is True
