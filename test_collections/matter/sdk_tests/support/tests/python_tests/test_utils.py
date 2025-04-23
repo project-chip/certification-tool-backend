@@ -239,6 +239,7 @@ async def test_generate_command_arguments_nfc_thread() -> None:
     mock_dut_config = DutConfig(
         setup_code="8765",
         pairing_mode=DutPairingModeEnum.NFC_THREAD,
+        discriminator="456",
     )
 
     mock_config.dut_config = mock_dut_config
@@ -267,6 +268,7 @@ async def test_generate_command_arguments_nfc_thread() -> None:
                 "23402081111111122222222051000112233445566778899aabbccddeeff030444454d4"
                 "f"
             ),
+            "--discriminator 456",
             "--passcode 8765",
             "--paa-trust-store-path /paa-root-certs",
             "--storage_path /root/admin_storage.json",
@@ -286,6 +288,7 @@ async def test_generate_command_arguments_nfc_thread_for_external_network() -> N
     mock_dut_config = DutConfig(
         setup_code="8765",
         pairing_mode=DutPairingModeEnum.NFC_THREAD,
+        discriminator="783",
     )
 
     mock_config.dut_config = mock_dut_config
@@ -310,6 +313,7 @@ async def test_generate_command_arguments_nfc_thread_for_external_network() -> N
             "4f20410d477d767e424a5f2ef25c16fc9b621e90c0402a0f7f8000300000f0102123402081"
             "111111122222222051000112233445566778899aabbccddeeff030444454d4f"
         ),
+        "--discriminator 783",
         "--passcode 8765",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
