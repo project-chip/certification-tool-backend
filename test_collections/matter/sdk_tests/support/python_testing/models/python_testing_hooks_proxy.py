@@ -34,6 +34,7 @@ class SDKPythonTestResultEnum(str, Enum):
     STEP_UNKNOWN = "step_unknown"
     STEP_MANUAL = "step_manual"
     SHOW_PROMPT = "show_prompt"
+    SHOW_VIDEO_PROMPT = "show_video_prompt"
 
 
 class SDKPythonTestResultBase(BaseModel):
@@ -114,6 +115,11 @@ class SDKPythonTestResultShowPrompt(SDKPythonTestResultBase):
     msg: str
     placeholder: Optional[str]
     default_value: Optional[str]
+
+
+class SDKPythonTestResultShowVideoPrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_VIDEO_PROMPT
+    msg: str
 
 
 class SDKPythonTestRunnerHooks(TestRunnerHooks):
@@ -204,6 +210,9 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
                 msg=msg, placeholder=placeholder, default_value=default_value
             )
         )
+
+    def show_video_prompt(self, msg: str) -> None:
+        self.results.put(SDKPythonTestResultShowVideoPrompt(msg=msg))
 
     def step_start_list(self) -> None:
         pass

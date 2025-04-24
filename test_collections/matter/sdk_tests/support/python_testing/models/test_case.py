@@ -15,6 +15,7 @@
 #
 import re
 from asyncio import sleep
+from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
@@ -28,6 +29,7 @@ from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import (
     OptionsSelectPromptRequest,
+    StreamVerificationPromptRequest,
     TextInputPromptRequest,
 )
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
@@ -57,6 +59,11 @@ T = TypeVar("T", bound="PythonTestCase")
 
 class PythonTestCaseError(Exception):
     pass
+
+
+class PromptOptions(IntEnum):
+    FAIL = 0
+    PASS = 1
 
 
 class PythonTestCase(TestCase, UserPromptSupport):
@@ -143,6 +150,24 @@ class PythonTestCase(TestCase, UserPromptSupport):
             prompt=msg,
             placeholder_text=placeholder,
             default_value=default_value,
+        )
+
+        user_response = await self.send_prompt_request(prompt_request)
+
+        if self.test_socket and user_response.response_str:
+            response = f"{user_response.response_str}\n".encode()
+            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+
+    async def show_video_prompt(
+        self,
+        msg: str,
+    ) -> None:
+        options = {
+            "PASS": PromptOptions.PASS,
+            "FAIL": PromptOptions.FAIL,
+        }
+        prompt_request = StreamVerificationPromptRequest(
+            prompt=msg, options=options, timeout=120  # 120 Seconds
         )
 
         user_response = await self.send_prompt_request(prompt_request)
