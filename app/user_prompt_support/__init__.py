@@ -18,6 +18,7 @@ from .prompt_request import (
     OptionsSelectPromptRequest,
     PromptRequest,
     StreamVerificationPromptRequest,
+    ImageVerificationPromptRequest,
     TextInputPromptRequest,
     UploadFilePromptRequest,
 )

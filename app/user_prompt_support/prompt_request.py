@@ -67,3 +67,11 @@ class StreamVerificationPromptRequest(OptionsSelectPromptRequest):
     @property
     def messageType(self) -> MessageTypeEnum:
         return MessageTypeEnum.STREAM_VERIFICATION_REQUEST
+
+
+class ImageVerificationPromptRequest(OptionsSelectPromptRequest):
+    image_hex_str: str
+
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.IMAGE_VERIFICATION_REQUEST

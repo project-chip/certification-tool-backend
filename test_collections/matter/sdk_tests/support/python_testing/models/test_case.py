@@ -30,6 +30,7 @@ from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import (
     OptionsSelectPromptRequest,
     StreamVerificationPromptRequest,
+    ImageVerificationPromptRequest,
     TextInputPromptRequest,
 )
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
@@ -175,6 +176,25 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+
+    async def show_image_prompt(
+        self,
+        msg: str,
+        img_hex_str: str
+    ) -> None:
+        options = {
+            "PASS": PromptOptions.PASS,
+            "FAIL": PromptOptions.FAIL,
+        }
+        prompt_request = ImageVerificationPromptRequest(
+            prompt=msg, options=options, timeout=120, image_hex_str=img_hex_str
+        )
+
+        user_response = await self.send_prompt_request(prompt_request)
+
+        if self.test_socket and user_response.response_str:
+            response = f"{user_response.response_str}\n".encode()
+            self.test_socket._sock.sendall(response)
 
     @classmethod
     def pics(cls) -> set[str]:

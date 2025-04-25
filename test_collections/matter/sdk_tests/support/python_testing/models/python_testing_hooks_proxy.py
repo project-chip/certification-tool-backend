@@ -35,6 +35,7 @@ class SDKPythonTestResultEnum(str, Enum):
     STEP_MANUAL = "step_manual"
     SHOW_PROMPT = "show_prompt"
     SHOW_VIDEO_PROMPT = "show_video_prompt"
+    SHOW_IMAGE_PROMPT = "show_image_prompt"
 
 
 class SDKPythonTestResultBase(BaseModel):
@@ -120,6 +121,12 @@ class SDKPythonTestResultShowPrompt(SDKPythonTestResultBase):
 class SDKPythonTestResultShowVideoPrompt(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.SHOW_VIDEO_PROMPT
     msg: str
+
+
+class SDKPythonTestResultShowImagePrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_IMAGE_PROMPT
+    msg: str
+    img_hex_str: str
 
 
 class SDKPythonTestRunnerHooks(TestRunnerHooks):
@@ -213,6 +220,13 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
 
     def show_video_prompt(self, msg: str) -> None:
         self.results.put(SDKPythonTestResultShowVideoPrompt(msg=msg))
+
+    def show_image_prompt(self, msg: str, img_hex_str: str) -> None:
+        self.results.put(SDKPythonTestResultShowImagePrompt(
+            msg=msg,
+            img_hex_str=img_hex_str
+        )
+        )
 
     def step_start_list(self) -> None:
         pass

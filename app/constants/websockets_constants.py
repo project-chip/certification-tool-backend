@@ -37,6 +37,7 @@ class MessageTypeEnum(str, Enum):
     TEST_LOG_RECORDS = "test_log_records"
     INVALID_MESSAGE = "invalid_message"
     STREAM_VERIFICATION_REQUEST = "stream_verification_request"
+    IMAGE_VERIFICATION_REQUEST = "image_verification_request"
 
 
 # Enum keys used with messages at the top level
