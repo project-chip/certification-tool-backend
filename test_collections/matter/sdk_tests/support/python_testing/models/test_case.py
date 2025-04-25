@@ -28,9 +28,9 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 from app.user_prompt_support.prompt_request import (
+    ImageVerificationPromptRequest,
     OptionsSelectPromptRequest,
     StreamVerificationPromptRequest,
-    ImageVerificationPromptRequest,
     TextInputPromptRequest,
 )
 from app.user_prompt_support.user_prompt_support import UserPromptSupport

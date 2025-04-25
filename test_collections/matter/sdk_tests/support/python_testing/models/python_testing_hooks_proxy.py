@@ -222,10 +222,8 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         self.results.put(SDKPythonTestResultShowVideoPrompt(msg=msg))
 
     def show_image_prompt(self, msg: str, img_hex_str: str) -> None:
-        self.results.put(SDKPythonTestResultShowImagePrompt(
-            msg=msg,
-            img_hex_str=img_hex_str
-        )
+        self.results.put(
+            SDKPythonTestResultShowImagePrompt(msg=msg, img_hex_str=img_hex_str)
         )
 
     def step_start_list(self) -> None:
