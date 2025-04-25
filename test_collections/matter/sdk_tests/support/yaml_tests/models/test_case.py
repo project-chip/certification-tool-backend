@@ -232,7 +232,7 @@ class YamlCameraChipTestCase(YamlTestCase, ChipTest):
             self._append_automated_test_step(step)
 
 
-class YamlCameraSemiAutomatedChipTestCase(YamlChipTestCase, ChipManualPromptTest):
+class YamlCameraSemiAutomatedChipTestCase(YamlCameraChipTestCase, ChipManualPromptTest):
     """Camera Semi-Automated test cases, need special step for users to attach logs
     for manual steps, so inheriting from ChipManualPromptTest.
     """
