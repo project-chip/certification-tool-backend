@@ -63,8 +63,8 @@ class PythonTestCaseError(Exception):
 
 
 class PromptOptions(IntEnum):
-    FAIL = 0
     PASS = 1
+    FAIL = 2
 
 
 class PythonTestCase(TestCase, UserPromptSupport):
