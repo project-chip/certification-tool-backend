@@ -159,10 +159,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
-    async def show_video_prompt(
-        self,
-        msg: str,
-    ) -> None:
+    async def show_video_prompt(self, msg: str) -> None:
         options = {
             "PASS": PromptOptions.PASS,
             "FAIL": PromptOptions.FAIL,
@@ -177,11 +174,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
-    async def show_image_prompt(
-        self,
-        msg: str,
-        img_hex_str: str
-    ) -> None:
+    async def show_image_prompt(self, msg: str, img_hex_str: str) -> None:
         options = {
             "PASS": PromptOptions.PASS,
             "FAIL": PromptOptions.FAIL,
@@ -194,7 +187,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
-            self.test_socket._sock.sendall(response)
+            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
 
     @classmethod
     def pics(cls) -> set[str]:
