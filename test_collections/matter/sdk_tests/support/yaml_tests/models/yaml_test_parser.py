@@ -20,9 +20,9 @@ from loguru import logger
 from pydantic import ValidationError
 
 from ...models.matter_test_models import MatterTestType
+from .constants.yaml_constants import USER_ACTIONS
 from .test_suite import SuiteType
 from .yaml_test_models import YamlTest
-
 
 class YamlParserException(Exception):
     """Raised when an error occurs during the parser of yaml file."""
@@ -63,7 +63,7 @@ def _test_type(test: YamlTest) -> tuple[MatterTestType, SuiteType]:
     # if any step has a UserPrompt, PromptWithResponse or VerifyVideoStream command,
     # categorize as semi-automated
     if any(
-        s.command in ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"]
+        s.command in USER_ACTIONS
         for s in steps
     ):
         if re.search(camera_test_pattern, test.name):
