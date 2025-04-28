@@ -229,14 +229,6 @@ class MatterYAMLRunner(metaclass=Singleton):
             pics_path = f"{PICS_FILE_PATH}"
             self.logger.info(f"Using PICS file: {pics_path}")
 
-        if (
-            server_type == ChipServerType.CHIP_TOOL
-            or server_type == ChipServerType.CHIP_CAMERA_CONTROLLER
-        ):
-            test_path = f"{YAML_TESTS_PATH}/{test_path}.yaml"
-        else:
-            test_path = f"{YAML_TESTS_PATH}/{test_path}_Simulated.yaml"
-
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)
         parser_builder_config = TestParserBuilderConfig(
             [test_path], parser_config, test_parser_hooks
