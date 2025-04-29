@@ -19,6 +19,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from random import randrange
+from time import time
 from typing import Generator, Optional, Union, cast
 
 import loguru
@@ -37,6 +38,8 @@ CHIP_TOOL_ARG_PAA_CERTS_PATH = "--paa-trust-store-path"
 # Chip App Parameters
 CHIP_APP_EXE = "./chip-app1"
 
+CHIP_SERVER_EXIT_TIMEOUT = 30  # seconds
+
 
 class ChipServerStartingError(Exception):
     """Raised when we fail to start the chip server"""
@@ -44,6 +47,10 @@ class ChipServerStartingError(Exception):
 
 class UnsupportedChipServerType(Exception):
     """Raised when we attempt to use a chip server, but the type is not supported"""
+
+
+class ChipServerExitError(Exception):
+    """Raised when a timout happens when trying to exit the chip server"""
 
 
 class ChipServerType(str, Enum):
@@ -165,9 +172,16 @@ class ChipServer(metaclass=Singleton):
             )
             return None
 
+        # A given timeout in seconds is provided to wait for the chip server exit code
+        # In case the timeout is triggered, the process continues after logging
+        timeout = time() + CHIP_SERVER_EXIT_TIMEOUT
         exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
-        while exit_code is None:
+
+        while time() <= timeout:
             exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
+
+        if exit_code is None:
+            raise ChipServerExitError("Timeout while waiting to exit chip server")
 
         return exit_code
 
