@@ -19,7 +19,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from random import randrange
-from time import time
+from time import sleep, time
 from typing import Generator, Optional, Union, cast
 
 import loguru
@@ -177,7 +177,8 @@ class ChipServer(metaclass=Singleton):
         timeout = time() + CHIP_SERVER_EXIT_TIMEOUT
         exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
 
-        while time() <= timeout:
+        while exit_code is not None and time() <= timeout:
+            sleep(CHIP_SERVER_EXIT_TIMEOUT / 5)
             exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
 
         if exit_code is None:
