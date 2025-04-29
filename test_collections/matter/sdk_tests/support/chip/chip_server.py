@@ -50,7 +50,7 @@ class UnsupportedChipServerType(Exception):
 
 
 class ChipServerExitError(Exception):
-    """Raised when a timout happens when trying to exit the chip server"""
+    """Raised when a timout happens while trying to exit the chip server"""
 
 
 class ChipServerType(str, Enum):
