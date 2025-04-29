@@ -173,12 +173,18 @@ class ChipServer(metaclass=Singleton):
             return None
 
         # A given timeout in seconds is provided to wait for the chip server exit code
+        # To avoid excessive attempts, we verify 5 times over the timeout value provided
         # In case the timeout is triggered, the process continues after logging
+        sleeping_seconds = CHIP_SERVER_EXIT_TIMEOUT / 5
         timeout = time() + CHIP_SERVER_EXIT_TIMEOUT
         exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
 
-        while exit_code is not None and time() <= timeout:
-            sleep(CHIP_SERVER_EXIT_TIMEOUT / 5)
+        while exit_code is None and time() <= timeout:
+            self.logger.info(
+                f"Sleeping for {sleeping_seconds} seconds before verifying chip server "
+                "exit code again."
+            )
+            sleep(sleeping_seconds)
             exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
 
         if exit_code is None:
