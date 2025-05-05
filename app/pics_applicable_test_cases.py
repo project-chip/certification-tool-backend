@@ -101,6 +101,7 @@ def __handle_platform_certification(
         # TODO Need to fetch platform-test.json from repo
         # Issue: https://github.com/project-chip/certification-tool/issues/571
         platform_tests = __read_platform_test_cases("platform-test.json")
+        logger.info(f"Listing platform-test.json test cases: {sorted(platform_tests)}")
 
         # Only add platform tests that don't already exist with any suffix
         for test in platform_tests:
@@ -115,13 +116,26 @@ def __handle_platform_certification(
         # Create a new list with dmp_test_skip plus the same tests with
         # " (Semi-automated)" and " (Steps Disabled)" suffixes
         # These suffixes may be added during the test parsing process
+        logger.info(f"Listing dmp_test_skip test cases: {sorted(dmp_test_skip)}")
         extended_skip_list = dmp_test_skip.copy()
         for test in dmp_test_skip:
             extended_skip_list.append(f"{test} (Semi-automated)")
             extended_skip_list.append(f"{test} (Steps Disabled)")
 
+        # Make a copy of applicable test cases before removing for logging purposes
+        applicable_tests_combined_original = applicable_tests_combined.copy()
+
         # Remove tests from the extended list from applicable_tests_combined
         applicable_tests_combined.difference_update(extended_skip_list)
+
+        # Logging the removed test cases due to DMP file content
+        removed_tests = applicable_tests_combined_original - applicable_tests_combined
+        logger.info(f"Listing test cases removed due to dmp: {sorted(removed_tests)}")
+
+    logger.info(
+        "Listing applicable tests cases "
+        f"for execution: {sorted(applicable_tests_combined)}"
+    )
 
     return applicable_tests_combined
 
