@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from enum import Enum
+from fastapi import WebSocket
 
 MESSAGE_ID_KEY = "message_id"
 
@@ -37,6 +38,17 @@ class MessageTypeEnum(str, Enum):
     TEST_LOG_RECORDS = "test_log_records"
     INVALID_MESSAGE = "invalid_message"
     STREAM_VERIFICATION_REQUEST = "stream_verification_request"
+
+
+class WebSocketTypeEnum(str, Enum):
+    MAIN = "main"
+    VIDEO = "video"
+
+
+class WebSocketConnection():
+    def __init__(self, websocket: WebSocket, socket_type: WebSocketTypeEnum) -> None:
+        self.websocket = websocket
+        self.type = socket_type
 
 
 # Enum keys used with messages at the top level

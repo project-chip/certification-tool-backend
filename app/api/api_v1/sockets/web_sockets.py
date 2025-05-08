@@ -18,9 +18,8 @@ import socket
 
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
-from loguru import logger
 
-from app.constants.websockets_constants import UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT
+from app.constants.websockets_constants import WebSocketTypeEnum, WebSocketConnection
 from app.socket_connection_manager import SocketConnectionManager
 
 router = APIRouter()
@@ -29,7 +28,8 @@ router = APIRouter()
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     socket_connection_manager = SocketConnectionManager()
-    await socket_connection_manager.connect(websocket)
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.MAIN)
+    await socket_connection_manager.connect(connection)
     try:
         while True:
             # WebSocketDisconnect is not raised unless we poll
@@ -37,36 +37,18 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             try:
                 message = await asyncio.wait_for(websocket.receive_text(), 0.1)
                 await socket_connection_manager.received_message(
-                    socket=websocket, message=message
+                    websocket=websocket, message=message
                 )
             except asyncio.TimeoutError:
                 pass
 
     except WebSocketDisconnect:
-        socket_connection_manager.disconnect(websocket)
+        socket_connection_manager.disconnect(connection)
 
 
 @router.websocket("/ws/video")
 async def websocket_video_endpoint(websocket: WebSocket) -> None:
-    try:
-        await websocket.accept()
-        logger.info(f'Websocket connected: "{websocket}".')
-    except RuntimeError as e:
-        logger.info(f'Failed to connect with error: "{e}".')
-        raise e
-
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-        sock.bind((UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT))
-        logger.info("UDP socket bound successfully")
-        loop = asyncio.get_event_loop()
-        while True:
-            data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
-            # send data to ws
-            await websocket.send_bytes(data)
-    except WebSocketDisconnect:
-        logger.info(f'Websocket for video stream disconnected: "{websocket}".')
-    except Exception as e:
-        logger.info(f"Failed with {e}")
-    finally:
-        await websocket.close()
+    socket_connection_manager = SocketConnectionManager()
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.VIDEO)
+    await socket_connection_manager.connect(connection)
+    await socket_connection_manager.relay_video_frames(connection)
