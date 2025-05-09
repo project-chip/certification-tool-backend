@@ -27,8 +27,8 @@ from app.constants.websockets_constants import (
     MESSAGE_ID_KEY,
     MessageKeysEnum,
     MessageTypeEnum,
+    WebSocketConnection,
     WebSocketTypeEnum,
-    WebSocketConnection
 )
 from app.socket_connection_manager import (
     SocketConnectionManager,

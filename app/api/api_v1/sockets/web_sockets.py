@@ -14,12 +14,11 @@
 # limitations under the License.
 #
 import asyncio
-import socket
 
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 
-from app.constants.websockets_constants import WebSocketTypeEnum, WebSocketConnection
+from app.constants.websockets_constants import WebSocketConnection, WebSocketTypeEnum
 from app.socket_connection_manager import SocketConnectionManager
 
 router = APIRouter()

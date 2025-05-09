@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 import json
 import socket
-import asyncio
 from json import JSONDecodeError
 from typing import Callable, Dict, List, Union
 
@@ -34,8 +34,8 @@ from app.constants.websockets_constants import (
     UDP_SOCKET_PORT,
     MessageKeysEnum,
     MessageTypeEnum,
+    WebSocketConnection,
     WebSocketTypeEnum,
-    WebSocketConnection
 )
 from app.singleton import Singleton
 
@@ -64,7 +64,10 @@ class SocketConnectionManager(object, metaclass=Singleton):
             raise e
 
     def disconnect(self, connection: WebSocketConnection) -> None:
-        logger.info(f'Websocket disconnected: "{connection.websocket}" and type: "{connection.type}".')
+        logger.info(
+            f'Websocket disconnected: "{connection.websocket}"'
+            f' of type: "{connection.type}".'
+        )
         self.active_connections.remove(connection)
 
     async def send_personal_message(
@@ -84,15 +87,15 @@ class SocketConnectionManager(object, metaclass=Singleton):
                 websocket = connection.websocket
                 try:
                     await websocket.send_text(message)
-                # Starlette raises websockets.exceptions.ConnectionClosedOK when trying to
-                # send to a closed websocket. https://github.com/encode/starlette/issues/759
+                # Starlette raises websockets.exceptions.ConnectionClosedOK
+                # when trying to send to a closed websocket.
+                # https://github.com/encode/starlette/issues/759
                 except ConnectionClosedOK:
                     if websocket.application_state != WebSocketState.DISCONNECTED:
                         await websocket.close()
                     logger.warning(
-                        f'Failed to send message: "{message}" to websocket: "{websocket}",'
-                        "connection closed."
-                    )
+                        f'Failed to send message: "{message}"'
+                        f' to websocket: "{websocket}", connection closed."')
                 except RuntimeError as e:
                     logger.warning(
                         f'Failed to send: "{message}" to websocket: "{websocket}."',
@@ -130,7 +133,9 @@ class SocketConnectionManager(object, metaclass=Singleton):
                 await websocket.close()
                 self.active_connections.remove(connection)
         else:
-            logger.error(f"Websocket connection \"{connection}\" must have type {WebSocketTypeEnum.VIDEO}")
+            logger.error(
+                f'Excpected websocket connection of type {WebSocketTypeEnum.VIDEO}'
+            )
 
     # Note: Currently we only support one message handler per type, registering the
     # handler will displace the previous handler(if any)
@@ -139,7 +144,9 @@ class SocketConnectionManager(object, metaclass=Singleton):
     ) -> None:
         self.__message_handlers[message_type] = callback
 
-    async def __handle_received_json(self, websocket: WebSocket, json_dict: dict) -> None:
+    async def __handle_received_json(
+        self, websocket: WebSocket, json_dict: dict
+    ) -> None:
         message_type = json_dict[MessageKeysEnum.TYPE]
         if message_type is None:
             # Every message must have a type key for the tool to be able to route it
@@ -158,7 +165,9 @@ class SocketConnectionManager(object, metaclass=Singleton):
         message_handler = self.__message_handlers[message_type]
         message_handler(json_dict[MessageKeysEnum.PAYLOAD], websocket)
 
-    async def __notify_invalid_message(self, websocket: WebSocket, message: str) -> None:
+    async def __notify_invalid_message(
+        self, websocket: WebSocket, message: str
+    ) -> None:
         notify_message = {
             MessageKeysEnum.TYPE: MessageTypeEnum.INVALID_MESSAGE,
             MessageKeysEnum.PAYLOAD: message,

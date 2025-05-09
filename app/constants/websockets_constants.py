@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from enum import Enum
+
 from fastapi import WebSocket
 
 MESSAGE_ID_KEY = "message_id"
@@ -45,7 +46,7 @@ class WebSocketTypeEnum(str, Enum):
     VIDEO = "video"
 
 
-class WebSocketConnection():
+class WebSocketConnection:
     def __init__(self, websocket: WebSocket, socket_type: WebSocketTypeEnum) -> None:
         self.websocket = websocket
         self.type = socket_type
