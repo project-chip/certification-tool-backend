@@ -208,7 +208,7 @@ async def test_text_input_user_prompt_manager_response(db: Session) -> None:
     # Send response to the prompt manager
     socket = MagicMock()
     await socket_connection_manager.received_message(
-        socket=socket, message=dumps(__expected_response_dict_okay())
+        websocket=socket, message=dumps(__expected_response_dict_okay())
     )
 
     # Verify the user response properties
@@ -220,7 +220,7 @@ async def test_text_input_user_prompt_manager_response(db: Session) -> None:
     prompt.message_id = 2
     user_prompt_manager.active_prompts.append(prompt)
     await socket_connection_manager.received_message(
-        socket=socket, message=dumps(__expected_response_dict_cancelled())
+        websocket=socket, message=dumps(__expected_response_dict_cancelled())
     )
 
     # Verify the user response properties
@@ -372,7 +372,7 @@ async def broadcast_stub_response_okay(*args: Any, **kwargs: Any) -> Any:
     # Call the received message with the expected response
     socket = MagicMock()
     await socket_connection_manager.received_message(
-        socket=socket, message=dumps(__expected_response_dict_okay())
+        websocket=socket, message=dumps(__expected_response_dict_okay())
     )
     return DEFAULT
 
