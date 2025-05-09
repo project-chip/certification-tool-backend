@@ -76,7 +76,7 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
 
 def __handle_platform_certification(
     enabled_pics: set[str], applicable_tests_combined: set[str], dmp_test_skip: list
-) -> set[str]:
+) -> None:
     """
     Handle platform certification test cases based on PICS configuration.
 
@@ -98,18 +98,14 @@ def __handle_platform_certification(
         )
 
     if PICS_PLAT_CERT in enabled_pics:
-        applicable_tests_combined = __process_platform_tests(applicable_tests_combined)
+        __process_platform_tests(applicable_tests_combined)
     elif PICS_PLAT_CERT_DERIVED in enabled_pics:
-        applicable_tests_combined = __process_platform_cert_derived(
-            dmp_test_skip, applicable_tests_combined
-        )
+        __process_platform_cert_derived(dmp_test_skip, applicable_tests_combined)
 
     logger.info(
         "Listing applicable tests cases "
         f"for execution: {sorted(applicable_tests_combined)}"
     )
-
-    return applicable_tests_combined
 
 
 def applicable_test_cases_set(
@@ -149,12 +145,12 @@ def applicable_test_cases_set(
     )
 
     # Handle platform certification test cases
-    applicable_tests = __handle_platform_certification(
+    __handle_platform_certification(
         enabled_pics, applicable_tests_combined, dmp_test_skip
     )
 
-    logger.debug(f"Applicable test cases: {applicable_tests}")
-    return PICSApplicableTestCases(test_cases=list(applicable_tests))
+    logger.debug(f"Applicable test cases: {applicable_tests_combined}")
+    return PICSApplicableTestCases(test_cases=list(applicable_tests_combined))
 
 
 def __applicable_test_cases(
@@ -203,7 +199,7 @@ def __retrieve_pics(test_case: TestCaseDeclaration) -> Tuple[set, set]:
     return enabled_pics, disabled_pics
 
 
-def __process_platform_tests(applicable_tests_combined: set[str]) -> set[str]:
+def __process_platform_tests(applicable_tests_combined: set[str]) -> None:
     """
     Process platform tests and add them to applicable tests
 
@@ -217,6 +213,9 @@ def __process_platform_tests(applicable_tests_combined: set[str]) -> set[str]:
     # Issue: https://github.com/project-chip/certification-tool/issues/571
     platform_tests = __read_platform_test_cases("platform-test.json")
     logger.info(f"Listing platform-test.json test cases: {sorted(platform_tests)}")
+
+    # All platform tests must be added
+    applicable_tests_combined.update(platform_tests)
 
     test_collections_copy = test_script_manager.test_collections.copy()
 
@@ -244,13 +243,11 @@ def __process_platform_tests(applicable_tests_combined: set[str]) -> set[str]:
             if matching_test:
                 applicable_tests_combined.add(matching_test)
             else:
-                applicable_tests_combined.add(test)
-
-    return applicable_tests_combined
+                logger.info(f"The platform test {test} is not found in TH")
 
 
 def __process_platform_cert_derived(
-    dmp_test_skip: list, applicable_tests_combined: set[str]
+    dmp_test_skip: list, applicable_tests_combined: None
 ) -> set[str]:
     """
     Process platform certification derived test cases.
@@ -280,5 +277,3 @@ def __process_platform_cert_derived(
     # Logging the removed test cases due to DMP file content
     removed_tests = applicable_tests_combined_original - applicable_tests_combined
     logger.info(f"Listing test cases removed due to dmp: {sorted(removed_tests)}")
-
-    return applicable_tests_combined
