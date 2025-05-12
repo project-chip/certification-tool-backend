@@ -247,8 +247,8 @@ def __process_platform_tests(applicable_tests_combined: set[str]) -> None:
 
 
 def __process_platform_cert_derived(
-    dmp_test_skip: list, applicable_tests_combined: None
-) -> set[str]:
+    dmp_test_skip: list, applicable_tests_combined: set[str]
+) -> None:
     """
     Process platform certification derived test cases.
 
