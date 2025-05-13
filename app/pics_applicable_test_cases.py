@@ -208,7 +208,7 @@ def __process_platform_tests(applicable_tests_combined: set[str]) -> None:
     platform_tests = __read_platform_test_cases("platform-test.json")
     logger.info(f"Listing platform-test.json test cases: {sorted(platform_tests)}")
 
-    # Include each platform test along with some sufix: 'Semi-automated'
+    # Include each platform test along with some suffixes: 'Semi-automated'
     # and 'Steps Disabled'
     for test in platform_tests:
         applicable_tests_combined.add(test)
