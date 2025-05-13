@@ -225,7 +225,7 @@ def __process_platform_tests(applicable_tests_combined: set[str]) -> None:
             for test_case in test_suite.test_cases.values():
                 all_tests.append(test_case.metadata["title"])
 
-    # Only add platform tests that don't already exist with any suffix
+    # Now also add platform tests that contain a suffix (e.g., " (Semi-automated)")
     for test in platform_tests:
         # Check if the test exists with any suffix in applicable_tests_combined
         test_exists = any(
