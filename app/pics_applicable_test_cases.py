@@ -76,7 +76,7 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
 
 def __handle_platform_certification(
     enabled_pics: set[str], applicable_tests_combined: set[str], dmp_test_skip: list
-) -> set[str]:
+) -> None:
     """
     Handle platform certification test cases based on PICS configuration.
 
@@ -84,9 +84,6 @@ def __handle_platform_certification(
         enabled_pics: Set of enabled PICS
         applicable_tests_combined: Current set of applicable test cases
         dmp_test_skip: List of test cases to skip
-
-    Returns:
-        Updated set of applicable test cases
 
     Raises:
         PlatformTestError: If both PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are enabled
@@ -98,46 +95,14 @@ def __handle_platform_certification(
         )
 
     if PICS_PLAT_CERT in enabled_pics:
-        # TODO Need to fetch platform-test.json from repo
-        # Issue: https://github.com/project-chip/certification-tool/issues/571
-        platform_tests = __read_platform_test_cases("platform-test.json")
-        logger.info(f"Listing platform-test.json test cases: {sorted(platform_tests)}")
-
-        # Only add platform tests that don't already exist with any suffix
-        for test in platform_tests:
-            # Check if the test exists with any suffix
-            test_exists = any(
-                existing_test.startswith(f"{test} (")
-                for existing_test in applicable_tests_combined
-            )
-            if not test_exists:
-                applicable_tests_combined.add(test)
+        __process_platform_tests(applicable_tests_combined)
     elif PICS_PLAT_CERT_DERIVED in enabled_pics:
-        # Create a new list with dmp_test_skip plus the same tests with
-        # " (Semi-automated)" and " (Steps Disabled)" suffixes
-        # These suffixes may be added during the test parsing process
-        logger.info(f"Listing dmp_test_skip test cases: {sorted(dmp_test_skip)}")
-        extended_skip_list = dmp_test_skip.copy()
-        for test in dmp_test_skip:
-            extended_skip_list.append(f"{test} (Semi-automated)")
-            extended_skip_list.append(f"{test} (Steps Disabled)")
-
-        # Make a copy of applicable test cases before removing for logging purposes
-        applicable_tests_combined_original = applicable_tests_combined.copy()
-
-        # Remove tests from the extended list from applicable_tests_combined
-        applicable_tests_combined.difference_update(extended_skip_list)
-
-        # Logging the removed test cases due to DMP file content
-        removed_tests = applicable_tests_combined_original - applicable_tests_combined
-        logger.info(f"Listing test cases removed due to dmp: {sorted(removed_tests)}")
+        __process_platform_cert_derived(dmp_test_skip, applicable_tests_combined)
 
     logger.info(
         "Listing applicable tests cases "
         f"for execution: {sorted(applicable_tests_combined)}"
     )
-
-    return applicable_tests_combined
 
 
 def applicable_test_cases_set(
@@ -177,12 +142,12 @@ def applicable_test_cases_set(
     )
 
     # Handle platform certification test cases
-    applicable_tests = __handle_platform_certification(
+    __handle_platform_certification(
         enabled_pics, applicable_tests_combined, dmp_test_skip
     )
 
-    logger.debug(f"Applicable test cases: {applicable_tests}")
-    return PICSApplicableTestCases(test_cases=list(applicable_tests))
+    logger.debug(f"Applicable test cases: {applicable_tests_combined}")
+    return PICSApplicableTestCases(test_cases=list(applicable_tests_combined))
 
 
 def __applicable_test_cases(
@@ -229,3 +194,53 @@ def __retrieve_pics(test_case: TestCaseDeclaration) -> Tuple[set, set]:
             enabled_pics.add(pics)
 
     return enabled_pics, disabled_pics
+
+
+def __process_platform_tests(applicable_tests_combined: set[str]) -> None:
+    """
+    Process platform tests and add them to applicable tests
+
+    Args:
+        applicable_tests_combined: Current set of applicable test cases
+    """
+    # TODO Need to fetch platform-test.json from repo
+    # Issue: https://github.com/project-chip/certification-tool/issues/571
+    platform_tests = __read_platform_test_cases("platform-test.json")
+    logger.info(f"Listing platform-test.json test cases: {sorted(platform_tests)}")
+
+    # Include each platform test along with some suffixes: 'Semi-automated'
+    # and 'Steps Disabled'
+    for test in platform_tests:
+        applicable_tests_combined.add(test)
+        applicable_tests_combined.add(f"{test} (Semi-automated)")
+        applicable_tests_combined.add(f"{test} (Steps Disabled)")
+
+
+def __process_platform_cert_derived(
+    dmp_test_skip: list, applicable_tests_combined: set[str]
+) -> None:
+    """
+    Process platform certification derived test cases.
+
+    Args:
+        dmp_test_skip: List of test cases to skip
+        applicable_tests_combined: Current set of applicable test cases
+    """
+    # Create a new list with dmp_test_skip plus the same tests with
+    # " (Semi-automated)" and " (Steps Disabled)" suffixes
+    # These suffixes may be added during the test parsing process
+    logger.info(f"Listing dmp_test_skip test cases: {sorted(dmp_test_skip)}")
+    extended_skip_list = dmp_test_skip.copy()
+    for test in dmp_test_skip:
+        extended_skip_list.append(f"{test} (Semi-automated)")
+        extended_skip_list.append(f"{test} (Steps Disabled)")
+
+    # Make a copy of applicable test cases before removing for logging purposes
+    applicable_tests_combined_original = applicable_tests_combined.copy()
+
+    # Remove tests from the extended list from applicable_tests_combined
+    applicable_tests_combined.difference_update(extended_skip_list)
+
+    # Logging the removed test cases due to DMP file content
+    removed_tests = applicable_tests_combined_original - applicable_tests_combined
+    logger.info(f"Listing test cases removed due to dmp: {sorted(removed_tests)}")
