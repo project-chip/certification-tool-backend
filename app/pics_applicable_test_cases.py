@@ -85,9 +85,6 @@ def __handle_platform_certification(
         applicable_tests_combined: Current set of applicable test cases
         dmp_test_skip: List of test cases to skip
 
-    Returns:
-        Updated set of applicable test cases
-
     Raises:
         PlatformTestError: If both PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are enabled
     """
@@ -205,45 +202,18 @@ def __process_platform_tests(applicable_tests_combined: set[str]) -> None:
 
     Args:
         applicable_tests_combined: Current set of applicable test cases
-
-    Returns:
-        Updated set of applicable test cases
     """
     # TODO Need to fetch platform-test.json from repo
     # Issue: https://github.com/project-chip/certification-tool/issues/571
     platform_tests = __read_platform_test_cases("platform-test.json")
     logger.info(f"Listing platform-test.json test cases: {sorted(platform_tests)}")
 
-    # All platform tests must be added
-    applicable_tests_combined.update(platform_tests)
-
-    test_collections_copy = test_script_manager.test_collections.copy()
-
-    all_tests = []
-    for test_collection in test_collections_copy.values():
-        for test_suite in test_collection.test_suites.values():
-            for test_case in test_suite.test_cases.values():
-                all_tests.append(test_case.metadata["title"])
-
-    # Now also add platform tests that contain a suffix (e.g., " (Semi-automated)")
+    # Include each platform test along with some sufix: 'Semi-automated'
+    # and 'Steps Disabled'
     for test in platform_tests:
-        # Check if the test exists with any suffix in applicable_tests_combined
-        test_exists = any(
-            existing_test.startswith(f"{test} (")
-            for existing_test in applicable_tests_combined
-        )
-
-        # Check if the test exists in all_tests
-        matching_test = next(
-            (existing_test for existing_test in all_tests if test in existing_test),
-            None,
-        )
-
-        if not test_exists:
-            if matching_test:
-                applicable_tests_combined.add(matching_test)
-            else:
-                logger.info(f"The platform test {test} is not found in TH")
+        applicable_tests_combined.add(test)
+        applicable_tests_combined.add(f"{test} (Semi-automated)")
+        applicable_tests_combined.add(f"{test} (Steps Disabled)")
 
 
 def __process_platform_cert_derived(
@@ -255,9 +225,6 @@ def __process_platform_cert_derived(
     Args:
         dmp_test_skip: List of test cases to skip
         applicable_tests_combined: Current set of applicable test cases
-
-    Returns:
-        Updated set of applicable test cases
     """
     # Create a new list with dmp_test_skip plus the same tests with
     # " (Semi-automated)" and " (Steps Disabled)" suffixes
