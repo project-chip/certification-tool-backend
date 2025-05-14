@@ -174,7 +174,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
     def step_unknown(self) -> None:
         self.__runned += 1
 
-    async def step_manual(self, request: TestStep) -> None:
+    async def step_manual(self, request: Optional[TestStep]) -> None:
         step = self.current_test_step
         if not isinstance(step, ManualVerificationTestStep):
             raise TestError(f"Unexpected user prompt found in test step: {step.name}")
