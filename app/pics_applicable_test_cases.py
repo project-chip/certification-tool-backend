@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 import json
 from typing import Dict, Tuple
 
@@ -65,6 +66,7 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
         InvalidJSONError: If the JSON format is invalid
     """
     try:
+        json_file_path = os.path.join(os.path.dirname(__file__), "platform-test.json")
         with open(json_file_path, "r") as file:
             data = json.load(file)
             return set(data.get("PlatformTestCasesToRun", []))
