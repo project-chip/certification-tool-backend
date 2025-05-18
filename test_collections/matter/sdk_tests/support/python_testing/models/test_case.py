@@ -62,11 +62,6 @@ class PythonTestCaseError(Exception):
     pass
 
 
-class PromptOptions(IntEnum):
-    PASS = 1
-    FAIL = 2
-
-
 class PythonTestCase(TestCase, UserPromptSupport):
     """Base class for all Python Test based test cases.
 
