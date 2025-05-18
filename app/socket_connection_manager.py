@@ -95,7 +95,8 @@ class SocketConnectionManager(object, metaclass=Singleton):
                         await websocket.close()
                     logger.warning(
                         f'Failed to send message: "{message}"'
-                        f' to websocket: "{websocket}", connection closed."')
+                        f' to websocket: "{websocket}", connection closed."'
+                    )
                 except RuntimeError as e:
                     logger.warning(
                         f'Failed to send: "{message}" to websocket: "{websocket}."',
@@ -112,7 +113,7 @@ class SocketConnectionManager(object, metaclass=Singleton):
                 websocket=websocket, message=INVALID_JSON_ERROR_STR
             )
 
-    async def relay_video_frames(self, connection: WebSocketConnection):
+    async def relay_video_frames(self, connection: WebSocketConnection) -> None:
         if connection.type == WebSocketTypeEnum.VIDEO:
             websocket = connection.websocket
             try:
@@ -131,10 +132,10 @@ class SocketConnectionManager(object, metaclass=Singleton):
                 logger.error(f"Failed with {e}")
             finally:
                 await websocket.close()
-                self.active_connections.remove(connection)
+                self.disconnect(connection)
         else:
             logger.error(
-                f'Excpected websocket connection of type {WebSocketTypeEnum.VIDEO}'
+                f"Expected websocket connection of type {WebSocketTypeEnum.VIDEO}"
             )
 
     # Note: Currently we only support one message handler per type, registering the
