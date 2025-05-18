@@ -65,8 +65,8 @@ async def websocket_video_endpoint(websocket: WebSocket) -> None:
             # send data to ws
             await websocket.send_bytes(data)
     except WebSocketDisconnect:
-        logger.info(f'Websocket for video stream disconnected: "{websocket}".')
+        logger.error(f'Websocket for video stream disconnected: "{websocket}".')
     except Exception as e:
-        logger.info(f"Failed with {e}")
+        logger.error(f"Failed with {e}")
     finally:
         await websocket.close()
