@@ -23,9 +23,9 @@ class MatterSettings(BaseSettings):
 
     # SDK Docker Image
     SDK_DOCKER_IMAGE: str = "connectedhomeip/chip-cert-bins"
-    SDK_DOCKER_TAG: str = "6cc5fb11559a4fa8264c7de968600b00f8f06c25"
+    SDK_DOCKER_TAG: str = "a12250a4e4ffce5be5f809479fbe8d85e5acd230"
     # SDK SHA: used to fetch tests (YAML and Python) from SDK.
-    SDK_SHA: str = "6cc5fb11559a4fa8264c7de968600b00f8f06c25"
+    SDK_SHA: str = "a12250a4e4ffce5be5f809479fbe8d85e5acd230"
 
     class Config:
         case_sensitive = True
