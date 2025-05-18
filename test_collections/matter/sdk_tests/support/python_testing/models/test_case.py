@@ -156,8 +156,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     async def show_video_prompt(self, msg: str) -> None:
         options = {
-            "PASS": PromptOptions.PASS,
-            "FAIL": PromptOptions.FAIL,
+            "PASS": PromptOption.PASS,
+            "FAIL": PromptOption.FAIL,
         }
         prompt_request = StreamVerificationPromptRequest(
             prompt=msg, options=options, timeout=120  # 120 Seconds
