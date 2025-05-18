@@ -171,8 +171,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
     async def show_image_prompt(self, msg: str, img_hex_str: str) -> None:
         options = {
-            "PASS": PromptOptions.PASS,
-            "FAIL": PromptOptions.FAIL,
+            "PASS": PromptOption.PASS,
+            "FAIL": PromptOption.FAIL,
         }
         prompt_request = ImageVerificationPromptRequest(
             prompt=msg, options=options, timeout=120, image_hex_str=img_hex_str
