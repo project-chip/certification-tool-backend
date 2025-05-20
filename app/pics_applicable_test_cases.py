@@ -24,7 +24,7 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
 )
 from app.test_engine.test_script_manager import test_script_manager
-from test_collections.matter.sdk_tests.support.performance_tests.sdk_performance_tests import (  # noqa
+from test_collections.matter.sdk_tests.support.performance_tests.utils import (
     STRESS_TEST_COLLECTION,
 )
 

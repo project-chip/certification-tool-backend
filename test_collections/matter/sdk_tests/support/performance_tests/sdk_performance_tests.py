@@ -23,19 +23,7 @@ from .models.test_declarations import (
     PerformanceSuiteDeclaration,
 )
 from .models.test_suite import PerformanceSuiteType
-
-###
-# This file hosts logic to load and parse Stress/Stability test cases, located in
-# `./scripts/sdk/`.
-#
-# This is a temporary solution since those tests should come from SDK.
-#
-###
-
-STRESS_TEST_COLLECTION = "SDK Performance Tests"
-STRESS_TEST_SUITE = "Performance Test Suite"
-STRESS_TEST_PATH = Path(__file__).resolve().parent / "scripts/sdk/"
-STRESS_TEST_FOLDER = SDKTestFolder(path=STRESS_TEST_PATH, filename_pattern="TC_*")
+from .utils import STRESS_TEST_COLLECTION, STRESS_TEST_FOLDER, STRESS_TEST_SUITE
 
 
 def _init_test_suites(
