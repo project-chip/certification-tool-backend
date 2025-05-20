@@ -15,7 +15,6 @@
 #
 import re
 from asyncio import sleep
-from enum import IntEnum
 from inspect import iscoroutinefunction
 from multiprocessing.managers import BaseManager
 from pathlib import Path
