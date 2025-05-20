@@ -18,7 +18,15 @@ import os
 import re
 import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Optional
+
+from ..models.sdk_test_folder import SDKTestFolder
+
+STRESS_TEST_COLLECTION = "SDK Performance Tests"
+STRESS_TEST_SUITE = "Performance Test Suite"
+STRESS_TEST_PATH = Path(__file__).resolve().parent / "scripts/sdk/"
+STRESS_TEST_FOLDER = SDKTestFolder(path=STRESS_TEST_PATH, filename_pattern="TC_*")
 
 date_pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+"
 date_pattern_out_folder = "%d-%m-%Y_%H-%M-%S-%f"
