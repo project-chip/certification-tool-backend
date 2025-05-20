@@ -18,8 +18,8 @@ from pathlib import Path
 from loguru import logger
 from pydantic import ValidationError
 
+from ...constants import USER_ACTIONS
 from ...models.matter_test_models import MatterTestType
-from .constants.yaml_constants import USER_ACTIONS
 from .yaml_test_models import YamlTest
 
 

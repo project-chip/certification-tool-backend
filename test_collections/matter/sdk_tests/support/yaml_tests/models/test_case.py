@@ -26,9 +26,9 @@ from app.test_engine.models import (
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
 
 from ...chip.chip_server import ChipServerType
+from ...constants import USER_ACTIONS
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...yaml_tests.models.chip_test import ChipManualPromptTest, ChipTest
-from .constants.yaml_constants import USER_ACTIONS
 from .yaml_test_models import YamlTest
 
 # Custom type variable used to annotate the factory method in YamlTestCase.
