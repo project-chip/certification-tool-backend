@@ -15,7 +15,7 @@
 #
 # type: ignore
 # Ignore mypy type check for this file
-import json
+# import json
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -73,7 +73,8 @@ def test_applicable_test_cases_set_with_no_pics() -> None:
 #     # Create PICS with platform certification enabled
 #     pics = PICS()
 #     cluster = PICSCluster(name="Platform")
-#     cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+#     cluster.items["MCORE.PLAT_CERT"] = PICSItem(
+#       number="MCORE.PLAT_CERT", enabled=True)
 #     pics.clusters["Platform"] = cluster
 
 #     applicable_test_cases = applicable_test_cases_set(pics, [])
@@ -167,7 +168,8 @@ def test_applicable_test_cases_set_with_platform_cert_derived_enabled_remove_tes
 #     # Create PICS with platform certification enabled
 #     pics = PICS()
 #     cluster = PICSCluster(name="Platform")
-#     cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+#     cluster.items["MCORE.PLAT_CERT"] = PICSItem(
+#       number="MCORE.PLAT_CERT", enabled=True)
 #     pics.clusters["Platform"] = cluster
 
 #     # Create a set of applicable test cases
