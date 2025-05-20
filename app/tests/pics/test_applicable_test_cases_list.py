@@ -104,7 +104,7 @@ def test_applicable_test_cases_set_with_platform_cert_file_not_found(mock_file) 
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="invalid json")
-def test_applicable_test_cases_set_with_platform_cert_invalid_json() -> None:
+def test_applicable_test_cases_set_with_platform_cert_invalid_json(mock_file) -> None:
     # Create PICS with platform certification enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
