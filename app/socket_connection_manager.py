@@ -118,15 +118,25 @@ class SocketConnectionManager(object, metaclass=Singleton):
             websocket = connection.websocket
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+                sock.settimeout(1.0)
                 sock.bind((UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT))
                 logger.info("UDP socket bound successfully")
                 loop = asyncio.get_event_loop()
                 while True:
-                    data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
-                    for connection in self.active_connections:
-                        if connection.type == WebSocketTypeEnum.VIDEO:
-                            await connection.websocket.send_bytes(data)
-            except WebSocketDisconnect:
+                    try:
+                        data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
+                        await websocket.send_bytes(data)
+                    except TimeoutError:
+                        try:
+                            # WebSocketDisconnect is not raised unless we poll
+                            # https://github.com/tiangolo/fastapi/issues/3008
+                            await asyncio.wait_for(websocket.receive_text(), 0.1)
+                        except asyncio.TimeoutError:
+                            pass
+            # Starlette raises websockets.exceptions.ConnectionClosedOK
+            # when trying to send to a closed websocket.
+            # https://github.com/encode/starlette/issues/759
+            except (WebSocketDisconnect, ConnectionClosedOK):
                 logger.error(f'Websocket for video stream disconnected: "{websocket}".')
             except Exception as e:
                 logger.error(f"Failed with {e}")
