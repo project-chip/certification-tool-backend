@@ -143,6 +143,7 @@ class SocketConnectionManager(object, metaclass=Singleton):
             finally:
                 await websocket.close()
                 self.disconnect(connection)
+                sock.close()
         else:
             logger.error(
                 f"Expected websocket connection of type {WebSocketTypeEnum.VIDEO}"
