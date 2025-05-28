@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
 import json
+from pathlib import Path
 from typing import Dict, Tuple
 
 from loguru import logger
@@ -51,12 +51,12 @@ class InvalidJSONError(PlatformTestError):
     pass
 
 
-def __read_platform_test_cases(json_file_path: str) -> set[str]:
+def __read_platform_test_cases(platform_json_filename: str) -> set[str]:
     """
     Read platform test cases from a JSON file.
 
     Args:
-        json_file_path: Path to the JSON file containing platform test cases
+        platform_json_filename: Path to the JSON file containing platform test cases
 
     Returns:
         Set of test case IDs
@@ -66,14 +66,16 @@ def __read_platform_test_cases(json_file_path: str) -> set[str]:
         InvalidJSONError: If the JSON format is invalid
     """
     try:
-        json_file_path = os.path.join(os.path.dirname(__file__), "platform-test.json")
-        with open(json_file_path, "r") as file:
+        platform_tests_file = (
+            Path(__file__).parent.parent / "test_collections" / platform_json_filename
+        )
+        with open(platform_tests_file, "r") as file:
             data = json.load(file)
             return set(data.get("PlatformTestCasesToRun", []))
     except FileNotFoundError:
-        raise FileNotFoundError(f"File {json_file_path} not found")
+        raise FileNotFoundError(f"File {platform_tests_file} not found")
     except json.JSONDecodeError:
-        raise InvalidJSONError(f"Invalid JSON format in {json_file_path}")
+        raise InvalidJSONError(f"Invalid JSON format in {platform_tests_file}")
 
 
 def __handle_platform_certification(

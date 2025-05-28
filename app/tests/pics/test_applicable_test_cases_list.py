@@ -15,7 +15,8 @@
 #
 # type: ignore
 # Ignore mypy type check for this file
-# import json
+import json
+from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -61,30 +62,28 @@ def test_applicable_test_cases_set_with_no_pics() -> None:
     assert len(applicable_test_cases.test_cases) == 0
 
 
-# TODO: Github's CI is failing this unit test due to the mock_file call.
-# TODO: The Following issue was created to track the issue:
-# TODO: https://github.com/project-chip/certification-tool-backend/issues/222
-# @patch(
-#     "builtins.open",
-#     new_callable=mock_open,
-#     read_data=json.dumps(MOCK_PLATFORM_TEST_DATA),
-# )
-# def test_applicable_test_cases_set_with_platform_cert(mock_file) -> None:
-#     # Create PICS with platform certification enabled
-#     pics = PICS()
-#     cluster = PICSCluster(name="Platform")
-#     cluster.items["MCORE.PLAT_CERT"] = PICSItem(
-#       number="MCORE.PLAT_CERT", enabled=True)
-#     pics.clusters["Platform"] = cluster
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data=json.dumps(MOCK_PLATFORM_TEST_DATA),
+)
+def test_applicable_test_cases_set_with_platform_cert(mock_file) -> None:
+    # Create PICS with platform certification enabled
+    pics = PICS()
+    cluster = PICSCluster(name="Platform")
+    cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+    pics.clusters["Platform"] = cluster
 
-#     applicable_test_cases = applicable_test_cases_set(pics, [])
+    applicable_test_cases = applicable_test_cases_set(pics, [])
 
-#     # Verify that the platform test file was opened
-#     mock_file.assert_called_once_with("platform-test.json", "r")
+    # Verify that the platform test file was opened
+    mock_file.assert_called_once_with(
+        Path("test_collections/platform-test.json").resolve(), "r"
+    )
 
-#     # Verify that all platform test cases were included
-#     for test_case in MOCK_PLATFORM_TEST_DATA["PlatformTestCasesToRun"]:
-#         assert test_case in applicable_test_cases.test_cases
+    # Verify that all platform test cases were included
+    for test_case in MOCK_PLATFORM_TEST_DATA["PlatformTestCasesToRun"]:
+        assert test_case in applicable_test_cases.test_cases
 
 
 @patch("builtins.open")
@@ -156,33 +155,31 @@ def test_applicable_test_cases_set_with_platform_cert_derived_enabled_remove_tes
     assert "TC-PLAT-1.2" not in applicable_test_cases.test_cases
 
 
-# TODO: Github's CI is failing this unit test due to the mock_file call.
-# TODO: The Following issue was created to track the issue:
-# TODO: https://github.com/project-chip/certification-tool-backend/issues/222
-# @patch(
-#     "builtins.open",
-#     new_callable=mock_open,
-#     read_data=json.dumps(MOCK_PLATFORM_TEST_DATA),
-# )
-# def test_applicable_test_cases_set_with_platform_cert_enabled(mock_file) -> None:
-#     # Create PICS with platform certification enabled
-#     pics = PICS()
-#     cluster = PICSCluster(name="Platform")
-#     cluster.items["MCORE.PLAT_CERT"] = PICSItem(
-#       number="MCORE.PLAT_CERT", enabled=True)
-#     pics.clusters["Platform"] = cluster
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data=json.dumps(MOCK_PLATFORM_TEST_DATA),
+)
+def test_applicable_test_cases_set_with_platform_cert_enabled(mock_file) -> None:
+    # Create PICS with platform certification enabled
+    pics = PICS()
+    cluster = PICSCluster(name="Platform")
+    cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+    pics.clusters["Platform"] = cluster
 
-#     # Create a set of applicable test cases
-#     dmp_test_skip = ["DMP-TC-1", "DMP-TC-2"]
+    # Create a set of applicable test cases
+    dmp_test_skip = ["DMP-TC-1", "DMP-TC-2"]
 
-#     applicable_test_cases = applicable_test_cases_set(pics, dmp_test_skip)
+    applicable_test_cases = applicable_test_cases_set(pics, dmp_test_skip)
 
-#     # Verify that the platform test file was opened
-#     mock_file.assert_called_once_with("platform-test.json", "r")
+    # Verify that the platform test file was opened
+    mock_file.assert_called_once_with(
+        Path("test_collections/platform-test.json").resolve(), "r"
+    )
 
-#     # Verify that the DMP test cases were excluded from the result
-#     assert "DMP-TC-1" not in applicable_test_cases.test_cases
-#     assert "DMP-TC-2" not in applicable_test_cases.test_cases
+    # Verify that the DMP test cases were excluded from the result
+    assert "DMP-TC-1" not in applicable_test_cases.test_cases
+    assert "DMP-TC-2" not in applicable_test_cases.test_cases
 
 
 def test_applicable_test_cases_set_with_both_platform_certs_enabled() -> None:
