@@ -78,7 +78,10 @@ def test_applicable_test_cases_set_with_platform_cert(mock_file) -> None:
 
     # Verify that the platform test file was opened
     mock_file.assert_called_once_with(
-        Path("test_collections/platform-test.json").resolve(), "r"
+        Path(
+            "test_collections/matterplatform-cert/generated-platform-cert-test-list.json"
+        ).resolve(),
+        "r",
     )
 
     # Verify that all platform test cases were included
@@ -174,7 +177,10 @@ def test_applicable_test_cases_set_with_platform_cert_enabled(mock_file) -> None
 
     # Verify that the platform test file was opened
     mock_file.assert_called_once_with(
-        Path("test_collections/platform-test.json").resolve(), "r"
+        Path(
+            "test_collections/matter/platform-cert/generated-platform-cert-test-list.json"
+        ).resolve(),
+        "r",
     )
 
     # Verify that the DMP test cases were excluded from the result
