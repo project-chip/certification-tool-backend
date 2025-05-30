@@ -15,6 +15,7 @@
 #
 # type: ignore
 # Ignore mypy type check for this file
+# flake8: noqa
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
@@ -79,7 +80,7 @@ def test_applicable_test_cases_set_with_platform_cert(mock_file) -> None:
     # Verify that the platform test file was opened
     mock_file.assert_called_once_with(
         Path(
-            "test_collections/matterplatform-cert/generated-platform-cert-test-list.json"
+            "test_collections/matter/platform-cert/generated-platform-cert-test-list.json"
         ).resolve(),
         "r",
     )
