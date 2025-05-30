@@ -289,4 +289,57 @@ def parse_dmp_file(xml_file: IO) -> list[str]:
     return tests
 
 
+def parse_args_to_dict(arg_string):
+    """Parse command line arguments string into a dictionary using argparse.
+
+    Args:
+        arg_string: String containing command line arguments
+
+    Returns:
+        Dictionary with parsed arguments, preserving the -- prefix in keys
+
+    Example:
+        >>> parse_args_to_dict("--commissioning-method on-network --int-arg key1:1 key2:2")
+        {'--commissioning-method': 'on-network', '--int-arg': 'key1:1 key2:2'}
+    """
+    import argparse
+    import shlex
+
+    parser = argparse.ArgumentParser()
+
+    # Add a generic argument that accepts any number of arguments
+    parser.add_argument("args", nargs="*")
+
+    # Parse the arguments
+    try:
+        # Split the input string into arguments
+        args_list = shlex.split(arg_string)
+
+        # Process arguments manually
+        result = {}
+        i = 0
+        while i < len(args_list):
+            if args_list[i].startswith("--"):
+                key = args_list[i]  # Keep the -- prefix
+                values = []
+
+                # Collect all values until next argument
+                i += 1
+                while i < len(args_list) and not args_list[i].startswith("--"):
+                    values.append(args_list[i])
+                    i += 1
+
+                # Join multiple values with space, or use single value
+                result[key] = (
+                    " ".join(values) if len(values) > 1 else values[0] if values else ""
+                )
+            else:
+                i += 1
+
+        return result
+    except Exception as e:
+        print(f"Error parsing arguments: {e}")
+        return {}
+
+
 program_class, program_config_path = __retrieve_program_conf()
