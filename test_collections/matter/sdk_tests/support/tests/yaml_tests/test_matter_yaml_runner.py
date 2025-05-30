@@ -21,10 +21,10 @@ from subprocess import CompletedProcess
 from unittest import mock
 
 import pytest
-from matter_yamltests.hooks import TestParserHooks, TestRunnerHooks
-from matter_yamltests.parser_builder import TestParserBuilderConfig
-from matter_yamltests.runner import TestRunnerConfig
-from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
+from matter.yamltests.hooks import TestParserHooks, TestRunnerHooks
+from matter.yamltests.parser_builder import TestParserBuilderConfig
+from matter.yamltests.runner import TestRunnerConfig
+from matter.yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
 from app.schemas.pics import PICSError
 from app.tests.utils.test_pics_data import create_random_pics

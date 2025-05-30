@@ -17,7 +17,7 @@ from enum import Enum
 from queue import Empty, Queue
 from typing import Any, Optional, Union
 
-from matter_yamltests.hooks import TestRunnerHooks
+from matter.yamltests.hooks import TestRunnerHooks
 from pydantic import BaseModel
 
 
