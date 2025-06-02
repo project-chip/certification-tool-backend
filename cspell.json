@@ -128,7 +128,7 @@
         "test_collections/matter/sdk_tests/*.json",
         "test_collections/matter/sdk_tests/support/performance_tests/",
         "test_collections/matter/config.py",
-        "test_collections/platform-test.json"
+        "test_collections/matter/platform-cert/generated-platform-cert-test-list.json"
     ],
     "enableFiletypes": [
         "shellscript"
