@@ -32,6 +32,8 @@ from test_collections.matter.sdk_tests.support.performance_tests.utils import (
 PICS_PLAT_CERT = "MCORE.PLAT_CERT"
 PICS_PLAT_CERT_DERIVED = "MCORE.PLAT_CERT_DONE"
 
+PLATFORM_TESTS_FILE_NAME = "generated-platform-cert-test-list.json"
+
 
 class PlatformTestError(Exception):
     """Base exception for platform test errors"""
@@ -67,7 +69,11 @@ def __read_platform_test_cases(platform_json_filename: str) -> set[str]:
     """
     try:
         platform_tests_file = (
-            Path(__file__).parent.parent / "test_collections" / platform_json_filename
+            Path(__file__).parent.parent
+            / "test_collections"
+            / "matter"
+            / "platform-cert"
+            / platform_json_filename
         )
         with open(platform_tests_file, "r") as file:
             data = json.load(file)
@@ -207,10 +213,11 @@ def __process_platform_tests(applicable_tests_combined: set[str]) -> None:
     Args:
         applicable_tests_combined: Current set of applicable test cases
     """
-    # TODO Need to fetch platform-test.json from repo
-    # Issue: https://github.com/project-chip/certification-tool/issues/571
-    platform_tests = __read_platform_test_cases("platform-test.json")
-    logger.info(f"Listing platform-test.json test cases: {sorted(platform_tests)}")
+    # Read platform test list file
+    platform_tests = __read_platform_test_cases(PLATFORM_TESTS_FILE_NAME)
+    logger.info(
+        f"Listing {PLATFORM_TESTS_FILE_NAME} test cases: {sorted(platform_tests)}"
+    )
 
     # Include each platform test along with some suffixes: 'Semi-automated'
     # and 'Steps Disabled'
