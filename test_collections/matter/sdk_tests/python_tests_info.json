@@ -1,5 +1,5 @@
 {
-    "sdk_sha": "a12250a4e4ffce5be5f809479fbe8d85e5acd230",
+    "sdk_sha": "871b4347b3b068dc161d6a02f867a0335cff13ed",
     "tests": [
         {
             "class_name": "TCP_Tests",
@@ -1479,6 +1479,871 @@
             ]
         },
         {
+            "class_name": "TC_AVSM_2_1",
+            "desc": "[TC-AVSM-2.1] Attributes with Server as DUT",
+            "function": "test_TC_AVSM_2_1",
+            "path": "sdk/TC_AVSM_2_1",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads MaxConcurrentEncoders attribute.",
+                    "expectation": "Verify that the DUT response contains an uint8 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads MaxEncodedPixelRate attribute.",
+                    "expectation": "Verify that the DUT response contains an uint32 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads VideoSensorParams attribute.",
+                    "expectation": "Verify that the DUT response contains a VideoSensorParamsStruct value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads NightVisionCapable attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH reads MinViewport attribute.",
+                    "expectation": "Verify that the DUT response contains a VideoResolutionStruct value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH reads RateDistortionTradeOffPoints attribute.",
+                    "expectation": "Verify that the DUT response contains a list of RateDistortionTradeOffPointsStruct entries.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH reads MaxContentBufferSize attribute.",
+                    "expectation": "Verify that the DUT response contains an uint32 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads MicrophoneCapabilities attribute.",
+                    "expectation": "Verify that the DUT response contains an AudioCapabilitiesStruct value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads SpeakerCapabilities attribute.",
+                    "expectation": "Verify that the DUT response contains an AudioCapabilitiesStruct value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH reads TwoWayTalkSupport attribute.",
+                    "expectation": "Verify that the DUT response contains a TwoWayTalkSupportTypeEnum value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH reads SnapshotCapabilities attribute.",
+                    "expectation": "Verify that the DUT response contains a list of SnapshotCapabilitiesStruct entries.",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH reads MaxNetworkBandwidth attribute.",
+                    "expectation": "Verify that the DUT response contains an uint32 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH reads CurrentFrameRate attribute.",
+                    "expectation": "Verify that the DUT response contains an uint16 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH reads HDRModeEnabled attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "TH reads SupportedStreamUsages attribute.",
+                    "expectation": "Verify that the DUT response contains a list of StreamUsageEnum entries.",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute.",
+                    "expectation": "Verify that the DUT response contains a list of VideoStreamStruct entries.",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute.",
+                    "expectation": "Verify that the DUT response contains a list of AudioStreamStruct entries.",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute.",
+                    "expectation": "Verify that the DUT response contains a list of AudioStreamStruct entries.",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "TH reads RankedVideoStreamPrioritiesList attribute.",
+                    "expectation": "Verify that the DUT response contains a list of StreamUsageEnum entries.",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "TH reads SoftRecordingPrivacyModeEnabled attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "TH reads SoftLivestreamPrivacyModeEnabled attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
+                },
+                {
+                    "description": "TH reads HardPrivacyModeOn attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 23
+                },
+                {
+                    "description": "TH reads NightVision attribute.",
+                    "expectation": "Verify that the DUT response contains a TriStateAutoEnum value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 24
+                },
+                {
+                    "description": "TH reads NightVisionIllum attribute.",
+                    "expectation": "Verify that the DUT response contains a TriStateAutoEnum value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 25
+                },
+                {
+                    "description": "TH reads Viewport attribute.",
+                    "expectation": "Verify that the DUT response contains a ViewportStruct value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 26
+                },
+                {
+                    "description": "TH reads SpeakerMuted attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 27
+                },
+                {
+                    "description": "TH reads SpeakerVolumeLevel attribute.",
+                    "expectation": "Verify that the DUT response contains an uint8 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 28
+                },
+                {
+                    "description": "TH reads SpeakerMaxLevel attribute.",
+                    "expectation": "Verify that the DUT response contains an uint8 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 29
+                },
+                {
+                    "description": "TH reads SpeakerMinLevel attribute.",
+                    "expectation": "Verify that the DUT response contains an uint8 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 30
+                },
+                {
+                    "description": "TH reads MicrophoneMuted attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 31
+                },
+                {
+                    "description": "TH reads MicrophoneVolumeLevel attribute.",
+                    "expectation": "Verify that the DUT response contains an uint8 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 32
+                },
+                {
+                    "description": "TH reads MicrophoneMaxLevel attribute.",
+                    "expectation": "Verify that the DUT response contains an uint8 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 33
+                },
+                {
+                    "description": "TH reads MicrophoneMinLevel attribute.",
+                    "expectation": "Verify that the DUT response contains an uint8 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 34
+                },
+                {
+                    "description": "TH reads MicrophoneAGCEnabled attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 35
+                },
+                {
+                    "description": "TH reads ImageRotation attribute.",
+                    "expectation": "Verify that the DUT response contains an uint16 value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 36
+                },
+                {
+                    "description": "TH reads ImageFlipHorizontal attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 37
+                },
+                {
+                    "description": "TH reads ImageFlipVertical attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 38
+                },
+                {
+                    "description": "TH reads LocalVideoRecordingEnabled attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 39
+                },
+                {
+                    "description": "TH reads LocalSnapshotRecordingEnabled attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 40
+                },
+                {
+                    "description": "TH reads StatusLightEnabled attribute.",
+                    "expectation": "Verify that the DUT response contains a bool value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 41
+                },
+                {
+                    "description": "TH reads StatusLightBrightness attribute.",
+                    "expectation": "Verify that the DUT response contains a ThreeLevelAutoEnum value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 42
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_10",
+            "desc": "[TC-AVSM-2.10] Validate CaptureSnapshot Functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_10",
+            "path": "sdk/TC_AVSM_2_10",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and preconditions",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify SNP is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 1. Store StreamID as aStreamID.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends the CaptureSnapshot command with SnapshotStreamID set to aStreamID.",
+                    "expectation": "DUT responds with CaptureSnapshotResponse command with the image in the Data field.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends the CaptureSnapshot command with SnapshotStreamID set to Null.",
+                    "expectation": "DUT responds with NOT_FOUND status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "DUT responds with CaptureSnapshotResponse command with the image in the Data field.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH sends the SnapshotStreamDeallocate command with SnapshotStreamID set to aStreamID.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH sends the CaptureSnapshot command with SnapshotStreamID set to Null.",
+                    "expectation": "DUT responds with NOT_FOUND status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_11",
+            "desc": "[TC-AVSM-2.11] Validate SetStreamPriorities Functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_11",
+            "path": "sdk/TC_AVSM_2_11",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and preconditions",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 1. Store StreamID as aStreamID.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Verify the number of allocated video streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated audio streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads SupportedStreamUsages attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aSupportedStreamUsages.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH sends the SetStreamPriorities command with StreamPriorities set as a subset of aSupportedStreamUsages.",
+                    "expectation": "DUT responds with a INVALID_IN_STATE status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH sends the SnapshotStreamDeallocate command with SnapshotStreamID set to aStreamID.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH sends the SetStreamPriorities command with StreamPriorities set as a subset of aSupportedStreamUsages.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH sends the SetStreamPriorities command with StreamPriorities containing a StreamUsage not in aSupportedStreamUsages.",
+                    "expectation": "DUT responds with a INVALID_DATA_TYPE status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH sends the SetStreamPriorities command with StreamPriorities containing duplicate StreamUsage values from aSupportedStreamUsages.",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_2",
+            "desc": "[TC-AVSM-2.2] Validate Snapshot Stream Allocation functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_2",
+            "path": "sdk/TC_AVSM_2_2",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify SNP is supported",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads SnapshotCapabilities attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aSnapshotCapabilities.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends the SnapshotStreamAllocate command with valid values of ImageCodec, MaxFrameRate, MinResolution=MaxResolution=Resolution from aSnapshotCapabilities and Quality set to 90.",
+                    "expectation": "DUT responds with SnapshotStreamAllocateResponse command with a valid SnapshotStreamID.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 1.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH sends the SnapshotStreamAllocate command with values from step 3 except with MaxFrameRate set to 0(outside of valid range).",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH sends the SnapshotStreamAllocate command with values from step 3 except with Quality set to 101(outside of valid range).",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_3",
+            "desc": "[TC-AVSM-2.3] Validate Snapshot Stream Modification functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_3",
+            "path": "sdk/TC_AVSM_2_3",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and preconditions",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify SNP & (WMARK|OSD) is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 1. Store StreamID as aStreamID. If WMARK is supported, store WaterMarkEnabled as aWmark. If OSD is supported, store OSDEnabled as aOSD.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends the SnapshotStreamModify command with SnapshotStreamID set to aStreamID. If WMARK is supported, set WaterMarkEnabled to !aWmark`and if OSD is supported, set OSDEnabled to `!aOSD in the command.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the following: If WMARK is supported, verify WaterMarkEnabled == !aWmark. If OSD is supported, verify OSDEnabled == !aOSD.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_4",
+            "desc": "[TC-AVSM-2.4] Validate Snapshot Stream Deallocation functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_4",
+            "path": "sdk/TC_AVSM_2_4",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and preconditions",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify SNP is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 1. Store StreamID as aStreamIDToDelete.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends the SnapshotStreamDeallocate command with SnapshotStreamID set to aStreamIDToDelete + 1.",
+                    "expectation": "DUT responds with a NOT_FOUND status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends the SnapshotStreamDeallocate command with SnapshotStreamID set to aStreamIDToDelete.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated snapshot streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_5",
+            "desc": "[TC-AVSM-2.5] Validate Audio Stream Allocation functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_5",
+            "path": "sdk/TC_AVSM_2_5",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify ADO is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated audio streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads MicrophoneCapabilities attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aMicrophoneCapabilities.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads RankedVideoStreamPrioritiesList attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aRankedStreamPriorities.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH sends the AudioStreamAllocate command with valid values of AudioCodec, ChannelCount, SampleRate and BitDepth from aMicrophoneCapabilities and StreamUsage from aRankedStreamPriorities.",
+                    "expectation": "DUT responds with AudioStreamAllocateResponse command with a valid AudioStreamID.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated audio streams in the list is 1.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH sends the AudioStreamAllocate command with values from step 4 except with ChannelCount set to 16(outside of valid range)",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH sends the AudioStreamAllocate command with values from step 4 except with BitDepth set to 48(outside of valid range)",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH sends the AudioStreamAllocate command with values from step 4 except with Samplerate set to 0(outside of valid range)",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH sends the AudioStreamAllocate command with values from step 4 except with BitRate set to 0(outside of valid range)",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_6",
+            "desc": "[TC-AVSM-2.6] Validate Audio Stream DeAllocation functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_6",
+            "path": "sdk/TC_AVSM_2_6",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and preconditions",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify ADO is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated audio streams in the list is 1. Store StreamID as aStreamIDToDelete.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends the AudioStreamDeallocate command with AudioStreamID set to aStreamIDToDelete + 1.",
+                    "expectation": "DUT responds with a NOT_FOUND status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends the AudioStreamDeallocate command with AudioStreamID set to aStreamIDToDelete.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated audio streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_7",
+            "desc": "[TC-AVSM-2.7] Validate Video Stream Allocation functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_7",
+            "path": "sdk/TC_AVSM_2_7",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify VDO is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated video streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads RankedVideoStreamPrioritiesList attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aRankedStreamPriorities.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads RateDistortionTradeOffPoints attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aRateDistortionTradeOffPoints.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads MinViewport attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aMinViewport.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH reads VideoSensorParams attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aVideoSensorParams.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH reads MaxEncodedPixelRate attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                    "expectation": "Store this value in aMaxEncodedPixelRate.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH sets StreamUsage from aRankedStreamPriorities. TH sets VideoCodec, MinResolution, MaxResolution, MinBitRate, MaxBitRate conforming with aRateDistortionTradeOffPoints. TH sets MinFrameRate, MaxFrameRate conforming with aVideoSensorParams. TH sets the MinFragmentLen and MaxFragmentLen = 4000. TH sends the VideoStreamAllocate command with these arguments.",
+                    "expectation": "DUT responds with VideoStreamAllocateResponse command with a valid VideoStreamID.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated video streams in the list is 1.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH sends the VideoStreamAllocate command with the same arguments from step 7 except StreamUsage set to a value not in aRankedStreamPriorities.",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH sends the VideoStreamAllocate command with the same arguments from step 7 except MinFrameRate set to 0(outside of valid range).",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH sends the VideoStreamAllocate command with the same arguments from step 7 except MinFrameRate > MaxFrameRate.",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH sends the VideoStreamAllocate command with the same arguments from step 7 except MinBitRate set to 0(outside of valid range).",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH sends the VideoStreamAllocate command with the same arguments from step 7 except MinBitRate > MaxBitRate.",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH sends the VideoStreamAllocate command with the same arguments from step 7 except MinFragmentLen > MaxFragmentLen.",
+                    "expectation": "DUT responds with a CONSTRAINT_ERROR status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_8",
+            "desc": "[TC-AVSM-2.8] Validate Video Stream Modification functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_8",
+            "path": "sdk/TC_AVSM_2_8",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and preconditions",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify VDO & (WMARK|OSD) is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated video streams in the list is 1. Store StreamID as aStreamID. If WMARK is supported, store WaterMarkEnabled as aWmark. If OSD is supported, store OSDEnabled as aOSD.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends the VideoStreamModify command with VideoStreamID set to aStreamID. If WMARK is supported, set WaterMarkEnabled to !aWmark and if OSD is supported, set OSDEnabled to !aOSD in the command.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the following: If WMARK is supported, verify WaterMarkEnabled == !aWmark. If OSD is supported, verify OSDEnabled == !aOSD.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                }
+            ]
+        },
+        {
+            "class_name": "TC_AVSM_2_9",
+            "desc": "[TC-AVSM-2.9] Validate Video Stream DeAllocation functionality with Server as DUT",
+            "function": "test_TC_AVSM_2_9",
+            "path": "sdk/TC_AVSM_2_9",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and preconditions",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify VDO is supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated video streams in the list is 1. Store StreamID as aStreamIDToDelete.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends the VideoStreamDeallocate command with VideoStreamID set to aStreamIDToDelete + 1.",
+                    "expectation": "DUT responds with a NOT_FOUND status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends the VideoStreamDeallocate command with VideoStreamID set to aStreamIDToDelete.",
+                    "expectation": "DUT responds with a SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated video streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                }
+            ]
+        },
+        {
             "class_name": "TC_AVSUM_2_1",
             "desc": "[TC-AVSUM-2.1] Attributes with DUT as Server",
             "function": "test_TC_AVSUM_2_1",
@@ -1548,7 +2413,7 @@
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Read and verify DPTZRelativeMove attribute, if supported",
+                    "description": "Read and verify DPTZStreams attribute, if supported",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 11
@@ -1577,94 +2442,160 @@
                     "test_plan_number": 2
                 },
                 {
-                    "description": "If Pan is supported, read and verify PanMin and PanMax attributes. If not skip to step 8",
+                    "description": "Send an MPTZSetPosition command with no fields. Verify failure response",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Create a valid value for a Pan, set via MPTZSetPosition command. Verify success response.",
+                    "description": "If Pan is supported, read and verify the PanMin attribute. If not skip to step 8",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Pan value is that set in Step 4.",
+                    "description": "Read and verify the PanMax attribute.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Create an invalid value for a Pan, set via MPTZSetPosition command. Verify failure response.",
+                    "description": "Create a valid value for a Pan",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Pan value is that set in Step 4.",
+                    "description": "Set the new Pan value via the MPTZSetPosition command. Verify success response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "If Tilt is supported, read and verify TiltMin and TiltMax attributes. If not skip to step 13",
+                    "description": "Read MPTZPosition. Verify the Pan value is that set in Step 4.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Create a valid value for a Tilt, set via MPTZSetPosition command. Verify success response.",
+                    "description": "If PIXIT.CANBEMADEBUSY is set, place the DUT into a state where it cannot accept a command. Else jump to step 11.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 9
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 9.",
+                    "description": "Send an MPTZSetPositionCommand with the previously set Pan value. Verify failure response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Create an invalid value for a Tilt, set via MPTZSetPosition command. Verify failure response.",
+                    "description": "Create an invalid value for a Pan.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 11
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 9.",
+                    "description": "Set the invalid value via the MPTZSetPosition command. Verify failure response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 12
                 },
                 {
-                    "description": "If Zoom is supported, read and verify the ZoomMax attribute.",
+                    "description": "Read MPTZPosition. Verify the Pan value is that set in Step 4.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 13
                 },
                 {
-                    "description": "Create a valid value for Zoom, set via MPTZSetPosition command. Verify success response.",
+                    "description": "If Tilt is supported, read and verify the TiltMin and TiltMax attributes. If not skip to step 13",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 14
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Zoom value is that set in Step 14.",
+                    "description": "Read and verify the TiltMax attribute.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 15
                 },
                 {
-                    "description": "Create an invalid value for a Zoom, set via MPTZSetPosition command. Verify failure response.",
+                    "description": "Create a valid value for a Tilt different from the initial value.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 16
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 14.",
+                    "description": "Set the new Tilt value via the MPTZSetPosition command. Verify success response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 17
+                },
+                {
+                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 9.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "Create an invalid value for a Tilt.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "Set the invalid value via the MPTZSetPosition command. Verify failure response.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 9.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "If Zoom is supported, read and verify the ZoomMax attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
+                },
+                {
+                    "description": "Create a valid value for Zoom.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 23
+                },
+                {
+                    "description": "Set the new Zoom value via the MPTZSetPosition command. Verify success response.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 24
+                },
+                {
+                    "description": "Read MPTZPosition. Verify the Zoom value is that set in Step 14.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 25
+                },
+                {
+                    "description": "Create an invalid value for a Zoom.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 26
+                },
+                {
+                    "description": "Set the invalid value via the MPTZSetPosition command. Verify failure response.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 27
+                },
+                {
+                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 14.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 28
                 }
             ]
         },
@@ -1690,130 +2621,160 @@
                     "test_plan_number": 2
                 },
                 {
-                    "description": "If Pan is supported, read and verify PanMin and PanMax attributes. If not skip to step 10",
+                    "description": "Send an MPTZRelativeMove command with no fields. Verify failure response",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Create a valid value for a Pan, calculate the relative distance from the current Pan.",
+                    "description": "If Pan is supported, read and verify the PanMin attribute. If not skip to step 14",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Set via MPTZRelativeMove command the relative Pan. Verify success response.",
+                    "description": "Read and verify the PanMax attribute.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Pan value is that set in Step 5.",
+                    "description": "Create a valid value for a Pan, calculate the relative distance from the current Pan.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Create an invalid value for a relative Pan that would exceed PanMax.",
+                    "description": "Set via MPTZRelativeMove command the relative Pan. Verify success response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Set via MPTZSetRelativeMove command the relative Pan. Verify success response.",
+                    "description": "Read MPTZPosition. Verify the Pan value is that set in Step 6.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Pan value is set to PanMax.",
+                    "description": "Create an invalid value for a relative Pan that would exceed PanMax.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 9
                 },
                 {
-                    "description": "If Tilt is supported, read and verify TiltMin and TiltMax attributes. If not skip to step 17",
+                    "description": "Set via MPTZSetRelativeMove command the invalid relative Pan. Verify success response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Create a valid value for a Tilt, calculate the relative distance from the current Tilt.",
+                    "description": "Read MPTZPosition. Verify the Pan value is set to PanMax.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 11
                 },
                 {
-                    "description": "Set via MPTZRelativeMove command the relative Tilt. Verify success response.",
+                    "description": "If Tilt is supported, read and verify the TiltMin attribute. If not skip to step 22",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 12
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 12.",
+                    "description": "Read and verify the TiltMax attribute.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 13
                 },
                 {
-                    "description": "Create an invalid value for a relative Tilt that would exceed TiltMax.",
+                    "description": "Create a valid value for a Tilt, calculate the relative distance from the current Tilt.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 14
                 },
                 {
-                    "description": "Set via MPTZSetRelativeMove command the relative Tilt. Verify success response.",
+                    "description": "Set via MPTZRelativeMove command the relative Tilt. Verify success response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 15
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Tilt value is set to TiltMax.",
+                    "description": "Read MPTZPosition. Verify the Tilt value is that set in Step 17.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 16
                 },
                 {
-                    "description": "If Zoom is supported, read and verify the ZoomMax attribute.",
+                    "description": "Create an invalid value for a relative Tilt that would exceed TiltMax.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 17
                 },
                 {
-                    "description": "Create a valid value for a Zoom, calculate the relative distance from the current Zoom.",
+                    "description": "Set via MPTZSetRelativeMove command the relative Tilt. Verify success response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 18
                 },
                 {
-                    "description": "Set via MPTZRelativeMove command the relative Zoom. Verify success response.",
+                    "description": "Read MPTZPosition. Verify the Tilt value is set to TiltMax.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 19
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Zoom value is that set in Step 19.",
+                    "description": "If Zoom is supported, read and verify the ZoomMax attribute.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 20
                 },
                 {
-                    "description": "Create an invalid value for a relative Zoom that would exceed ZoomMax.",
+                    "description": "Create a valid value for a Zoom, calculate the relative distance from the current Zoom.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 21
                 },
                 {
-                    "description": "Set via MPTZSetRelativeMove command the relative Zoom. Verify success response.",
+                    "description": "Set via MPTZRelativeMove command the relative Zoom. Verify success response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 22
                 },
                 {
-                    "description": "Read MPTZPosition. Verify the Zoom value is set to ZoomMax.",
+                    "description": "Read MPTZPosition. Verify the Zoom value is that set in Step 24.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 23
+                },
+                {
+                    "description": "Create an invalid value for a relative Zoom that would exceed ZoomMax.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 24
+                },
+                {
+                    "description": "Set via MPTZSetRelativeMove command the relative Zoom. Verify success response.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 25
+                },
+                {
+                    "description": "Read MPTZPosition. Verify the Zoom value is set to ZoomMax.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 26
+                },
+                {
+                    "description": "If PIXIT.CANBEMADEBUSY is set, place the DUT into a state where it cannot accept a command. Else end the test cse.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 27
+                },
+                {
+                    "description": "Send an MPTZRelativeMove Command with any previously set relative value. Verify busy failure response.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 28
                 }
             ]
         },
@@ -1845,58 +2806,94 @@
                     "test_plan_number": 3
                 },
                 {
-                    "description": "If MPTZPresets is empty, jump to step 9",
+                    "description": "Send a MPTZMovePreset command with a presetID of MaxPresets+1. Verify Constraint Error failure response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Verify that the size of the Presets List is not greater than MaxPresets",
+                    "description": "If MPTZPresets is empty, jump to step 11",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Loop over the supported presets, for each verify the PresetID and Name are in range",
+                    "description": "Verify that the size of the Presets List is not greater than MaxPresets",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "For each found preset, invoke MoveToPreset with the PresetID. Verify that the MPTZPosition is that from the Preset",
+                    "description": "Loop over the supported presets, for each verify the PresetID and Name are in range",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Exit the testcase",
+                    "description": "For each found preset, invoke MoveToPreset with the PresetID. Verify that the MPTZPosition is that from the Preset",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Create a new saved preset with PresetID of MaxPresets",
+                    "description": "If PIXIT.CANBEMADEBUSY is set, place the DUT into a state where it cannot accept a command. Else exit the test case.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 9
                 },
                 {
-                    "description": "Move to a new MPTZPosition that is the mid-point of all support PTZ attributes",
+                    "description": "Send an MPTZMoveToPreset Command with a valid presetID. Verify busy failure response. End the text case",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Move to the newly saved preset",
+                    "description": "Send a MPTZMovePreset command with a presetID of MaxPresets. Verify Not Found failure response.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 11
                 },
                 {
-                    "description": "Verify that the MPTZPosition is that of the preset",
+                    "description": "Create a new saved preset with PresetID of MaxPresets",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 12
+                },
+                {
+                    "description": "Create a new MPTZPosition that is the mid-point of all support PTZ attributes",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "Move to a the MPTZPosition created in step 13.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "Move to the saved preset from step 12",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "Verify that the MPTZPosition is that of the preset",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "If PIXIT.CANBEMADEBUSY is set, place the DUT into a state where it cannot accept a command. Else exit the test case.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "Send an MPTZMoveToPreset Command with a valid presetID. Verify busy failure response.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
                 }
             ]
         },
@@ -1952,13 +2949,13 @@
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Verify there is space in the preset list, if not, end the test case",
+                    "description": "Verify there is space in the preset list, if not, skip to step 12",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "save a new Preset via the MPTZSavePreset command, name 'newpreset-2', do not provide a PresetID",
+                    "description": "Save a new Preset via the MPTZSavePreset command, name 'newpreset-2', do not provide a PresetID",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 9
@@ -1968,6 +2965,18 @@
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 10
+                },
+                {
+                    "description": "Repeatedly send MPTZSavePreset commands till the number of presets equals MaxPresets",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "Save a new Preset via the MPTZSavePreset command, name 'newpreset-fail', do not provide a PresetID. Verify Resource Exhausted failure. End the test case.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
                 }
             ]
         },
@@ -2006,28 +3015,52 @@
                     "test_plan_number": 4
                 },
                 {
-                    "description": "If MPTZPresets is not empty, send MPTZRemovePreset for the first item in the list. Verify it has been removed. End the test case",
+                    "description": "If MPTZPresets is not empty, send MPTZRemovePreset for the first item in the list. Verify it has been removed. Otherwise skip to step 8.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "If MPTZPresets is empty, via the MPTZSavePreset command, create a new saved preset with PresetID of MaxPresets, name of 'newpreset'",
+                    "description": "Read MPTZPresets, verify the entry has been removed.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Read the value of MPTZPresets. Ensure it has an entry for a PresetID of MaxPresets with a name 'newpreset' that matches the saved MPTZPosition",
+                    "description": "Repeat step 5, sending a MPTZRemovePreset command for the already removed preset. Verify failurre. End the test case.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Via MPTZRemovePreset remove the saved preset. Verify that this is no longer present in MPTZPresets. ",
+                    "description": "If MPTZPresets is empty, via the MPTZSavePreset command, create a new saved preset with PresetID of MaxPresets, name of 'newpreset'",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
+                },
+                {
+                    "description": "Read the value of MPTZPresets. Ensure it has an entry for a PresetID of MaxPresets with a name 'newpreset' that matches the saved MPTZPosition",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "Via MPTZRemovePreset remove the saved preset.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "Read MPTZPresets, verify this is empty.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "Repeat step 10, sending a MPTZRemovePreset command for a PresetID of MaxPresets. Verify failure.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
                 }
             ]
         },
@@ -2049,64 +3082,70 @@
                     "test_plan_number": 1
                 },
                 {
-                    "description": "Create a viewport smaller than the supported minimum",
+                    "description": "Read the viewport and sensorparms from the device. Ensure the viewport is less than or equal to the sensor size",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "Send DPTZSetVieport with an unknown stream ID, verify NotFound response",
+                    "description": "Create a viewport smaller than the supported minimum",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Send a VideoStreamAllocate command to AVStreamManagement to allocate a video stream ID. Record the returned ID",
+                    "description": "Send DPTZSetVieport with an unknown stream ID, verify NotFound response",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Send DPTZSetVieport with a the viewport created in Step 2. Verify ConstraintError response",
+                    "description": "Send a VideoStreamAllocate command to AVStreamManagement to allocate a video stream ID. Record the returned ID",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Create a viewport with valid aspect ratio that is larger than the camera sensor",
+                    "description": "Send DPTZSetVieport with a the viewport created in Step 2. Verify ConstraintError response",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Send DPTZSetVieport with a the viewport created in Step 6. Verify ConstraintError response",
+                    "description": "Create a viewport with valid aspect ratio that is larger than the camera sensor",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Create a valid viewport give the dimensions of the sensor and the device resolution",
+                    "description": "Send DPTZSetVieport with a the viewport created in Step 6. Verify ConstraintError response",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Send DPTZSetVieport with a the viewport created in Step 9. Verify success",
+                    "description": "Create a valid viewport give the dimensions of the sensor and the device resolution",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 9
                 },
                 {
-                    "description": "Modify the valid viewport so that the aspect ratio is invalid",
+                    "description": "Send DPTZSetVieport with a the viewport created in Step 9. Verify success",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Send DPTZSetVieport with a the viewport created in Step 10. Verify ConstraintError response",
+                    "description": "Modify the valid viewport so that the aspect ratio is invalid",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 11
+                },
+                {
+                    "description": "Send DPTZSetVieport with a the viewport created in Step 10. Verify ConstraintError response",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
                 }
             ]
         },
@@ -2146,40 +3185,34 @@
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Send DPTZRelativeMove with the allocated stream ID, valid Zoom Delta. But a viewport hasn't been set. Verify NotFound response",
+                    "description": "Create a viewport with a valid AR. Set this via DPTZSetViewport",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Create a viewport with a valid AR. Set this via DPTZSetViewport",
+                    "description": "Setup deltaX and deltaY to move beyond the cartesian plan, send via DPTZRelativeMove. Verify success",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Setup deltaX and deltaY to move beyond the cartesian plan, send via DPTZRelativeMove. Verify success",
+                    "description": "Setup deltaX to move the viewport to the right, send via DPTZRelativeMove. Verify success",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Setup deltaX to move the viewport to the right, send via DPTZRelativeMove. Verify success",
+                    "description": "Setup deltaY to move the viewport down, send via DPTZRelativeMove. Verify success",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Setup deltaY to move the viewport down, send via DPTZRelativeMove. Verify success",
-                    "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": 9
-                },
-                {
                     "description": "Repeatedly invoke DPTZRelativeMove with a Zoom Delta of 100%, verify no error on max out of sensor size",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 10
+                    "test_plan_number": 9
                 }
             ]
         },
@@ -2197,13 +3230,13 @@
                     "test_plan_number": "precondition"
                 },
                 {
-                    "description": "TH_commissioner performs a wildcard read",
+                    "description": "TH_commissioner performs a wildcard read (done during test setup)",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 1
                 },
                 {
-                    "description": "TH_commissioner reads the ACL attribute",
+                    "description": "TH_commissioner reads the ACL attribute (done during test setup)",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
@@ -2290,13 +3323,13 @@
                     "test_plan_number": "precondition"
                 },
                 {
-                    "description": "TH_commissioner performs a wildcard read",
+                    "description": "TH_commissioner performs a wildcard read (done during test setup)",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 1
                 },
                 {
-                    "description": "TH_commissioner reads the ACL attribute",
+                    "description": "TH_commissioner reads the ACL attribute (done during test setup)",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
@@ -2395,13 +3428,13 @@
                     "test_plan_number": "precondition"
                 },
                 {
-                    "description": "TH_commissioner performs a wildcard read",
+                    "description": "TH_commissioner performs a wildcard read (done during test setup)",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 1
                 },
                 {
-                    "description": "TH_commissioner reads the ACL attribute",
+                    "description": "TH_commissioner reads the ACL attribute (done during test setup)",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
@@ -3301,6 +4334,37 @@
             ]
         },
         {
+            "class_name": "TC_BRBINFO_3_2",
+            "desc": "[TC-BRBINFO-3.2] Attributes with DUT as Server",
+            "function": "test_TC_BRBINFO_3_2",
+            "path": "sdk/TC_BRBINFO_3_2",
+            "pics": [
+                "BRBINFO.S",
+                "BRBINFO.S.A.A0018",
+                "BRBINFO.S.M.DeviceConfigurationChange"
+            ],
+            "steps": [
+                {
+                    "description": "TH reads ConfigurationVersion from the DUT and stores the value as initialConfigurationVersion",
+                    "expectation": "Verify that the value is in the inclusive range of 1 to 4294967295",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Change the configuration version in a way which results in functionality to be added or removed (e.g. rewire thermostat to support a new mode)",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads ConfigurationVersion from the DUT",
+                    "expectation": "Verify that the value is higher than the value of initialConfigurationVersion",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                }
+            ]
+        },
+        {
             "class_name": "TC_BRBINFO_4_1",
             "desc": "[TC_BRBINFO_4_1] Verification of KeepActive Command [DUT-Server]",
             "function": "test_TC_BRBINFO_4_1",
@@ -3534,124 +4598,130 @@
             ],
             "steps": [
                 {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
                     "description": "TH_CR1 gets the MaxCumulativeFailsafeSeconds value from BasicCommissioningInfo attribute in GeneralCommissioning Cluster",
                     "expectation": "Should set the MaxCumulativeFailsafeSeconds value from BasicCommissioningInfo attribute to timeout",
                     "is_commissioning": false,
-                    "test_plan_number": 1
+                    "test_plan_number": 2
                 },
                 {
                     "description": "TH_CR1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read. Save the number of fabrics in the list as initial_number_of_fabrics",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 2
+                    "test_plan_number": 3
                 },
                 {
                     "description": "TH_CR1 opens commissioning window on DUT with duration set to value for MaxCumulativeFailsafeSeconds",
                     "expectation": "Commissioning window should open with timeout set to MaxCumulativeFailsafeSeconds",
                     "is_commissioning": false,
-                    "test_plan_number": 3
+                    "test_plan_number": 4
                 },
                 {
                     "description": "TH_CR2 fully commissions DUT_CE",
                     "expectation": "DUT should fully commission",
                     "is_commissioning": false,
-                    "test_plan_number": 4
+                    "test_plan_number": 5
                 },
                 {
                     "description": "TH_CR1 opens commissioning window on DUT with duration set to value from BasicCommissioningInfo",
                     "expectation": "New commissioning window should open and be set to timeout",
                     "is_commissioning": false,
-                    "test_plan_number": 5
+                    "test_plan_number": 6
                 },
                 {
                     "description": "TH_CR3 fully commissions DUT_CE",
                     "expectation": "DUT should fully commission to TH_CR3",
                     "is_commissioning": false,
-                    "test_plan_number": 6
+                    "test_plan_number": 7
                 },
                 {
                     "description": "TH_CR2 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read",
                     "expectation": "Verify the list shows initial_number_of_fabrics + 2 fabrics",
                     "is_commissioning": false,
-                    "test_plan_number": 7
+                    "test_plan_number": 8
                 },
                 {
                     "description": "Verify DUT_CE is now discoverable over DNS-SD with 3 Operational service records (_matter._tcp SRV records).",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 8
+                    "test_plan_number": 9
                 },
                 {
                     "description": "TH_CR2 reads the CurrentFabricIndex from the Node Operational Credentials cluster and saves as fabric_idx_cr2",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 9
+                    "test_plan_number": 10
                 },
                 {
                     "description": "TH_CR2 sends RemoveFabric with FabricIndex = fabric_idx_cr2 command to DUT_CE",
                     "expectation": "Verify DUT_CE responses with NOCResponse with a StatusCode OK",
                     "is_commissioning": false,
-                    "test_plan_number": 10
+                    "test_plan_number": 11
                 },
                 {
                     "description": "TH_CR2 reads the Basic Information Cluster\u2019s NodeLabel attribute of DUT_CE",
                     "expectation": "Verify read/write commands fail as expected since the DUT_CE is no longer on the network",
                     "is_commissioning": false,
-                    "test_plan_number": 11
+                    "test_plan_number": 12
                 },
                 {
                     "description": "TH_CR1 reads the list of Fabrics on DUT_CE",
                     "expectation": "Verify the list shows initial_number_of_fabrics + 1 fabrics and fabric_idx_cr2 is not included.",
                     "is_commissioning": false,
-                    "test_plan_number": 12
+                    "test_plan_number": 13
                 },
                 {
                     "description": "TH_CR1 sends a OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 13
+                    "test_plan_number": 14
                 },
                 {
                     "description": "TH_CR2 commissions DUT_CE",
                     "expectation": "Commissioning is successful",
                     "is_commissioning": false,
-                    "test_plan_number": 14
+                    "test_plan_number": 15
                 },
                 {
                     "description": "TH_CR2 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read",
                     "expectation": "Verify the list shows initial_number_of_fabrics + 2 fabrics and fabric_idx_cr2 is not included, since a new fabric index should have been allocated.",
                     "is_commissioning": false,
-                    "test_plan_number": 15
+                    "test_plan_number": 16
                 },
                 {
                     "description": "TH_CR2 reads the CurrentFabricIndex from the Node Operational Credentials cluster and saves as fabric_idx_cr2_2",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 16
+                    "test_plan_number": 17
                 },
                 {
                     "description": "TH_CR3 reads the CurrentFabricIndex from the Node Operational Credentials cluster and saves as fabric_idx_cr3",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 17
+                    "test_plan_number": 18
                 },
                 {
                     "description": "TH_CR1 sends RemoveFabric with FabricIndex = fabric_idx_cr2_2 command to DUT_CE",
                     "expectation": "Verify DUT_CE responses with NOCResponse with a StatusCode OK",
                     "is_commissioning": false,
-                    "test_plan_number": 18
+                    "test_plan_number": 19
                 },
                 {
                     "description": "TH_CR1 sends RemoveFabric with FabricIndex = fabric_idx_cr3 command to DUT_CE",
                     "expectation": "Verify DUT_CE responses with NOCResponse with a StatusCode OK",
                     "is_commissioning": false,
-                    "test_plan_number": 19
+                    "test_plan_number": 20
                 },
                 {
                     "description": "TH_CR1 reads the list of Fabrics on DUT_CE",
                     "expectation": "Verify the list shows initial_number_of_fabrics fabrics.",
                     "is_commissioning": false,
-                    "test_plan_number": 20
+                    "test_plan_number": 21
                 }
             ]
         },
@@ -3665,56 +4735,32 @@
             ],
             "steps": [
                 {
-                    "description": "TH_CR1 reads the BasicCommissioningInfo attribute from the General Commissioning cluster and saves the MaxCumulativeFailsafeSeconds field as max_window_duration.",
+                    "description": "Commissioning, already done",
                     "expectation": "",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": 1
                 },
                 {
-                    "description": "TH_CR1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read. Save the number of fabrics in the list as initial_number_of_fabrics",
+                    "description": "TH_CR1 reads the BasicCommissioningInfo attribute from the General Commissioning cluster and saves the MaxCumulativeFailsafeSeconds field as max_window_duration.",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "TH_CR1 reads the SupportedFabrics attribute from the Node Operational Credentials cluster. Save max_fabrics",
-                    "expectation": "Verify that max_fabrics is larger than initial_number_of_fabrics. If not, instruct the tester to remove one non-test-harness fabric and re-start the test.",
+                    "description": "TH_CR1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read. Save the number of fabrics in the list as initial_number_of_fabrics",
+                    "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Repeat the following steps (5a and 5b) max_fabrics - initial_number_of_fabrics times",
-                    "expectation": "",
+                    "description": "TH_CR1 reads the SupportedFabrics attribute from the Node Operational Credentials cluster. Save max_fabrics",
+                    "expectation": "Verify that max_fabrics is larger than initial_number_of_fabrics. If not, instruct the tester to remove one non-test-harness fabric and re-start the test.",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
-                    "expectation": "{resDutSuccess}",
-                    "is_commissioning": false,
-                    "test_plan_number": "4a"
-                },
-                {
-                    "description": "TH creates a controller on a new fabric and commissions DUT_CE using that controller",
-                    "expectation": "Commissioning is successful",
-                    "is_commissioning": false,
-                    "test_plan_number": "4b"
-                },
-                {
-                    "description": "The controller reads the CurrentFabricIndex from the Node Operational Credentials cluster. Save all fabrics in a list as fabric_idxs.",
-                    "expectation": "{resDutSuccess}",
-                    "is_commissioning": false,
-                    "test_plan_number": "4c"
-                },
-                {
-                    "description": "Shutdown the fabrics created during test step 4b from TH only so that it does not fill up the fabric table",
+                    "description": "Repeat the following steps (5a and 5b) max_fabrics - initial_number_of_fabrics times",
                     "expectation": "",
-                    "is_commissioning": false,
-                    "test_plan_number": "4d"
-                },
-                {
-                    "description": "TH reads the CommissionedFabrics attributes from the Node Operational Credentials cluster.",
-                    "expectation": "Verify this is equal to max_fabrics",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
@@ -3722,25 +4768,55 @@
                     "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
                     "expectation": "{resDutSuccess}",
                     "is_commissioning": false,
+                    "test_plan_number": "5a"
+                },
+                {
+                    "description": "TH creates a controller on a new fabric and commissions DUT_CE using that controller",
+                    "expectation": "Commissioning is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": "5b"
+                },
+                {
+                    "description": "The controller reads the CurrentFabricIndex from the Node Operational Credentials cluster. Save all fabrics in a list as fabric_idxs.",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": "5c"
+                },
+                {
+                    "description": "Shutdown the fabrics created during test step 5b from TH only so that it does not fill up the fabric table",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5d"
+                },
+                {
+                    "description": "TH reads the CommissionedFabrics attributes from the Node Operational Credentials cluster.",
+                    "expectation": "Verify this is equal to max_fabrics",
+                    "is_commissioning": false,
                     "test_plan_number": 6
+                },
+                {
+                    "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
                 },
                 {
                     "description": "TH creates a controller on a new fabric and commissions DUT_CE using that controller",
                     "expectation": "Verify DUT_CE responds with NOCResponse with a StatusCode field value of TableFull(5)",
                     "is_commissioning": false,
-                    "test_plan_number": 7
+                    "test_plan_number": 8
                 },
                 {
                     "description": "TH_CR1 sends the RemoveFabric command in to DUT_CE to remove fabrics saved on device using fabric_idxs",
                     "expectation": "{resDutSuccess}",
                     "is_commissioning": false,
-                    "test_plan_number": 8
+                    "test_plan_number": 9
                 },
                 {
                     "description": "TH reads the CommissionedFabrics attributes from the Node Operational Credentials cluster.",
                     "expectation": "Verify this is equal to initial_number_of_fabrics.",
                     "is_commissioning": false,
-                    "test_plan_number": 9
+                    "test_plan_number": 10
                 }
             ]
         },
@@ -3835,6 +4911,215 @@
                     "expectation": "DUT_CE windows status shows the window is closed",
                     "is_commissioning": false,
                     "test_plan_number": 6
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CADMIN_1_25",
+            "desc": "test_TC_CADMIN_1_25",
+            "function": "test_TC_CADMIN_1_25",
+            "path": "sdk/TC_CADMIN_1_25",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 subscribes to WindowStatus attribute on DUT_CE",
+                    "expectation": "Verify TH_CR1 receives WindowStatus subscription notification",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 subscribes to AdminFabricIndex attribute on DUT_CE",
+                    "expectation": "Verify TH_CR1 receives AdminFabricIndex subscription notification",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH_CR1 subscribes to AdminVendorId attribute on DUT_CE",
+                    "expectation": "Verify TH_CR1 receives AdminVendorId subscription notification",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 reads the BasicCommissioningInfo attribute from the General Commissioning cluster and saves the MaxCumulativeFailsafeSeconds field as `max_window_duration`.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of `max_window_duration`",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 1, AdminFabricIndex value to be the same as the Fabric Index of the Fabrics attribute list entry corresponding to TH_CR1's fabric, AdminVendorId to be the same as the Vendor ID field of Fabrics attribute list entry corresponding to TH_CR1's fabric",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH_CR2 starts a commissioning process with DUT_CE",
+                    "expectation": "DUT_CE is commissioned by TH_CR2",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 0, AdminFabricIndex value to be null, AdminVendorId to be null",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH_CR2 subscribes to WindowStatus attribute on DUT_CE",
+                    "expectation": "Verify TH_CR2 receives WindowStatus subscription notification",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH_CR2 subscribes to AdminFabricIndex attribute on DUT_CE",
+                    "expectation": "Verify TH_CR2 receives AdminFabricIndex subscription notification",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH_CR2 subscribes to AdminVendorId attribute on DUT_CE",
+                    "expectation": "Verify TH_CR2 receives AdminVendorId subscription notification",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH_CR1 sends an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of `max_window_duration`",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 1, AdminFabricIndex value to be the same as the Fabric Index of the Fabrics attribute list entry corresponding to TH_CR1's fabric, AdminVendorId to be the same as the Vendor ID field of Fabrics attribute list entry corresponding to TH_CR1's fabric",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "Verify TH_CR2 receives subscription notifications which show WindowStatus value to be 1, AdminFabricIndex value to be the same as the Fabric Index of the Fabrics attribute list entry corresponding to TH_CR1's fabric, AdminVendorId to be the same as the Vendor ID field of Fabrics attribute list entry corresponding to TH_CR1's fabric",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "TH_CR1 revokes the commissioning window on DUT_CE using RevokeCommissioning command",
+                    "expectation": "Verify DUT_CE closes its Commissioning window",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 0, AdminFabricIndex value to be null, AdminVendorId to be null",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "Verify TH_CR2 receives subscription notifications which show WindowStatus value to be 0, AdminFabricIndex value to be null, AdminVendorId to be null",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "TH_CR2 opens a commissioning window on DUT_CE using ECM with commissioning timeout of `max_window_duration`",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 1, AdminFabricIndex value to be the same as the Fabric Index of the Fabrics attribute list entry corresponding to TH_CR2's fabric, AdminVendorId to be the same as the Vendor ID field of Fabrics attribute list entry corresponding to TH_CR2's fabric",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "Verify TH_CR2 receives subscription notifications which show WindowStatus value to be 1, AdminFabricIndex value to be the same as the Fabric Index of the Fabrics attribute list entry corresponding to TH_CR2's fabric, AdminVendorId to be the same as the Vendor ID field of Fabrics attribute list entry corresponding to TH_CR2's fabric",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "TH_CR1 revokes the commissioning window on DUT_CE using RevokeCommissioning command",
+                    "expectation": "Verify DUT_CE closes its Commissioning window",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 0, AdminFabricIndex value to be null, AdminVendorId to be null",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 23
+                },
+                {
+                    "description": "Verify TH_CR2 receives subscription notifications which show WindowStatus value to be 0, AdminFabricIndex value to be null, AdminVendorId to be null",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 24
+                },
+                {
+                    "description": "TH_CR2 send an OpenCommissioningWindow command to DUT_CE using ECM with a commissioning timeout of `max_window_duration`",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 25
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 1, AdminFabricIndex value to be the same as the Fabric Index of the Fabrics attribute list entry corresponding to TH_CR2's fabric, AdminVendorId to be the same as the Vendor ID field of Fabrics attribute list entry corresponding to TH_CR2's fabric",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 26
+                },
+                {
+                    "description": "Verify TH_CR2 receives subscription notifications which show WindowStatus value to be 1, AdminFabricIndex value to be the same as the Fabric Index of the Fabrics attribute list entry corresponding to TH_CR2's fabric, AdminVendorId to be the same as the Vendor ID field of Fabrics attribute list entry corresponding to TH_CR2's fabric",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 27
+                },
+                {
+                    "description": "Before expiration of `max_window_duration` set in step 25, TH_CR1 sends RemoveFabric command to DUT_CE with FabricIndex set to the fabric index of TH_CR2's fabric",
+                    "expectation": "Verify DUT_CE responses with NOCResponse with a StatusCode OK (note that expecting OK should ONLY work if an administrator/commissioner on another fabric than the one being removed is invoking RemoveFabric).",
+                    "is_commissioning": false,
+                    "test_plan_number": 28
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show AdminFabricIndex value to be null",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 29
+                },
+                {
+                    "description": "TH_CR1 reads WindowStatus attribute from DUT_CE",
+                    "expectation": "verify the value to be 1 indicating the window is still open",
+                    "is_commissioning": false,
+                    "test_plan_number": 30
+                },
+                {
+                    "description": "TH_CR1 reads AdminVendorID attribute from DUT_CE",
+                    "expectation": "verify the value to be the same as the Admin Vendor ID of the Fabrics attribute list entry corresponding to TH_CR2's fabric",
+                    "is_commissioning": false,
+                    "test_plan_number": 31
+                },
+                {
+                    "description": "TH_CR1 revokes the commissioning window on DUT_CE using RevokeCommissioning command",
+                    "expectation": "Verify DUT_CE closes its Commissioning window",
+                    "is_commissioning": false,
+                    "test_plan_number": 32
+                },
+                {
+                    "description": "Verify TH_CR1 receives subscription notifications which show WindowStatus value to be 0, AdminVendorId to be null",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 33
                 }
             ]
         },
@@ -3957,7 +5242,7 @@
             "function": "test_TC_CADMIN_1_4",
             "path": "sdk/TC_CADMIN_1_3_4",
             "pics": [
-                "CADMIN.S"
+                "CADMIN.S.F00"
             ],
             "steps": [
                 {
@@ -4678,6 +5963,341 @@
             ]
         },
         {
+            "class_name": "TC_CC_2_1",
+            "desc": "25.2.1. [TC-CC-2.1] Attributes with server as DUT",
+            "function": "test_TC_CC_2_1",
+            "path": "sdk/TC_CC_2_1",
+            "pics": [
+                "CC.S"
+            ],
+            "steps": [
+                {
+                    "description": "Wait for the commissioned device to be retrieved",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0000) CurrentHue attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0001) CurrentSaturation attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0002) RemainingTime attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0003) CurrentX attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0004) CurrentY attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0005) DriftCompensation attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0006) CompensationText attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0007) ColorTemperatureMireds attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0008) ColorMode attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH reads from the DUT the (0x000f) Options attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4000) EnhancedCurrentHue attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4001) EnhancedColorMode attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4002) ColorLoopActive attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4003) ColorLoopDirection attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4004) ColorLoopTime attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4005) ColorLoopStartEnhancedHue attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4006) ColorLoopStoredEnhancedHue attributeT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "Saving for comparision in step 19 reads FeatureMap attribute from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "18.a"
+                },
+                {
+                    "description": "TH reads from the DUT the (0x400a) ColorCapabilities attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "TH reads from the DUT the (0x400b) ColorTempPhysicalMinMireds attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "TH reads from the DUT the (0x400c) ColorTempPhysicalMaxMireds attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "TH reads from the DUT the (0x400d) CoupleColorTempToLevelMinMireds attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
+                },
+                {
+                    "description": "TH reads from the DUT the (0x4010) StartUpColorTemperatureMireds attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 23
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0010) NumberOfPrimaries attribute and verify that the DUT response contains an uint8 and value SHALL be in range from 0..6. NumberOfPrimaries attribute is consistent with the PrimaryN<X,Y,Intensity> attributes provided",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 24
+                },
+                {
+                    "description": "TH reads Primary1X attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 1 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 25
+                },
+                {
+                    "description": "TH reads Primary1Y attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 1 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 26
+                },
+                {
+                    "description": "TH reads Primary1Intensity attribute from DUT and Verify that the DUT response contains an uint8 if NumberOfPrimaries is 1 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 27
+                },
+                {
+                    "description": "TH reads Primary2X attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 2 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 28
+                },
+                {
+                    "description": "TH reads Primary2Y attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 2 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 29
+                },
+                {
+                    "description": "TH reads Primary2Intensity attribute from DUT and Verify that the DUT response contains an uint8 if NumberOfPrimaries is 2 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 30
+                },
+                {
+                    "description": "TH reads Primary3X attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 3 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 31
+                },
+                {
+                    "description": "TH reads Primary3Y attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 3 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 32
+                },
+                {
+                    "description": "TH reads Primary3Intensity attribute from DUT and Verify that the DUT response contains an uint8 if NumberOfPrimaries is 3 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 33
+                },
+                {
+                    "description": "TH reads Primary4X attribute from DUT Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 4 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 34
+                },
+                {
+                    "description": "TH reads Primary4Y attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 4 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 35
+                },
+                {
+                    "description": "TH reads Primary4Intensity attribute from DUT and Verify that the DUT response contains an uint8 if NumberOfPrimaries is 4 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 36
+                },
+                {
+                    "description": "TH reads Primary5X attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 5 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 37
+                },
+                {
+                    "description": "TH reads Primary5Y attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 5 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 38
+                },
+                {
+                    "description": "TH reads Primary5Intensity attribute from DUT and Verify that the DUT response contains an uint8 if NumberOfPrimaries is 5 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 39
+                },
+                {
+                    "description": "TH reads Primary6X attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 6 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 40
+                },
+                {
+                    "description": "TH reads Primary6Y attribute from DUT and Verify that the DUT response contains an uint16 [Min:0 Max:0xfeff] if NumberOfPrimaries is 6 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 41
+                },
+                {
+                    "description": "TH reads Primary6Intensity attribute from DUT and Verify that the DUT response contains an uint8 if NumberOfPrimaries is 6 or more",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 42
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0030) WhitePointX attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 43
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0031) WhitePointY attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 44
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0032) ColorPointRX attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 45
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0033) ColorPointRY attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 46
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0034) ColorPointRIntensity attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 47
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0036) ColorPointGX attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 48
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0037) ColorPointGY attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 49
+                },
+                {
+                    "description": "TH reads from the DUT the (0x0038) ColorPointGIntensity attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 50
+                },
+                {
+                    "description": "TH reads from the DUT the (0x003a) ColorPointBX attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 51
+                },
+                {
+                    "description": "TH reads from the DUT the (0x003b) ColorPointBY attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 52
+                },
+                {
+                    "description": "TH reads from the DUT the (0x003c) ColorPointBIntensity attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 53
+                }
+            ]
+        },
+        {
             "class_name": "TC_CC_2_3",
             "desc": "test_TC_CC_2_2",
             "function": "test_TC_CC_2_2",
@@ -5059,6 +6679,305 @@
             ]
         },
         {
+            "class_name": "TC_CGEN_2_2",
+            "desc": "[TC-CGEN-2.2] ArmFailSafe command verification [DUT - Server]",
+            "function": "test_TC_CGEN_2_2",
+            "path": "sdk/TC_CGEN_2_2",
+            "pics": [
+                "CGEN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 0
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster \n                     and saves the number of list items as numTrustedRootsOriginal.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH1 reads the BasicCommissioningInfo attribute \n                     and saves the MaxCumulativeFailsafeSeconds as maxFailsafe.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "The failsafe timer is set based on PIXIT.CGEN.FailsafeExpiryLengthSeconds if provided; \n                     otherwise, it defaults to 20 seconds, ensuring flexibility and preventing delays in test execution.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "2a"
+                },
+                {
+                    "description": "TH1 execute function run_steps_3_to_5 to run steps #3 through #5.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "3-5"
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds\n                     and the Breadcrumb value as 1.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH1 reads the Breadcrumb attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH1 generates a new TrustedRootCertificate that is different from the previously commissioned TrustedRootCertificate for TH1.\n                     TH1 sends an AddTrustedRootCertificate command to the Node Operational Credentials cluster to install this new certificate.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificate attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH1 sends an ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to 1 and the Breadcrumb value as 2. \n                     TH1 then waits 1 seconds to ensure the failsafe timer has expired",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH1 execute function run_steps_8_to_9 to run steps #8 through #9.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "8-9"
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH1 reads the Breadcrumb attribute and verify that the breadcrumb attribute is 0.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH1 repeats steps #3 through #5 using function run_steps_3_to_5.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to 0.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH1 Repeat steps 8 through 9.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH1 sends the OpenCommissioningWindow command to the Administrator Commissioning cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH2 opens a PASE connection to the DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "TH2 obtains or generates a TrustedRootCertificate that is different from the previously commissioned TrustedRootCertificate for TH1.\n                     TH2 sends an AddTrustedRootCertificate command to the Node Operational Credentials cluster to install this new certificate.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "TH2 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to 0.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a non-fabric-filtered read\n                     and saves the returned list as nocs.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "TH1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read\n                     and saves the returned list as fabrics.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster\n                     and saves the returned list as trustedroots.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "TH2 starts commissioning the DUT. It performs all steps up to establishing a CASE connection,\n                     but DOES NOT send the CommissioningComplete command.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "TH2 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to 0.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
+                },
+                {
+                    "description": "TH1 reads the NOCs attribute from the Node Operational Credentials cluster using a non-fabric-filtered read.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 23
+                },
+                {
+                    "description": "TH1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 24
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 25
+                },
+                {
+                    "description": "TH2 fully commissions the DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 26
+                },
+                {
+                    "description": "TH2 obtains or generates a TrustedRootCertificate that is different from the previously commissioned TrustedRootCertificate for TH1.\n                     TH2 sends an AddTrustedRootCertificate command to the Node Operational Credentials cluster to install this new certificate.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 27
+                },
+                {
+                    "description": "TH1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 28
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds\n                     and the Breadcrumb value as 1.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 29
+                },
+                {
+                    "description": "TH1 obtains or generates a new TrustedRootCertificate that is different from the previously commissioned TrustedRootCertificate for TH1.\n                     TH1 sends an AddTrustedRootCertificate command to the Node Operational Credentials cluster to install this new certificate.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 30
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 31
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to maxFailsafe.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 32
+                },
+                {
+                    "description": "TH1 waits for PIXIT.CGEN.FailsafeExpiryLengthSeconds.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 33
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 34
+                },
+                {
+                    "description": "TH2 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to PIXIT.CGEN.FailsafeExpiryLengthSeconds\n                     and the Breadcrumb value as 1.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 35
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to 0.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 36
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to maxFailsafe.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 37
+                },
+                {
+                    "description": "TH1 saves the current wall time clock in seconds as Tstart,",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 38
+                },
+                {
+                    "description": "TH1 obtains or generates a new TrustedRootCertificate that is different from the previously commissioned TrustedRootCertificate for TH1.\n                      TH1 sends an AddTrustedRootCertificate command to the Node Operational Credentials cluster to install this new certificate.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 39
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 40
+                },
+                {
+                    "description": "TH1 waits until the current wall time clock is Tstart + maxFailsafe/2.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 41
+                },
+                {
+                    "description": "TH1 sends ArmFailSafe command to the DUT with ExpiryLengthSeconds field set to maxFailsafe.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 42
+                },
+                {
+                    "description": "TH1 waits until the current wall time clock is Tstart + maxFailsafe. maxFailsafe is the maximum amount of time a failsafe can be armed for,\n                     so the failsafe is required to time out at this point, despite having been re-armed in step 42.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 43
+                },
+                {
+                    "description": "TH1 reads the TrustedRootCertificates attribute from the Node Operational Credentials cluster.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 44
+                }
+            ]
+        },
+        {
             "class_name": "TC_CGEN_2_4",
             "desc": "test_TC_CGEN_2_4",
             "function": "test_TC_CGEN_2_4",
@@ -5414,6 +7333,177 @@
                 },
                 {
                     "description": "TH reads from the DUT the General Commissioning Cluster SupportsConcurrentConnection attribute, verify that it is true",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CNET_4_15",
+            "desc": "test_TC_CNET_4_15",
+            "function": "test_TC_CNET_4_15",
+            "path": "sdk/TC_CNET_4_15",
+            "pics": [
+                "CNET.S.F00(WI)"
+            ],
+            "steps": [
+                {
+                    "description": "DUT is commissioned",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH sends ArmFailSafe command to the DUT with the ExpiryLengthSeconds field set to 900",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH sends RemoveNetwork Command to the DUT with NetworkID field set to PIXIT.CNET.WIFI_2ND_ACCESSPOINT_SSID, which does not match the provisioned network, and Breadcrumb field set to 1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends ConnectNetwork Command to the DUT with NetworkID field set to PIXIT.CNET.WIFI_2ND_ACCESSPOINT_SSID, which does not match the provisioned network, and Breadcrumb field set to 1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CNET_4_2",
+            "desc": "[TC-CNET-4.2] [Thread] Verification for attributes check [DUT-Server]",
+            "function": "test_TC_CNET_4_2",
+            "path": "sdk/TC_CNET_4_2",
+            "pics": [
+                "CNET.S.F01"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT if not already done",
+                    "expectation": "DUT is commissioned, TH can communicate with the DUT on thread dataset provided in --thread-dataset-hex parameter.",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads the Networks attribute list from the DUT on all endpoints (all network commissioning clusters).",
+                    "expectation": "Verify that there is a single connected network across ALL network commissioning clusters. ",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Skip remaining steps if the connected network is NOT on the cluster currently being verified.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads the MaxNetworks attribute from the DUT.",
+                    "expectation": "Verify that MaxNetworks attribute value is within a range of 1 to 255.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads the Networks attribute list from the DUT on current endpoint.",
+                    "expectation": "Verify that each element in the Networks attribute list has the following fields: 'NetworkID', 'connected'.NetworkID field is of type octstr with a length range 1 to 32.The connected field is of type bool.Verify that the number of entries in the Networks attribute is less than or equal to 'MaxNetworksValue'.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH reads ScanMaxTimeSeconds attribute from the DUT.",
+                    "expectation": "Verify that ScanMaxTimeSeconds attribute value is within the range of 1 to 255 seconds.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH reads ConnectMaxTimeSeconds Attribute from the DUT.",
+                    "expectation": "Verify that ConnectMaxTimeSeconds attribute value is within the range of 1 to 255 seconds.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH reads InterfaceEnabled attribute from the DUT.",
+                    "expectation": "Verify that InterfaceEnabled attribute value is true.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads LastNetworkingStatus attribute from the DUT.",
+                    "expectation": "Verify that LastNetworkingStatus attribute value is Success.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads the LastNetworkID attribute from the DUT.",
+                    "expectation": "Verify that LastNetworkID attribute matches the NetworkID value of one of the entries in the Networks attribute list.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH reads the SupportedThreadFeatures attribute from the DUT.",
+                    "expectation": "Verify that SupportedThreadFeatures attribute value is an empty bitmap (value 0).Verify that Bit 4 (IsSynchronizedSleepyEndDeviceCapable) is only set if bit 2 (IsSleepyEndDeviceCapable) is also set.Verify that Bit 0 (IsBorderRouterCapable) is only set if bit 3 (IsFullThreadDevice) is also set.Verify that Bit 1 (IsRouterCapable) is only set if bit 3 (IsFullThreadDevice) is also set.Verify that at least one of the following bits is set: Bit 4 (IsSynchronizedSleepyEndDeviceCapable), Bit 2 (IsSleepyEndDeviceCapable), Bit 3 (IsFullThreadDevice).",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH reads the ThreadVersion attribute from the DUT.",
+                    "expectation": "Verify that ThreadVersion attribute value is greater than or equal to 4.",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CNET_4_22",
+            "desc": "test_TC_CNET_4_22",
+            "function": "test_TC_CNET_4_22",
+            "path": "sdk/TC_CNET_4_22",
+            "pics": [
+                "CNET.S.F01"
+            ],
+            "steps": [
+                {
+                    "description": "TH is commissioned",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "Precondition"
+                },
+                {
+                    "description": "TH sends ScanNetworks command to the DUT with the SSID field omitted and the Breadcrumb field set to 1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads Breadcrumb attribute from the General Commissioning Cluster",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends ScanNetworks command to the DUT with the SSID field set to null and the Breadcrumb field set to 2",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH reads Breadcrumb attribute from the General Commissioning Cluster",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH sends ScanNetworks command to the DUT with the SSID field set to a random string of ASCII characters with a size of between 1 and 31 characters and the Breadcrumb field set to 3",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH reads Breadcrumb attribute from the General Commissioning Cluster",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
@@ -8788,16 +10878,22 @@
                     "test_plan_number": 8
                 },
                 {
-                    "description": "If the pixit_allow_empty_fixed_label_list flag is not set, and the FixedLabel cluster is present on the device, ,check that the fixed label cluster list is not empty",
+                    "description": "If the pixit_allow_empty_fixed_label_list flag is not set, and the FixedLabel cluster is present on the device, check that the fixed label cluster list is not empty",
                     "expectation": "List is not empty",
                     "is_commissioning": false,
                     "test_plan_number": 9
                 },
                 {
+                    "description": "If the pixit_allow_fixed_label_default_values flag is not set, and the FixedLabel cluster is present on the device, check that the fixed label cluster list does not contain any of the default labels",
+                    "expectation": "List does not contain default labels",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
                     "description": "Fail on any problems",
                     "expectation": "",
                     "is_commissioning": false,
-                    "test_plan_number": 10
+                    "test_plan_number": 11
                 }
             ]
         },
@@ -10577,9 +12673,9 @@
             ]
         },
         {
-            "class_name": "EGC_2_1",
+            "class_name": "TC_EGC_2_1",
             "desc": "[TC-EGC-2.1] Attributes with DUT as Server",
-            "function": "test_EGC_2_1",
+            "function": "test_TC_EGC_2_1",
             "path": "sdk/TC_EGC_2_1",
             "pics": [
                 "EGC.S"
@@ -10588,7 +12684,7 @@
                 {
                     "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
                     "expectation": "",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": "1"
                 },
                 {
@@ -10612,9 +12708,9 @@
             ]
         },
         {
-            "class_name": "EGC_2_2",
+            "class_name": "TC_EGC_2_2",
             "desc": "[TC-EGC-2.2] Primary Functionality with DUT as Server",
-            "function": "test_EGC_2_2",
+            "function": "test_TC_EGC_2_2",
             "path": "sdk/TC_EGC_2_2",
             "pics": [
                 "EGC.S"
@@ -10623,7 +12719,7 @@
                 {
                     "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
                     "expectation": "",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": "1"
                 },
                 {
@@ -10653,9 +12749,9 @@
             ]
         },
         {
-            "class_name": "EGC_2_3",
+            "class_name": "TC_EGC_2_3",
             "desc": "[TC-EGC-2.3] Forecast feature functionality with DUT as Server",
-            "function": "test_EGC_2_3",
+            "function": "test_TC_EGC_2_3",
             "path": "sdk/TC_EGC_2_3",
             "pics": [
                 "EGC.S",
@@ -10665,7 +12761,7 @@
                 {
                     "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
                     "expectation": "",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": "1"
                 },
                 {
@@ -11718,6 +13814,53 @@
                     "expectation": "Verify DUT responds w/ status SUCCESS(0x00)",
                     "is_commissioning": false,
                     "test_plan_number": "14"
+                }
+            ]
+        },
+        {
+            "class_name": "TC_FAN_2_1",
+            "desc": "[TC-FAN-2.1] Mandatory functionality with DUT as Server",
+            "function": "test_TC_FAN_2_1",
+            "path": "sdk/TC_FAN_2_1",
+            "pics": [
+                "FAN.S"
+            ],
+            "steps": [
+                {
+                    "description": "[FC] Commissioning already done.",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "[FC] TH checks for support of the Auto feature.",
+                    "expectation": "Save result for future use.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "[FC] TH reads from the DUT the FanModeSequence attribute.",
+                    "expectation": "Verify that the DUT response contains a FanModeSequenceEnum with value between 0 and 5 inclusive. If Auto is not supported, verify that the FanModeSequence attribute value is 0, 1, or 5. If Auto is supported, verify that the FanModeSequence attribute value is 2, 3, or 4.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "[FC] TH reads from the DUT the FanMode attribute value.",
+                    "expectation": "Verify that the DUT response contains a FanModeEnum with a value between 0 and 5, excluding 4 and 6 (deprecated). Verify that the FanMode attribute value is supported by the FanModeSequence attribute value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "[FC] TH reads from the DUT the PercentSetting attribute.",
+                    "expectation": "Verify that the DUT response contains a uint8 with value between 0 and 100 inclusive.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "[FC] TH reads from the DUT the PercentCurrent attribute.",
+                    "expectation": "Verify that the DUT response contains a uint8 with value between 0 and 100 inclusive.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
                 }
             ]
         },
@@ -13583,6 +15726,166 @@
             ]
         },
         {
+            "class_name": "TC_LTIME_3_1",
+            "desc": "4.1.1. [TC-LTIME-3.1] Read and Write Time Format Localization Cluster Attributes [DUT as Server]",
+            "function": "test_TC_LTIME_3_1",
+            "path": "sdk/TC_LTIME_3_1",
+            "pics": [
+                "LTIME.S"
+            ],
+            "steps": [
+                {
+                    "description": "TH is commissioned with DUT",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 0
+                },
+                {
+                    "description": "TH reads HourFormat attribute from DUT",
+                    "expectation": "Verify that the HourFormat attribute is of Enum8 datatype and that the values are 0 (12hr), 1 (24hr), and 255 (UseActiveLocale) as per the HourFormatEnum in the specification.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH writes 0(12hr) to HourFormat attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "If the prior write was successful, TH reads HourFormat attribute",
+                    "expectation": "Verify that the value is 0 (12hr).",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH writes 1(24hr) to HourFormat attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "If the prior write was successful, TH reads HourFormat attribute",
+                    "expectation": "Verify that the value is 1 (24hr).",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH writes 255 (UseActiveLocale) to HourFormat attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "If the prior write was successful, TH reads HourFormat attribute",
+                    "expectation": "Verify that the value is 255 (UseActiveLocale).",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH writes 5 to HourFormat attribute",
+                    "expectation": "Verify that the write request shows 0x87 (Constraint Error).",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads the feature map attribute. If the CALFMT feature is not supported, skip all remaining steps",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads SupportedCalendarTypes attribute from DUT and saves as `cluster_supported_calendar_types`",
+                    "expectation": "Verify that the SupportedCalendarTypes attribute is of Enum8 datatype and only contains values from 0-11 (specific calendar types) and 255 (UseActiveLocale), as defined in the CalendarTypeEnum in the specification.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH reads ActiveCalendarType attribute from DUT",
+                    "expectation": "Verify that the ActiveCalendarType is in `cluster_supported_calendar_types`",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "For each entry in `cluster_supported_calendar_types`, TH writes that value to ActiveCalendarType, verifies that the write was successful and confirms the value via a read",
+                    "expectation": "Write is successful and read value matches for every entry",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH finds the set of CalendarTypesEnum value that do not appear in `cluster_supported_calendar_types` and saves as `cluster_not_supported_calendar_types`",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "For each value in `cluster_unsupported_calendar_types`, TH writes the value to the ActiveCalendarType attributes",
+                    "expectation": "DUT returns CONSTRAINT_ERROR",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH writes 50 to ActiveCalendarType attribute",
+                    "expectation": "Verify that the write request shows 0x87 (Constraint Error).",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                }
+            ]
+        },
+        {
+            "class_name": "TC_LUNIT_3_1",
+            "desc": "[TC-LUNIT-2.1] Read and Write Unit Localization Cluster Attributes with DUT as Server",
+            "function": "test_TC_LUNIT_3_1",
+            "path": "sdk/TC_LUNIT_3_1",
+            "pics": [
+                "LUNIT.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT if required",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 0
+                },
+                {
+                    "description": "TH reads from the DUT the TemperatureUnit attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "If supported, TH reads from the DUT the SupportedTemperatureUnits attribute",
+                    "expectation": "Verify the list length is between 2 and 3 inclusive.\nVerify that each entry in the list is a valid\nTempUnitEnum value and is unique.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "If the SupportedTemperatureUnits is supported, TH creates a `supported` list With each entry in SupportedUnitsList. If SupportedTemperatureUnits is not supported, TH creates a `supported` list with Celsius and Fahrenheit. TH writes each entry in the `supported` list to the DUT the TemperatureUnit attribute",
+                    "expectation": "Write is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "If the SupportedTemperatureUnits is supported, TH construct a list with valid TempUnitEnum values that are not contained in SupportedUnitsList",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "if the SupportedTemperatureUnits is supported, With each entry in UnsupportedUnitsList, TH writes to the DUT the TemperatureUnit attribute",
+                    "expectation": "Write returns CONSTRAINT_ERROR",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "If SupportedTemperatureUnits is not supported, TH writes Kelvin",
+                    "expectation": "Write either returns SUCCESS or CONSTRAINT_ERROR",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                }
+            ]
+        },
+        {
             "class_name": "TC_LVL_2_3",
             "desc": "test_TC_LVL_2_3",
             "function": "test_TC_LVL_2_3",
@@ -14937,7 +17240,7 @@
                 {
                     "description": "TH0 adds TH1 over CASE",
                     "expectation": "Commissioning is successful",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": 1
                 },
                 {
@@ -15058,10 +17361,12 @@
         },
         {
             "class_name": "TC_OPCREDS_VidVerify",
-            "desc": "[DUTServer] Pre-release TC-OPCREDS-3.8 test case.",
+            "desc": "[DUTServer] TC-OPCREDS-3.8 test case.",
             "function": "test_TC_OPCREDS_3_8",
             "path": "sdk/TC_OPCREDS_3_8",
-            "pics": [],
+            "pics": [
+                "OPCREDS.S.C0c.Rsp"
+            ],
             "steps": [
                 {
                     "description": "Run entire test",
@@ -16557,6 +18862,170 @@
             ]
         },
         {
+            "class_name": "TC_SC_3_4",
+            "desc": "[TC-SC-3.4] CASE Error Handling [DUT_Responder] ",
+            "function": "test_TC_SC_3_4",
+            "path": "sdk/TC_SC_3_4",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "DUT is commissioned and TH has an open CASE Session with DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH constructs and sends a Sigma1 message with a resumptionID and NO initiatorResumeMIC to DUT",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH constructs and sends a Sigma1 message with an initiatorResumeMIC and NO resumptionID to DUT",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH constructs and sends a Sigma1 message with a resumptionID and an invalid initiatorResumeMIC",
+                    "expectation": "DUT falls back to establishing CASE without resumption . DUT sends a status report to the TH with a Success general code, Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code as SESSION_ESTABLISHMENT_SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH constructs and sends a Sigma1 message with message with an invalid destinationId to DUT",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of NO_SHARED_TRUST_ROOTS (0X0001). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH sends a valid Sigma1 message to DUT. In reply to the received Sigma2,TH Sends back a Sigma3 message with improperly generated encrypted integrity data (TBEData3Encrypted)",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH sends a valid Sigma1 message to DUT. In reply to the received Sigma2,TH Sends back a Sigma3 message with invalid initiatorNOC data",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH sends a valid Sigma1 message to DUT. In reply to the received Sigma2,TH Sends back a Sigma3 message with invalid initiatorICAC data",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH sends a valid Sigma1 message to DUT. In reply to the received Sigma2,TH Sends back a Sigma3 message with invalid signature data",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH sends a valid Sigma1 message to DUT. In reply to the received Sigma2,TH Sends back a Sigma3 message with invalid initiatorEphPubKey data",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH sends a valid Sigma1 message to DUT. In reply to the received Sigma2,TH Sends back a Sigma3 message with invalid responderEphPubKey data",
+                    "expectation": "DUT sends a status report to the TH with a FAILURE general code , Protocol ID of SECURE_CHANNEL (0x0000), and Protocol Code of INVALID_PARAMETER (0X0002). DUT MUST perform no further processing after sending the status report.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                }
+            ]
+        },
+        {
+            "class_name": "TC_SC_3_5",
+            "desc": "[TC-SC-3.5] CASE Error Handling [DUT_Initiator] ",
+            "function": "test_TC_SC_3_5",
+            "path": "sdk/TC_SC_3_5",
+            "pics": [
+                "MCORE.ROLE.COMMISSIONER"
+            ],
+            "steps": [
+                {
+                    "description": "TH_SERVER has been commissioned to TH_CLIENT",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH Client sends an OpenCommissioningWindow command to TH_SERVER to allow it to be commissioned by DUT_Initiator and trigger CASE Handshake",
+                    "expectation": "Verify that the TH_SERVER returns SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "1a"
+                },
+                {
+                    "description": "TH Client sends FailAtFault command to FaultInjection cluster on TH_SERVER to include a corrupt TBEData2Encrypted in the Sigma2 it will send during CASE Handshake",
+                    "expectation": "Verify that the TH_SERVER receives the message",
+                    "is_commissioning": false,
+                    "test_plan_number": "1b"
+                },
+                {
+                    "description": "TH prompts the user to Commission DUT_Initiator to TH_SERVER",
+                    "expectation": "Verify that the DUT sends a status report to TH_SERVER with a FAILURE general code (value 1), protocol ID of SECURE_CHANNEL (0x0000), and Protocol code of INVALID_PARAMETER (0X0002).",
+                    "is_commissioning": false,
+                    "test_plan_number": "1c"
+                },
+                {
+                    "description": "TH Client revokes the Commissioning Window and resends an OpenCommissioningWindow command to TH_SERVER to allow commissioning by DUT_Initiator again and re-trigger the CASE handshake.",
+                    "expectation": "Verify that the TH_SERVER returns SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "2a"
+                },
+                {
+                    "description": "TH Client sends FailAtFault command to FaultInjection cluster on TH_SERVER to include a corrupt responderNOC in the Sigma2 it will send during CASE Handshake",
+                    "expectation": "Verify that the TH_SERVER receives the message",
+                    "is_commissioning": false,
+                    "test_plan_number": "2b"
+                },
+                {
+                    "description": "TH prompts the user to Commission DUT_Initiator to TH_SERVER again",
+                    "expectation": "Verify that the DUT sends a status report to TH_SERVER with a FAILURE general code (value 1), protocol ID of SECURE_CHANNEL (0x0000), and Protocol code of INVALID_PARAMETER (0X0002).",
+                    "is_commissioning": false,
+                    "test_plan_number": "2c"
+                },
+                {
+                    "description": "TH Client revokes the Commissioning Window and resends an OpenCommissioningWindow command to TH_SERVER to allow commissioning by DUT_Initiator again and re-trigger the CASE handshake.",
+                    "expectation": "Verify that the TH_SERVER returns SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "3a"
+                },
+                {
+                    "description": "TH Client sends FailAtFault command to FaultInjection cluster on TH_SERVER to include a corrupt responderICAC in the Sigma2 it will send during CASE Handshake",
+                    "expectation": "Verify that the TH_SERVER receives the message",
+                    "is_commissioning": false,
+                    "test_plan_number": "3b"
+                },
+                {
+                    "description": "TH prompts the user to Commission DUT_Initiator to TH_SERVER again",
+                    "expectation": "Verify that the DUT sends a status report to TH_SERVER with a FAILURE general code (value 1), protocol ID of SECURE_CHANNEL (0x0000), and Protocol code of INVALID_PARAMETER (0X0002).",
+                    "is_commissioning": false,
+                    "test_plan_number": "3c"
+                },
+                {
+                    "description": "TH Client revokes the Commissioning Window and resends an OpenCommissioningWindow command to TH_SERVER to allow commissioning by DUT_Initiator again and re-trigger the CASE handshake.",
+                    "expectation": "Verify that the TH_SERVER returns SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "4a"
+                },
+                {
+                    "description": "TH Client sends FailAtFault command to FaultInjection cluster on TH_SERVER to include a corrupt Signature in the Sigma2 it will send during CASE Handshake",
+                    "expectation": "Verify that the TH_SERVER receives the message",
+                    "is_commissioning": false,
+                    "test_plan_number": "4b"
+                },
+                {
+                    "description": "TH prompts the user to Commission DUT_Initiator to TH_SERVER again",
+                    "expectation": "Verify that the DUT sends a status report to TH_SERVER with a FAILURE general code (value 1), protocol ID of SECURE_CHANNEL (0x0000), and Protocol code of INVALID_PARAMETER (0X0002).",
+                    "is_commissioning": false,
+                    "test_plan_number": "4c"
+                }
+            ]
+        },
+        {
             "class_name": "TC_SC_3_6",
             "desc": "test_TC_SC_3_6",
             "function": "test_TC_SC_3_6",
@@ -16760,7 +19229,7 @@
                 {
                     "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
                     "expectation": "",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": "1"
                 },
                 {
@@ -16801,7 +19270,7 @@
                 {
                     "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
                     "expectation": "",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": "1"
                 },
                 {
@@ -16867,14 +19336,21 @@
             "path": "sdk/TC_SEPR_2_3",
             "pics": [
                 "SEPR.S",
-                "SEPR.F00"
+                "SEPR.F00",
+                "MCORE.SC.TCP"
             ],
             "steps": [
                 {
                     "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
                     "expectation": "",
-                    "is_commissioning": false,
+                    "is_commissioning": true,
                     "test_plan_number": "1"
+                },
+                {
+                    "description": "Create CASE session connection via TCP if the DUT claims to support TCP",
+                    "expectation": "TCP connection established OK",
+                    "is_commissioning": false,
+                    "test_plan_number": "1a"
                 },
                 {
                     "description": "TH reads TestEventTriggersEnabled attribute from General Diagnostics Cluster",
@@ -17631,7 +20107,7 @@
                     "test_plan_number": 6
                 },
                 {
-                    "description": "TH reads the Tolerance attribute from the DUT",
+                    "description": "If the tolerance attribute is supported, TH reads the Tolerance attribute from the DUT",
                     "expectation": "Verify that Tolerance is in the range of 0 to 2048",
                     "is_commissioning": false,
                     "test_plan_number": 7
@@ -19042,6 +21518,150 @@
             ]
         },
         {
+            "class_name": "TC_WebRTCRequestor_2_1",
+            "desc": "[TC-{picsCode}-2.1] Validate sending an SDP Offer command to {DUT_Server} with an invalid session id",
+            "function": "test_TC_WebRTCRequestor_2_1",
+            "path": "sdk/TC_WEBRTCR_2_1",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commission the {TH_Server} from TH",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Open the Commissioning Window of the {TH_Server}",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Commission the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Connect the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Activate the fault injection to modify the session ID of the WebRTC Offer command from {TH_Server}",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Send SolicitOffer command to the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                }
+            ]
+        },
+        {
+            "class_name": "TC_WebRTCRequestor_2_2",
+            "desc": "[TC-{picsCode}-2.2] Validate sending an SDP Answer command to {DUT_Server} with an invalid session id",
+            "function": "test_TC_WebRTCRequestor_2_2",
+            "path": "sdk/TC_WEBRTCR_2_2",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commission the {TH_Server} from TH",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Open the Commissioning Window of the {TH_Server}",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Commission the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Connect the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Activate the Fault injection to modify the session ID of the WebRTC Answer command from {TH_Server}",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Send ProvideOffer command to the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                }
+            ]
+        },
+        {
+            "class_name": "TC_WebRTCRequestor_2_3",
+            "desc": "[TC-{picsCode}-2.3] Validate sending an SDP Offer command to {DUT_Server} with an existing session id",
+            "function": "test_TC_WebRTCRequestor_2_3",
+            "path": "sdk/TC_WEBRTCR_2_3",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commission the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Connect the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Send SolicitOffer command to the {TH_Server}",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                }
+            ]
+        },
+        {
+            "class_name": "TC_WebRTCRequestor_2_4",
+            "desc": "[TC-{picsCode}-2.4] Validate sending an SDP Answer command to {DUT_Server} with an existing session id",
+            "function": "test_TC_WebRTCRequestor_2_4",
+            "path": "sdk/TC_WEBRTCR_2_4",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commission the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Connect the {TH_Server} from DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Send ProvideOffer command to the {TH_Server}",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                }
+            ]
+        },
+        {
             "class_name": "TC_WHM_1_2",
             "desc": "[TC-WHM-1.2] Cluster attributes with DUT as Server",
             "function": "test_TC_WHM_1_2",
@@ -19173,7 +21793,7 @@
             "pics": [],
             "steps": [
                 {
-                    "description": "TH performs a wildcard read of all attributes on the endpoint under test",
+                    "description": "TH performs a wildcard read of all attributes on the endpoint under test (done during test setup)",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 1
@@ -19213,6 +21833,12 @@
                     "expectation": "CI PICS is not present",
                     "is_commissioning": false,
                     "test_plan_number": 7
+                },
+                {
+                    "description": "If any of the checks failed, fail the test",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
                 }
             ]
         }
