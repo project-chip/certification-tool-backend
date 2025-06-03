@@ -23,14 +23,15 @@ import requests
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
+from loguru import logger
 from pydantic import ValidationError, parse_obj_as
 from sqlalchemy.orm import Session
 
 from app import crud, log_utils, models, schemas
 from app.api import DEFAULT_404_MESSAGE
-from app.default_environment_config import default_environment_config
 from app.crud.crud_test_run_execution import ImportError
 from app.db.session import get_db
+from app.default_environment_config import default_environment_config
 from app.models.test_run_execution import TestRunExecution
 from app.schemas.test_run_execution import TestRunExecutionUpdate
 from app.test_engine import TEST_ENGINE_ABORTING_TESTING_MESSAGE
@@ -48,6 +49,8 @@ from test_collections.matter.sdk_tests.support.performance_tests.utils import (
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 router = APIRouter()
+
+DEFAULT_CLI_PROJECT_NAME = "CLI Project Execution"
 
 
 @router.get("/", response_model=List[schemas.TestRunExecutionWithStats])
@@ -100,10 +103,11 @@ def create_test_run_execution(
     )
     return test_run_execution
 
+
 def convert_to_dict(obj):
-    if hasattr(obj, 'dict'):
+    if hasattr(obj, "dict"):
         return obj.dict()
-    elif hasattr(obj, 'model_dump'):
+    elif hasattr(obj, "model_dump"):
         return obj.model_dump()
     elif isinstance(obj, dict):
         return {k: convert_to_dict(v) for k, v in obj.items()}
@@ -111,51 +115,39 @@ def convert_to_dict(obj):
         return [convert_to_dict(item) for item in obj]
     return obj
 
+
 @router.post("/cli", response_model=schemas.TestRunExecutionWithChildren)
-def create_test_run_execution(
+def create_cli_test_run_execution(
     *,
     db: Session = Depends(get_db),
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
     config: dict = {},
 ) -> TestRunExecution:
-    """Create a new test run execution."""
-    # from app.default_environment_config import default_environment_config
+    """Creates a new test run execution on CLI request."""
     if not config:
         config = default_environment_config.__dict__
 
-    # test_args:str = "--cli true --commissioning-method on-network --discriminator 3840 --passcode 20202021 --storage-path admin_storage.json --timeout 98765432 --int-arg PIXIT.ACE.APPENDPOINT:1 PIXIT.ACE.APPDEVTYPEID:256 --string-arg PIXIT.ACE.APPCLUSTER:OnOff PIXIT.ACE.APPATTRIBUTE:OnOff"
+    logger.info(
+        f"CLI Config Arguments: {json.dumps(convert_to_dict(config), indent=2)}"
+    )
 
-    # # TODO Setar o pairing mode
-    # TODO - chip_use_paa_certs
-    # TODO - PICS --PICS /var/tmp/pics
-    # self.config_matter.dut_config.pairing_mode // DutPairingModeEnum
-    # self.config_matter.dut_config.chip_use_paa_certs
-    # cli_args = parse_args_to_dict(test_args)
-    # print("Parsed CLI Arguments:", json.dumps(config, indent=2))
-    print("Parsed CLI Arguments:", json.dumps(convert_to_dict(config), indent=2))
+    # Retrieve the default CLI project
+    cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
 
-    cli_project = crud.project.get_by_name(db=db, name="CLI Project Execution")
-
+    # If the default CLI project does not exist, create it
     if not cli_project:
-        project = schemas.ProjectCreate(name="CLI Project Execution")
+        project = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
         project.config = config
         project = crud.project.create(db=db, obj_in=project)
     else:
-        # Criar um novo config com os test_parameters atualizados
-        new_config = cli_project.config.copy()
-        # if "test_parameters" not in new_config or new_config["test_parameters"] is None:
-        #     new_config["test_parameters"] = {}
-        new_config = {**new_config, **config}
-
-        # Atualizar o projeto com o novo config
+        # Update the default CLI project the cli config argument
         project = crud.project.update(
-            db=db, db_obj=cli_project, obj_in=schemas.ProjectUpdate(config=new_config)
+            db=db, db_obj=cli_project, obj_in=schemas.ProjectUpdate(config=config)
         )
 
     # TODO: Remove test_run_config completely from the project
     test_run_execution_in.project_id = project.id
-    test_run_execution_in.test_run_config_id = None
     test_run_execution_in.certification_mode = False
 
     test_run_execution = crud.test_run_execution.create(

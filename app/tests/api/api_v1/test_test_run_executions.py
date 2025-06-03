@@ -17,8 +17,10 @@
 # Ignore mypy type check for this file
 
 import asyncio
+import json
 from asyncio import sleep
 from http import HTTPStatus
+from unittest.mock import MagicMock, patch
 
 import pytest
 from faker import Faker
@@ -28,9 +30,15 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import crud
+from app.api.api_v1.endpoints.test_run_executions import DEFAULT_CLI_PROJECT_NAME
 from app.core.config import settings
+from app.main import app
 from app.models import TestRunExecution
+from app.models.project import Project
 from app.models.test_enums import TestStateEnum
+from app.models.test_run_execution import TestRunExecution
+from app.schemas.test_run_execution import TestRunExecutionCreate
+from app.schemas.test_selection import TestSelection
 from app.test_engine import (
     TEST_ENGINE_ABORTING_TESTING_MESSAGE,
     TEST_ENGINE_BUSY_MESSAGE,
@@ -51,6 +59,61 @@ from app.tests.utils.test_run_execution import (
 from app.tests.utils.utils import random_lower_string
 from app.tests.utils.validate_json_response import validate_json_response
 from app.utils import remove_title_date
+
+client = TestClient(app)
+
+
+@pytest.fixture
+def mock_db():
+    return MagicMock(spec=Session)
+
+
+@pytest.fixture
+def test_run_execution_create():
+    return TestRunExecutionCreate(
+        title="Test Run",
+        description="Test Description",
+        project_id=1,
+        operator_id=1,
+    )
+
+
+@pytest.fixture
+def test_selection():
+    return {"sample_tests": {"SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 1}}}
+
+
+@pytest.fixture
+def default_config():
+    return {
+        "network": {
+            "wifi": {"ssid": "test_ssid", "password": "test_password"},
+            "thread": {
+                "channel": 15,
+                "panid": "0x1234",
+                "extpanid": "1122334455667788",
+                "networkkey": "00112233445566778899aabbccddeeff",
+                "networkname": "TestThread",
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::",
+                "network_interface": "wpan0",
+                "dataset": "test-dataset",
+                "operational_dataset_hex": "0e080000000000010000000300000e09",
+            },
+        },
+        "test_parameters": {
+            "matter_qa_url": "http://localhost:8080",
+        },
+        "dut_config": {
+            "discriminator": "1234",
+            "setup_code": "12345678",
+            "pairing_mode": "ble-wifi",
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    }
+
 
 faker = Faker()
 
@@ -427,6 +490,160 @@ def test_rename_test_run_execution_succeeds(client: TestClient, db: Session) -> 
         expected_status_code=HTTPStatus.OK,
         expected_keys=["title"],
     )
+
+
+def test_create_cli_test_run_execution_new_project(
+    mock_db, test_run_execution_create, test_selection, default_config
+):
+    """Test creating a CLI test run execution with a new project"""
+    # Mock project not found
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+
+    # Mock project creation
+    mock_project = Project(
+        id=1,
+        name=DEFAULT_CLI_PROJECT_NAME,
+        config=default_config,
+    )
+    mock_db.add.return_value = None
+    mock_db.commit.return_value = None
+    mock_db.refresh.return_value = None
+
+    # Mock test run execution creation
+    mock_test_run = TestRunExecution(
+        id=1,
+        title=test_run_execution_create.title,
+        description=test_run_execution_create.description,
+        project_id=1,
+        operator_id=1,
+    )
+
+    # Configure mock to return mock_test_run when needed
+    mock_db.query.return_value.filter.return_value.first.side_effect = [
+        None,
+        mock_test_run,
+    ]
+
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+                "config": default_config,
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == test_run_execution_create.title
+    assert data["description"] == test_run_execution_create.description
+
+
+def test_create_cli_test_run_execution_existing_project(
+    mock_db, test_run_execution_create, test_selection, default_config
+):
+    """Test creating a CLI test run execution with an existing project"""
+    # Mock existing project
+    mock_project = Project(
+        id=1,
+        name=DEFAULT_CLI_PROJECT_NAME,
+        config={},
+    )
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_project
+
+    # Mock test run execution creation
+    mock_test_run = TestRunExecution(
+        id=1,
+        title=test_run_execution_create.title,
+        description=test_run_execution_create.description,
+        project_id=1,
+        operator_id=1,
+    )
+    mock_db.add.return_value = None
+    mock_db.commit.return_value = None
+    mock_db.refresh.return_value = None
+
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+                "config": default_config,
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == test_run_execution_create.title
+    assert data["description"] == test_run_execution_create.description
+
+
+def test_create_cli_test_run_execution_default_config(
+    mock_db, test_run_execution_create, test_selection
+):
+    """Test creating a CLI test run execution with default config"""
+    # Mock project not found
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+
+    # Mock project creation
+    mock_project = Project(
+        id=1,
+        name=DEFAULT_CLI_PROJECT_NAME,
+        config={},
+    )
+    mock_db.add.return_value = None
+    mock_db.commit.return_value = None
+    mock_db.refresh.return_value = None
+
+    # Mock test run execution creation
+    mock_test_run = TestRunExecution(
+        id=1,
+        title=test_run_execution_create.title,
+        description=test_run_execution_create.description,
+        project_id=1,
+        operator_id=1,
+    )
+    mock_db.add.return_value = None
+    mock_db.commit.return_value = None
+    mock_db.refresh.return_value = None
+
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == test_run_execution_create.title
+    assert data["description"] == test_run_execution_create.description
+
+
+def test_create_cli_test_run_execution_invalid_data(mock_db):
+    """Test creating a CLI test run execution with invalid data"""
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": {},
+                "selected_tests": {},
+            },
+        )
+
+    assert response.status_code == 422  # Validation error
 
 
 def test_rename_not_valid_test_run_execution_fails(
