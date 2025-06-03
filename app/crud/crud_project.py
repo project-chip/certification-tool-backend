@@ -88,10 +88,6 @@ class CRUDProject(
         if program_class:
             program_class(**json_obj_in["config"])
 
-        # if cli_args:
-        #     if not json_obj_in["config"]["test_parameters"]:
-        #         json_obj_in["config"]["test_parameters"] = {}
-        #     json_obj_in["config"]["test_parameters"] = cli_args
 
         obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
