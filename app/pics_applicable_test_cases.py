@@ -95,7 +95,7 @@ def applicable_test_cases_set(
     Returns:
         PICSApplicableTestCases: List of test cases that are applicable
           for this Project
-    
+
     Raises:
         PlatformTestError: If both PICS_PLAT_CERT and PICS_PLAT_CERT_DERIVED are enabled
     """
@@ -122,9 +122,7 @@ def applicable_test_cases_set(
     #  If PICS_PLAT_CERT is enabled, process platform tests
     if PICS_PLAT_CERT in enabled_pics:
         __process_platform_tests(
-            applicable_tests_combined,
-            test_collections_copy,
-            enabled_pics
+            applicable_tests_combined, test_collections_copy, enabled_pics
         )
     else:
         # If PICS_PLAT_CERT is not enabled, process mandatory and remaining tests
@@ -152,7 +150,7 @@ def __applicable_test_cases(
     test_collections: Dict[str, TestCollectionDeclaration],
     enabled_pics: set[str],
     mandatory: bool,
-    tests_to_consider: list[str] = None
+    tests_to_consider: list[str] = None,
 ) -> set:
     """
     Get applicable test cases based on PICS configuration and optional test list.
@@ -176,7 +174,10 @@ def __applicable_test_cases(
             for test_suite in test_collection.test_suites.values():
                 for test_case in test_suite.test_cases.values():
                     # Skip if test is not in the list of tests to consider
-                    if tests_to_consider and test_case.metadata["title"] not in tests_to_consider:
+                    if (
+                        tests_to_consider
+                        and test_case.metadata["title"] not in tests_to_consider
+                    ):
                         continue
 
                     if not test_case.pics:
@@ -212,7 +213,7 @@ def __retrieve_pics(test_case: TestCaseDeclaration) -> Tuple[set, set]:
 def __process_platform_tests(
     applicable_tests_combined: set[str],
     test_collections_copy: Dict[str, TestCollectionDeclaration],
-    enabled_pics: set[str]
+    enabled_pics: set[str],
 ) -> None:
     """
     Process platform tests and add them to applicable tests
@@ -234,7 +235,7 @@ def __process_platform_tests(
             test_collections_copy, enabled_pics, True, platform_tests
         )
     )
-    
+
     # Include each platform test along with some suffixes: 'Semi-automated'
     # and 'Steps Disabled'
     for test in platform_tests:
