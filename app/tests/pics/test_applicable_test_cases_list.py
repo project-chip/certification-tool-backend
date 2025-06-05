@@ -23,6 +23,8 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from app.pics_applicable_test_cases import (
+    PICS_PLAT_CERT,
+    PICS_PLAT_CERT_DERIVED,
     FileNotFoundError,
     InvalidJSONError,
     PlatformTestError,
@@ -72,7 +74,7 @@ def test_applicable_test_cases_set_with_platform_cert(mock_file) -> None:
     # Create PICS with platform certification enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+    cluster.items[PICS_PLAT_CERT] = PICSItem(number=PICS_PLAT_CERT, enabled=True)
     pics.clusters["Platform"] = cluster
 
     applicable_test_cases = applicable_test_cases_set(pics, [])
@@ -95,7 +97,7 @@ def test_applicable_test_cases_set_with_platform_cert_file_not_found(mock_file) 
     # Create PICS with platform certification enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+    cluster.items[PICS_PLAT_CERT] = PICSItem(number=PICS_PLAT_CERT, enabled=True)
     pics.clusters["Platform"] = cluster
 
     # Mock file not found error
@@ -111,7 +113,7 @@ def test_applicable_test_cases_set_with_platform_cert_invalid_json(mock_file) ->
     # Create PICS with platform certification enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+    cluster.items[PICS_PLAT_CERT] = PICSItem(number=PICS_PLAT_CERT, enabled=True)
     pics.clusters["Platform"] = cluster
 
     # Verify that InvalidJSONError is raised
@@ -123,8 +125,8 @@ def test_applicable_test_cases_set_with_platform_cert_derived_enabled() -> None:
     # Create PICS with platform certification derived enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT_DONE"] = PICSItem(
-        number="MCORE.PLAT_CERT_DONE", enabled=True
+    cluster.items[PICS_PLAT_CERT_DERIVED] = PICSItem(
+        number=PICS_PLAT_CERT_DERIVED, enabled=True
     )
     pics.clusters["Platform"] = cluster
 
@@ -144,8 +146,8 @@ def test_applicable_test_cases_set_with_platform_cert_derived_enabled_remove_tes
     # Create PICS with platform certification derived enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT_DONE"] = PICSItem(
-        number="MCORE.PLAT_CERT_DONE", enabled=True
+    cluster.items[PICS_PLAT_CERT_DERIVED] = PICSItem(
+        number=PICS_PLAT_CERT_DERIVED, enabled=True
     )
     pics.clusters["Platform"] = cluster
 
@@ -168,7 +170,7 @@ def test_applicable_test_cases_set_with_platform_cert_enabled(mock_file) -> None
     # Create PICS with platform certification enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
+    cluster.items[PICS_PLAT_CERT] = PICSItem(number=PICS_PLAT_CERT, enabled=True)
     pics.clusters["Platform"] = cluster
 
     # Create a set of applicable test cases
@@ -193,9 +195,9 @@ def test_applicable_test_cases_set_with_both_platform_certs_enabled() -> None:
     # Create PICS with both platform certifications enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT"] = PICSItem(number="MCORE.PLAT_CERT", enabled=True)
-    cluster.items["MCORE.PLAT_CERT_DONE"] = PICSItem(
-        number="MCORE.PLAT_CERT_DONE", enabled=True
+    cluster.items[PICS_PLAT_CERT] = PICSItem(number=PICS_PLAT_CERT, enabled=True)
+    cluster.items[PICS_PLAT_CERT_DERIVED] = PICSItem(
+        number=PICS_PLAT_CERT_DERIVED, enabled=True
     )
     pics.clusters["Platform"] = cluster
 
@@ -263,8 +265,8 @@ def test_applicable_test_cases_set_with_dmp_cert_test_removed(mock_manager) -> N
     # # Create PICS with platform certification derived enabled
     # pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT_DONE"] = PICSItem(
-        number="MCORE.PLAT_CERT_DONE", enabled=True
+    cluster.items[PICS_PLAT_CERT_DERIVED] = PICSItem(
+        number=PICS_PLAT_CERT_DERIVED, enabled=True
     )
     pics.clusters["Platform"] = cluster
 
@@ -346,8 +348,8 @@ def test_applicable_test_cases_set_with_mocked_internal_calls(
     # Create PICS with platform certification derived enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
-    cluster.items["MCORE.PLAT_CERT_DONE"] = PICSItem(
-        number="MCORE.PLAT_CERT_DONE", enabled=True
+    cluster.items[PICS_PLAT_CERT_DERIVED] = PICSItem(
+        number=PICS_PLAT_CERT_DERIVED, enabled=True
     )
     pics.clusters["Platform"] = cluster
 

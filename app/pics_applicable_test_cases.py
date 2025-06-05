@@ -29,8 +29,8 @@ from test_collections.matter.sdk_tests.support.performance_tests.utils import (
     STRESS_TEST_COLLECTION,
 )
 
-PICS_PLAT_CERT = "MCORE.PLAT_CERT"
-PICS_PLAT_CERT_DERIVED = "MCORE.PLAT_CERT_DONE"
+PICS_PLAT_CERT = "PLAT.CERT"
+PICS_PLAT_CERT_DERIVED = "PLAT.CERT.TESTS.DONE"
 
 PLATFORM_TESTS_FILE_NAME = "generated-platform-cert-test-list.json"
 
