@@ -15,7 +15,7 @@
 #
 import json
 from pathlib import Path
-from typing import Dict, Tuple, Optional
+from typing import Dict, Optional, Tuple
 
 from loguru import logger
 
@@ -159,7 +159,7 @@ def __applicable_test_cases(
         test_collections: Dictionary of test collections
         enabled_pics: Set of enabled PICS
         mandatory: Whether to consider mandatory tests
-        tests_to_consider: Optional list of test IDs to consider. 
+        tests_to_consider: Optional list of test IDs to consider.
                            If None or empty, all tests are considered.
 
     Returns:
