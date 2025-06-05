@@ -25,7 +25,9 @@ from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
+from app.test_engine.models.manual_test_case import TestError
 from app.test_engine.models.test_case import CUSTOM_TEST_IDENTIFIER
+from app.user_prompt_support import PromptResponse, UserResponseStatusEnum
 from app.user_prompt_support.prompt_request import (
     ImageVerificationPromptRequest,
     OptionsSelectPromptRequest,
@@ -163,6 +165,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         )
 
         user_response = await self.send_prompt_request(prompt_request)
+        self.__evaluate_user_response_for_errors(user_response)
 
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
@@ -178,6 +181,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         )
 
         user_response = await self.send_prompt_request(prompt_request)
+        self.__evaluate_user_response_for_errors(user_response)
 
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
@@ -366,6 +370,18 @@ class PythonTestCase(TestCase, UserPromptSupport):
             python_test_step = TestStep(step.label)
             self.test_steps.append(python_test_step)
         self.test_steps.append(TestStep("Show test logs"))
+
+    def __evaluate_user_response_for_errors(
+        self, prompt_response: PromptResponse
+    ) -> None:
+        if prompt_response is None:
+            raise TestError("User response returned Null.")
+
+        if prompt_response.status_code == UserResponseStatusEnum.TIMEOUT:
+            raise TestError("Prompt timed out.")
+
+        if prompt_response.status_code == UserResponseStatusEnum.CANCELLED:
+            raise TestError("User cancelled the prompt.")
 
 
 class NoCommissioningPythonTestCase(PythonTestCase):
