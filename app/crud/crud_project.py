@@ -31,6 +31,9 @@ class CRUDProject(
     CRUDBaseDelete[Project],
     CRUDBaseUpdate[Project, ProjectUpdate],
 ):
+    def get_by_name(self, db: Session, name: str) -> Optional[Project]:
+        return db.query(self.model).filter(self.model.name == name).first()
+
     def get_multi(
         self,
         db: Session,
@@ -84,6 +87,7 @@ class CRUDProject(
         # Try to instantiate the program class in order to validate the input data
         if program_class:
             program_class(**json_obj_in["config"])
+
 
         obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
