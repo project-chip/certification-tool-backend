@@ -25,6 +25,10 @@ class BodyCreateTestRunExecutionApiV1TestRunExecutionsPost(BaseModel):
     selected_tests: "Optional[Dict[str, Dict[str, Dict[str, int]]]]" = Field(None, alias="selected_tests")
 
 
+class BodyCreateTestRunExecutionCliApiV1TestRunExecutionsCliPost(BodyCreateTestRunExecutionApiV1TestRunExecutionsPost):
+    config: "Dict[str, Any]" = Field(default_factory=dict, alias="config")
+
+
 class DutConfig(BaseModel):
     discriminator: "str" = Field(..., alias="discriminator")
     setup_code: "str" = Field(..., alias="setup_code")

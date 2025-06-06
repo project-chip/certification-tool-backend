@@ -23,6 +23,7 @@ from commands import (
     delete_project,
     list_projects,
     run_tests,
+    run_tests_cli,
     test_run_execution_history,
     update_project,
 )
@@ -41,6 +42,7 @@ root.add_command(list_projects)
 root.add_command(create_project)
 root.add_command(delete_project)
 root.add_command(update_project)
+root.add_command(run_tests_cli)
 
 
 if __name__ == "__main__":

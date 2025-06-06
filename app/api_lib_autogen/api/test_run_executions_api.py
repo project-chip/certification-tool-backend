@@ -66,6 +66,19 @@ class _TestRunExecutionsApi:
             type_=m.TestRunExecutionWithChildren, method="POST", url="/api/v1/test_run_executions/", json=body
         )
 
+    def _build_for_create_test_run_execution_cli_api_v1_test_run_executions_cli_post(
+        self,
+        body_create_test_run_execution_api_v1_test_run_executions_post: m.BodyCreateTestRunExecutionApiV1TestRunExecutionsPost,
+    ) -> Awaitable[m.TestRunExecutionWithChildren]:
+        """
+        Create new test run execution via CLI.
+        """
+        body = jsonable_encoder(body_create_test_run_execution_api_v1_test_run_executions_post)
+
+        return self.api_client.request(
+            type_=m.TestRunExecutionWithChildren, method="POST", url="/api/v1/test_run_executions/cli", json=body
+        )
+
     def _build_for_download_log_api_v1_test_run_executions_id_log_get(
         self, id: int, json_entries: Optional[bool] = None, download: Optional[bool] = None
     ) -> Awaitable[None]:
@@ -229,6 +242,17 @@ class AsyncTestRunExecutionsApi(_TestRunExecutionsApi):
             body_create_test_run_execution_api_v1_test_run_executions_post=body_create_test_run_execution_api_v1_test_run_executions_post
         )
 
+    async def create_test_run_execution_cli_api_v1_test_run_executions_cli_post(
+        self,
+        body_create_test_run_execution_api_v1_test_run_executions_post: m.BodyCreateTestRunExecutionApiV1TestRunExecutionsPost,
+    ) -> m.TestRunExecutionWithChildren:
+        """
+        Create new test run execution via CLI.
+        """
+        return await self._build_for_create_test_run_execution_cli_api_v1_test_run_executions_cli_post(
+            body_create_test_run_execution_api_v1_test_run_executions_post=body_create_test_run_execution_api_v1_test_run_executions_post,
+        )
+
     async def download_log_api_v1_test_run_executions_id_log_get(
         self, id: int, json_entries: Optional[bool] = None, download: Optional[bool] = None
     ) -> None:
@@ -325,6 +349,18 @@ class SyncTestRunExecutionsApi(_TestRunExecutionsApi):
         """
         coroutine = self._build_for_create_test_run_execution_api_v1_test_run_executions_post(
             body_create_test_run_execution_api_v1_test_run_executions_post=body_create_test_run_execution_api_v1_test_run_executions_post
+        )
+        return get_event_loop().run_until_complete(coroutine)
+
+    def create_test_run_execution_cli_api_v1_test_run_executions_cli_post(
+        self,
+        body_create_test_run_execution_api_v1_test_run_executions_post: m.BodyCreateTestRunExecutionApiV1TestRunExecutionsPost,
+    ) -> m.TestRunExecutionWithChildren:
+        """
+        Create new test run execution via CLI.
+        """
+        coroutine = self._build_for_create_test_run_execution_cli_api_v1_test_run_executions_cli_post(
+            body_create_test_run_execution_api_v1_test_run_executions_post=body_create_test_run_execution_api_v1_test_run_executions_post,
         )
         return get_event_loop().run_until_complete(coroutine)
 

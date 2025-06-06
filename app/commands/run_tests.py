@@ -26,57 +26,11 @@ from async_cmd import async_cmd
 from click.exceptions import Exit
 from client import client
 from test_run.websocket import TestRunSocket
+from utils import build_test_selection
 
 async_apis = AsyncApis(client)
 test_run_executions_api = async_apis.test_run_executions_api
 test_collections_api = async_apis.test_collections_api
-
-
-def build_test_selection(test_collections, tests_list) -> dict:
-    """Build the test selection JSON structure from test_collections and tests_list.
-    Example:
-        tests_list = "TC-ACE-1.1,TC_ACE_1_3"
-        Selected tests: {
-                "SDK YAML Tests": {
-                    "FirstChipToolSuite": {
-                    "TC-ACE-1.1": 1
-                    }
-                },
-                "SDK Python Tests": {
-                    "Python Testing Suite": {
-                    "TC_ACE_1_3": 1
-                    }
-                }
-            }
-    """
-    selected_tests = {}
-
-    # Convert test IDs to a set for faster lookup and normalize them
-    tests_set = {test_id.strip().replace("-", "_").replace(".", "_") for test_id in tests_list}
-
-    # Iterate through test collections
-    for collection_name, collection in test_collections.test_collections.items():
-        selected_tests[collection_name] = {}
-
-        # Iterate through test suites
-        for suite_name, suite in collection.test_suites.items():
-            selected_tests[collection_name][suite_name] = {}
-
-            # Iterate through test cases
-            for test_case_id, test_case in suite.test_cases.items():
-                # Normalize the test case ID for comparison
-                normalized_test_case_id = test_case_id.replace("-", "_").replace(".", "_")
-                if normalized_test_case_id in tests_set:
-                    selected_tests[collection_name][suite_name][test_case_id] = 1
-
-    # Remove empty collections and suites
-    selected_tests = {
-        collection: {suite: tests for suite, tests in suites.items() if tests}
-        for collection, suites in selected_tests.items()
-        if any(suites.values())
-    }
-
-    return selected_tests
 
 
 @click.command()
@@ -98,7 +52,8 @@ def build_test_selection(test_collections, tests_list) -> dict:
 )
 @click.option(
     "--tests-list",
-    help="List of test cases to execute. Separated by commas (,) and without any blank spaces. For example: TC-ACE-1.1,TC_ACE_1_3",
+    help="List of test cases to execute. Separated by commas (,) and without any blank spaces. "
+        "For example: TC-ACE-1.1,TC_ACE_1_3",
 )
 @async_cmd
 async def run_tests(selected_tests: str, title: str, file: str, project_id: int, tests_list: str = None) -> None:

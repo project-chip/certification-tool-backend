@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from pathlib import Path
-from shutil import copyfile
 import json
+from enum import Enum
+from pathlib import Path
+from typing import Dict, Tuple
 
 from pydantic import BaseModel
 
@@ -47,3 +48,32 @@ if not config_file.is_file():
         raise ValueError(f"Invalid JSON after comment removal: {e}")
 
 config = Config.parse_file(config_file)
+
+
+class PairingMode(str, Enum):
+    BLE_WIFI = "ble-wifi"
+    BLE_THREAD = "ble-thread"
+    WIFIPAF_WIFI = "wifipaf-wifi"
+    NFC_THREAD = "nfc-thread"
+    ONNETWORK = "onnetwork"
+
+
+VALID_PAIRING_MODES = {mode.value for mode in PairingMode}
+
+ATTRIBUTE_MAPPING: Dict[str, Tuple[str, ...]] = {
+    # Thread dataset attributes
+    "channel": ("network", "thread", "dataset"),
+    "panid": ("network", "thread", "dataset"),
+    "extpanid": ("network", "thread", "dataset"),
+    "networkkey": ("network", "thread", "dataset"),
+    "networkname": ("network", "thread", "dataset"),
+    # Other thread attributes
+    "rcp_serial_path": ("network", "thread"),
+    "rcp_baudrate": ("network", "thread"),
+    "on_mesh_prefix": ("network", "thread"),
+    "network_interface": ("network", "thread"),
+    "operational_dataset_hex": ("network", "thread"),
+    # WiFi attributes
+    "ssid": ("network", "wifi"),
+    "password": ("network", "wifi"),
+}

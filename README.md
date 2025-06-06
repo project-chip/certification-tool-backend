@@ -52,6 +52,7 @@ Commands:
   create-project              Creates a project
   delete-project              Deletes a project
   update-project              Updates a project with full test env config file
+  run-tests-cli               Simplified CLI execution of a test run from selected tests
 ```
 
 ### available-tests
@@ -91,6 +92,20 @@ Run `./cli.sh delete-project --id {id}` to delete a project.
 ### update-project
 
 Run `./cli.sh update-project --id {id} --config path/to/config` to update a project. Both parameters are required. Config must be a full test environment config file.
+
+### run-tests-cli
+
+Run `./cli.sh run-tests-cli --tests-list <tests> [--title <title>] [-c <config>]` to execute a test run using the simplified CLI flow.
+
+This command simplifies test execution by allowing you to run selected test cases directly, with minimal configuration defined in a property file.
+
+Required:
+--tests-list: Comma-separated list of test case identifiers.
+Example: --tests-list TC-ACE-1.1,TC_ACE_1_3
+
+Optional:
+--title: Custom title for the test run. If not provided, the current timestamp will be used as the default.
+--config: Path to the property config file. If not specified, default_config.properties will be used.
 
 ## Development
 
