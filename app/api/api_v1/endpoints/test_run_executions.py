@@ -104,18 +104,6 @@ def create_test_run_execution(
     return test_run_execution
 
 
-def convert_to_dict(obj):
-    if hasattr(obj, "dict"):
-        return obj.dict()
-    elif hasattr(obj, "model_dump"):
-        return obj.model_dump()
-    elif isinstance(obj, dict):
-        return {k: convert_to_dict(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_to_dict(item) for item in obj]
-    return obj
-
-
 @router.post("/cli", response_model=schemas.TestRunExecutionWithChildren)
 def create_cli_test_run_execution(
     *,
@@ -128,9 +116,7 @@ def create_cli_test_run_execution(
     if not config:
         config = default_environment_config.__dict__
 
-    logger.info(
-        f"CLI Config Arguments: {json.dumps(convert_to_dict(config), indent=2)}"
-    )
+    logger.info(f"CLI Config Arguments: {config}")
 
     # Retrieve the default CLI project
     cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)

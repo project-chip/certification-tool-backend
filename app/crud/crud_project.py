@@ -88,7 +88,6 @@ class CRUDProject(
         if program_class:
             program_class(**json_obj_in["config"])
 
-
         obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
         db.add(db_obj)

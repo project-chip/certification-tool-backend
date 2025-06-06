@@ -142,7 +142,7 @@ def applicable_test_cases_set(
         if PICS_PLAT_CERT_DERIVED in enabled_pics:
             __process_platform_cert_derived(dmp_test_skip, applicable_tests_combined)
 
-    logger.debug(f"Applicable test cases: {applicable_tests_combined}")
+    logger.info(f"Applicable test cases: {applicable_tests_combined}")
     return PICSApplicableTestCases(test_cases=list(applicable_tests_combined))
 
 
