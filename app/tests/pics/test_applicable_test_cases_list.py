@@ -70,12 +70,36 @@ def test_applicable_test_cases_set_with_no_pics() -> None:
     new_callable=mock_open,
     read_data=json.dumps(MOCK_PLATFORM_TEST_DATA),
 )
-def test_applicable_test_cases_set_with_platform_cert(mock_file) -> None:
+@patch("app.pics_applicable_test_cases.test_script_manager")
+def test_applicable_test_cases_set_with_platform_cert(mock_manager, mock_file) -> None:
     # Create PICS with platform certification enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
     cluster.items[PICS_PLAT_CERT] = PICSItem(number=PICS_PLAT_CERT, enabled=True)
     pics.clusters["Platform"] = cluster
+
+    # Create a mock test collection with platform tests
+    mock_collection = MagicMock()
+    mock_collection.mandatory = True
+
+    # Create a mock test suite
+    mock_suite = MagicMock()
+
+    # Create a mock test case for a platform test
+    mock_test_case = MagicMock()
+    mock_test_case.pics = {"AB.C"}  # This PIC is enabled in create_random_pics
+    mock_test_case.metadata = {"title": "TC-PLAT-1.1"}  # This matches one of the platform tests
+
+     # Create a mock test case for a platform test
+    mock_test_case2 = MagicMock()
+    mock_test_case2.metadata = {"title": "TC-PLAT-1.2"}  # This matches one of the platform tests
+
+    # Set up the mock objects
+    mock_suite.test_cases = {"TC-PLAT-1.1": mock_test_case, "TC-PLAT-1.2": mock_test_case2}
+    mock_collection.test_suites = {"TestSuite": mock_suite}
+    mock_manager.test_collections = {"TestCollection": mock_collection}
+
+    mock_manager.test_collections = {"TestCollection": mock_collection}
 
     applicable_test_cases = applicable_test_cases_set(pics, [])
 
@@ -87,9 +111,65 @@ def test_applicable_test_cases_set_with_platform_cert(mock_file) -> None:
         "r",
     )
 
-    # Verify that all platform test cases were included
-    for test_case in MOCK_PLATFORM_TEST_DATA["PlatformTestCasesToRun"]:
-        assert test_case in applicable_test_cases.test_cases
+    # Check TC-PLAT-1.1 is not listed in applicable_test_cases since the PICS does 
+    # not match
+    assert "TC-PLAT-1.1" not in applicable_test_cases.test_cases
+    # Check TC-PLAT-1.2 is listed in applicable_test_cases since this test does 
+    # not define PICS
+    assert "TC-PLAT-1.2" in applicable_test_cases.test_cases
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data=json.dumps(MOCK_PLATFORM_TEST_DATA),
+)
+@patch("app.pics_applicable_test_cases.test_script_manager")
+def test_applicable_test_cases_set_with_platform_cert_with_pics(mock_manager, mock_file) -> None:
+    # Create PICS with platform certification enabled
+    pics = PICS()
+    cluster = PICSCluster(name="Platform")
+    cluster.items[PICS_PLAT_CERT] = PICSItem(number=PICS_PLAT_CERT, enabled=True)
+    cluster.items["AB.C"] = PICSItem(number="AB.C", enabled=True)
+    pics.clusters["Platform"] = cluster
+
+    # Create a mock test collection with platform tests
+    mock_collection = MagicMock()
+    mock_collection.mandatory = True
+
+    # Create a mock test suite
+    mock_suite = MagicMock()
+
+    # Create a mock test case for a platform test
+    mock_test_case = MagicMock()
+    mock_test_case.pics = {"AB.C"}  # This PIC is enabled in create_random_pics
+    mock_test_case.metadata = {"title": "TC-PLAT-1.1"}  # This matches one of the platform tests
+
+     # Create a mock test case for a platform test
+    mock_test_case2 = MagicMock()
+    mock_test_case2.metadata = {"title": "TC-PLAT-1.2"}  # This matches one of the platform tests
+
+    # Set up the mock objects
+    mock_suite.test_cases = {"TC-PLAT-1.1": mock_test_case, "TC-PLAT-1.2": mock_test_case2}
+    mock_collection.test_suites = {"TestSuite": mock_suite}
+    mock_manager.test_collections = {"TestCollection": mock_collection}
+
+    mock_manager.test_collections = {"TestCollection": mock_collection}
+
+    applicable_test_cases = applicable_test_cases_set(pics, [])
+
+    # Verify that the platform test file was opened
+    mock_file.assert_called_once_with(
+        Path(
+            "test_collections/matter/platform-cert/generated-platform-cert-test-list.json"
+        ).resolve(),
+        "r",
+    )
+
+    # Check both tests are listed since PICS matches
+    assert "TC-PLAT-1.1" in applicable_test_cases.test_cases
+    assert "TC-PLAT-1.2" in applicable_test_cases.test_cases
+
 
 
 @patch("builtins.open")

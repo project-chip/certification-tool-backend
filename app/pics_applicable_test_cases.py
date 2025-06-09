@@ -239,7 +239,7 @@ def __process_platform_tests(
 
     # Include each platform test along with some suffixes: 'Semi-automated'
     # and 'Steps Disabled'
-    for test in platform_tests:
+    for test in applicable_tests_combined.copy():
         applicable_tests_combined.add(test)
         applicable_tests_combined.add(f"{test} (Semi-automated)")
         applicable_tests_combined.add(f"{test} (Steps Disabled)")
