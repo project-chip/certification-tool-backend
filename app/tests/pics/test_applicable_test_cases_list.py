@@ -151,7 +151,7 @@ def test_applicable_test_cases_set_with_platform_cert_with_pics(
 
     # Create a mock test case for a platform test
     mock_test_case = MagicMock()
-    mock_test_case.pics = {"AB.C"}  # This PIC is enabled in create_random_pics
+    mock_test_case.pics = {"AB.C"}  # PICS required by this mock test case
     mock_test_case.metadata = {
         "title": "TC-PLAT-1.1"
     }  # This matches one of the platform tests
