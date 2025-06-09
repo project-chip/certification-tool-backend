@@ -88,14 +88,21 @@ def test_applicable_test_cases_set_with_platform_cert(mock_manager, mock_file) -
     # Create a mock test case for a platform test
     mock_test_case = MagicMock()
     mock_test_case.pics = {"AB.C"}  # This PIC is enabled in create_random_pics
-    mock_test_case.metadata = {"title": "TC-PLAT-1.1"}  # This matches one of the platform tests
+    mock_test_case.metadata = {
+        "title": "TC-PLAT-1.1"
+    }  # This matches one of the platform tests
 
-     # Create a mock test case for a platform test
+    # Create a mock test case for a platform test
     mock_test_case2 = MagicMock()
-    mock_test_case2.metadata = {"title": "TC-PLAT-1.2"}  # This matches one of the platform tests
+    mock_test_case2.metadata = {
+        "title": "TC-PLAT-1.2"
+    }  # This matches one of the platform tests
 
     # Set up the mock objects
-    mock_suite.test_cases = {"TC-PLAT-1.1": mock_test_case, "TC-PLAT-1.2": mock_test_case2}
+    mock_suite.test_cases = {
+        "TC-PLAT-1.1": mock_test_case,
+        "TC-PLAT-1.2": mock_test_case2,
+    }
     mock_collection.test_suites = {"TestSuite": mock_suite}
     mock_manager.test_collections = {"TestCollection": mock_collection}
 
@@ -111,10 +118,10 @@ def test_applicable_test_cases_set_with_platform_cert(mock_manager, mock_file) -
         "r",
     )
 
-    # Check TC-PLAT-1.1 is not listed in applicable_test_cases since the PICS does 
+    # Check TC-PLAT-1.1 is not listed in applicable_test_cases since the PICS does
     # not match
     assert "TC-PLAT-1.1" not in applicable_test_cases.test_cases
-    # Check TC-PLAT-1.2 is listed in applicable_test_cases since this test does 
+    # Check TC-PLAT-1.2 is listed in applicable_test_cases since this test does
     # not define PICS
     assert "TC-PLAT-1.2" in applicable_test_cases.test_cases
 
@@ -125,7 +132,9 @@ def test_applicable_test_cases_set_with_platform_cert(mock_manager, mock_file) -
     read_data=json.dumps(MOCK_PLATFORM_TEST_DATA),
 )
 @patch("app.pics_applicable_test_cases.test_script_manager")
-def test_applicable_test_cases_set_with_platform_cert_with_pics(mock_manager, mock_file) -> None:
+def test_applicable_test_cases_set_with_platform_cert_with_pics(
+    mock_manager, mock_file
+) -> None:
     # Create PICS with platform certification enabled
     pics = PICS()
     cluster = PICSCluster(name="Platform")
@@ -143,14 +152,21 @@ def test_applicable_test_cases_set_with_platform_cert_with_pics(mock_manager, mo
     # Create a mock test case for a platform test
     mock_test_case = MagicMock()
     mock_test_case.pics = {"AB.C"}  # This PIC is enabled in create_random_pics
-    mock_test_case.metadata = {"title": "TC-PLAT-1.1"}  # This matches one of the platform tests
+    mock_test_case.metadata = {
+        "title": "TC-PLAT-1.1"
+    }  # This matches one of the platform tests
 
-     # Create a mock test case for a platform test
+    # Create a mock test case for a platform test
     mock_test_case2 = MagicMock()
-    mock_test_case2.metadata = {"title": "TC-PLAT-1.2"}  # This matches one of the platform tests
+    mock_test_case2.metadata = {
+        "title": "TC-PLAT-1.2"
+    }  # This matches one of the platform tests
 
     # Set up the mock objects
-    mock_suite.test_cases = {"TC-PLAT-1.1": mock_test_case, "TC-PLAT-1.2": mock_test_case2}
+    mock_suite.test_cases = {
+        "TC-PLAT-1.1": mock_test_case,
+        "TC-PLAT-1.2": mock_test_case2,
+    }
     mock_collection.test_suites = {"TestSuite": mock_suite}
     mock_manager.test_collections = {"TestCollection": mock_collection}
 
@@ -169,7 +185,6 @@ def test_applicable_test_cases_set_with_platform_cert_with_pics(mock_manager, mo
     # Check both tests are listed since PICS matches
     assert "TC-PLAT-1.1" in applicable_test_cases.test_cases
     assert "TC-PLAT-1.2" in applicable_test_cases.test_cases
-
 
 
 @patch("builtins.open")

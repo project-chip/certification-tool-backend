@@ -17,7 +17,6 @@
 # Ignore mypy type check for this file
 
 import asyncio
-import json
 from asyncio import sleep
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -36,9 +35,7 @@ from app.main import app
 from app.models import TestRunExecution
 from app.models.project import Project
 from app.models.test_enums import TestStateEnum
-from app.models.test_run_execution import TestRunExecution
 from app.schemas.test_run_execution import TestRunExecutionCreate
-from app.schemas.test_selection import TestSelection
 from app.test_engine import (
     TEST_ENGINE_ABORTING_TESTING_MESSAGE,
     TEST_ENGINE_BUSY_MESSAGE,
@@ -498,13 +495,6 @@ def test_create_cli_test_run_execution_new_project(
     """Test creating a CLI test run execution with a new project"""
     # Mock project not found
     mock_db.query.return_value.filter.return_value.first.return_value = None
-
-    # Mock project creation
-    mock_project = Project(
-        id=1,
-        name=DEFAULT_CLI_PROJECT_NAME,
-        config=default_config,
-    )
     mock_db.add.return_value = None
     mock_db.commit.return_value = None
     mock_db.refresh.return_value = None
@@ -553,15 +543,6 @@ def test_create_cli_test_run_execution_existing_project(
         config={},
     )
     mock_db.query.return_value.filter.return_value.first.return_value = mock_project
-
-    # Mock test run execution creation
-    mock_test_run = TestRunExecution(
-        id=1,
-        title=test_run_execution_create.title,
-        description=test_run_execution_create.description,
-        project_id=1,
-        operator_id=1,
-    )
     mock_db.add.return_value = None
     mock_db.commit.return_value = None
     mock_db.refresh.return_value = None
@@ -590,25 +571,9 @@ def test_create_cli_test_run_execution_default_config(
     """Test creating a CLI test run execution with default config"""
     # Mock project not found
     mock_db.query.return_value.filter.return_value.first.return_value = None
-
-    # Mock project creation
-    mock_project = Project(
-        id=1,
-        name=DEFAULT_CLI_PROJECT_NAME,
-        config={},
-    )
     mock_db.add.return_value = None
     mock_db.commit.return_value = None
     mock_db.refresh.return_value = None
-
-    # Mock test run execution creation
-    mock_test_run = TestRunExecution(
-        id=1,
-        title=test_run_execution_create.title,
-        description=test_run_execution_create.description,
-        project_id=1,
-        operator_id=1,
-    )
     mock_db.add.return_value = None
     mock_db.commit.return_value = None
     mock_db.refresh.return_value = None
