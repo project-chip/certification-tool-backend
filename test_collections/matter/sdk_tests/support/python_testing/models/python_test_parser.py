@@ -28,7 +28,8 @@ ARG_STEP_DESCRIPTION_INDEX = 1
 KEYWORD_IS_COMISSIONING_INDEX = 0
 
 TC_FUNCTION_PATTERN = re.compile(r"[\S]+_TC_[\S]+")
-TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>TC_[\S]+)")
+# This is used for the function name. It must start with test_
+TC_TEST_FUNCTION_PATTERN = re.compile(r"test_(?P<title>(?:TC_)?[\S]+)")
 
 
 FunctionDefType = Union[ast.FunctionDef, ast.AsyncFunctionDef]
