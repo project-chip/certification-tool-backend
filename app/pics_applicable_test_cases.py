@@ -149,7 +149,7 @@ def applicable_test_cases_set(
 def __applicable_test_cases(
     test_collections: Dict[str, TestCollectionDeclaration],
     enabled_pics: set[str],
-    mandatory: bool,
+    mandatory: Optional[bool] = None,
     tests_to_consider: Optional[set[str]] = None,
 ) -> set:
     """
@@ -158,7 +158,8 @@ def __applicable_test_cases(
     Args:
         test_collections: Dictionary of test collections
         enabled_pics: Set of enabled PICS
-        mandatory: Whether to consider mandatory tests
+        mandatory: Whether to consider mandatory tests.
+                   If None, considers both mandatory and non-mandatory tests.
         tests_to_consider: Optional list of test IDs to consider.
                            If None or empty, all tests are considered.
 
@@ -171,7 +172,8 @@ def __applicable_test_cases(
     test_collections.pop(STRESS_TEST_COLLECTION, None)
 
     for test_collection in test_collections.values():
-        if test_collection.mandatory == mandatory:
+        # If mandatory is None, consider both mandatory and non-mandatory tests
+        if mandatory is None or test_collection.mandatory == mandatory:
             for test_suite in test_collection.test_suites.values():
                 for test_case in test_suite.test_cases.values():
                     # Skip if test is not in the list of tests to consider
@@ -233,7 +235,7 @@ def __process_platform_tests(
     # Get applicable tests from collections based on platform tests
     applicable_tests_combined.update(
         __applicable_test_cases(
-            test_collections_copy, enabled_pics, True, platform_tests
+            test_collections_copy, enabled_pics, None, platform_tests
         )
     )
 
