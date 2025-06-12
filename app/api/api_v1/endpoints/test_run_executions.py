@@ -158,7 +158,8 @@ def create_cli_test_run_execution(
     else:
         # Update the default CLI project with the cli config argument and pics
         project_update = schemas.ProjectUpdate(config=config)
-        project_update.pics = pics_obj
+        if pics_obj:
+            project_update.pics = pics_obj
         project = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
 
     # TODO: Remove test_run_config completely from the project
