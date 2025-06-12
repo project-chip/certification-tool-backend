@@ -152,7 +152,8 @@ def create_cli_test_run_execution(
     if not cli_project:
         project = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
         project.config = config
-        project.pics = pics_obj
+        if pics_obj:
+            project.pics = pics_obj
         project = crud.project.create(db=db, obj_in=project)
     else:
         # Update the default CLI project with the cli config argument and pics
