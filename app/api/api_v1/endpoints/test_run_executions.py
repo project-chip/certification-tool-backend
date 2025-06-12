@@ -140,7 +140,11 @@ def create_cli_test_run_execution(
     logger.info(f"CLI PICS Arguments: {pics}")
 
     # Convert pics dict to PICS object if provided
-    pics_obj = __convert_pics_dict_to_object(pics)
+    if pics_obj is None:
+        raise HTTPException(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            detail="Invalid PICS data provided. Please check the format."
+        )
 
     # Retrieve the default CLI project
     cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
