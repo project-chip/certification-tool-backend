@@ -117,6 +117,7 @@ def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
         return schemas.PICS(clusters={})
 
     try:
+        return schemas.PICS(**pics) if isinstance(pics, dict) else pics
     except ValidationError as e:
         logger.error(f"Invalid PICS data: {e}")
         return None
@@ -139,11 +140,7 @@ def create_cli_test_run_execution(
     logger.info(f"CLI PICS Arguments: {pics}")
 
     # Convert pics dict to PICS object if provided
-    if pics_obj is None:
-        raise HTTPException(
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail="Invalid PICS data provided. Please check the format."
-        )
+    pics_obj = __convert_pics_dict_to_object(pics)
 
     # Retrieve the default CLI project
     cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
@@ -152,14 +149,12 @@ def create_cli_test_run_execution(
     if not cli_project:
         project = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
         project.config = config
-        if pics_obj:
-            project.pics = pics_obj
+        project.pics = pics_obj
         project = crud.project.create(db=db, obj_in=project)
     else:
         # Update the default CLI project with the cli config argument and pics
         project_update = schemas.ProjectUpdate(config=config)
-        if pics_obj:
-            project_update.pics = pics_obj
+        project_update.pics = pics_obj
         project = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
 
     # TODO: Remove test_run_config completely from the project
