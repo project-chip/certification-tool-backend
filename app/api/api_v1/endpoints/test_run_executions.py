@@ -104,7 +104,7 @@ def create_test_run_execution(
     return test_run_execution
 
 
-def __convert_pics_dict_to_object(pics: dict) -> schemas.PICS:
+def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
     """Convert a dictionary to a PICS object.
 
     Args:
