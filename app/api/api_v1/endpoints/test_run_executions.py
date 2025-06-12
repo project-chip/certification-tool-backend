@@ -117,8 +117,7 @@ def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
         return schemas.PICS(clusters={})
 
     try:
-        return schemas.PICS(**pics) if isinstance(pics, dict) else pics
-    except Exception as e:
+    except ValidationError as e:
         logger.error(f"Invalid PICS data: {e}")
         return None
 
