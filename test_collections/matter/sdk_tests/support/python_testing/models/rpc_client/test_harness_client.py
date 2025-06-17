@@ -33,6 +33,7 @@ from chip.testing.matter_testing import (
 
 COMMISSION_ARGUMENT = "commission"
 GET_TEST_INFO_ARGUMENT = "--get_test_info"
+GET_TEST_LIST_ARGUMENT = "--test-list"
 TEST_INFO_JSON_FILENAME = "test_info.json"
 TEST_INFO_JSON_PATH = "/root/python_testing/" + TEST_INFO_JSON_FILENAME
 EXECUTION_LOG_OUTPUT = "/root/python_testing/test_output.txt"
@@ -85,17 +86,23 @@ def main() -> None:
     config = parse_matter_test_args(test_args)
     if GET_TEST_INFO_ARGUMENT in sys.argv:
         try:
-            info = get_test_info_support(
-                script_path=sys.argv[1], class_name=sys.argv[2], config=config
-            )
+            # Check if GET_TEST_LIST_ARGUMENT (--test-list) is present in argument list
+            if GET_TEST_LIST_ARGUMENT in sys.argv:
+                # process the test list
+                info = process_test_list(sys.argv, config)
+            else:
+                info = get_test_info_support(
+                    script_path=sys.argv[1], class_name=sys.argv[2], config=config
+                )
+
+            with open(TEST_INFO_JSON_PATH, "w") as f:
+                json.dump(info, f, indent=4)
+
         except Exception as e:
             error_msg = {"detail": f"{str(e)}"}
             with open(TEST_INFO_JSON_PATH, "w") as f:
                 json.dump(error_msg, f, indent=4)
             raise e
-
-        with open(TEST_INFO_JSON_PATH, "w") as f:
-            json.dump(info, f, indent=4)
     else:
         # TODO: find a better solution.
         # This is a temporary workaround since Python Tests
@@ -178,6 +185,48 @@ def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> Non
 def commission(config: MatterTestConfig) -> None:
     config.commission_only = True
     run_tests(CommissionDeviceTest, config, None)
+
+
+def process_test_list(sys_argv: list, config: MatterTestConfig) -> list:
+    # Find the position of --get_test_info and the token
+    get_info_pos = sys_argv.index(GET_TEST_INFO_ARGUMENT)
+    token_pos = sys_argv.index("--test-list") if "--test-list" in sys_argv else None
+
+    if token_pos is None or token_pos >= get_info_pos:
+        raise ValueError("--test-list token must be present and before --get_test_info")
+
+    # Parse test files and classes from arguments between token and --get_test_info
+    test_pairs = []
+    args_between = sys_argv[token_pos + 1 : get_info_pos]
+    if len(args_between) % 2 != 0:
+        raise ValueError(
+            "Invalid parameters. The arguments provided after --test-list must be in "
+            "pairs: (script_path, class_name)"
+        )
+    for i in range(0, len(args_between), 2):
+        script_path = args_between[i]
+        class_name = args_between[i + 1]
+        test_pairs.append((script_path, class_name))
+
+    # Process each test pair
+    all_tests_info = []
+    for script_path, class_name in test_pairs:
+        try:
+            info = get_test_info_support(
+                script_path=script_path, class_name=class_name, config=config
+            )
+            all_tests_info.append(
+                {"script_path": script_path, "class_name": class_name, "info": info}
+            )
+        except Exception as e:
+            error_msg = {
+                "detail": f"{str(e)}",
+                "script_path": script_path,
+                "class_name": class_name,
+            }
+            all_tests_info.append(error_msg)
+
+    return all_tests_info
 
 
 if __name__ == "__main__":
