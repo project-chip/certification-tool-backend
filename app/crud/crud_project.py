@@ -31,6 +31,9 @@ class CRUDProject(
     CRUDBaseDelete[Project],
     CRUDBaseUpdate[Project, ProjectUpdate],
 ):
+    def get_by_name(self, db: Session, name: str) -> Optional[Project]:
+        return db.query(self.model).filter(self.model.name == name).first()
+
     def get_multi(
         self,
         db: Session,

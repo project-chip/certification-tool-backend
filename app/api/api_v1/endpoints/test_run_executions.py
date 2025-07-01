@@ -23,6 +23,7 @@ import requests
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
+from loguru import logger
 from pydantic import ValidationError, parse_obj_as
 from sqlalchemy.orm import Session
 
@@ -30,6 +31,7 @@ from app import crud, log_utils, models, schemas
 from app.api import DEFAULT_404_MESSAGE
 from app.crud.crud_test_run_execution import ImportError
 from app.db.session import get_db
+from app.default_environment_config import default_environment_config
 from app.models.test_run_execution import TestRunExecution
 from app.schemas.test_run_execution import TestRunExecutionUpdate
 from app.test_engine import TEST_ENGINE_ABORTING_TESTING_MESSAGE
@@ -47,6 +49,8 @@ from test_collections.matter.sdk_tests.support.performance_tests.utils import (
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 router = APIRouter()
+
+DEFAULT_CLI_PROJECT_NAME = "CLI Project Execution"
 
 
 @router.get("/", response_model=List[schemas.TestRunExecutionWithStats])
@@ -93,6 +97,44 @@ def create_test_run_execution(
     # TODO: Remove test_run_config completely from the project
     test_run_execution_in.test_run_config_id = None
     test_run_execution_in.certification_mode = certification_mode
+
+    test_run_execution = crud.test_run_execution.create(
+        db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
+    )
+    return test_run_execution
+
+
+@router.post("/cli", response_model=schemas.TestRunExecutionWithChildren)
+def create_cli_test_run_execution(
+    *,
+    db: Session = Depends(get_db),
+    test_run_execution_in: schemas.TestRunExecutionCreate,
+    selected_tests: schemas.TestSelection,
+    config: dict = {},
+) -> TestRunExecution:
+    """Creates a new test run execution on CLI request."""
+    if not config:
+        config = default_environment_config.__dict__
+
+    logger.info(f"CLI Config Arguments: {config}")
+
+    # Retrieve the default CLI project
+    cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
+
+    # If the default CLI project does not exist, create it
+    if not cli_project:
+        project = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
+        project.config = config
+        project = crud.project.create(db=db, obj_in=project)
+    else:
+        # Update the default CLI project the cli config argument
+        project = crud.project.update(
+            db=db, db_obj=cli_project, obj_in=schemas.ProjectUpdate(config=config)
+        )
+
+    # TODO: Remove test_run_config completely from the project
+    test_run_execution_in.project_id = project.id
+    test_run_execution_in.certification_mode = False
 
     test_run_execution = crud.test_run_execution.create(
         db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
