@@ -27,6 +27,8 @@ from app.constants.websockets_constants import (
     MESSAGE_ID_KEY,
     MessageKeysEnum,
     MessageTypeEnum,
+    WebSocketConnection,
+    WebSocketTypeEnum,
 )
 from app.socket_connection_manager import (
     SocketConnectionManager,
@@ -54,7 +56,8 @@ async def test_connect_successful() -> None:
 
     # Create a socket to initiate the connection
     socket = mock.MagicMock(spec=WebSocket)
-    await socket_connection_manager.connect(websocket=socket)
+    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
+    await socket_connection_manager.connect(connection=connection)
 
     # "active_connections" list gets an entry upon a successful socket connection
     assert len(socket_connection_manager.active_connections) == 1
@@ -82,9 +85,10 @@ async def test_connect_failed() -> None:
     socket.accept.side_effect = RuntimeError(
         'Cannot call "receive" once a close message has been sent.'
     )
+    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
 
     with pytest.raises(RuntimeError):
-        await socket_connection_manager.connect(websocket=socket)
+        await socket_connection_manager.connect(connection=connection)
 
     # Ensure that "active_connections" list does not contain the failed socket
     assert len(socket_connection_manager.active_connections) == 0
@@ -101,10 +105,11 @@ def test_disconnect() -> None:
     # Add a websocket object to the "active_connections" list to imitate
     # an existing active connection
     socket = mock.MagicMock(spec=WebSocket)
-    socket_connection_manager.active_connections.append(socket)
+    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
+    socket_connection_manager.active_connections.append(connection)
     assert len(socket_connection_manager.active_connections) == 1
 
-    socket_connection_manager.disconnect(websocket=socket)
+    socket_connection_manager.disconnect(connection=connection)
 
     # Verify that the "active_connections" list does not have the disconnected socket
     assert len(socket_connection_manager.active_connections) == 0
@@ -154,7 +159,8 @@ async def test_broadcast_message_data_types() -> None:
     # Add a websocket object to the "active_connections" list to imitate an existing
     # active connection
     socket = mock.MagicMock(spec=WebSocket)
-    socket_connection_manager.active_connections.append(socket)
+    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
+    socket_connection_manager.active_connections.append(connection)
     assert len(socket_connection_manager.active_connections) == 1
 
     await socket_connection_manager.broadcast(message=test_message)
@@ -182,8 +188,9 @@ async def test_broadcast_failed_for_ConnectionClosed() -> None:
     # an existing active connection
     socket = mock.MagicMock(spec=WebSocket)
     socket.application_state = WebSocketState.CONNECTED
+    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
 
-    socket_connection_manager.active_connections.append(socket)
+    socket_connection_manager.active_connections.append(connection)
     assert len(socket_connection_manager.active_connections) == 1
 
     # Force a connection closed exception
@@ -213,7 +220,8 @@ async def test_broadcast_failed_for_RuntimeError() -> None:
     # an existing active connection
     socket_connection_manager.active_connections.clear()
     socket = mock.MagicMock(spec=WebSocket)
-    socket_connection_manager.active_connections.append(socket)
+    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
+    socket_connection_manager.active_connections.append(connection)
     assert len(socket_connection_manager.active_connections) == 1
 
     socket.send_text.side_effect = RuntimeError(
@@ -242,7 +250,7 @@ async def test_received_message_valid_json() -> None:
         "_SocketConnectionManager__handle_received_json",
     ) as handle_received_json:
         await socket_connection_manager.received_message(
-            socket=socket, message=test_message
+            websocket=socket, message=test_message
         )
         handle_received_json.assert_called_once_with(
             socket, expected_json_dict_parameter
@@ -261,10 +269,10 @@ async def test_received_message_invalid_json() -> None:
         "_SocketConnectionManager__notify_invalid_message",
     ) as notify_invalid_message:
         await socket_connection_manager.received_message(
-            socket=socket, message="Invalid"
+            websocket=socket, message="Invalid"
         )
         notify_invalid_message.assert_called_once_with(
-            socket=socket, message=INVALID_JSON_ERROR_STR
+            websocket=socket, message=INVALID_JSON_ERROR_STR
         )
 
 

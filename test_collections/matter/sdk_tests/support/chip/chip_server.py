@@ -35,6 +35,8 @@ from ..sdk_container import DOCKER_LOGS_PATH, DOCKER_PAA_CERTS_PATH, SDKContaine
 CHIP_TOOL_EXE = "./chip-tool"
 CHIP_TOOL_ARG_PAA_CERTS_PATH = "--paa-trust-store-path"
 
+# TODO: Use chip-camera-controller for camera tests.
+
 # Chip App Parameters
 CHIP_APP_EXE = "./chip-app1"
 
