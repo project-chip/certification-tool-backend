@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Type
+from typing import Optional, Type
 
 from app.test_engine.models.test_declarations import (
     TestCaseDeclaration,
@@ -53,11 +53,13 @@ class YamlCaseDeclaration(TestCaseDeclaration):
     """Direct initialization for YAML Test Case."""
 
     class_ref: Type[YamlTestCase]
+    suite_type: Optional[SuiteType] = None
 
     def __init__(self, test: YamlTest, yaml_version: str) -> None:
         super().__init__(
             YamlTestCase.class_factory(test=test, yaml_version=yaml_version)
         )
+        self.suite_type = test.suite_type
 
     @property
     def test_type(self) -> MatterTestType:
