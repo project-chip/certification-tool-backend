@@ -15,8 +15,10 @@
 #
 from .constants import UserResponseStatusEnum
 from .prompt_request import (
+    ImageVerificationPromptRequest,
     OptionsSelectPromptRequest,
     PromptRequest,
+    StreamVerificationPromptRequest,
     TextInputPromptRequest,
     UploadFilePromptRequest,
 )
