@@ -44,14 +44,15 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
     def __init__(self, *args):  # type: ignore[no-untyped-def]
         super().__init__(*args)
 
-        self.interactions = 1
+        self.iterations = 1
 
         try:
-            self.interactions = self.user_params["interactions"]
-            logging.info(f"Internal Control Interaction: {self.interactions} ")
-        except Exception:
-            logging.warning(f"Interactions not defined, using default value: {self.interactions} ")
-
+            self.iterations = self.user_params["iterations"]
+            logging.info(f"Internal Control Interaction: {self.iterations} ")
+        except KeyError:
+            logging.warning(
+                f"Iterations not defined, using default value: {self.iterations} "
+            )
 
     def setup_class(self):  # type: ignore[no-untyped-def]
         self.commissioner = None
@@ -65,7 +66,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
     def steps_TC_COMMISSIONING_1_0(self) -> list[TestStep]:
         steps = [TestStep(1, "Loop Commissioning ... 1")]
 
-        for i in range(2, self.interactions + 1):
+        for i in range(2, self.iterations + 1):
             steps.insert(i, TestStep(i, f"Loop Commissioning ... {i}"))
 
         return steps
@@ -106,7 +107,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         self.clean_chip_tool_kvs()
         await self.create_commissioner()
 
-        for i in range(1, self.interactions + 1):
+        for i in range(1, self.iterations + 1):
             self.step(i)
 
             logging.info(
