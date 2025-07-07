@@ -48,7 +48,7 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
 
         try:
             self.iterations = self.user_params["iterations"]
-            logging.info(f"Internal Control Interaction: {self.iterations} ")
+            logging.info(f"Internal Control Iteraction: {self.iterations} ")
         except KeyError:
             logging.warning(
                 f"Iterations not defined, using default value: {self.iterations} "
