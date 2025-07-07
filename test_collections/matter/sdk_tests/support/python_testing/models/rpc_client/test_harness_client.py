@@ -133,17 +133,6 @@ def configure_interactions(args) -> []:
         print(f"Error while trying to remove rogue simulators: {e}")
 
 
-def configure_interactions(args) -> []:
-    result = args
-    try:
-        position = sys.argv.index("--interactions")
-        interactions_value = sys.argv[position + 1]
-        result = args + ["--int-arg", f"interactions:{interactions_value}"]
-    except ValueError:
-        pass
-    return result
-
-
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
     manual_execution = 0  # false
 
