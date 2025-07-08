@@ -270,7 +270,7 @@ class PerformanceTestCase(TestCase, UserPromptSupport):
             if self.sdk_container.pics_file_created:
                 command.append(f" --PICS {PICS_FILE_PATH}")
 
-            command.append(f" --interactions {(len(self.test_steps) - 2)}")
+            command.append(f" --iterations {(len(self.test_steps) - 2)}")
 
             self.sdk_container.send_command(
                 command,
