@@ -116,12 +116,13 @@ class SocketConnectionManager(object, metaclass=Singleton):
     async def relay_video_frames(self, connection: WebSocketConnection) -> None:
         if connection.type == WebSocketTypeEnum.VIDEO:
             websocket = connection.websocket
+            sock = None
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
                 sock.settimeout(1.0)
                 sock.bind((UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT))
                 logger.info("UDP socket bound successfully")
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 while True:
                     try:
                         data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
@@ -143,7 +144,8 @@ class SocketConnectionManager(object, metaclass=Singleton):
             finally:
                 await websocket.close()
                 self.disconnect(connection)
-                sock.close()
+                if sock:
+                    sock.close()
         else:
             logger.error(
                 f"Expected websocket connection of type {WebSocketTypeEnum.VIDEO}"
