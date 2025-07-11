@@ -122,7 +122,6 @@ def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
         logger.error(f"Invalid PICS data: {e}")
         return None
 
-
 @router.post("/cli", response_model=schemas.TestRunExecutionWithChildren)
 def create_cli_test_run_execution(
     *,
@@ -147,6 +146,7 @@ def create_cli_test_run_execution(
             detail="Invalid PICS data provided. Please check the format.",
         )
 
+
     # Retrieve the default CLI project
     cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
 
@@ -163,6 +163,7 @@ def create_cli_test_run_execution(
         if pics_obj:
             project_update.pics = pics_obj
         project = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
+
 
     # TODO: Remove test_run_config completely from the project
     test_run_execution_in.project_id = project.id
