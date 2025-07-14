@@ -152,7 +152,7 @@ async def __process_grouped_commands(
     complete_json: list,
     errors_found: list[str],
     warnings_found: list[str],
-) -> None:
+) -> tuple[int, int]:
     test_function_count: int = 0
     invalid_test_function_count: int = 0
 
@@ -205,7 +205,7 @@ async def __process_individual_commands(
     complete_json: list,
     errors_found: list[str],
     warnings_found: list[str],
-) -> None:
+) -> tuple[int, int]:
     test_function_count: int = 0
     invalid_test_function_count: int = 0
     total_commands = len(commands)
