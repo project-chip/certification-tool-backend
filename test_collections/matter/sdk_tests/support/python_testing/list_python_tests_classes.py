@@ -98,32 +98,31 @@ async def process_commands_sdk_container(
     complete_json = []
     errors_found: list[str] = []
     warnings_found: list[str] = []
-    test_function_count = 0
-    invalid_test_function_count = 0
-
     sdk_container: SDKContainer = SDKContainer()
     await sdk_container.start()
 
     try:
         if grouped_commands:
-            await _process_grouped_commands(
+            (
+                test_function_count,
+                invalid_test_function_count,
+            ) = await __process_grouped_commands(
                 sdk_container,
                 commands,
                 complete_json,
                 errors_found,
                 warnings_found,
-                test_function_count,
-                invalid_test_function_count,
             )
         else:
-            await _process_individual_commands(
+            (
+                test_function_count,
+                invalid_test_function_count,
+            ) = await __process_individual_commands(
                 sdk_container,
                 commands,
                 complete_json,
                 errors_found,
                 warnings_found,
-                test_function_count,
-                invalid_test_function_count,
             )
 
         # Create a wrapper object with sdk_sha at root level
@@ -132,7 +131,7 @@ async def process_commands_sdk_container(
         with open(json_output_file, "w") as json_file:
             json.dump(json_output, json_file, indent=4, sort_keys=True)
 
-        _print_report(
+        __print_report(
             json_output_file,
             test_function_count,
             invalid_test_function_count,
@@ -144,15 +143,16 @@ async def process_commands_sdk_container(
         sdk_container.destroy()
 
 
-async def _process_grouped_commands(
+async def __process_grouped_commands(
     sdk_container: SDKContainer,
     commands: list,
     complete_json: list,
     errors_found: list[str],
     warnings_found: list[str],
-    test_function_count: int,
-    invalid_test_function_count: int,
 ) -> None:
+    test_function_count: int = 0
+    invalid_test_function_count: int = 0
+
     command_string = " ".join(
         ["--test-list"]
         + [item for sublist in commands for item in sublist]
@@ -165,15 +165,14 @@ async def _process_grouped_commands(
     )
 
     if result.exit_code != 0:
-        try:
-            with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
-                json_data = json.load(json_file)
-                errors_found.append(
-                    f"Failed running command: {command_string}.\n"
-                    f"Error message: {json_data['detail']}"
-                )
-        finally:
-            return
+        with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
+            json_data = json.load(json_file)
+            errors_found.append(
+                f"Failed running command: {command_string}.\n"
+                f"Error message: {json_data['detail']}"
+            )
+
+        return
 
     with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
         json_data = json.load(json_file)
@@ -194,16 +193,18 @@ async def _process_grouped_commands(
                     )
                 complete_json.append(json_dict_info)
 
+    return test_function_count, invalid_test_function_count
 
-async def _process_individual_commands(
+
+async def __process_individual_commands(
     sdk_container: SDKContainer,
     commands: list,
     complete_json: list,
     errors_found: list[str],
     warnings_found: list[str],
-    test_function_count: int,
-    invalid_test_function_count: int,
 ) -> None:
+    test_function_count: int = 0
+    invalid_test_function_count: int = 0
     total_commands = len(commands)
     for index, command in enumerate(commands):
         print(f"Progress {index+1}/{total_commands}...")
@@ -232,18 +233,21 @@ async def _process_individual_commands(
 
                 json_dict["path"] = command[0]
                 json_dict["class_name"] = command[1]
-                function = json_dict["function"]
-                if not function.startswith("test_TC_"):
-                    invalid_test_function_count += 1
-                    warnings_found.append(
-                        f"Warning: File path: {json_dict['path']}  "
-                        f"Class: {json_dict['class_name']}. "
-                        f"Invalid test function: {function}"
-                    )
+                if "function" in json_dict:
+                    function = json_dict["function"]
+                    if not function.startswith("test_TC_"):
+                        invalid_test_function_count += 1
+                        warnings_found.append(
+                            f"Warning: File path: {json_dict['path']}  "
+                            f"Class: {json_dict['class_name']}. "
+                            f"Invalid test function: {function}"
+                        )
                 complete_json.append(json_dict)
 
+    return test_function_count, invalid_test_function_count
 
-def _print_report(
+
+def __print_report(
     json_output_file: Path,
     test_function_count: int,
     invalid_test_function_count: int,

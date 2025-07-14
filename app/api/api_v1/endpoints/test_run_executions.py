@@ -122,6 +122,7 @@ def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
         logger.error(f"Invalid PICS data: {e}")
         return None
 
+
 @router.post("/cli", response_model=schemas.TestRunExecutionWithChildren)
 def create_cli_test_run_execution(
     *,

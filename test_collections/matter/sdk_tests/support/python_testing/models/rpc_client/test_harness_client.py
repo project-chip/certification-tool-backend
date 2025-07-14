@@ -179,7 +179,11 @@ def commission(config: MatterTestConfig) -> None:
 def process_test_list(sys_argv: list, config: MatterTestConfig) -> list:
     # Find the position of --get_test_info and the token
     get_info_pos = sys_argv.index(GET_TEST_INFO_ARGUMENT)
-    token_pos = sys_argv.index("--test-list") if "--test-list" in sys_argv else None
+    token_pos = (
+        sys_argv.index(GET_TEST_LIST_ARGUMENT)
+        if GET_TEST_LIST_ARGUMENT in sys_argv
+        else None
+    )
 
     if token_pos is None or token_pos >= get_info_pos:
         raise ValueError("--test-list token must be present and before --get_test_info")
