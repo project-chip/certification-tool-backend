@@ -69,7 +69,7 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
     ]
 
 
-def get_command_list(test_folder: SDKTestFolder = None) -> list:
+def get_command_list(test_folder: SDKTestFolder) -> list:
     python_script_commands = []
     python_test_files = test_folder.file_paths(extension=".py")
     python_test_files.sort()
@@ -95,9 +95,12 @@ def get_command_list(test_folder: SDKTestFolder = None) -> list:
 async def process_commands_sdk_container(
     commands: list, json_output_file: Path, grouped_commands: bool = False
 ) -> None:
-    complete_json = []
+    test_function_count: int = 0
+    invalid_test_function_count: int = 0
+    complete_json: list[dict] = []
     errors_found: list[str] = []
     warnings_found: list[str] = []
+
     sdk_container: SDKContainer = SDKContainer()
     await sdk_container.start()
 
@@ -172,7 +175,7 @@ async def __process_grouped_commands(
                 f"Error message: {json_data['detail']}"
             )
 
-        return
+        return test_function_count, invalid_test_function_count
 
     with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
         json_data = json.load(json_file)
