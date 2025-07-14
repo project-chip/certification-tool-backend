@@ -53,7 +53,7 @@ test_collections_api = async_apis.test_collections_api
 @click.option(
     "--tests-list",
     help="List of test cases to execute. Separated by commas (,) and without any blank spaces. "
-        "For example: TC-ACE-1.1,TC_ACE_1_3",
+    "For example: TC-ACE-1.1,TC_ACE_1_3",
 )
 @async_cmd
 async def run_tests(selected_tests: str, title: str, file: str, project_id: int, tests_list: str = None) -> None:

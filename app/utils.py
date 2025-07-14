@@ -15,6 +15,7 @@
 #
 import copy
 import json
+import os
 from configparser import ConfigParser
 from typing import Any
 
@@ -271,3 +272,96 @@ def convert_nested_to_dict(obj, _seen=None):
 
     # Fallback for other types
     return str(obj)
+
+
+def parse_pics_xml(xml_content: str) -> dict:
+    """Parse a PICS XML file and convert it to the required JSON format.
+
+    Args:
+        xml_content (str): The XML content as a string
+
+    Returns:
+        dict: Dictionary containing the PICS configuration in the required format
+    """
+    import xml.etree.ElementTree as ET
+    from typing import Any, Dict
+
+    def parse_pics_items(element) -> Dict[str, Any]:
+        items = {}
+        for pics_item in element.findall(".//picsItem"):
+            item_number = pics_item.find("itemNumber").text
+            support = pics_item.find("support").text.lower() == "true"
+            items[item_number] = {"number": item_number, "enabled": support}
+        return items
+
+    try:
+        root = ET.fromstring(xml_content)
+        cluster_name = root.find("name").text
+
+        # Initialize the result structure
+        result = {"clusters": {cluster_name: {"name": cluster_name, "items": {}}}}
+
+        # Parse usage items
+        usage_items = parse_pics_items(root.find(".//usage"))
+        result["clusters"][cluster_name]["items"].update(usage_items)
+
+        # Parse server side items
+        server_side = root.find(".//clusterSide[@type='Server']")
+        if server_side is not None:
+            # Parse attributes
+            attr_items = parse_pics_items(server_side.find(".//attributes"))
+            result["clusters"][cluster_name]["items"].update(attr_items)
+
+            # Parse events
+            event_items = parse_pics_items(server_side.find(".//events"))
+            result["clusters"][cluster_name]["items"].update(event_items)
+
+        return result
+
+    except ET.ParseError as e:
+        raise ValueError(f"Failed to parse XML: {str(e)}")
+    except Exception as e:
+        raise ValueError(f"Error processing PICS XML: {str(e)}")
+
+
+def read_pics_config(pics_config_folder: str) -> dict:
+    """Read PICS configuration from XML files in the specified folder.
+
+    Args:
+        pics_config_folder (str): Path to the folder containing PICS XML files
+
+    Returns:
+        dict: Dictionary containing the PICS configuration
+
+    Raises:
+        Exit: If there are any errors reading or parsing the PICS configuration
+    """
+    pics = {"clusters": {}}
+    if not pics_config_folder:
+        return pics
+
+    try:
+        # Resolve the path to handle relative paths correctly
+        pics_config_folder = os.path.abspath(pics_config_folder)
+        if os.path.isdir(pics_config_folder):
+            # Read all XML files from the directory
+            for filename in os.listdir(pics_config_folder):
+                if filename.endswith(".xml"):
+                    file_path = os.path.join(pics_config_folder, filename)
+                    try:
+                        with open(file_path, "r") as f:
+                            xml_content = f.read()
+                            cluster_pics = parse_pics_xml(xml_content)
+                            # Merge the cluster PICS into the global structure
+                            pics["clusters"].update(cluster_pics["clusters"])
+                    except Exception as e:
+                        click.echo(f"Failed to parse PICS XML file {filename}: {e}")
+                        raise Exit(code=1)
+        else:
+            click.echo(f"Error: {pics_config_folder} is not a directory")
+            raise Exit(code=1)
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        click.echo(f"Failed to read PICS configuration: {e}")
+        raise Exit(code=1)
+
+    return pics

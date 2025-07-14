@@ -27,7 +27,13 @@ from async_cmd import async_cmd
 from click.exceptions import Exit
 from client import client
 from test_run.websocket import TestRunSocket
-from utils import build_test_selection, convert_nested_to_dict, merge_properties_to_config, read_properties_file
+from utils import (
+    build_test_selection,
+    convert_nested_to_dict,
+    merge_properties_to_config,
+    read_pics_config,
+    read_properties_file,
+)
 
 async_apis = AsyncApis(client)
 test_run_executions_api = async_apis.test_run_executions_api
@@ -53,8 +59,13 @@ projects_api = async_apis.projects_api
     required=True,
     help="List of test cases to execute. For example: TC-ACE-1.1,TC_ACE_1_3",
 )
+@click.option(
+    "--pics-config-folder",
+    "-p",
+    help="Directory containing PICS XML configuration files. If not provided, no PICS will be used.",
+)
 @async_cmd
-async def run_tests_cli(title: str, config: str, tests_list: str) -> None:
+async def run_tests_cli(title: str, config: str, tests_list: str, pics_config_folder: str = None) -> None:
     """Simplified CLI execution of a test run from selected tests"""
 
     # Configure new log output for test.
@@ -73,6 +84,9 @@ async def run_tests_cli(title: str, config: str, tests_list: str) -> None:
     cli_config_dict = merge_properties_to_config(config_data, default_config_dict)
     click.echo(f"CLI Config for test run execution: {cli_config_dict}")
 
+    # Read PICS configuration if provided
+    pics = read_pics_config(pics_config_folder)
+
     try:
         # Convert each test separeted by comma to a list
         tests_list = [test for test in tests_list.split(",")]
@@ -81,7 +95,7 @@ async def run_tests_cli(title: str, config: str, tests_list: str) -> None:
 
         click.echo(f"Selected tests: {json.dumps(selected_tests_dict, indent=2)}")
         new_test_run = await __create_new_test_run_cli(
-            selected_tests=selected_tests_dict, title=title, config=cli_config_dict
+            selected_tests=selected_tests_dict, title=title, config=cli_config_dict, pics=pics
         )
         socket = TestRunSocket(new_test_run)
         socket_task = asyncio.create_task(socket.connect_websocket())
@@ -94,13 +108,13 @@ async def run_tests_cli(title: str, config: str, tests_list: str) -> None:
 
 
 async def __create_new_test_run_cli(
-    selected_tests: dict, title: str, config: Optional[dict] = None
+    selected_tests: dict, title: str, config: Optional[dict] = None, pics: Optional[dict] = None
 ) -> m.TestRunExecutionWithChildren:
     click.echo(f"Creating new test run with title: {title}")
 
     test_run_in = m.TestRunExecutionCreate(title=title)
     json_body = m.BodyCreateTestRunExecutionCliApiV1TestRunExecutionsCliPost(
-        test_run_execution_in=test_run_in, selected_tests=selected_tests, config=config
+        test_run_execution_in=test_run_in, selected_tests=selected_tests, config=config, pics=pics
     )
 
     try:

@@ -95,7 +95,7 @@ Run `./cli.sh update-project --id {id} --config path/to/config` to update a proj
 
 ### run-tests-cli
 
-Run `./cli.sh run-tests-cli --tests-list <tests> [--title <title>] [-c <config>]` to execute a test run using the simplified CLI flow.
+Run `./cli.sh run-tests-cli --tests-list <tests> [--title <title>] [-c <config>] [--pics-config-folder <pics-config-folder>]` to execute a test run using the simplified CLI flow.
 
 This command simplifies test execution by allowing you to run selected test cases directly, with minimal configuration defined in a property file.
 
@@ -106,6 +106,7 @@ Example: --tests-list TC-ACE-1.1,TC_ACE_1_3
 Optional:
 --title: Custom title for the test run. If not provided, the current timestamp will be used as the default.
 --config: Path to the property config file. If not specified, default_config.properties will be used.
+--pics-config-folder: Path to the folder that contains PICS files. If not specified, no PICS file will be used.
 
 ## Development
 

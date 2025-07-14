@@ -27,6 +27,7 @@ class BodyCreateTestRunExecutionApiV1TestRunExecutionsPost(BaseModel):
 
 class BodyCreateTestRunExecutionCliApiV1TestRunExecutionsCliPost(BodyCreateTestRunExecutionApiV1TestRunExecutionsPost):
     config: "Dict[str, Any]" = Field(default_factory=dict, alias="config")
+    pics: "Optional[Dict[str, Any]]" = Field(None, alias="pics")
 
 
 class DutConfig(BaseModel):
@@ -174,6 +175,7 @@ class TestRunExecutionCreate(BaseModel):
     project_id: "Optional[int]" = Field(None, alias="project_id")
     description: "Optional[str]" = Field(None, alias="description")
     operator_id: "Optional[int]" = Field(None, alias="operator_id")
+    pics: "Optional[Dict[str, Any]]" = Field(None, alias="pics")
 
 
 class TestRunExecutionInDBBase(BaseModel):
