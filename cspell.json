@@ -107,7 +107,8 @@
         "wpan",
         "PBKDF",
         "PCSC",
-        "pcscd"
+        "pcscd",
+        "DGRAM"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [

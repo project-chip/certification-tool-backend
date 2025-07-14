@@ -18,6 +18,7 @@ import asyncio
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 
+from app.constants.websockets_constants import WebSocketConnection, WebSocketTypeEnum
 from app.socket_connection_manager import SocketConnectionManager
 
 router = APIRouter()
@@ -26,7 +27,8 @@ router = APIRouter()
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     socket_connection_manager = SocketConnectionManager()
-    await socket_connection_manager.connect(websocket)
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.MAIN)
+    await socket_connection_manager.connect(connection)
     try:
         while True:
             # WebSocketDisconnect is not raised unless we poll
@@ -34,10 +36,18 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             try:
                 message = await asyncio.wait_for(websocket.receive_text(), 0.1)
                 await socket_connection_manager.received_message(
-                    socket=websocket, message=message
+                    websocket=websocket, message=message
                 )
             except asyncio.TimeoutError:
                 pass
 
     except WebSocketDisconnect:
-        socket_connection_manager.disconnect(websocket)
+        socket_connection_manager.disconnect(connection)
+
+
+@router.websocket("/ws/video")
+async def websocket_video_endpoint(websocket: WebSocket) -> None:
+    socket_connection_manager = SocketConnectionManager()
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.VIDEO)
+    await socket_connection_manager.connect(connection)
+    await socket_connection_manager.relay_video_frames(connection)

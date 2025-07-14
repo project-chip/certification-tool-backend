@@ -18,6 +18,7 @@ from pathlib import Path
 from loguru import logger
 from pydantic import ValidationError
 
+from ...constants import USER_ACTIONS
 from ...models.matter_test_models import MatterTestType
 from .yaml_test_models import YamlTest
 
@@ -50,8 +51,9 @@ def _test_type(test: YamlTest) -> MatterTestType:
     if all(s.disabled is True for s in steps):
         return MatterTestType.MANUAL
 
-    # if any step has a UserPrompt, categorize as semi-automated
-    if any(s.command == "UserPrompt" for s in steps):
+    # if any step has a UserPrompt, PromptWithResponse or VerifyVideoStream command,
+    # categorize as semi-automated
+    if any(s.command in USER_ACTIONS for s in steps):
         return MatterTestType.SEMI_AUTOMATED
 
     # Otherwise Automated

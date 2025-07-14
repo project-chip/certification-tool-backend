@@ -22,6 +22,8 @@ from app.test_engine.logger import test_engine_logger as logger
 from app.user_prompt_support import (
     OptionsSelectPromptRequest,
     PromptResponse,
+    StreamVerificationPromptRequest,
+    TextInputPromptRequest,
     UploadFile,
     UploadFilePromptRequest,
     UserPromptSupport,
@@ -51,6 +53,51 @@ class ManualVerificationTestStep(TestStep, UserPromptSupport):
     def __init__(self, name: str, verification: Optional[str] = None) -> None:
         super().__init__(name=name)
         self.verification = verification
+
+    async def prompt_verification_step_with_response(
+        self, textInputPrompt: TextInputPromptRequest
+    ) -> str:
+        """Prompt user to verify the video stream.
+
+        Returns:
+            str: string response received as user input
+        """
+        prompt_response = await self.invoke_prompt_and_get_str_response(textInputPrompt)
+        return prompt_response
+
+    async def prompt_stream_verification_step(self) -> bool:
+        """Prompt user to verify the video stream.
+
+        Raises:
+            ValueError: When receiving an unexpected response
+
+        Returns:
+            bool: False if user responds Failed
+        """
+        prompt = self.name
+        if self.verification is not None:
+            prompt += f"\n\n{self.verification}"
+
+        options = {
+            "PASS": PromptOptions.PASS,
+            "FAIL": PromptOptions.FAIL,
+        }
+        prompt_request = StreamVerificationPromptRequest(
+            prompt=prompt, options=options, timeout=OUTCOME_TIMEOUT_S
+        )
+        prompt_response = await self.send_prompt_request(prompt_request)
+        self.__evaluate_user_response_for_errors(prompt_response)
+
+        if prompt_response.response == PromptOptions.FAIL:
+            self.append_failure("User stated manual step FAILED.")
+            return False
+        elif prompt_response.response == PromptOptions.PASS:
+            logger.info("User stated this manual step PASSED.")
+            return True
+        else:
+            raise ValueError(
+                f"Received unknown prompt option: {prompt_response.response}"
+            )
 
     async def prompt_verification_step(self) -> bool:
         """Sends a prompt request to present instructions and get outcome from user.

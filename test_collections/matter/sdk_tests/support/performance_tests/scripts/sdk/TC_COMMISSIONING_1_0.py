@@ -43,7 +43,16 @@ kConfigureTrustedTimeSource = 19
 class TC_COMMISSIONING_1_0(MatterBaseTest):
     def __init__(self, *args):  # type: ignore[no-untyped-def]
         super().__init__(*args)
-        self.additional_steps = []
+
+        self.iterations = 1
+
+        try:
+            self.iterations = self.user_params["iterations"]
+            logging.info(f"Internal Control Iteraction: {self.iterations} ")
+        except KeyError:
+            logging.warning(
+                f"Iterations not defined, using default value: {self.iterations} "
+            )
 
     def setup_class(self):  # type: ignore[no-untyped-def]
         self.commissioner = None
@@ -57,10 +66,10 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
     def steps_TC_COMMISSIONING_1_0(self) -> list[TestStep]:
         steps = [TestStep(1, "Loop Commissioning ... 1")]
 
-        if len(self.additional_steps) > 0:
-            return self.additional_steps
-        else:
-            return steps
+        for i in range(2, self.iterations + 1):
+            steps.insert(i, TestStep(i, f"Loop Commissioning ... {i}"))
+
+        return steps
 
     @async_test_body
     async def teardown_test(self):  # type: ignore[no-untyped-def]
@@ -97,20 +106,8 @@ class TC_COMMISSIONING_1_0(MatterBaseTest):
         accessory_manager = AccessoryManager()
         self.clean_chip_tool_kvs()
         await self.create_commissioner()
-        conf = self.matter_test_config
 
-        interactions = 5
-
-        try:
-            interactions = conf.global_test_params["interactions"]
-            logging.info(f"INFO Internal Control Interaction: {interactions} ")
-        except Exception:
-            pass
-
-        for i in range(1, interactions + 1):
-            self.additional_steps.insert(i, TestStep(i, f"Loop Commissioning ... {i}"))
-
-        for i in range(1, interactions + 1):
+        for i in range(1, self.iterations + 1):
             self.step(i)
 
             logging.info(
