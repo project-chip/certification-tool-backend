@@ -81,40 +81,146 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
 
         test_classes = base_test_classes(parsed_python_file)
         for test_class in test_classes:
-            script_command = [f"{parent_folder}/{python_test_file.stem}"]
-            script_command.append(f"{test_class.name}")
-            script_command.append(GET_TEST_INFO_ARGUMENT)
+            # Add file path and class name
+            script_command = [
+                f"{parent_folder}/{python_test_file.stem}",
+                f"{test_class.name}",
+            ]
+
             python_script_commands.append(script_command)
 
     return python_script_commands
 
 
-async def proccess_commands_sdk_container(
-    commands: list,
-    json_output_file: Path,
+async def process_commands_sdk_container(
+    commands: list, json_output_file: Path, grouped_commands: bool = False
 ) -> None:
-    complete_json = []
+    test_function_count: int = 0
+    invalid_test_function_count: int = 0
+    complete_json: list[dict] = []
     errors_found: list[str] = []
     warnings_found: list[str] = []
-    test_function_count = 0
-    invalid_test_function_count = 0
 
     sdk_container: SDKContainer = SDKContainer()
-
     await sdk_container.start()
+
+    try:
+        if grouped_commands:
+            (
+                test_function_count,
+                invalid_test_function_count,
+            ) = await __process_grouped_commands(
+                sdk_container,
+                commands,
+                complete_json,
+                errors_found,
+                warnings_found,
+            )
+        else:
+            (
+                test_function_count,
+                invalid_test_function_count,
+            ) = await __process_individual_commands(
+                sdk_container,
+                commands,
+                complete_json,
+                errors_found,
+                warnings_found,
+            )
+
+        # Create a wrapper object with sdk_sha at root level
+        json_output = {"sdk_sha": matter_settings.SDK_SHA, "tests": complete_json}
+
+        with open(json_output_file, "w") as json_file:
+            json.dump(json_output, json_file, indent=4, sort_keys=True)
+
+        __print_report(
+            json_output_file,
+            test_function_count,
+            invalid_test_function_count,
+            warnings_found,
+            errors_found,
+        )
+
+    finally:
+        sdk_container.destroy()
+
+
+async def __process_grouped_commands(
+    sdk_container: SDKContainer,
+    commands: list,
+    complete_json: list,
+    errors_found: list[str],
+    warnings_found: list[str],
+) -> tuple[int, int]:
+    test_function_count: int = 0
+    invalid_test_function_count: int = 0
+
+    command_string = " ".join(
+        ["--test-list"]
+        + [item for sublist in commands for item in sublist]
+        + [GET_TEST_INFO_ARGUMENT]
+    )
+
+    result = sdk_container.send_command(
+        command_string,
+        prefix=CONTAINER_TH_CLIENT_EXEC,
+    )
+
+    if result.exit_code != 0:
+        with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
+            json_data = json.load(json_file)
+            errors_found.append(
+                f"Failed running command: {command_string}.\n"
+                f"Error message: {json_data['detail']}"
+            )
+
+        return test_function_count, invalid_test_function_count
+
+    with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
+        json_data = json.load(json_file)
+
+        for json_dict in json_data:
+            test_function_count += 1
+
+            for json_dict_info in json_dict["info"]:
+                json_dict_info["path"] = json_dict["script_path"]
+                json_dict_info["class_name"] = json_dict["class_name"]
+                function = json_dict_info["function"]
+                if not function.startswith("test_TC_"):
+                    invalid_test_function_count += 1
+                    warnings_found.append(
+                        f"Warning: File path: {json_dict_info['path']}  "
+                        f"Class: {json_dict_info['class_name']}. "
+                        f"Invalid test function: {function}"
+                    )
+                complete_json.append(json_dict_info)
+
+    return test_function_count, invalid_test_function_count
+
+
+async def __process_individual_commands(
+    sdk_container: SDKContainer,
+    commands: list,
+    complete_json: list,
+    errors_found: list[str],
+    warnings_found: list[str],
+) -> tuple[int, int]:
+    test_function_count: int = 0
+    invalid_test_function_count: int = 0
     total_commands = len(commands)
     for index, command in enumerate(commands):
-        print(f"Progress {index}/{total_commands}...")
-        command_string = " ".join(command)
+        print(f"Progress {index+1}/{total_commands}...")
+        command_string = " ".join(command + [GET_TEST_INFO_ARGUMENT])
         result = sdk_container.send_command(
             command_string,
             prefix=CONTAINER_TH_CLIENT_EXEC,
         )
+
         if result.exit_code != 0:
             try:
                 with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
                     json_data = json.load(json_file)
-
                     errors_found.append(
                         f"Failed running command: {command}.\n"
                         f"Error message: {json_data['detail']}"
@@ -127,28 +233,30 @@ async def proccess_commands_sdk_container(
 
             for json_dict in json_data:
                 test_function_count += 1
+
                 json_dict["path"] = command[0]
                 json_dict["class_name"] = command[1]
-                function = json_dict["function"]
-                if not function.startswith("test_TC_"):
-                    invalid_test_function_count += 1
-                    warnings_found.append(
-                        f"Warning: File path: {json_dict['path']}  "
-                        f"Class: {json_dict['class_name']}. "
-                        f"Invalid test function: {function}"
-                    )
+                if "function" in json_dict:
+                    function = json_dict["function"]
+                    if not function.startswith("test_TC_"):
+                        invalid_test_function_count += 1
+                        warnings_found.append(
+                            f"Warning: File path: {json_dict['path']}  "
+                            f"Class: {json_dict['class_name']}. "
+                            f"Invalid test function: {function}"
+                        )
                 complete_json.append(json_dict)
 
-    sdk_container.destroy()
+    return test_function_count, invalid_test_function_count
 
-    # complete_json.append({"sdk_sha": matter_settings.SDK_SHA})
-    # Create a wrapper object with sdk_sha at root level
-    json_output = {"sdk_sha": matter_settings.SDK_SHA, "tests": complete_json}
 
-    with open(json_output_file, "w") as json_file:
-        json.dump(json_output, json_file, indent=4, sort_keys=True)
-        json_file.close()
-
+def __print_report(
+    json_output_file: Path,
+    test_function_count: int,
+    invalid_test_function_count: int,
+    warnings_found: list[str],
+    errors_found: list[str],
+) -> None:
     print("###########################################################################")
     print("###############################   REPORT   ################################")
     print("###########################################################################")
@@ -173,13 +281,16 @@ async def proccess_commands_sdk_container(
 async def generate_python_test_json_file(
     test_folder: SDKTestFolder = PYTHON_SCRIPTS_FOLDER,
     json_output_file: Path = PYTHON_TESTS_PARSED_FILE,
+    grouped_commands: bool = False,
 ) -> None:
     python_scripts_command_list = get_command_list(test_folder=test_folder)
 
-    await proccess_commands_sdk_container(
-        python_scripts_command_list, json_output_file=json_output_file
+    await process_commands_sdk_container(
+        python_scripts_command_list,
+        json_output_file=json_output_file,
+        grouped_commands=grouped_commands,
     )
 
 
 if __name__ == "__main__":
-    asyncio.run(generate_python_test_json_file())
+    asyncio.run(generate_python_test_json_file(grouped_commands=True))
