@@ -183,6 +183,15 @@ async def __process_grouped_commands(
         for json_dict in json_data:
             test_function_count += 1
 
+            if "info" not in json_dict and "script_path" in json_dict:
+                errors_found.append(
+                    f"Failed running command: {command_string}.\n"
+                    f"Error message details: {json_dict['detail']}\n"
+                    f"Error message script_path: {json_dict['script_path']}"
+                )
+                invalid_test_function_count += 1
+                continue
+
             for json_dict_info in json_dict["info"]:
                 json_dict_info["path"] = json_dict["script_path"]
                 json_dict_info["class_name"] = json_dict["class_name"]
