@@ -141,7 +141,7 @@ def configure_iterations(args) -> []:
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
-    manual_execution = 1  # false
+    manual_execution = 0  # false
 
     try:
         manual_execution = sys.argv.index("--cmd-line")
