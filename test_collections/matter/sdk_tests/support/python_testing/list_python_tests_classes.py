@@ -186,7 +186,7 @@ async def __process_grouped_commands(
             if "info" not in json_dict and "script_path" in json_dict:
                 errors_found.append(
                     f"Failed running command: {command_string}.\n"
-                    f"Error message details: {json_dict['detail']}\n"
+                    f"Error message details: {json_dict.get('detail', 'No detail provided')}\n"
                     f"Error message script_path: {json_dict['script_path']}"
                 )
                 invalid_test_function_count += 1
