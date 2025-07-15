@@ -22,8 +22,8 @@ import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 
+from chip.testing.commissioning import CommissionDeviceTest
 from chip.testing.matter_testing import (
-    CommissionDeviceTest,
     MatterTestConfig,
     TestStep,
     get_test_info,
@@ -141,7 +141,7 @@ def configure_iterations(args) -> []:
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
-    manual_execution = 0  # false
+    manual_execution = 1  # false
 
     try:
         manual_execution = sys.argv.index("--cmd-line")
