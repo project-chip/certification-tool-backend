@@ -215,7 +215,6 @@ async def test_broadcast_with_failed_connection() -> None:
     2. Message is sent successfully on the working connection
     """
     test_message = "Test"
-    expected_parameter = {"type": "websocket.send", "text": test_message}
     socket_connection_manager.active_connections.clear()
 
     # Add a closed socket to the active connection list
@@ -235,8 +234,8 @@ async def test_broadcast_with_failed_connection() -> None:
     assert len(socket_connection_manager.active_connections) == 2
 
     await socket_connection_manager.broadcast(message=test_message)
-    socket_bad.send_text.assert_called_with(expected_parameter)
-    socket_good.send_text.assert_called_with(expected_parameter)
+    socket_bad.send_text.assert_called_with(test_message)
+    socket_good.send_text.assert_called_with(test_message)
 
     # Cleanup
     socket_connection_manager.active_connections.clear()
