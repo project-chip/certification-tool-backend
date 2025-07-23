@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-import threading
+import asyncio
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -124,13 +124,12 @@ class MatterYAMLRunner(metaclass=Singleton):
                         f.write(data)
             except Exception as e:
                 self.logger.error(f"Error in chip-tool log reader thread: {e}")
-        self.__chip_tool_log_reader = threading.Thread(target=read_chip_log, args=(self.__chip_tool_log,))
-        self.__chip_tool_log_reader.start()
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, read_chip_log, self.__chip_tool_log)
 
     async def stop(self) -> None:
         await self.stop_runner()
         await self.chip_server.stop()
-        self.__chip_tool_log_reader.join()
 
     def __get_gateway_ip(self) -> str:
         """
