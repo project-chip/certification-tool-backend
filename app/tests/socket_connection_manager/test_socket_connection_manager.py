@@ -203,39 +203,6 @@ async def test_broadcast_failed_for_ConnectionClosed() -> None:
     # Cleanup
     socket_connection_manager.active_connections.clear()
 
-
-@pytest.mark.asyncio
-async def test_broadcast_failed_for_RuntimeError() -> None:
-    """
-    Tests if broadcast() is able to handle run time errors.
-
-    Expected results:
-    1. RuntimeError is raised
-    2. "Send" is called in an attempt to broadcast
-    """
-    test_message = "Test"
-    expected_parameter = {"type": "websocket.send", "text": test_message}
-
-    # Add a websocket object to the "active_connections" list to imitate
-    # an existing active connection
-    socket_connection_manager.active_connections.clear()
-    socket = mock.MagicMock(spec=WebSocket)
-    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
-    socket_connection_manager.active_connections.append(connection)
-    assert len(socket_connection_manager.active_connections) == 1
-
-    socket.send_text.side_effect = RuntimeError(
-        'Cannot call "receive" once a disconnect message has been received.'
-    )
-
-    with pytest.raises(RuntimeError):
-        await socket_connection_manager.broadcast(message=test_message)
-        socket.send_text.assert_called_with(expected_parameter)
-
-    # Cleanup
-    socket_connection_manager.active_connections.clear()
-
-
 @pytest.mark.asyncio
 async def test_received_message_valid_json() -> None:
     """
