@@ -98,11 +98,11 @@ class SocketConnectionManager(object, metaclass=Singleton):
                         f' to websocket: "{websocket}", connection closed."'
                     )
                 except RuntimeError as e:
+                    # TODO: Determine / resolve underlying cause of mismanaged connections resulting in RuntimeErrors
                     logger.warning(
                         f'Failed to send: "{message}" to websocket: "{websocket}."'
                         f' error: "{e}"',
                     )
-                    # raise e
 
     async def received_message(self, websocket: WebSocket, message: str) -> None:
         try:
