@@ -1,5 +1,5 @@
 {
-    "sdk_sha": "05e574d5517106f491dc37ab444791fc96175627",
+    "sdk_sha": "7b245457e2950177398765f28cc37f94dab1a0c2",
     "tests": [
         {
             "class_name": "TCP_Tests",
@@ -2913,10 +2913,22 @@
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Read and verify DPTZStreams attribute, if supported",
+                    "description": "Verify the DPTZStreams attribute is present if the DPTZ feature is supported",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 11
+                },
+                {
+                    "description": "Ensure that a video stream has been allocated, store the streamID",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "Read the DPTZStreams attribute. Verify the streamIDs are unique, and the allocated streamID is present",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
                 }
             ]
         },
