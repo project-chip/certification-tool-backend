@@ -118,9 +118,12 @@ class MatterYAMLRunner(metaclass=Singleton):
 
         self.__chip_tool_log = await self.chip_server.start(server_type, use_paa_certs)
         def read_chip_log(gen):
-            with open(YAML_TESTS_PATH_BASE / "chip_output.log", "wb") as f:
-                for data in gen:
-                    f.write(data)
+            try:
+                with open(YAML_TESTS_PATH_BASE / "chip_output.log", "wb") as f:
+                    for data in gen:
+                        f.write(data)
+            except Exception as e:
+                self.logger.error(f"Error in chip-tool log reader thread: {e}")
         self.__chip_tool_log_reader = threading.Thread(target=read_chip_log, args=(self.__chip_tool_log,))
         self.__chip_tool_log_reader.start()
 
