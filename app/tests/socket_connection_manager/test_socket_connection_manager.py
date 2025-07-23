@@ -203,10 +203,12 @@ async def test_broadcast_failed_for_ConnectionClosed() -> None:
     # Cleanup
     socket_connection_manager.active_connections.clear()
 
+
 @pytest.mark.asyncio
 async def test_broadcast_with_failed_connection() -> None:
     """
-    Tests if broadcast() is able to output to multiple connections, where one is closed / failed.
+    Tests if broadcast() is able to output to multiple connections,
+    where one is closed / failed.
 
     Expected results:
     1. Broadcast runs without an error, skipping over the bad connection
@@ -238,6 +240,7 @@ async def test_broadcast_with_failed_connection() -> None:
 
     # Cleanup
     socket_connection_manager.active_connections.clear()
+
 
 @pytest.mark.asyncio
 async def test_received_message_valid_json() -> None:
