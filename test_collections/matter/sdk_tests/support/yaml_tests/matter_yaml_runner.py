@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import threading
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -116,10 +117,17 @@ class MatterYAMLRunner(metaclass=Singleton):
         self.__test_harness_runner = WebSocketRunner(config=web_socket_config)
 
         self.__chip_tool_log = await self.chip_server.start(server_type, use_paa_certs)
+        def read_chip_log(gen):
+            with open(YAML_TESTS_PATH_BASE / "chip_output.log", "wb") as f:
+                for data in gen:
+                    f.write(data)
+        self.__chip_tool_log_reader = threading.Thread(target=read_chip_log, args=(self.__chip_tool_log,))
+        self.__chip_tool_log_reader.start()
 
     async def stop(self) -> None:
         await self.stop_runner()
         await self.chip_server.stop()
+        self.__chip_tool_log_reader.join()
 
     def __get_gateway_ip(self) -> str:
         """
