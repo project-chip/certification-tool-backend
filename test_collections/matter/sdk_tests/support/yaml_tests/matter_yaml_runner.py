@@ -15,11 +15,11 @@
 #
 from __future__ import annotations
 
+import asyncio
 import json
 import subprocess
-import asyncio
 from pathlib import Path
-from typing import Any, Optional, Union, Generator
+from typing import Any, Generator, Optional, Union
 
 import loguru
 from matter.yamltests.definitions import SpecDefinitionsFromPaths
