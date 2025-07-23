@@ -19,7 +19,7 @@ import json
 import subprocess
 import asyncio
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Generator
 
 import loguru
 from matter.yamltests.definitions import SpecDefinitionsFromPaths
@@ -117,13 +117,15 @@ class MatterYAMLRunner(metaclass=Singleton):
         self.__test_harness_runner = WebSocketRunner(config=web_socket_config)
 
         self.__chip_tool_log = await self.chip_server.start(server_type, use_paa_certs)
-        def read_chip_log(gen):
+
+        def read_chip_log(gen: Generator) -> None:
             try:
                 with open(YAML_TESTS_PATH_BASE / "chip_output.log", "wb") as f:
                     for data in gen:
                         f.write(data)
             except Exception as e:
                 self.logger.error(f"Error in chip-tool log reader thread: {e}")
+
         loop = asyncio.get_running_loop()
         loop.run_in_executor(None, read_chip_log, self.__chip_tool_log)
 
