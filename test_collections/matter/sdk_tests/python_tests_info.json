@@ -1,5 +1,5 @@
 {
-    "sdk_sha": "871b4347b3b068dc161d6a02f867a0335cff13ed",
+    "sdk_sha": "1b2b3fd571feaca7328db35798b99ab7ba4e6212",
     "tests": [
         {
             "class_name": "TCP_Tests",
@@ -7289,6 +7289,188 @@
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 8
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CHIME_2_1",
+            "desc": "[TC-CHIME-2.1] Attributes with DUT as Server",
+            "function": "test_TC_CHIME_2_1",
+            "path": "sdk/TC_CHIME_2_1",
+            "pics": [
+                "CHIME.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Read InstalledChimeSounds, verify list and field value conformance",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Verify that all of the ChimeIDs in InstalledChimeSounds are unique",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Verify that all of the Names in InstalledChimeSounds are unique",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Read and verify SelectedChime attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Read and verify Enabled attribute",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CHIME_2_2",
+            "desc": "[TC-CHIME-2.2] Verify that Chime can be enabled",
+            "function": "test_TC_CHIME_2_2",
+            "path": "sdk/TC_CHIME_2_2",
+            "pics": [
+                "CHIME.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Read the Enabled attribute, store as myEnabled",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Write to the DUT a new value that is !myEnabled",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Read the Enabled attribute, verify it was as written in Step 3",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CHIME_2_3",
+            "desc": "[TC-CHIME-2.3] Verify that the SelectedChime can be changed",
+            "function": "test_TC_CHIME_2_3",
+            "path": "sdk/TC_CHIME_2_3",
+            "pics": [
+                "CHIME.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Read the InstalledChimeSounds attribute, store as myChimeSounds.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Read the SelectedChime attribute, store as mySelectedChime",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "If myChimeSounds has only 1 value, jump to step 7.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Write to SelectedChime a new value from myChimeSounds.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "Read the SelectedChime attribute, verfy that it's the same as the value written in step 5",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "Write to SelectedChime a value not found in myChimeSounds. Verify a NotFound error response",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "Read the SelectedChime attribute, verfy that it's unchanged",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CHIME_2_4",
+            "desc": "[TC-CHIME-2.4] Verify functionality of the PlayChimeSound command",
+            "function": "test_TC_CHIME_2_4",
+            "path": "sdk/TC_CHIME_2_4",
+            "pics": [
+                "CHIME.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Write the value of False to the Enabled attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "Invoke the PlayChimeSound command. Verify a success response, and no chime is played.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "Write the value of True to the Enabled attribute.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Invoke the PlayChimeSound command. Verify a success response, and a chime is played.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
                 }
             ]
         },
@@ -15390,6 +15572,12 @@
             "pics": [],
             "steps": [
                 {
+                    "description": "TH commissions DUT if required",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
                     "description": "CR1 reads the ServerList attribute from the Descriptor cluster on EP0.",
                     "expectation": "If the ICD Management cluster ID (70,0x46) is present, set SUBSCRIPTION_MAX_INTERVAL_PUBLISHER_LIMIT_SEC = IdleModeDuration and min_interval_floor_s to 0, otherwise, set SUBSCRIPTION_MAX_INTERVAL_PUBLISHER_LIMIT_SEC = 60 mins and min_interval_floor_s to 3.",
                     "is_commissioning": false,
@@ -19085,7 +19273,7 @@
                 },
                 {
                     "description": "TH performs a query for the TXT record against the qname instance_qname.",
-                    "expectation": "Verify TXT record is returned",
+                    "expectation": "Verify TXT record is returned if the device supports ICD or TCP. The TXT record MAY be returned if these are not supported, but it is not required.",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
@@ -21381,28 +21569,34 @@
                     "test_plan_number": 1
                 },
                 {
-                    "description": "Send SolicitOffer with both videoStreamID and audioStreamID not present, usage=3 => expect ConstraintError",
+                    "description": "Send SolicitOffer with VideoStreamID that doesn't match AllocatedVideoStreams => expect DYNAMIC_CONSTRAINT_ERROR",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "Send SolicitOffer with a valid videoStreamID and usage=4 => expect ConstraintError",
+                    "description": "Send SolicitOffer with AudioStreamID that doesn't match AllocatedAudioStreams => expect DYNAMIC_CONSTRAINT_ERROR",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Send SolicitOffer with valid parameters => expect DeferredOffer=TRUE",
+                    "description": "Write SoftLivestreamPrivacyModeEnabled=true, send SolicitOffer => expect INVALID_IN_STATE",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Read CurrentSessions attribute => expect 1",
+                    "description": "Write SoftLivestreamPrivacyModeEnabled=false, send SolicitOffer => expect DeferredOffer=TRUE",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
+                },
+                {
+                    "description": "Read CurrentSessions attribute => expect 1 with valid session data",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
                 }
             ]
         },
@@ -21430,6 +21624,18 @@
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
+                },
+                {
+                    "description": "Send EndSession with invalid WebRTCSessionID => expect NOT_FOUND",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Send EndSession with valid WebRTCSessionID => expect SUCCESS",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
                 }
             ]
         },
@@ -21447,28 +21653,46 @@
                     "test_plan_number": 1
                 },
                 {
-                    "description": "Send ProvideOffer with both videoStreamID and audioStreamID not present, usage=3 => expect ConstraintError",
+                    "description": "Send ProvideOffer with VideoStreamID that doesn't match AllocatedVideoStreams => expect DYNAMIC_CONSTRAINT_ERROR",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "Send ProvideOffer with a valid videoStreamID and usage=4 => expect ConstraintError",
+                    "description": "Send ProvideOffer with null VideoStreamID => expect INVALID_IN_STATE",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Send ProvideOffer with valid parameters => expect ProvideOfferResponse containing allocated WebRTCSessionID",
+                    "description": "Send ProvideOffer with AudioStreamID that doesn't match AllocatedAudioStreams => expect DYNAMIC_CONSTRAINT_ERROR",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Read CurrentSessions attribute => expect 1",
+                    "description": "Send ProvideOffer with null AudioStreamID => expect INVALID_IN_STATE",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
+                },
+                {
+                    "description": "Write SoftLivestreamPrivacyModeEnabled=true, send ProvideOffer => expect INVALID_IN_STATE",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "Write SoftLivestreamPrivacyModeEnabled=false, send valid ProvideOffer => expect ProvideOfferResponse",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "Read CurrentSessions attribute => expect 1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
                 }
             ]
         },
