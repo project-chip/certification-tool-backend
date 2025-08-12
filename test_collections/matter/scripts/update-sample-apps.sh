@@ -43,9 +43,7 @@ fi
 
 
 print_script_step "Updating Sample APPs"
-# TODO - Uncomment line bellow and remove the subsequent line when the SDK IMAGE contains the apps folder
-# sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v apps/* /apps/"
-sudo docker run -t -v ~/apps:/apps $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; cp -v apps/* /apps/; cp -v chip-* /apps/; cp -v thermostat-app /apps/; cp -v lit-icd-app /apps/;cp -v fabric-* /apps/; cp -v matter-network-manager-app /apps/"
+sudo docker run -t -v ~/apps:/apps -v ~/mock_server:/mock_server -v ~/credentials:/credentials $SDK_DOCKER_IMAGE bash -c "rm -v /apps/*; rm -vrf /mock_server/*; rm -vrf /credentials/*; cp -v apps/* /apps/; cp -v -r mock_server/* /mock_server/; cp -v -r credentials/* /credentials/"
 echo "Setting Sample APPs ownership"
 sudo chown -R `whoami` ~/apps
 

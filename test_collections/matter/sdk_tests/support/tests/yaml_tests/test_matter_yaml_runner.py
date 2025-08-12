@@ -21,10 +21,10 @@ from subprocess import CompletedProcess
 from unittest import mock
 
 import pytest
-from matter_yamltests.hooks import TestParserHooks, TestRunnerHooks
-from matter_yamltests.parser_builder import TestParserBuilderConfig
-from matter_yamltests.runner import TestRunnerConfig
-from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
+from matter.yamltests.hooks import TestParserHooks, TestRunnerHooks
+from matter.yamltests.parser_builder import TestParserBuilderConfig
+from matter.yamltests.runner import TestRunnerConfig
+from matter.yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
 from app.schemas.pics import PICSError
 from app.tests.utils.test_pics_data import create_random_pics
@@ -129,7 +129,7 @@ async def test_run_test_default_config() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     chip_server: ChipServer = ChipServer()
     server_type = ChipServerType.CHIP_TOOL
-    test_id = "TC_TEST_ID"
+    test_path = "TC_TEST_ID"
     runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
         WebSocketRunnerConfig()
     )
@@ -148,7 +148,7 @@ async def test_run_test_default_config() -> None:
         await runner.run_test(
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
-            test_id=test_id,
+            test_path=test_path,
             server_type=server_type,
         )
 
@@ -156,7 +156,7 @@ async def test_run_test_default_config() -> None:
     # parser_builder_config is the 1st parameter in WebSocketRunner.run
     parser_builder_config: TestParserBuilderConfig = mock_run.mock_calls[0].args[0]
     assert len(parser_builder_config.tests) == 1
-    assert test_id in parser_builder_config.tests[0]
+    assert test_path in parser_builder_config.tests[0]
     parser_options = parser_builder_config.parser_config.config_override
     assert parser_options["nodeId"] == f"{hex(chip_server.node_id)}"
     assert parser_options["timeout"] == f"{TEST_DEFAULT_TIMEOUT_IN_SEC}"
@@ -174,7 +174,7 @@ async def test_run_test_default_config() -> None:
 async def test_run_test_custom_timeout() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     server_type = ChipServerType.CHIP_TOOL
-    test_id = "TC_TEST_ID"
+    test_path = "TC_TEST_ID"
     test_timeout = "10"
     runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
         WebSocketRunnerConfig()
@@ -194,7 +194,7 @@ async def test_run_test_custom_timeout() -> None:
         await runner.run_test(
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
-            test_id=test_id,
+            test_path=test_path,
             server_type=server_type,
             timeout=test_timeout,
         )
@@ -203,7 +203,7 @@ async def test_run_test_custom_timeout() -> None:
     # parser_builder_config is the 1st parameter in WebSocketRunner.run
     parser_builder_config: TestParserBuilderConfig = mock_run.mock_calls[0].args[0]
     assert len(parser_builder_config.tests) == 1
-    assert test_id in parser_builder_config.tests[0]
+    assert test_path in parser_builder_config.tests[0]
     parser_options = parser_builder_config.parser_config.config_override
     assert parser_options["timeout"] == f"{test_timeout}"
 
@@ -215,7 +215,7 @@ async def test_run_test_custom_timeout() -> None:
 async def test_run_test_with_custom_parameter() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     server_type = ChipServerType.CHIP_TOOL
-    test_id = "TC_TEST_ID"
+    test_path = "TC_TEST_ID"
     test_param_name = "param1"
     test_param_value = "value"
     runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
@@ -236,7 +236,7 @@ async def test_run_test_with_custom_parameter() -> None:
         await runner.run_test(
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
-            test_id=test_id,
+            test_path=test_path,
             server_type=server_type,
             test_parameters={test_param_name: test_param_value},
         )
@@ -245,7 +245,7 @@ async def test_run_test_with_custom_parameter() -> None:
     # parser_builder_config is the 1st parameter in WebSocketRunner.run
     parser_builder_config: TestParserBuilderConfig = mock_run.mock_calls[0].args[0]
     assert len(parser_builder_config.tests) == 1
-    assert test_id in parser_builder_config.tests[0]
+    assert test_path in parser_builder_config.tests[0]
     parser_options = parser_builder_config.parser_config.config_override
     assert parser_options.get(test_param_name) is not None
     assert parser_options.get(test_param_name) == test_param_value
@@ -258,7 +258,7 @@ async def test_run_test_with_custom_parameter() -> None:
 async def test_run_test_with_endpoint_parameter() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     server_type = ChipServerType.CHIP_TOOL
-    test_id = "TC_TEST_ID"
+    test_path = "TC_TEST_ID"
     test_param_name = "endpoint"
     test_param_value = 1
     runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
@@ -279,7 +279,7 @@ async def test_run_test_with_endpoint_parameter() -> None:
         await runner.run_test(
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
-            test_id=test_id,
+            test_path=test_path,
             server_type=server_type,
             test_parameters={test_param_name: test_param_value},
         )
@@ -288,7 +288,7 @@ async def test_run_test_with_endpoint_parameter() -> None:
     # parser_builder_config is the 1st parameter in WebSocketRunner.run
     parser_builder_config: TestParserBuilderConfig = mock_run.mock_calls[0].args[0]
     assert len(parser_builder_config.tests) == 1
-    assert test_id in parser_builder_config.tests[0]
+    assert test_path in parser_builder_config.tests[0]
     parser_options = parser_builder_config.parser_config.config_override
     assert parser_options[test_param_name] == test_param_value
 
@@ -300,7 +300,7 @@ async def test_run_test_with_endpoint_parameter() -> None:
 async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     server_type = ChipServerType.CHIP_TOOL
-    test_id = "TC_TEST_ID"
+    test_path = "TC_TEST_ID"
     test_param_name = "endpoint"
     test_param_value = 1
     runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
@@ -321,7 +321,7 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
         await runner.run_test(
             test_step_interface=TestRunnerHooks(),
             test_parser_hooks=TestParserHooks(),
-            test_id=test_id,
+            test_path=test_path,
             server_type=server_type,
             test_parameters={
                 test_param_name: test_param_value,
@@ -334,7 +334,7 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
     # parser_builder_config is the 1st parameter in WebSocketRunner.run
     parser_builder_config: TestParserBuilderConfig = mock_run.mock_calls[0].args[0]
     assert len(parser_builder_config.tests) == 1
-    assert test_id in parser_builder_config.tests[0]
+    assert test_path in parser_builder_config.tests[0]
     parser_options = parser_builder_config.parser_config.config_override
     assert parser_options[test_param_name] == test_param_value
     assert parser_options.get("nodeId") != "custom"
@@ -445,6 +445,44 @@ async def test_pairing_ble_thread_command_params() -> None:
         f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code} {discriminator}"
     )
     expected_command = f"pairing ble-thread {expected_params}"
+
+    assert result is True
+    mock_send_websocket_command.assert_awaited_once_with(expected_command)
+
+    # clean up:
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
+    chip_server._ChipServer__node_id = None
+
+
+@pytest.mark.asyncio
+async def test_pairing_nfc_thread_command_params() -> None:
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
+    if original_trace_setting_value is True:
+        matter_settings.CHIP_TOOL_TRACE = False
+
+    # Attributes
+    runner: MatterYAMLRunner = MatterYAMLRunner()
+    chip_server: ChipServer = ChipServer()
+    hex_dataset = "c0ffee"
+    setup_code = "0123456"
+    discriminator = "1234"
+
+    with mock.patch.object(
+        target=runner,
+        attribute="send_websocket_command",
+        return_value='{"results": []}',
+        # '{  "results": [{ "error": "FAILURE" }]
+    ) as mock_send_websocket_command:
+        result = await runner.pairing_nfc_thread(
+            hex_dataset=hex_dataset,
+            setup_code=setup_code,
+            discriminator=discriminator,
+        )
+
+    expected_params = (
+        f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code} {discriminator}"
+    )
+    expected_command = f"pairing nfc-thread {expected_params}"
 
     assert result is True
     mock_send_websocket_command.assert_awaited_once_with(expected_command)

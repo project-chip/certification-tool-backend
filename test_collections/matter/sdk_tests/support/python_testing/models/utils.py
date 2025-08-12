@@ -44,7 +44,7 @@ from ...utils import (
 )
 
 # Command line params
-RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/test_harness_client.py"
+RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 EXECUTABLE = "python3"
 
 TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
@@ -86,7 +86,10 @@ async def generate_command_arguments(
             arguments.append(f"--wifi-ssid {config.network.wifi.ssid}")
             arguments.append(f"--wifi-passphrase {config.network.wifi.password}")
 
-        if pairing_mode == DutPairingModeEnum.BLE_THREAD:
+        if (
+            pairing_mode == DutPairingModeEnum.BLE_THREAD
+            or pairing_mode == DutPairingModeEnum.NFC_THREAD
+        ):
             dataset_hex = await __thread_dataset_hex(config.network.thread)
             arguments.append(f"--thread-dataset-hex {dataset_hex}")
 

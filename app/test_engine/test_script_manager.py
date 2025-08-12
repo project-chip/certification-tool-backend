@@ -383,4 +383,4 @@ class TestScriptManager(object, metaclass=Singleton):
                 )
 
 
-test_script_manager = TestScriptManager()
+test_script_manager: TestScriptManager = TestScriptManager()

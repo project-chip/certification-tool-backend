@@ -22,7 +22,7 @@ import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 
-from matter_testing_support import (
+from chip.testing.matter_testing import (
     CommissionDeviceTest,
     MatterTestConfig,
     TestStep,
@@ -108,6 +108,24 @@ def main() -> None:
                     run_test(
                         script_path=sys.argv[1], class_name=sys.argv[2], config=config
                     )
+
+
+def get_test_info_support(script_path: str, class_name: str, config: MatterTestConfig):
+    module = importlib.import_module(script_path.replace("/", "."))
+    TestClassReference = getattr(module, class_name)
+    test_info = get_test_info(TestClassReference, config)
+    return json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
+
+
+def configure_interactions(args) -> []:
+    result = args
+    try:
+        position = sys.argv.index("--interactions")
+        interactions_value = sys.argv[position + 1]
+        result = args + ["--int-arg", f"interactions:{interactions_value}"]
+    except ValueError:
+        pass
+    return result
 
 
 def get_test_info_support(script_path: str, class_name: str, config: MatterTestConfig):

@@ -71,6 +71,11 @@ class ChipSuite(TestSuite, UserPromptSupport):
         logger.info("Setting up SDK container")
         await self.sdk_container.start()
 
+        if self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD:
+            # When PCSC reader is used in a Docker container, pollkit should
+            #  be disabled
+            self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
+
         logger.info("Setting up test runner")
         await self.runner.setup(
             self.server_type, self.config_matter.dut_config.chip_use_paa_certs
@@ -121,6 +126,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
             self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
         ):
             pair_result = await self.__pair_with_dut_ble_thread()
+        elif (
+            self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD
+        ):
+            pair_result = await self.__pair_with_dut_nfc_thread()
         elif (
             self.config_matter.dut_config.pairing_mode
             is DutPairingModeEnum.WIFIPAF_WIFI
@@ -175,6 +184,26 @@ class ChipSuite(TestSuite, UserPromptSupport):
             raise DUTCommissioningError("Invalid thread configuration")
 
         return await self.runner.pairing_ble_thread(
+            hex_dataset=hex_dataset,
+            setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,
+        )
+
+    async def __pair_with_dut_nfc_thread(self) -> bool:
+        if self.config_matter.network.thread is None:
+            raise DUTCommissioningError("Tool config is missing thread config.")
+
+        # if thread has ThreadAutoConfig, bring up border router
+        thread_config = self.config_matter.network.thread
+        if isinstance(thread_config, ThreadExternalConfig):
+            hex_dataset = thread_config.operational_dataset_hex
+        elif isinstance(thread_config, ThreadAutoConfig):
+            border_router = await self.__start_border_router(thread_config)
+            hex_dataset = border_router.active_dataset
+        else:
+            raise DUTCommissioningError("Invalid thread configuration")
+
+        return await self.runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
             setup_code=self.config_matter.dut_config.setup_code,
             discriminator=self.config_matter.dut_config.discriminator,

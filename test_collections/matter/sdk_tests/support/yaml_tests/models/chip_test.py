@@ -17,10 +17,11 @@ import asyncio
 from enum import Enum, IntEnum
 from typing import Any, Optional
 
+from matter.yamltests.hooks import TestParserHooks, TestRunnerHooks
+from matter.yamltests.parser import PostProcessResponseResult, TestStep
+
 # Websocket Test imports:
 from matter_chip_tool_adapter.decoder import MatterLog
-from matter_yamltests.hooks import TestParserHooks, TestRunnerHooks
-from matter_yamltests.parser import PostProcessResponseResult, TestStep
 
 from app.models import TestStateEnum
 from app.models.test_case_execution import TestCaseExecution
@@ -170,7 +171,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
     def step_unknown(self) -> None:
         self.__runned += 1
 
-    async def step_manual(self) -> None:
+    async def step_manual(self, request: Optional[TestStep] = None) -> None:
         step = self.current_test_step
         if not isinstance(step, ManualVerificationTestStep):
             raise TestError(f"Unexpected user prompt found in test step: {step.name}")
@@ -237,11 +238,10 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
             raise TestError("Unable to execute test as SDK container is not available")
 
     async def execute(self) -> None:
-        test_name = f"Test_{self.chip_test_identifier}"
         await self.runner.run_test(
             test_step_interface=self,
             test_parser_hooks=self,
-            test_id=test_name,
+            test_path=str(self.yaml_test.path),
             server_type=self.server_type,
             test_parameters=self.test_parameters,
         )

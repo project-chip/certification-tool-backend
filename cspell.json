@@ -38,12 +38,14 @@
         "libgirepository",
         "loguru",
         "mandatories",
+        "mobly",
         "MANYTOONE",
         "mypy",
         "noqa",
         "onnetwork",
         "otbr",
         "panid",
+        "pidof",
         "PIXIT",
         "pkill",
         "pydantic",
@@ -99,8 +101,13 @@
         "zinfo",
         "MCORE",
         "elts",
+        "PBKDF",
+        "elts",
         "xpanid",
-        "wpan"
+        "wpan",
+        "PBKDF",
+        "PCSC",
+        "pcscd"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
@@ -120,7 +127,8 @@
         ".devcontainer",
         "test_collections/matter/sdk_tests/*.json",
         "test_collections/matter/sdk_tests/support/performance_tests/",
-        "test_collections/matter/config.py"
+        "test_collections/matter/config.py",
+        "test_collections/matter/platform-cert/generated-platform-cert-test-list.json"
     ],
     "enableFiletypes": [
         "shellscript"

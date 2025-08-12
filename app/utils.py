@@ -17,10 +17,11 @@ import ast
 import importlib
 import os
 import re
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import IO, Any, Dict, Optional, Tuple, Type
 
 import emails
 from emails.template import JinjaTemplate
@@ -36,6 +37,9 @@ TEST_ENVIRONMENT_CONFIG_NAME = "default_project.config"
 TEST_ENVIRONMENT_CONFIG_PYTHON = "test_environment_config.py"
 TEST_ENVIRONMENT_CONFIG_MODULE = "test_environment_config"
 TEST_ENVIRONMENT_CONFIG_BASE_CLASS_NAME = "TestEnvironmentConfig"
+
+DMP_TEST_SKIP_FILENAME = "dmp-test-skip"
+DMP_TEST_SKIP_CONFIG_NODE = "dmp_test_skip"
 
 
 class InvalidProgramConfigurationError(Exception):
@@ -258,6 +262,21 @@ def __retrieve_program_conf() -> Tuple[Optional[Type], Optional[Path]]:
             return ProgramConfigClassReference, default_config_file
 
     return None, None
+
+
+def parse_dmp_file(xml_file: IO) -> list[str]:
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Find all test elements and the test names
+    tests = []
+    for test in root.findall("test"):
+        test_name = test.get("name")
+        if test_name:
+            tests.append(test_name)
+
+    return tests
 
 
 program_class, program_config_path = __retrieve_program_conf()

@@ -21,18 +21,18 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 import loguru
+from matter.yamltests.definitions import SpecDefinitionsFromPaths
+from matter.yamltests.hooks import TestParserHooks, TestRunnerHooks
+
+# Matter YAML tests Imports
+from matter.yamltests.parser import TestParserConfig
+from matter.yamltests.parser_builder import TestParserBuilderConfig
+from matter.yamltests.pseudo_clusters.pseudo_clusters import get_default_pseudo_clusters
+from matter.yamltests.runner import TestRunnerConfig, TestRunnerOptions
+from matter.yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 from matter_chip_tool_adapter import adapter as ChipToolAdapter
 from matter_chip_tool_adapter.decoder import MatterLog
 from matter_placeholder_adapter import adapter as ChipAppAdapter
-from matter_yamltests.definitions import SpecDefinitionsFromPaths
-from matter_yamltests.hooks import TestParserHooks, TestRunnerHooks
-
-# Matter YAML tests Imports
-from matter_yamltests.parser import TestParserConfig
-from matter_yamltests.parser_builder import TestParserBuilderConfig
-from matter_yamltests.pseudo_clusters.pseudo_clusters import get_default_pseudo_clusters
-from matter_yamltests.runner import TestRunnerConfig, TestRunnerOptions
-from matter_yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
 
 from app.container_manager.backend_container import backend_container
 from app.schemas.pics import PICS, PICSError
@@ -59,6 +59,7 @@ PAIRING_MODE_ONNETWORK = "onnetwork-long"
 PAIRING_MODE_BLE_WIFI = "ble-wifi"
 PAIRING_MODE_BLE_THREAD = "ble-thread"
 PAIRING_MODE_WIFIPAF_WIFI = "wifipaf-wifi"
+PAIRING_MODE_NFC_THREAD = "nfc-thread"
 PAIRING_MODE_UNPAIR = "unpair"
 
 # Websocket runner
@@ -185,7 +186,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         self,
         test_step_interface: TestRunnerHooks,
         test_parser_hooks: TestParserHooks,
-        test_id: str,
+        test_path: str,
         server_type: ChipServerType,
         timeout: Optional[str] = None,
         test_parameters: Optional[dict[str, Any]] = None,
@@ -193,7 +194,7 @@ class MatterYAMLRunner(metaclass=Singleton):
         """Run the test with the associated id using the right executable/container
 
         Args:
-            test_id (str): Test Id to be run
+            test_path (str): The path of the test to be run
             server_type (ChipServerType): Type of the binary that needs to be run
 
         Raises:
@@ -227,11 +228,6 @@ class MatterYAMLRunner(metaclass=Singleton):
         if self.__pics_file_created:
             pics_path = f"{PICS_FILE_PATH}"
             self.logger.info(f"Using PICS file: {pics_path}")
-
-        if server_type == ChipServerType.CHIP_TOOL:
-            test_path = f"{YAML_TESTS_PATH}/{test_id}.yaml"
-        else:
-            test_path = f"{YAML_TESTS_PATH}/{test_id}_Simulated.yaml"
 
         parser_config = TestParserConfig(pics_path, self.specifications, test_options)
         parser_builder_config = TestParserBuilderConfig(
@@ -317,6 +313,20 @@ class MatterYAMLRunner(metaclass=Singleton):
     ) -> bool:
         return await self.pairing(
             PAIRING_MODE_BLE_THREAD,
+            hex(self.chip_server.node_id),
+            f"hex:{hex_dataset}",
+            setup_code,
+            discriminator,
+        )
+
+    async def pairing_nfc_thread(
+        self,
+        hex_dataset: str,
+        setup_code: str,
+        discriminator: str,
+    ) -> bool:
+        return await self.pairing(
+            PAIRING_MODE_NFC_THREAD,
             hex(self.chip_server.node_id),
             f"hex:{hex_dataset}",
             setup_code,

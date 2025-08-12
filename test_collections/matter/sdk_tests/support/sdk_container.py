@@ -52,18 +52,12 @@ LOCAL_PYTHON_TESTING_PATH = Path(
 )
 DOCKER_PYTHON_TESTING_PATH = "/root/python_testing"
 
-MAPPED_DATA_MODEL_VOLUME = "mapped_data_model_volume"
-DOCKER_DATA_MODEL_PATH = DOCKER_PYTHON_TESTING_PATH + "/data_model"
-
-
 # RPC Client Running on SDK Container
 LOCAL_RPC_PYTHON_TESTING_PATH = Path(
     LOCAL_TEST_COLLECTIONS_PATH + "/sdk_tests/support/python_testing/models/rpc_client/"
     "test_harness_client.py"
 )
-DOCKER_RPC_PYTHON_TESTING_PATH = (
-    "/root/python_testing/scripts/sdk/test_harness_client.py"
-)
+DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
 
 class SDKContainerNotRunning(Exception):
@@ -110,10 +104,6 @@ class SDKContainer(metaclass=Singleton):
             },
             LOCAL_PYTHON_TESTING_PATH: {
                 "bind": DOCKER_PYTHON_TESTING_PATH,
-                "mode": "rw",
-            },
-            MAPPED_DATA_MODEL_VOLUME: {
-                "bind": DOCKER_DATA_MODEL_PATH,
                 "mode": "rw",
             },
             LOCAL_RPC_PYTHON_TESTING_PATH: {

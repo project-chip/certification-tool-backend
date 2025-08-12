@@ -21,7 +21,7 @@ from matter.yamltests.hooks import TestRunnerHooks
 from pydantic import BaseModel
 
 
-class SDKPythonTestResultEnum(str, Enum):
+class SDKPerformanceResultEnum(str, Enum):
     START = "start"
     STOP = "stop"
     TEST_START = "test_start"
@@ -36,64 +36,64 @@ class SDKPythonTestResultEnum(str, Enum):
     SHOW_PROMPT = "show_prompt"
 
 
-class SDKPythonTestResultBase(BaseModel):
-    type: SDKPythonTestResultEnum
+class SDKPerformanceResultBase(BaseModel):
+    type: SDKPerformanceResultEnum
 
     def params_dict(self) -> dict:
         return self.dict(exclude={"type"})
 
 
-class SDKPythonTestResultStart(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.START
+class SDKPerformanceResultStart(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.START
     count: int
 
 
-class SDKPythonTestResultStop(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STOP
+class SDKPerformanceResultStop(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.STOP
     duration: int
 
 
-class SDKPythonTestResultTestStart(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.TEST_START
+class SDKPerformanceResultTestStart(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.TEST_START
     filename: Optional[str]
     name: Optional[str]
     count: Optional[int]
     steps: Optional[list[str]]
 
 
-class SDKPythonTestResultTestStop(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.TEST_STOP
+class SDKPerformanceResultTestStop(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.TEST_STOP
     duration: Optional[int]
     exception: Any
 
 
-class SDKPythonTestResultTestSkipped(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.TEST_SKIPPED
+class SDKPerformanceResultTestSkipped(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.TEST_SKIPPED
     filename: Optional[str]
     name: Optional[str]
 
 
-class SDKPythonTestResultStepSkipped(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_SKIPPED
+class SDKPerformanceResultStepSkipped(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.STEP_SKIPPED
     name: Optional[str]
     expression: Optional[str]
 
 
-class SDKPythonTestResultStepStart(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_START
+class SDKPerformanceResultStepStart(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.STEP_START
     name: Optional[str]
 
 
-class SDKPythonTestResultStepSuccess(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_SUCCESS
+class SDKPerformanceResultStepSuccess(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.STEP_SUCCESS
     logger: Any
     logs: Any
     duration: int
     request: Any
 
 
-class SDKPythonTestResultStepFailure(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_FAILURE
+class SDKPerformanceResultStepFailure(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.STEP_FAILURE
     logger: Any
     logs: Any
     duration: int
@@ -101,28 +101,28 @@ class SDKPythonTestResultStepFailure(SDKPythonTestResultBase):
     received: Any
 
 
-class SDKPythonTestResultStepUnknown(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_UNKNOWN
+class SDKPerformanceResultStepUnknown(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.STEP_UNKNOWN
 
 
-class SDKPythonTestResultStepManual(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.STEP_MANUAL
+class SDKPerformanceResultStepManual(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.STEP_MANUAL
 
 
-class SDKPythonTestResultShowPrompt(SDKPythonTestResultBase):
-    type = SDKPythonTestResultEnum.SHOW_PROMPT
+class SDKPerformanceResultShowPrompt(SDKPerformanceResultBase):
+    type: SDKPerformanceResultEnum = SDKPerformanceResultEnum.SHOW_PROMPT
     msg: str
     placeholder: Optional[str]
     default_value: Optional[str]
 
 
-class SDKPythonTestRunnerHooks(TestRunnerHooks):
+class SDKPerformanceRunnerHooks(TestRunnerHooks):
     finished = False
     results: Queue
 
     def __init__(self) -> None:
-        SDKPythonTestRunnerHooks.finished = False
-        SDKPythonTestRunnerHooks.results = Queue()
+        SDKPerformanceRunnerHooks.finished = False
+        SDKPerformanceRunnerHooks.results = Queue()
 
     def update_test(self) -> Union[dict, None]:
         try:
@@ -132,41 +132,43 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
             return None
 
     def is_finished(self) -> bool:
-        return SDKPythonTestRunnerHooks.finished
+        return SDKPerformanceRunnerHooks.finished
 
     def start(self, count: int) -> None:
-        self.results.put(SDKPythonTestResultStart(count=count))
+        self.results.put(SDKPerformanceResultStart(count=count))
 
     def stop(self, duration: int) -> None:
-        self.results.put(SDKPythonTestResultStop(duration=duration))
-        SDKPythonTestRunnerHooks.finished = True
+        self.results.put(SDKPerformanceResultStop(duration=duration))
+        SDKPerformanceRunnerHooks.finished = True
 
     def test_start(
         self, filename: str, name: str, count: int, steps: list[str] = []
     ) -> None:
         self.results.put(
-            SDKPythonTestResultTestStart(
+            SDKPerformanceResultTestStart(
                 filename=filename, name=name, count=count, steps=steps
             )
         )
 
     def test_stop(self, exception: Exception, duration: int) -> None:
         self.results.put(
-            SDKPythonTestResultTestStop(exception=exception, duration=duration)
+            SDKPerformanceResultTestStop(exception=exception, duration=duration)
         )
 
     def test_skipped(self, filename: str, name: str) -> None:
-        self.results.put(SDKPythonTestResultTestSkipped(filename=filename, name=name))
+        self.results.put(SDKPerformanceResultTestSkipped(filename=filename, name=name))
 
     def step_skipped(self, name: str, expression: str) -> None:
-        self.results.put(SDKPythonTestResultStepSkipped(expression=expression))
+        self.results.put(
+            SDKPerformanceResultStepSkipped(name=name, expression=expression)
+        )
 
     def step_start(self, name: str) -> None:
-        self.results.put(SDKPythonTestResultStepStart(name=name))
+        self.results.put(SDKPerformanceResultStepStart(name=name))
 
     def step_success(self, logger: Any, logs: Any, duration: int, request: Any) -> None:
         self.results.put(
-            SDKPythonTestResultStepSuccess(
+            SDKPerformanceResultStepSuccess(
                 logger=logger,
                 logs=logs,
                 duration=duration,
@@ -178,7 +180,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         self, logger: Any, logs: Any, duration: int, request: Any, received: Any
     ) -> None:
         self.results.put(
-            SDKPythonTestResultStepFailure(
+            SDKPerformanceResultStepFailure(
                 logger=logger,
                 logs=logs,
                 duration=duration,
@@ -188,19 +190,20 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         )
 
     def step_unknown(self) -> None:
-        self.results.put(SDKPythonTestResultStepUnknown())
+        self.results.put(SDKPerformanceResultStepUnknown())
 
-    def step_manual(self) -> None:
-        self.results.put(SDKPythonTestResultStepManual())
+    async def step_manual(self) -> None:
+        self.results.put(SDKPerformanceResultStepManual())
 
     def show_prompt(
         self,
         msg: str,
         placeholder: Optional[str] = None,
         default_value: Optional[str] = None,
+        endpoint_id: Optional[int] = None,
     ) -> None:
         self.results.put(
-            SDKPythonTestResultShowPrompt(
+            SDKPerformanceResultShowPrompt(
                 msg=msg, placeholder=placeholder, default_value=default_value
             )
         )

@@ -130,13 +130,13 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
 
         matter_config = TestEnvironmentConfigMatter(**self.config)
 
-        # If in BLE-Thread mode and a Thread Auto-Config was provided by the user,
-        # start a new OTBR container app with the according Thread topology for all
-        # tests in the Python Tests Suite.
+        # If in BLE-Thread or NFC-Thread mode and a Thread Auto-Config was provided by
+        # the user, start a new OTBR container app with the according Thread topology
+        # for all tests in the Python Tests Suite.
         if (
             matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
-            and isinstance(matter_config.network.thread, ThreadAutoConfig)
-        ):
+            or matter_config.dut_config.pairing_mode == DutPairingModeEnum.NFC_THREAD
+        ) and isinstance(matter_config.network.thread, ThreadAutoConfig):
             await self.border_router.start_device(matter_config.network.thread)
             await self.border_router.form_thread_topology()
 
