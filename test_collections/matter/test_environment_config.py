@@ -108,7 +108,6 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
             mandatory_fields = valid_properties.copy()
             mandatory_fields.remove("chip_timeout")
             mandatory_fields.remove("enhanced_setup_flow")
-
             for field in mandatory_fields:
                 if field not in dut_config:
                     raise TestEnvironmentConfigMatterError(
