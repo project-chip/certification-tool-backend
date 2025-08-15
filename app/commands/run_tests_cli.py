@@ -86,6 +86,7 @@ async def run_tests_cli(title: str, config: str, tests_list: str, pics_config_fo
 
     # Read PICS configuration if provided
     pics = read_pics_config(pics_config_folder)
+    click.echo(f"PICS Used: {json.dumps(pics, indent=2)}")
 
     try:
         # Convert each test separeted by comma to a list
