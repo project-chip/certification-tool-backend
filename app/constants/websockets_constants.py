@@ -42,6 +42,7 @@ class MessageTypeEnum(str, Enum):
     IMAGE_VERIFICATION_REQUEST = "image_verification_request"
     PUSH_AV_STREAM_VERIFICATION_REQUEST = "push_av_stream_verification_request"
 
+
 class WebSocketTypeEnum(str, Enum):
     MAIN = "main"
     VIDEO = "video"

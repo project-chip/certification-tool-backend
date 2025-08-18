@@ -81,5 +81,3 @@ class PushAVStreamVerificationRequest(OptionsSelectPromptRequest):
     @property
     def messageType(self) -> MessageTypeEnum:
         return MessageTypeEnum.PUSH_AV_STREAM_VERIFICATION_REQUEST
-
-

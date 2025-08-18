@@ -38,6 +38,7 @@ class SDKPythonTestResultEnum(str, Enum):
     SHOW_IMAGE_PROMPT = "show_image_prompt"
     SHOW_PUSH_AV_STREAM_PROMPT = "show_push_av_stream_prompt"
 
+
 class SDKPythonTestResultBase(BaseModel):
     type: SDKPythonTestResultEnum
 
@@ -127,6 +128,7 @@ class SDKPythonTestResultShowImagePrompt(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.SHOW_IMAGE_PROMPT
     msg: str
     img_hex_str: str
+
 
 class SDKPythonTestResultShowPushAVStreamPrompt(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.SHOW_PUSH_AV_STREAM_PROMPT
@@ -234,7 +236,4 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         pass
 
     def show_push_av_stream_prompt(self, msg: str) -> None:
-        self.results.put(
-            SDKPythonTestResultShowPushAVStreamPrompt(msg=msg)
-        )
-
+        self.results.put(SDKPythonTestResultShowPushAVStreamPrompt(msg=msg))

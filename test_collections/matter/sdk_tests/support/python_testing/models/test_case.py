@@ -31,9 +31,9 @@ from app.user_prompt_support import PromptResponse, UserResponseStatusEnum
 from app.user_prompt_support.prompt_request import (
     ImageVerificationPromptRequest,
     OptionsSelectPromptRequest,
+    PushAVStreamVerificationRequest,
     StreamVerificationPromptRequest,
     TextInputPromptRequest,
-    PushAVStreamVerificationRequest
 )
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
@@ -202,7 +202,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
-
 
     @classmethod
     def pics(cls) -> set[str]:
