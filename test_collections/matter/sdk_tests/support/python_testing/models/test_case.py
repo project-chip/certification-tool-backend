@@ -33,6 +33,7 @@ from app.user_prompt_support.prompt_request import (
     OptionsSelectPromptRequest,
     StreamVerificationPromptRequest,
     TextInputPromptRequest,
+    PushAVStreamVerificationRequest
 )
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
@@ -186,6 +187,22 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
             self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+
+    async def show_push_av_stream_prompt(self, msg: str) -> None:
+        options = {
+            "PASS": PromptOption.PASS,
+            "FAIL": PromptOption.FAIL,
+        }
+        prompt_request = PushAVStreamVerificationRequest(
+            prompt=msg, options=options, timeout=120
+        )
+
+        user_response = await self.send_prompt_request(prompt_request)
+
+        if self.test_socket and user_response.response_str:
+            response = f"{user_response.response_str}\n".encode()
+            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+
 
     @classmethod
     def pics(cls) -> set[str]:
