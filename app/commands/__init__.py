@@ -18,3 +18,4 @@ from .project import create_project, delete_project, list_projects, update_proje
 from .run_tests import run_tests
 from .run_tests_cli import run_tests_cli
 from .test_run_execution_history import test_run_execution_history
+from .versions import versions

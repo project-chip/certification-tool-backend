@@ -23,6 +23,7 @@ from api_lib_autogen.api.test_collections_api import AsyncTestCollectionsApi, Sy
 from api_lib_autogen.api.test_run_configs_api import AsyncTestRunConfigsApi, SyncTestRunConfigsApi
 from api_lib_autogen.api.test_run_executions_api import AsyncTestRunExecutionsApi, SyncTestRunExecutionsApi
 from api_lib_autogen.api.utils_api import AsyncUtilsApi, SyncUtilsApi
+from api_lib_autogen.api.versions_api import AsyncVersionsApi, SyncVersionsApi
 from api_lib_autogen.exceptions import ResponseHandlingException, UnexpectedResponse
 from httpx import AsyncClient, Request, Response
 from pydantic import ValidationError, parse_obj_as
@@ -41,6 +42,7 @@ class AsyncApis(Generic[ClientT]):
         self.test_run_configs_api = AsyncTestRunConfigsApi(self.client)
         self.test_run_executions_api = AsyncTestRunExecutionsApi(self.client)
         self.utils_api = AsyncUtilsApi(self.client)
+        self.versions_api = AsyncVersionsApi(self.client)
 
 
 class SyncApis(Generic[ClientT]):
@@ -54,6 +56,7 @@ class SyncApis(Generic[ClientT]):
         self.test_run_configs_api = SyncTestRunConfigsApi(self.client)
         self.test_run_executions_api = SyncTestRunExecutionsApi(self.client)
         self.utils_api = SyncUtilsApi(self.client)
+        self.versions_api = SyncVersionsApi(self.client)
 
 
 T = TypeVar("T")

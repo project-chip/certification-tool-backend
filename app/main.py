@@ -26,11 +26,13 @@ from commands import (
     run_tests_cli,
     test_run_execution_history,
     update_project,
+    versions,
 )
+from commands.versions import get_cli_version
 
 
 @click.group()
-@click.version_option(version="0.0.1")
+@click.version_option(version=f"{get_cli_version()}")
 def root() -> None:
     pass
 
@@ -43,6 +45,7 @@ root.add_command(create_project)
 root.add_command(delete_project)
 root.add_command(update_project)
 root.add_command(run_tests_cli)
+root.add_command(versions)
 
 
 if __name__ == "__main__":
