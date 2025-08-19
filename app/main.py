@@ -25,6 +25,7 @@ from commands import (
     run_tests,
     run_tests_cli,
     test_run_execution_history,
+    test_runner_status,
     update_project,
     versions,
 )
@@ -38,10 +39,11 @@ def root() -> None:
 
 
 root.add_command(available_tests)
+root.add_command(create_project)
+root.add_command(list_projects)
 root.add_command(run_tests)
 root.add_command(test_run_execution_history)
-root.add_command(list_projects)
-root.add_command(create_project)
+root.add_command(test_runner_status)
 root.add_command(delete_project)
 root.add_command(update_project)
 root.add_command(run_tests_cli)
