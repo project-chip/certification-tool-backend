@@ -130,9 +130,16 @@ def create_cli_test_run_execution(
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
     config: dict = {},
-    pics: dict = {},
+    pics: dict = {}
 ) -> TestRunExecution:
-    """Creates a new test run execution on CLI request."""
+    """Creates a new test run execution on CLI request.
+    
+    Args:
+        test_run_execution_in: Test run execution data
+        selected_tests: Selected tests to run
+        config: Configuration parameters (optional)
+        pics: PICS configuration (optional)  
+    """
     if not config:
         config = default_environment_config.__dict__
 
@@ -147,22 +154,32 @@ def create_cli_test_run_execution(
             detail="Invalid PICS data provided. Please check the format.",
         )
 
-    # Retrieve the default CLI project
-    cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
-
-    # If the default CLI project does not exist, create it
-    if not cli_project:
-        project = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
-        project.config = config
-        if pics_obj:
-            project.pics = pics_obj
-        project = crud.project.create(db=db, obj_in=project)
+    # Use provided project_id or default CLI project
+    if test_run_execution_in.project_id:
+        # Use the specified project_id
+        project = crud.project.get(db=db, id=test_run_execution_in.project_id)
+        if not project:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail=f"Project with id {test_run_execution_in.project_id} not found.",
+            )
     else:
-        # Update the default CLI project with the cli config argument and pics
-        project_update = schemas.ProjectUpdate(config=config)
-        if pics_obj:
-            project_update.pics = pics_obj
-        project = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
+        # Retrieve the default CLI project
+        cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
+
+        # If the default CLI project does not exist, create it
+        if not cli_project:
+            project = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
+            project.config = config
+            if pics_obj:
+                project.pics = pics_obj
+            project = crud.project.create(db=db, obj_in=project)
+        else:
+            # Update the default CLI project with the cli config argument and pics
+            project_update = schemas.ProjectUpdate(config=config)
+            if pics_obj:
+                project_update.pics = pics_obj
+            project = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
 
     # TODO: Remove test_run_config completely from the project
     test_run_execution_in.project_id = project.id
