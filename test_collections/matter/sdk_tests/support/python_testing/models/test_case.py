@@ -56,6 +56,9 @@ from .utils import (
     should_perform_new_commissioning,
 )
 
+# Timeout for user prompts in seconds.
+USER_PROMPT_TIMEOUT = 120
+
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
 
@@ -162,7 +165,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             "FAIL": PromptOption.FAIL,
         }
         prompt_request = StreamVerificationPromptRequest(
-            prompt=msg, options=options, timeout=120  # 120 Seconds
+            prompt=msg, options=options, timeout=USER_PROMPT_TIMEOUT
         )
 
         user_response = await self.send_prompt_request(prompt_request)
@@ -178,7 +181,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
             "FAIL": PromptOption.FAIL,
         }
         prompt_request = ImageVerificationPromptRequest(
-            prompt=msg, options=options, timeout=120, image_hex_str=img_hex_str
+            prompt=msg,
+            options=options,
+            timeout=USER_PROMPT_TIMEOUT,
+            image_hex_str=img_hex_str,
         )
 
         user_response = await self.send_prompt_request(prompt_request)
@@ -194,10 +200,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
             "FAIL": PromptOption.FAIL,
         }
         prompt_request = PushAVStreamVerificationRequest(
-            prompt=msg, options=options, timeout=120
+            prompt=msg, options=options, timeout=USER_PROMPT_TIMEOUT
         )
 
         user_response = await self.send_prompt_request(prompt_request)
+        self.__evaluate_user_response_for_errors(user_response)
 
         if self.test_socket and user_response.response_str:
             response = f"{user_response.response_str}\n".encode()
