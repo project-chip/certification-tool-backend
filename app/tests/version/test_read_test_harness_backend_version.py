@@ -30,20 +30,16 @@ def test_read_test_harness_backend_version() -> None:
     expected_sha_value = "0fb2dd9"
 
     # Create temporary files instead of modifying real files
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False
-    ) as version_file, tempfile.NamedTemporaryFile(mode="w", delete=False) as sha_file:
-        # Write test data to temporary files
-        version_file.write(expected_version_value)
-        version_file.flush()
-        sha_file.write(expected_sha_value)
-        sha_file.flush()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir_path = Path(temp_dir)
+        version_file_path = temp_dir_path / "version.txt"
+        sha_file_path = temp_dir_path / "sha.txt"
 
-        # Mock the file paths to use our temporary files
-        with mock.patch(
-            "app.version.VERSION_FILEPATH", Path(version_file.name)
-        ), mock.patch(
-            "app.version.SHA_FILEPATH", Path(sha_file.name)
+        version_file_path.write_text(expected_version_value)
+        sha_file_path.write_text(expected_sha_value)
+
+        with mock.patch("app.version.VERSION_FILEPATH", version_file_path), mock.patch(
+            "app.version.SHA_FILEPATH", sha_file_path
         ), mock.patch.object(
             target=utils_db,
             attribute="get_db_revision",
@@ -59,10 +55,6 @@ def test_read_test_harness_backend_version() -> None:
 
         mock_utils.assert_called_once()
 
-        # Clean up temporary files
-        Path(version_file.name).unlink()
-        Path(sha_file.name).unlink()
-
 
 @pytest.mark.serial
 def test_read_test_harness_backend_version_with_empty_files() -> None:
@@ -70,29 +62,23 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
     expected_sha_value = "Unknown"
 
     # Create temporary empty files
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False
-    ) as version_file, tempfile.NamedTemporaryFile(mode="w", delete=False) as sha_file:
-        # Write empty content to temporary files
-        version_file.write("")
-        version_file.flush()
-        sha_file.write("")
-        sha_file.flush()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir_path = Path(temp_dir)
+        version_file_path = temp_dir_path / "version.txt"
+        sha_file_path = temp_dir_path / "sha.txt"
 
-        # Mock the file paths to use our temporary files
-        with mock.patch(
-            "app.version.VERSION_FILEPATH", Path(version_file.name)
-        ), mock.patch("app.version.SHA_FILEPATH", Path(sha_file.name)):
+        version_file_path.write_text("")
+        sha_file_path.write_text("")
+
+        with mock.patch("app.version.VERSION_FILEPATH", version_file_path), mock.patch(
+            "app.version.SHA_FILEPATH", sha_file_path
+        ):
             backend_version = read_test_harness_backend_version()
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
             matter_sdk_sha = read_matter_sdk_sha()
             if matter_sdk_sha is not None:
                 assert backend_version.sdk_sha == matter_sdk_sha
-
-        # Clean up temporary files
-        Path(version_file.name).unlink()
-        Path(sha_file.name).unlink()
 
 
 @pytest.mark.serial
