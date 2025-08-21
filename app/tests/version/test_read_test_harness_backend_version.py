@@ -20,10 +20,7 @@ from unittest import mock
 import pytest
 
 from app import utils_db
-from app.version import (
-    read_matter_sdk_sha,
-    read_test_harness_backend_version,
-)
+from app.version import read_matter_sdk_sha, read_test_harness_backend_version
 
 
 @pytest.mark.serial
@@ -33,24 +30,25 @@ def test_read_test_harness_backend_version() -> None:
     expected_sha_value = "0fb2dd9"
 
     # Create temporary files instead of modifying real files
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as version_file, \
-         tempfile.NamedTemporaryFile(mode='w', delete=False) as sha_file:
-        
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False
+    ) as version_file, tempfile.NamedTemporaryFile(mode="w", delete=False) as sha_file:
         # Write test data to temporary files
         version_file.write(expected_version_value)
         version_file.flush()
         sha_file.write(expected_sha_value)
         sha_file.flush()
-        
+
         # Mock the file paths to use our temporary files
-        with mock.patch('app.version.VERSION_FILEPATH', Path(version_file.name)), \
-             mock.patch('app.version.SHA_FILEPATH', Path(sha_file.name)), \
-             mock.patch.object(
-                 target=utils_db,
-                 attribute="get_db_revision",
-                 return_value=expected_db_revision,
-             ) as mock_utils:
-            
+        with mock.patch(
+            "app.version.VERSION_FILEPATH", Path(version_file.name)
+        ), mock.patch(
+            "app.version.SHA_FILEPATH", Path(sha_file.name)
+        ), mock.patch.object(
+            target=utils_db,
+            attribute="get_db_revision",
+            return_value=expected_db_revision,
+        ) as mock_utils:
             backend_version = read_test_harness_backend_version()
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
@@ -60,7 +58,7 @@ def test_read_test_harness_backend_version() -> None:
                 assert backend_version.sdk_sha == matter_sdk_sha
 
         mock_utils.assert_called_once()
-        
+
         # Clean up temporary files
         Path(version_file.name).unlink()
         Path(sha_file.name).unlink()
@@ -72,26 +70,26 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
     expected_sha_value = "Unknown"
 
     # Create temporary empty files
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as version_file, \
-         tempfile.NamedTemporaryFile(mode='w', delete=False) as sha_file:
-        
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False
+    ) as version_file, tempfile.NamedTemporaryFile(mode="w", delete=False) as sha_file:
         # Write empty content to temporary files
         version_file.write("")
         version_file.flush()
         sha_file.write("")
         sha_file.flush()
-        
+
         # Mock the file paths to use our temporary files
-        with mock.patch('app.version.VERSION_FILEPATH', Path(version_file.name)), \
-             mock.patch('app.version.SHA_FILEPATH', Path(sha_file.name)):
-            
+        with mock.patch(
+            "app.version.VERSION_FILEPATH", Path(version_file.name)
+        ), mock.patch("app.version.SHA_FILEPATH", Path(sha_file.name)):
             backend_version = read_test_harness_backend_version()
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
             matter_sdk_sha = read_matter_sdk_sha()
             if matter_sdk_sha is not None:
                 assert backend_version.sdk_sha == matter_sdk_sha
-        
+
         # Clean up temporary files
         Path(version_file.name).unlink()
         Path(sha_file.name).unlink()
@@ -106,11 +104,11 @@ def test_read_test_harness_backend_version_with_missing_files() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         nonexistent_version_file = Path(temp_dir) / "nonexistent_version"
         nonexistent_sha_file = Path(temp_dir) / "nonexistent_sha"
-        
+
         # Mock the file paths to use our non-existent files
-        with mock.patch('app.version.VERSION_FILEPATH', nonexistent_version_file), \
-             mock.patch('app.version.SHA_FILEPATH', nonexistent_sha_file):
-            
+        with mock.patch(
+            "app.version.VERSION_FILEPATH", nonexistent_version_file
+        ), mock.patch("app.version.SHA_FILEPATH", nonexistent_sha_file):
             backend_version = read_test_harness_backend_version()
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
