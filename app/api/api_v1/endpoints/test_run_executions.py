@@ -155,7 +155,7 @@ def create_cli_test_run_execution(
         )
 
     # Use provided project_id or default CLI project
-    if test_run_execution_in.project_id:
+    if test_run_execution_in.project_id is not None:
         # Use the specified project_id
         project = crud.project.get(db=db, id=test_run_execution_in.project_id)
         if not project:
