@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
+import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -21,22 +21,9 @@ import pytest
 
 from app import utils_db
 from app.version import (
-    SHA_FILEPATH,
-    VERSION_FILEPATH,
     read_matter_sdk_sha,
     read_test_harness_backend_version,
 )
-
-
-def _write_contents_to_file(filepath: Path, contents: str) -> None:
-    f = open(filepath, "w")
-    f.write(contents)
-    f.close()
-
-
-def _remove_file(filepath: Path) -> None:
-    if os.path.exists(path=filepath):
-        os.remove(path=filepath)
 
 
 @pytest.mark.serial
@@ -45,23 +32,38 @@ def test_read_test_harness_backend_version() -> None:
     expected_version_value = "v0.99"
     expected_sha_value = "0fb2dd9"
 
-    _write_contents_to_file(VERSION_FILEPATH, expected_version_value)
-    _write_contents_to_file(SHA_FILEPATH, expected_sha_value)
+    # Create temporary files instead of modifying real files
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as version_file, \
+         tempfile.NamedTemporaryFile(mode='w', delete=False) as sha_file:
+        
+        # Write test data to temporary files
+        version_file.write(expected_version_value)
+        version_file.flush()
+        sha_file.write(expected_sha_value)
+        sha_file.flush()
+        
+        # Mock the file paths to use our temporary files
+        with mock.patch('app.version.VERSION_FILEPATH', Path(version_file.name)), \
+             mock.patch('app.version.SHA_FILEPATH', Path(sha_file.name)), \
+             mock.patch.object(
+                 target=utils_db,
+                 attribute="get_db_revision",
+                 return_value=expected_db_revision,
+             ) as mock_utils:
+            
+            backend_version = read_test_harness_backend_version()
+            assert backend_version.version == expected_version_value
+            assert backend_version.sha == expected_sha_value
+            assert backend_version.db_revision == expected_db_revision
+            matter_sdk_sha = read_matter_sdk_sha()
+            if matter_sdk_sha is not None:
+                assert backend_version.sdk_sha == matter_sdk_sha
 
-    with mock.patch.object(
-        target=utils_db,
-        attribute="get_db_revision",
-        return_value=expected_db_revision,
-    ) as mock_utils:
-        backend_version = read_test_harness_backend_version()
-        assert backend_version.version == expected_version_value
-        assert backend_version.sha == expected_sha_value
-        assert backend_version.db_revision == expected_db_revision
-        matter_sdk_sha = read_matter_sdk_sha()
-        if matter_sdk_sha is not None:
-            assert backend_version.sdk_sha == matter_sdk_sha
-
-    mock_utils.assert_called_once()
+        mock_utils.assert_called_once()
+        
+        # Clean up temporary files
+        Path(version_file.name).unlink()
+        Path(sha_file.name).unlink()
 
 
 @pytest.mark.serial
@@ -69,15 +71,30 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
     expected_version_value = "Unknown"
     expected_sha_value = "Unknown"
 
-    _write_contents_to_file(VERSION_FILEPATH, "")
-    _write_contents_to_file(SHA_FILEPATH, "")
-
-    backend_version = read_test_harness_backend_version()
-    assert backend_version.version == expected_version_value
-    assert backend_version.sha == expected_sha_value
-    matter_sdk_sha = read_matter_sdk_sha()
-    if matter_sdk_sha is not None:
-        assert backend_version.sdk_sha == matter_sdk_sha
+    # Create temporary empty files
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as version_file, \
+         tempfile.NamedTemporaryFile(mode='w', delete=False) as sha_file:
+        
+        # Write empty content to temporary files
+        version_file.write("")
+        version_file.flush()
+        sha_file.write("")
+        sha_file.flush()
+        
+        # Mock the file paths to use our temporary files
+        with mock.patch('app.version.VERSION_FILEPATH', Path(version_file.name)), \
+             mock.patch('app.version.SHA_FILEPATH', Path(sha_file.name)):
+            
+            backend_version = read_test_harness_backend_version()
+            assert backend_version.version == expected_version_value
+            assert backend_version.sha == expected_sha_value
+            matter_sdk_sha = read_matter_sdk_sha()
+            if matter_sdk_sha is not None:
+                assert backend_version.sdk_sha == matter_sdk_sha
+        
+        # Clean up temporary files
+        Path(version_file.name).unlink()
+        Path(sha_file.name).unlink()
 
 
 @pytest.mark.serial
@@ -85,13 +102,18 @@ def test_read_test_harness_backend_version_with_missing_files() -> None:
     expected_version_value = "Unknown"
     expected_sha_value = "Unknown"
 
-    # Remove files if it exists
-    _remove_file(filepath=VERSION_FILEPATH)
-    _remove_file(filepath=SHA_FILEPATH)
-
-    backend_version = read_test_harness_backend_version()
-    assert backend_version.version == expected_version_value
-    assert backend_version.sha == expected_sha_value
-    matter_sdk_sha = read_matter_sdk_sha()
-    if matter_sdk_sha is not None:
-        assert backend_version.sdk_sha == matter_sdk_sha
+    # Create temporary file paths that don't exist
+    with tempfile.TemporaryDirectory() as temp_dir:
+        nonexistent_version_file = Path(temp_dir) / "nonexistent_version"
+        nonexistent_sha_file = Path(temp_dir) / "nonexistent_sha"
+        
+        # Mock the file paths to use our non-existent files
+        with mock.patch('app.version.VERSION_FILEPATH', nonexistent_version_file), \
+             mock.patch('app.version.SHA_FILEPATH', nonexistent_sha_file):
+            
+            backend_version = read_test_harness_backend_version()
+            assert backend_version.version == expected_version_value
+            assert backend_version.sha == expected_sha_value
+            matter_sdk_sha = read_matter_sdk_sha()
+            if matter_sdk_sha is not None:
+                assert backend_version.sdk_sha == matter_sdk_sha
