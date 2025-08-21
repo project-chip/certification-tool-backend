@@ -1449,7 +1449,8 @@ def test_operations_missing_test_run(client: TestClient, db: Session) -> None:
 def test_create_cli_test_run_execution_with_valid_project_id_in_execution(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test creating a CLI test run execution with a valid project_id in test_run_execution_in"""
+    """Test creating a CLI test run execution with a valid project_id in
+    test_run_execution_in"""
     # Set project_id in the test_run_execution_create object
     test_run_execution_create.project_id = 123
 
@@ -1503,7 +1504,8 @@ def test_create_cli_test_run_execution_with_valid_project_id_in_execution(
 def test_create_cli_test_run_execution_with_invalid_project_id_in_execution(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test creating a CLI test run execution with an invalid project_id in test_run_execution_in"""
+    """Test creating a CLI test run execution with an invalid project_id in
+    test_run_execution_in"""
     # Set invalid project_id in the test_run_execution_create object
     test_run_execution_create.project_id = 999
 
@@ -1531,7 +1533,8 @@ def test_create_cli_test_run_execution_with_invalid_project_id_in_execution(
 def test_create_cli_test_run_execution_without_project_id_in_execution_uses_default(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test creating a CLI test run execution without project_id in test_run_execution_in uses default CLI project"""
+    """Test creating a CLI test run execution without project_id in
+    test_run_execution_in uses default CLI project"""
     # Ensure project_id is None in test_run_execution_create
     test_run_execution_create.project_id = None
 
@@ -1593,7 +1596,8 @@ def test_create_cli_test_run_execution_without_project_id_in_execution_uses_defa
 def test_create_cli_test_run_execution_creates_default_project_when_missing_new_flow(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test creating a CLI test run execution creates default CLI project if it doesn't exist (new flow)"""
+    """Test creating a CLI test run execution creates default CLI project if it doesn't
+    exist (new flow)"""
     # Ensure project_id is None in test_run_execution_create
     test_run_execution_create.project_id = None
 
@@ -1611,7 +1615,8 @@ def test_create_cli_test_run_execution_creates_default_project_when_missing_new_
         operator_id=1,
     )
 
-    # Configure mocks: first call returns None (project not found), subsequent calls return the created project
+    # Configure mocks: first call returns None (project not found), subsequent calls
+    # return the created project
     mock_db.query.return_value.filter.return_value.first.side_effect = [
         None,
         mock_new_project,
@@ -1652,7 +1657,8 @@ def test_create_cli_test_run_execution_creates_default_project_when_missing_new_
 def test_create_cli_test_run_execution_project_id_zero_uses_default(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test creating a CLI test run execution with project_id=0 (falsy) uses default CLI project"""
+    """Test creating a CLI test run execution with project_id=0 (falsy) uses default
+    CLI project"""
     # Set project_id to 0 (falsy value) in test_run_execution_create
     test_run_execution_create.project_id = 0
 

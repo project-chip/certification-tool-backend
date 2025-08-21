@@ -157,8 +157,7 @@ def create_cli_test_run_execution(
     # Use provided project_id or default CLI project
     if test_run_execution_in.project_id is not None:
         # Use the specified project_id
-        project = crud.project.get(db=db, id=test_run_execution_in.project_id)
-        if not project:
+        if not crud.project.get(db=db, id=test_run_execution_in.project_id):
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
                 detail=f"Project with id {test_run_execution_in.project_id} not found.",
@@ -182,9 +181,9 @@ def create_cli_test_run_execution(
             project = crud.project.update(
                 db=db, db_obj=cli_project, obj_in=project_update
             )
+        test_run_execution_in.project_id = project.id
 
     # TODO: Remove test_run_config completely from the project
-    test_run_execution_in.project_id = project.id
     test_run_execution_in.certification_mode = False
 
     test_run_execution = crud.test_run_execution.create(
