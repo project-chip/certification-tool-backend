@@ -60,6 +60,7 @@ def test_read_test_harness_backend_version() -> None:
 def test_read_test_harness_backend_version_with_empty_files() -> None:
     expected_version_value = "Unknown"
     expected_sha_value = "Unknown"
+    expected_db_revision = "aabbccdd"  # spell-checker:disable-line
 
     # Create temporary empty files
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -72,10 +73,15 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
 
         with mock.patch("app.version.VERSION_FILEPATH", version_file_path), mock.patch(
             "app.version.SHA_FILEPATH", sha_file_path
+        ), mock.patch.object(
+            target=utils_db,
+            attribute="get_db_revision",
+            return_value=expected_db_revision,
         ):
             backend_version = read_test_harness_backend_version()
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
+            assert backend_version.db_revision == expected_db_revision
             matter_sdk_sha = read_matter_sdk_sha()
             if matter_sdk_sha is not None:
                 assert backend_version.sdk_sha == matter_sdk_sha
@@ -85,6 +91,7 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
 def test_read_test_harness_backend_version_with_missing_files() -> None:
     expected_version_value = "Unknown"
     expected_sha_value = "Unknown"
+    expected_db_revision = "aabbccdd"  # spell-checker:disable-line
 
     # Create temporary file paths that don't exist
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -94,10 +101,17 @@ def test_read_test_harness_backend_version_with_missing_files() -> None:
         # Mock the file paths to use our non-existent files
         with mock.patch(
             "app.version.VERSION_FILEPATH", nonexistent_version_file
-        ), mock.patch("app.version.SHA_FILEPATH", nonexistent_sha_file):
+        ), mock.patch(
+            "app.version.SHA_FILEPATH", nonexistent_sha_file
+        ), mock.patch.object(
+            target=utils_db,
+            attribute="get_db_revision",
+            return_value=expected_db_revision,
+        ):
             backend_version = read_test_harness_backend_version()
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
+            assert backend_version.db_revision == expected_db_revision
             matter_sdk_sha = read_matter_sdk_sha()
             if matter_sdk_sha is not None:
                 assert backend_version.sdk_sha == matter_sdk_sha
