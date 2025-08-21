@@ -130,15 +130,15 @@ def create_cli_test_run_execution(
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
     config: dict = {},
-    pics: dict = {}
+    pics: dict = {},
 ) -> TestRunExecution:
     """Creates a new test run execution on CLI request.
-    
+
     Args:
         test_run_execution_in: Test run execution data
         selected_tests: Selected tests to run
         config: Configuration parameters (optional)
-        pics: PICS configuration (optional)  
+        pics: PICS configuration (optional)
     """
     if not config:
         config = default_environment_config.__dict__
@@ -179,7 +179,9 @@ def create_cli_test_run_execution(
             project_update = schemas.ProjectUpdate(config=config)
             if pics_obj:
                 project_update.pics = pics_obj
-            project = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
+            project = crud.project.update(
+                db=db, db_obj=cli_project, obj_in=project_update
+            )
 
     # TODO: Remove test_run_config completely from the project
     test_run_execution_in.project_id = project.id
