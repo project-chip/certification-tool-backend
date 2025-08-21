@@ -1671,14 +1671,12 @@ def test_create_cli_test_run_execution_creates_default_project_when_missing_new_
     assert data["project_id"] == 1
 
 
-def test_create_cli_test_run_execution_project_id_zero_uses_default(
+def test_create_cli_test_run_execution_with_none_project_id_uses_default(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test creating a CLI test run execution with project_id=0 (falsy) uses default
-    CLI project"""
-    # Set project_id to None (explicitly falsy) in test_run_execution_create
-    # Note: We test None here instead of 0 because they both evaluate to falsy
-    # and should follow the same code path
+    """Test creating a CLI test run execution with project_id=None uses the default
+    CLI project."""
+    # Set project_id to None to test the default project logic
     test_run_execution_create.project_id = None
 
     # Mock default CLI project
