@@ -28,14 +28,13 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import crud
+from app import crud, schemas
 from app.api.api_v1.endpoints.test_run_executions import DEFAULT_CLI_PROJECT_NAME
 from app.core.config import settings
 from app.main import app
 from app.models import TestRunExecution
 from app.models.project import Project
 from app.models.test_enums import TestStateEnum
-from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.test_engine import (
     TEST_ENGINE_ABORTING_TESTING_MESSAGE,
     TEST_ENGINE_BUSY_MESSAGE,
@@ -67,7 +66,7 @@ def mock_db():
 
 @pytest.fixture
 def test_run_execution_create():
-    return TestRunExecutionCreate(
+    return schemas.test_run_execution.TestRunExecutionCreate(
         title="Test Run",
         description="Test Description",
         project_id=1,
@@ -1476,12 +1475,6 @@ def test_create_cli_test_run_execution_with_valid_project_id_in_execution(
         archived_at=None,
     )
 
-    # Configure mocks
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_project
-    mock_db.add.return_value = None
-    mock_db.commit.return_value = None
-    mock_db.refresh.return_value = None
-
     with patch(
         "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
     ), patch(
@@ -1565,12 +1558,6 @@ def test_create_cli_test_run_execution_without_project_id_in_execution_uses_defa
         archived_at=None,
     )
 
-    # Configure mocks
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_cli_project
-    mock_db.add.return_value = None
-    mock_db.commit.return_value = None
-    mock_db.refresh.return_value = None
-
     # Comprehensive mocking for all possible paths in the CLI project flow
     with patch(
         "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
@@ -1586,14 +1573,7 @@ def test_create_cli_test_run_execution_without_project_id_in_execution_uses_defa
     ), patch(
         "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create",
         return_value=mock_test_run,
-    ), patch(
-        "app.api.api_v1.endpoints.test_run_executions.__convert_pics_dict_to_object"
-    ) as mock_pics:
-        # Mock PICS conversion to return a valid PICS object
-        from app import schemas
-
-        mock_pics.return_value = schemas.PICS(clusters={})
-
+    ):
         response = client.post(
             f"{settings.API_V1_STR}/test_run_executions/cli",
             json={
@@ -1610,11 +1590,11 @@ def test_create_cli_test_run_execution_without_project_id_in_execution_uses_defa
     assert data["project_id"] == 1  # Default CLI project ID
 
 
-def test_create_cli_test_run_execution_creates_default_project_when_missing_new_flow(
+def test_create_cli_test_run_execution_creates_default_project_when_missing(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
     """Test creating a CLI test run execution creates default CLI project if it doesn't
-    exist (new flow)"""
+    exist"""
     # Ensure project_id is None in test_run_execution_create
     test_run_execution_create.project_id = None
 
@@ -1631,17 +1611,6 @@ def test_create_cli_test_run_execution_creates_default_project_when_missing_new_
         project_id=1,
         operator_id=1,
     )
-
-    # Configure mocks: first call returns None (project not found), subsequent calls
-    # return the created project
-    mock_db.query.return_value.filter.return_value.first.side_effect = [
-        None,
-        mock_new_project,
-        mock_test_run,
-    ]
-    mock_db.add.return_value = None
-    mock_db.commit.return_value = None
-    mock_db.refresh.return_value = None
 
     with patch(
         "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
@@ -1700,12 +1669,6 @@ def test_create_cli_test_run_execution_with_none_project_id_uses_default(
         archived_at=None,
     )
 
-    # Configure mocks to ensure all code paths are covered
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_cli_project
-    mock_db.add.return_value = None
-    mock_db.commit.return_value = None
-    mock_db.refresh.return_value = None
-
     # Comprehensive mocking for all possible paths in the CLI project flow
     with patch(
         "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
@@ -1721,14 +1684,7 @@ def test_create_cli_test_run_execution_with_none_project_id_uses_default(
     ), patch(
         "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create",
         return_value=mock_test_run,
-    ), patch(
-        "app.api.api_v1.endpoints.test_run_executions.__convert_pics_dict_to_object"
-    ) as mock_pics:
-        # Mock PICS conversion to return a valid PICS object
-        from app import schemas
-
-        mock_pics.return_value = schemas.PICS(clusters={})
-
+    ):
         response = client.post(
             f"{settings.API_V1_STR}/test_run_executions/cli",
             json={

@@ -183,7 +183,6 @@ def create_cli_test_run_execution(
             )
         test_run_execution_in.project_id = project.id
 
-    # TODO: Remove test_run_config completely from the project
     test_run_execution_in.certification_mode = False
 
     test_run_execution = crud.test_run_execution.create(
