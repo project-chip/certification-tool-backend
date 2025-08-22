@@ -22,7 +22,7 @@ set -e
 export MSYS_NO_PATHCONV=1 
 
 PACKAGE_NAME=api_lib_autogen
-OUTPUT_DIR="app"
+OUTPUT_DIR="th_cli"
 PACKAGE_PATH=$OUTPUT_DIR/$PACKAGE_NAME
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"

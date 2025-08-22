@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-
 import click
-from commands import (
+
+from th_cli.commands import (
     available_tests,
     create_project,
     delete_project,
@@ -29,12 +28,13 @@ from commands import (
     update_project,
     versions,
 )
-from commands.versions import get_cli_version
+from th_cli.commands.versions import get_cli_version
 
 
 @click.group()
 @click.version_option(version=f"{get_cli_version()}")
 def root() -> None:
+    """A CLI tool for accessing CSA Matter Test Harness certification tool"""
     pass
 
 

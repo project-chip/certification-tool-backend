@@ -20,3 +20,16 @@ from .run_tests_cli import run_tests_cli
 from .test_run_execution_history import test_run_execution_history
 from .test_runner_status import test_runner_status
 from .versions import versions
+
+__all__ = [
+    "available_tests",
+    "create_project",
+    "delete_project",
+    "list_projects",
+    "run_tests",
+    "run_tests_cli",
+    "test_run_execution_history",
+    "update_project",
+    "test_runner_status",
+    "versions",
+]

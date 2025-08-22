@@ -53,5 +53,5 @@ jobs:
           flake8: true
           flake8_command_prefix: "poetry run "
           mypy: true
-          mypy_args: "app/main.py"
+          mypy_args: "th_cli/main.py"
           mypy_command_prefix: "poetry run "

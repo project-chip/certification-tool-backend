@@ -15,8 +15,9 @@
 #
 import os
 
-from config import config
 from loguru import logger
+
+from th_cli.config import config
 
 # Add custom logger for "chip-tool"
 CHIPTOOL_LEVEL = "CHIPTOOL"

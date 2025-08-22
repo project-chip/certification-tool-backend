@@ -20,8 +20,9 @@ from configparser import ConfigParser
 from typing import Any
 
 import click
-from click.exceptions import Exit
-from config import ATTRIBUTE_MAPPING, VALID_PAIRING_MODES
+
+from th_cli.config import ATTRIBUTE_MAPPING, VALID_PAIRING_MODES
+from th_cli.exceptions import CLIError, handle_file_error
 
 
 def __print_json(object: Any) -> None:
@@ -117,7 +118,7 @@ def read_properties_file(file_path: str) -> dict:
             for key, value in config[section].items():
                 if key == "pairing_mode":
                     if value not in VALID_PAIRING_MODES:
-                        raise ValueError(
+                        raise CLIError(
                             f"Invalid pairing_mode value: {value}. "
                             f"Valid values are: {', '.join(VALID_PAIRING_MODES)}"
                         )
@@ -128,15 +129,12 @@ def read_properties_file(file_path: str) -> dict:
                     add_unmapped_property(properties, key, value, section)
 
         return properties
-    except FileNotFoundError:
-        click.echo(f"Properties file not found: {file_path}", err=True)
-        raise Exit(code=1)
+    except FileNotFoundError as e:
+        handle_file_error(e, "properties file")
     except ValueError as e:
-        click.echo(f"Error in properties file: {str(e)}", err=True)
-        raise Exit(code=1)
+        raise CLIError(f"Invalid properties file: {str(e)}")
     except Exception as e:
-        click.echo(f"Error reading properties file: {str(e)}", err=True)
-        raise Exit(code=1)
+        raise CLIError(f"Failed reading properties file: {e}")
 
 
 def add_mapped_property(properties: dict, key: str, value: str, section_path: tuple) -> None:
@@ -319,9 +317,9 @@ def parse_pics_xml(xml_content: str) -> dict:
         return result
 
     except ET.ParseError as e:
-        raise ValueError(f"Failed to parse XML: {str(e)}")
+        raise CLIError(f"Failed to parse XML: {str(e)}")
     except Exception as e:
-        raise ValueError(f"Error processing PICS XML: {str(e)}")
+        raise CLIError(f"Failed processing PICS XML: {str(e)}")
 
 
 def read_pics_config(pics_config_folder: str) -> dict:
@@ -355,13 +353,10 @@ def read_pics_config(pics_config_folder: str) -> dict:
                             # Merge the cluster PICS into the global structure
                             pics["clusters"].update(cluster_pics["clusters"])
                     except Exception as e:
-                        click.echo(f"Failed to parse PICS XML file {filename}: {e}")
-                        raise Exit(code=1)
+                        raise CLIError(f"Failed to parse PICS XML file {filename}: {e}")
         else:
-            click.echo(f"Error: {pics_config_folder} is not a directory")
-            raise Exit(code=1)
+            raise CLIError(f"{pics_config_folder} is not a directory")
     except (json.JSONDecodeError, FileNotFoundError) as e:
-        click.echo(f"Failed to read PICS configuration: {e}")
-        raise Exit(code=1)
+        raise CLIError(f"Failed to read PICS configuration: {e}")
 
     return pics

@@ -19,7 +19,6 @@
 
 Please refer to the main repository for how to use these tools [here](https://github.com/project-chip/certification-tool)
 
-https://github.com/project-chip/certification-tool
 
 # CSA Certification Tool - CLI
 
@@ -27,75 +26,78 @@ CLI tool for using the CSA Test Harness
 
 ## Requirements
 
-1. Python >= 3.10
-2. Poetry installed (see: https://python-poetry.org/docs/#installation)
+1. Ubuntu Server OS
+2. Python >= 3.10
+3. Poetry installed (see: https://python-poetry.org/docs/#installation)
 
 ## Setup
 
-1. Open terminal in the root folder `poetry install`
-2. Change the url in config.json
+1. Open terminal in the root folder and run the command `./scripts/th_cli_install.sh`
+2. Change the url in config.json as required:
 
 ```json
     "hostname" : "192.168.x.x" //Change this to your Raspberry Pi IP address/localhost for local development
 ```
 
-3. Run `./cli.sh --help` to check available commands
+3. Run `th-cli --help` to check available commands
 
 ## Commands
 
 ```
 Commands:
   available-tests             Get a list of available tests
-  run-tests                   Create a new test run from selected tests
-  test-run-execution-history  Read test run execution history
-  list-projects               Get a list of projects
   create-project              Creates a project
   delete-project              Deletes a project
-  update-project              Updates a project with full test env config file
+  list-projects               Get a list of projects
+  run-tests                   Create a new test run from selected tests
   run-tests-cli               Simplified CLI execution of a test run from selected tests
+  test-run-execution-history  Read test run execution history
+  test-runner-status          Get the current Matter test runner status
+  update-project              Updates a project with full test env config file
+  versions                    Get application versions information
 ```
 
 ### available-tests
 
-Run `./cli.sh available-tests` to get a list of tests available in Test Harness, printed in YAML. For JSON respond, use `./cli.sh available-tests --json` .
+Run `th-cli available-tests` to get a list of tests available in Test Harness, printed in YAML. For JSON respond, use `th-cli available-tests --json` .
 
 ### run-tests
 
-Run `./cli.sh run-tests --file /path/to/file --project-id {id}` to run a test.
+Run `th-cli run-tests --file /path/to/file --project-id {id}` to run a test.
 
 A `test config json` and `project ID` is required. For example, `{"sample_tests":{"SampleTestSuite1":{"TCSS1001": 1}}}`. Keys `sample_tests`, `SampleTestSuite1` and `TCSS1001` is mapped to the results from command `available-tests`. This triggers backend to run Test Case TCSS1001 once. Change the number to run a Test Case multiple times. Project id indicates which project this test run belongs to.
 
 ### test-run-execution-history
 
-Run `./cli.sh test-run-execution-history` to fetch the history of test runs. Use `--skip` and `--limit` for pagination
+Run `th-cli test-run-execution-history` to fetch the history of test runs. Use `--skip` and `--limit` for pagination
 
-Run `./cli.sh test-run-execution-history --id {id}` with a test run execution id to fetch the information for that test run.
+Run `th-cli test-run-execution-history --id {id}` with a test run execution id to fetch the information for that test run.
 
 For JSON respond, add `--json` to the command.
 
 ### create-project
 
-Run `./cli.sh create-project --name {project name} --config {config file}` to create a new project. Project name is required.
+Run `th-cli create-project --name {project name} --config {config file}` to create a new project. Project name is required.
 
 ### list-projects
 
-Run `./cli.sh list-projects` to fetch projects. Use `--skip` and `--limit` for pagination. Use `--archived` to fetch archived projects only.
+Run `th-cli list-projects` to fetch projects. Use `--skip` and `--limit` for pagination. Use `--archived` to fetch archived projects only.
 
-Run `./cli.sh list-projects --id {id}` with a project id to fetch the information for that specific project.
+Run `th-cli list-projects --id {id}` with a project id to fetch the information for that specific project.
 
 For JSON respond, add `--json` to the command.
 
 ### delete-project
 
-Run `./cli.sh delete-project --id {id}` to delete a project.
+Run `th-cli delete-project --id {id}` to delete a project.
 
 ### update-project
 
-Run `./cli.sh update-project --id {id} --config path/to/config` to update a project. Both parameters are required. Config must be a full test environment config file.
+Run `th-cli update-project --id {id} --config path/to/config` to update a project. Both parameters are required. Config must be a full test environment config file.
 
 ### run-tests-cli
 
-Run `./cli.sh run-tests-cli --tests-list <tests> [--title <title>] [-c <config>] [--pics-config-folder <pics-config-folder>]` to execute a test run using the simplified CLI flow.
+Run `th-cli run-tests-cli --tests-list <tests> [--title <title>] [-c <config>] [--pics-config-folder <pics-config-folder>]` to execute a test run using the simplified CLI flow.
 
 This command simplifies test execution by allowing you to run selected test cases directly, with minimal configuration defined in a property file.
 
@@ -110,16 +112,16 @@ Optional:
 
 ## Development
 
-The source files are organized in `./app`.
+The source files are organized in `./th_cli`.
 
 ### Add new command
 
 The project uses [click](https://click.palletsprojects.com/) to declare commands.
 To add a new `command` to the CLI:
 
--   Add a new file in `./app/commands`
--   Import the new command in `./app/commands/__init__.py`
--   Import and add the new command to the `root` group in `./app/main.py`
+-   Add a new file in `./th_cli/commands`
+-   Import the new command in `./th_cli/commands/__init__.py`
+-   Import and add the new command to the `root` group in `./th_cli/main.py`
 
 ### VS Code Environment
 
@@ -141,6 +143,14 @@ To update our client:
 
 The project dependencies are managed with [Poetry](https://python-poetry.org).
 To add a new dependency, run `poetry add <package-name>`.
+
+#### Checking Dependencies
+
+The project dependencies may be scanned to look for known vulnerabilities or conflicts for all the poetry packages
+configured. For that, run the following command after the tool installation to verify the current status of the
+required dependencies:
+
+-  `poetry run python ./scripts/check_deps.py`
 
 ### Linting and formatting
 

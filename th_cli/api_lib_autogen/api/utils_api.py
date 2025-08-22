@@ -17,45 +17,42 @@
 from asyncio import get_event_loop
 from typing import TYPE_CHECKING, Awaitable
 
-from api_lib_autogen import models as m
+from th_cli.api_lib_autogen import models as m
 
 if TYPE_CHECKING:
-    from api_lib_autogen.api_client import ApiClient
+    from th_cli.api_lib_autogen.api_client import ApiClient
 
 
-class _TestCollectionsApi:
+class _UtilsApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_read_test_collections_api_v1_test_collections_get(
-        self,
-    ) -> Awaitable[m.TestCollections]:
+    def _build_for_test_email_api_v1_utils_test_email_post(self, email_to: str) -> Awaitable[m.Msg]:
         """
-        Retrieve available test collections.
+        Test emails.
         """
+        query_params = {"email_to": str(email_to)}
+
         return self.api_client.request(
-            type_=m.TestCollections,
-            method="GET",
-            url="/api/v1/test_collections/",
+            type_=m.Msg,
+            method="POST",
+            url="/api/v1/utils/test-email/",
+            params=query_params,
         )
 
 
-class AsyncTestCollectionsApi(_TestCollectionsApi):
-    async def read_test_collections_api_v1_test_collections_get(
-        self,
-    ) -> m.TestCollections:
+class AsyncUtilsApi(_UtilsApi):
+    async def test_email_api_v1_utils_test_email_post(self, email_to: str) -> m.Msg:
         """
-        Retrieve available test collections.
+        Test emails.
         """
-        return await self._build_for_read_test_collections_api_v1_test_collections_get()
+        return await self._build_for_test_email_api_v1_utils_test_email_post(email_to=email_to)
 
 
-class SyncTestCollectionsApi(_TestCollectionsApi):
-    def read_test_collections_api_v1_test_collections_get(
-        self,
-    ) -> m.TestCollections:
+class SyncUtilsApi(_UtilsApi):
+    def test_email_api_v1_utils_test_email_post(self, email_to: str) -> m.Msg:
         """
-        Retrieve available test collections.
+        Test emails.
         """
-        coroutine = self._build_for_read_test_collections_api_v1_test_collections_get()
+        coroutine = self._build_for_test_email_api_v1_utils_test_email_post(email_to=email_to)
         return get_event_loop().run_until_complete(coroutine)

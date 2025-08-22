@@ -17,17 +17,18 @@ from typing import List, Optional
 
 import click
 import websockets
-from api_lib_autogen.models import (
+from loguru import logger
+from pydantic import ValidationError
+from websockets.client import WebSocketClientProtocol
+from websockets.client import connect as websocket_connect
+
+from th_cli.api_lib_autogen.models import (
     TestCaseExecution,
     TestRunExecutionWithChildren,
     TestStepExecution,
     TestSuiteExecution,
 )
-from config import config
-from loguru import logger
-from pydantic import ValidationError
-from websockets.client import WebSocketClientProtocol
-from websockets.client import connect as websocket_connect
+from th_cli.config import config
 
 from .prompt_manager import handle_prompt
 from .socket_schemas import (

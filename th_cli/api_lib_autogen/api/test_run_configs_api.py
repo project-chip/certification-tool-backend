@@ -17,11 +17,12 @@
 from asyncio import get_event_loop
 from typing import TYPE_CHECKING, Awaitable, List, Optional
 
-from api_lib_autogen import models as m
 from fastapi.encoders import jsonable_encoder
 
+from th_cli.api_lib_autogen import models as m
+
 if TYPE_CHECKING:
-    from api_lib_autogen.api_client import ApiClient
+    from th_cli.api_lib_autogen.api_client import ApiClient
 
 
 class _TestRunConfigsApi:
