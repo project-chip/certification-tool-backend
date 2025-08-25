@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import asyncio
 import datetime
 import json
+from typing import Optional
 
 import click
 
@@ -25,63 +26,104 @@ from th_cli.api_lib_autogen.api_client import AsyncApis
 from th_cli.api_lib_autogen.exceptions import UnexpectedResponse
 from th_cli.async_cmd import async_cmd
 from th_cli.client import get_client
-from th_cli.exceptions import CLIError, handle_api_error, handle_file_error
+from th_cli.exceptions import CLIError, handle_api_error
 from th_cli.test_run.websocket import TestRunSocket
-from th_cli.utils import build_test_selection
-from th_cli.validation import validate_file_path, validate_test_ids
+from th_cli.utils import (
+    build_test_selection,
+    convert_nested_to_dict,
+    merge_properties_to_config,
+    read_pics_config,
+    read_properties_file,
+)
+from th_cli.validation import validate_directory_path, validate_file_path, validate_test_ids
 
 
 @click.command(no_args_is_help=True)
 @click.option(
-    "--project-id",
-    "-i",
+    "--tests-list",
+    "-t",
     required=True,
-    help="Project ID that this test run belongs to",
+    help="List of test cases to execute. For example: TC-ACE-1.1,TC_ACE_1_3",
 )
 @click.option(
     "--title",
     "-n",
-    help="Name of the test run execution",
     default=lambda: str(datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")),
     show_default="timestamp",
+    help="Name of the test run execution",
 )
 @click.option(
-    "--tests-list",
-    "-t",
-    help="List of test cases to execute. Separated by commas (,) and without any blank spaces. "
-    "For example: TC-ACE-1.1,TC_ACE_1_3",
+    "--config",
+    "-c",
+    help="Property config file location. This "
+    "information is optional — if not provided, the default_config.properties "
+    "file will be used.",
 )
 @click.option(
-    "--selected-tests",
-    "-s",
-    help="JSON string with selected tests. "
-    'Format: \'{"collection_name":{"test_suite_id":{"test_case_id": <iterations>}}}\' '
-    'For example: \'{"SDK YAML Tests":{"FirstChipToolSuite":{"TC-ACE-1.1": 1}}}\'',
+    "--pics-config-folder",
+    "-p",
+    help="Directory containing PICS XML configuration files. If not provided, no PICS will be used.",
 )
-@click.option("--file", "-f", help="JSON file location")
+@click.option(
+    "--project-id",
+    type=int,
+    help="Project ID that this test run belongs to. If not provided, uses the default 'CLI Execution Project' in TH.",
+)
 @async_cmd
-async def run_tests(selected_tests: str, title: str, file: str, project_id: int, tests_list: str = None) -> None:
-    """Create a new test run from selected tests"""
+async def run_tests(
+    title: str, tests_list: str, config: str = None, pics_config_folder: str = None, project_id: int = None
+) -> None:
+    """CLI execution of a test run from selected tests"""
 
-    # Configure new log output for test.
-    log_path = test_logging.configure_logger_for_run(title=title)
+    # Validate inputs and convert each test separated by comma to a list
+    validated_test_ids = validate_test_ids(tests_list)
 
+    if config:
+        config_path = validate_file_path(config, must_exist=True)
+        config = str(config_path)
+
+    if pics_config_folder:
+        pics_path = validate_directory_path(pics_config_folder, must_exist=True)
+        pics_config_folder = str(pics_path)
+
+    client = None
     try:
         client = get_client()
         async_apis = AsyncApis(client)
+        projects_api = async_apis.projects_api
         test_collections_api = async_apis.test_collections_api
 
-        # Check if tests_list is provided
-        if tests_list:
-            validated_test_ids = validate_test_ids(tests_list)  # Validate and convert test list
-            test_collections = await test_collections_api.read_test_collections_api_v1_test_collections_get()
-            selected_tests_dict = build_test_selection(test_collections, validated_test_ids)
-        else:
-            selected_tests_dict = __parse_selected_tests(selected_tests, file)
+        # Configure new log output for test.
+        log_path = test_logging.configure_logger_for_run(title=title)
+
+        # Get default config and convert to dict
+        default_config = await projects_api.default_config_api_v1_projects_default_config_get()
+        default_config_dict = convert_nested_to_dict(default_config)
+
+        # If config file is provided, read and parse it
+        if not config:
+            config = "default_config.properties"
+
+        config_data = read_properties_file(config)
+        click.echo(f"Read config from file: {config_data}")
+        cli_config_dict = merge_properties_to_config(config_data, default_config_dict)
+        click.echo(f"CLI Config for test run execution: {cli_config_dict}")
+
+        # Read PICS configuration if provided
+        pics = read_pics_config(pics_config_folder)
+        click.echo(f"PICS Used: {json.dumps(pics, indent=2)}")
+
+        test_collections = await test_collections_api.read_test_collections_api_v1_test_collections_get()
+        selected_tests_dict = build_test_selection(test_collections, validated_test_ids)
 
         click.echo(f"Selected tests: {json.dumps(selected_tests_dict, indent=2)}")
-        new_test_run = await __create_new_test_run(
-            async_apis=async_apis, selected_tests=selected_tests_dict, title=title, project_id=project_id
+        new_test_run = await __create_new_test_run_cli(
+            async_apis,
+            selected_tests=selected_tests_dict,
+            title=title,
+            config=cli_config_dict,
+            pics=pics,
+            project_id=project_id,
         )
         socket = TestRunSocket(new_test_run)
         socket_task = asyncio.create_task(socket.connect_websocket())
@@ -89,23 +131,35 @@ async def run_tests(selected_tests: str, title: str, file: str, project_id: int,
         socket.run = new_test_run
         await socket_task
         click.echo(f"Log output in: '{log_path}'")
-    except UnexpectedResponse as e:
-        handle_api_error(e, "run test execution")
+    except CLIError:
+        raise  # Re-raise CLI errors
+    except Exception as e:
+        raise CLIError(f"Unexpected error during test execution: {e}")
     finally:
-        await client.aclose()
+        if client:
+            await client.aclose()
 
 
-async def __create_new_test_run(async_apis: AsyncApis, selected_tests: dict, title: str, project_id: int) -> None:
+async def __create_new_test_run_cli(
+    async_apis: AsyncApis,
+    selected_tests: dict,
+    title: str,
+    config: Optional[dict] = None,
+    pics: Optional[dict] = None,
+    project_id: Optional[int] = None,
+) -> m.TestRunExecutionWithChildren:
     click.echo(f"Creating new test run with title: {title}")
 
     test_run_in = m.TestRunExecutionCreate(title=title, project_id=project_id)
-    json_body = m.BodyCreateTestRunExecutionApiV1TestRunExecutionsPost(
-        test_run_execution_in=test_run_in, selected_tests=selected_tests
+    json_body = m.BodyCreateTestRunExecutionCliApiV1TestRunExecutionsCliPost(
+        test_run_execution_in=test_run_in, selected_tests=selected_tests, config=config, pics=pics
     )
 
     try:
         test_run_executions_api = async_apis.test_run_executions_api
-        return await test_run_executions_api.create_test_run_execution_api_v1_test_run_executions_post(json_body)
+        return await test_run_executions_api.create_test_run_execution_cli_api_v1_test_run_executions_cli_post(
+            json_body
+        )
     except UnexpectedResponse as e:
         handle_api_error(e, "create test run execution")
 
@@ -114,25 +168,10 @@ async def __start_test_run(
     async_apis: AsyncApis, test_run: m.TestRunExecutionWithChildren
 ) -> m.TestRunExecutionWithChildren:
     click.echo(f"Starting Test run: Title: {test_run.title}, id: {test_run.id}")
-
     try:
         test_run_executions_api = async_apis.test_run_executions_api
         return await test_run_executions_api.start_test_run_execution_api_v1_test_run_executions_id_start_post(
             id=test_run.id
         )
     except UnexpectedResponse as e:
-        handle_api_error(e, "start test run execution")
-
-
-def __parse_selected_tests(json_str: str, filename: str) -> dict:
-    try:
-        if filename:
-            validated_filename = validate_file_path(filename, must_exist=True)
-            filename = str(validated_filename)
-            json_file = open(filename, "r")
-            json_str = json_file.read()
-        return json.loads(json_str)
-    except json.JSONDecodeError as e:
-        raise CLIError(f"Failed to parse JSON parameter: {e.msg}")
-    except FileNotFoundError as e:
-        handle_file_error(e, "json file")
+        handle_api_error(e, "start test run")
