@@ -55,6 +55,7 @@ from th_cli.validation import validate_directory_path, validate_file_path, valid
 @click.option(
     "--config",
     "-c",
+    type=click.Path(file_okay=True, dir_okay=False),
     help="Property config file location. This "
     "information is optional — if not provided, the default_config.properties "
     "file will be used.",
@@ -62,6 +63,7 @@ from th_cli.validation import validate_directory_path, validate_file_path, valid
 @click.option(
     "--pics-config-folder",
     "-p",
+    type=click.Path(file_okay=False, dir_okay=True),
     help="Directory containing PICS XML configuration files. If not provided, no PICS will be used.",
 )
 @click.option(

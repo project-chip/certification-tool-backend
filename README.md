@@ -33,7 +33,7 @@ CLI tool for using the CSA Test Harness
 ## Setup
 
 1. Open terminal in the root folder and run the command `./scripts/th_cli_install.sh`
-2. Change the url in config.json as required:
+2. Change the url in config.json if required:
 
 ```json
     "hostname" : "192.168.x.x" //Change this to your Raspberry Pi IP address/localhost for local development
@@ -50,7 +50,6 @@ Commands:
   delete-project              Deletes a project
   list-projects               Get a list of projects
   run-tests                   Create a new test run from selected tests
-  run-tests-cli               Simplified CLI execution of a test run from selected tests
   test-run-execution-history  Read test run execution history
   test-runner-status          Get the current Matter test runner status
   update-project              Updates a project with full test env config file
@@ -63,9 +62,16 @@ Run `th-cli available-tests` to get a list of tests available in Test Harness, p
 
 ### run-tests
 
-Run `th-cli run-tests --file /path/to/file --project-id {id}` to run a test.
+Run `th-cli run-tests --tests-list <tests> [--title, -n <title>] [--config, -c <config>] [--pics-config-folder, -p <pics-config-folder>] [--project-id <ID>]` to start a new test execution.
 
-A `test config json` and `project ID` is required. For example, `{"sample_tests":{"SampleTestSuite1":{"TCSS1001": 1}}}`. Keys `sample_tests`, `SampleTestSuite1` and `TCSS1001` is mapped to the results from command `available-tests`. This triggers backend to run Test Case TCSS1001 once. Change the number to run a Test Case multiple times. Project id indicates which project this test run belongs to.
+Required:
+- `--tests-list`: Comma-separated list of test case identifiers (e.g. --tests-list TC-ACE-1.1,TC_ACE_1_3)
+
+Optional:
+- `--title`: Custom title for the test run. If not provided, the current timestamp will be used as the default.
+- `--config`: Path to the property config file. If not specified, default_config.properties will be used.
+- `--pics-config-folder`: Path to the folder that contains PICS files. If not specified, no PICS file will be used.
+- `--project-id`: Project ID that this test run belongs to. If not provided, uses the default 'CLI Execution Project' in TH.
 
 ### test-run-execution-history
 
@@ -93,26 +99,11 @@ Run `th-cli delete-project --id {id}` to delete a project.
 
 ### update-project
 
-Run `th-cli update-project --id {id} --config path/to/config` to update a project. Both parameters are required. Config must be a full test environment config file.
-
-### run-tests-cli
-
-Run `th-cli run-tests-cli --tests-list <tests> [--title <title>] [-c <config>] [--pics-config-folder <pics-config-folder>]` to execute a test run using the simplified CLI flow.
-
-This command simplifies test execution by allowing you to run selected test cases directly, with minimal configuration defined in a property file.
-
-Required:
---tests-list: Comma-separated list of test case identifiers.
-Example: --tests-list TC-ACE-1.1,TC_ACE_1_3
-
-Optional:
---title: Custom title for the test run. If not provided, the current timestamp will be used as the default.
---config: Path to the property config file. If not specified, default_config.properties will be used.
---pics-config-folder: Path to the folder that contains PICS files. If not specified, no PICS file will be used.
+Run `th-cli update-project --id {id} --config {config file}` to update a project. Both parameters are required. Config must be a full test environment config file.
 
 ## Development
 
-The source files are organized in `./th_cli`.
+The source files are organized in `./th_cli/`.
 
 ### Add new command
 

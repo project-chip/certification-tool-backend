@@ -54,6 +54,7 @@ table_format = "{:<5} {:30} {:10} {:40}"
 @click.option(
     "--json",
     is_flag=True,
+    default=False,
     help="Print JSON response for more details",
 )
 def test_run_execution_history(

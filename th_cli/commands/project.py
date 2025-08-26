@@ -46,9 +46,9 @@ def _abort_if_false(ctx, value):
     "--config",
     "-c",
     required=False,
-    type=str,
+    type=click.Path(file_okay=True, dir_okay=False),
     default=None,
-    help="Config file for the project",
+    help="Config JSON file for the project",
 )
 def create_project(name: str, config: Optional[str]) -> None:
     """Create a new project"""
@@ -159,7 +159,7 @@ def delete_project(id: int) -> None:
 @click.option(
     "--json",
     is_flag=True,
-    flag_value=True,
+    default=False,
     help="Print JSON response for more details",
 )
 def list_projects(
@@ -247,8 +247,8 @@ def list_projects(
     "--config",
     "-c",
     required=True,
-    type=str,
-    help="New config file path",
+    type=click.Path(file_okay=True, dir_okay=False),
+    help="New config JSON file path",
 )
 def update_project(id: int, config: str):
     """Updates project with full test environment config file"""

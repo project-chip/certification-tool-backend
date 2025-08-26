@@ -26,6 +26,7 @@ from th_cli.utils import __print_json
 @click.option(
     "--json",
     is_flag=True,
+    default=False,
     help="Print JSON response for more details",
 )
 def test_runner_status(json: Optional[bool]) -> None:
@@ -35,7 +36,7 @@ def test_runner_status(json: Optional[bool]) -> None:
         client = get_client()
         sync_apis = SyncApis(client)
         test_run_execution_api = sync_apis.test_run_executions_api
-        
+
         test_runner_status = test_run_execution_api.get_test_runner_status_api_v1_test_run_executions_status_get()
         if json:
             __print_json(test_runner_status)

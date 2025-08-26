@@ -29,7 +29,7 @@ from th_cli.utils import __json_string, __print_json
 @click.option(
     "--json",
     is_flag=True,
-    flag_value=True,
+    default=False,
     help="Print JSON response for more details",
 )
 def available_tests(json: bool = False) -> None:
@@ -50,7 +50,7 @@ def available_tests(json: bool = False) -> None:
     except CLIError:
         raise  # Re-raise CLI Errors as-is
     except UnexpectedResponse as e:
-        handle_api_error(e, f"get available tests")
+        handle_api_error(e, "get available tests")
     except Exception as e:
         raise CLIError(
             f"Could not fetch the available tests: {e}. Please check if the API server is running and accessible."

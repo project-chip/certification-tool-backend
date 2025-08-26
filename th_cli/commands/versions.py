@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
 import subprocess
 
 import click
@@ -32,13 +31,13 @@ def get_cli_version() -> str:
         # Try package root first
         package_root = get_package_root()
         pyproject_path = package_root / "pyproject.toml"
-        
+
         if not pyproject_path.exists():
             # If not found in package root, try git root
             git_root = find_git_root()
             if git_root:
                 pyproject_path = git_root / "pyproject.toml"
-        
+
         if pyproject_path.exists():
             with open(pyproject_path, "rb") as f:
                 pyproject_data = tomli.load(f)
@@ -49,6 +48,7 @@ def get_cli_version() -> str:
     except (FileNotFoundError, IOError):
         return "unknown"
 
+
 def get_cli_sha() -> str:
     """Get current CLI SHA from git"""
     try:
@@ -56,7 +56,7 @@ def get_cli_sha() -> str:
         git_root = find_git_root()
         if not git_root:
             return "unknown"
-        
+
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             capture_output=True,

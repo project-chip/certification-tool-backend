@@ -22,7 +22,6 @@ from th_cli.commands import (
     delete_project,
     list_projects,
     run_tests,
-    run_tests_cli,
     test_run_execution_history,
     test_runner_status,
     update_project,
@@ -46,7 +45,6 @@ root.add_command(test_run_execution_history)
 root.add_command(test_runner_status)
 root.add_command(delete_project)
 root.add_command(update_project)
-root.add_command(run_tests_cli)
 root.add_command(versions)
 
 
