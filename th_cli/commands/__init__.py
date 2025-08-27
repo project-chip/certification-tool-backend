@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from .abort_testing import abort_testing
 from .available_tests import available_tests
 from .project import create_project, delete_project, list_projects, update_project
 from .run_tests import run_tests
@@ -21,6 +22,7 @@ from .test_runner_status import test_runner_status
 from .versions import versions
 
 __all__ = [
+    "abort_testing",
     "available_tests",
     "create_project",
     "delete_project",
