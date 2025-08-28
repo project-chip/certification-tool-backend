@@ -146,9 +146,9 @@ class ContainerManager(object, metaclass=Singleton):
                 for d in stream:
                     f.write(d)
         except docker.errors.APIError as e:
-            print(f"Error while accessing the Docker API: {e}")
+            logger.error(f"Error while accessing the Docker API: {e}")
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
 
     def copy_file_to_container(
         self,
@@ -177,9 +177,9 @@ class ContainerManager(object, metaclass=Singleton):
             container.put_archive(f"{destination_container_path.parent}", tar_stream)
 
         except docker.errors.APIError as e:
-            print(f"Error while accessing the Docker API: {e}")
+            logger.error(f"Error while accessing the Docker API: {e}")
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
 
 
 container_manager: ContainerManager = ContainerManager()

@@ -129,7 +129,7 @@ def create_cli_test_run_execution(
     db: Session = Depends(get_db),
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
-    config: dict = {},
+    config: Optional[dict] = None,
     pics: dict = {},
 ) -> TestRunExecution:
     """Creates a new test run execution on CLI request.
@@ -140,7 +140,7 @@ def create_cli_test_run_execution(
         config: Configuration parameters (optional)
         pics: PICS configuration (optional)
     """
-    if not config:
+    if config is None:
         config = default_environment_config.__dict__
 
     logger.info(f"CLI Config Arguments: {config}")
@@ -208,12 +208,9 @@ def rename_test_run_execution(
     test_run_execution_in = TestRunExecutionUpdate.from_orm(test_run_execution)
     test_run_execution_in.title = new_execution_name.strip()
 
-    try:
-        return crud.test_run_execution.update(
-            db=db, db_obj=test_run_execution, obj_in=test_run_execution_in
-        )
-    except HTTPException:
-        raise
+    return crud.test_run_execution.update(
+        db=db, db_obj=test_run_execution, obj_in=test_run_execution_in
+    )
 
 
 @router.post("/abort-testing", response_model=Dict[str, str])
