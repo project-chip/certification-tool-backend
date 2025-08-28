@@ -19,7 +19,7 @@
 import asyncio
 from asyncio import sleep
 from http import HTTPStatus
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 from faker import Faker
@@ -1481,6 +1481,9 @@ def test_create_cli_test_run_execution_with_valid_project_id_in_execution(
         "app.api.api_v1.endpoints.test_run_executions.crud.project.get",
         return_value=mock_project,
     ), patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.update",
+        return_value=mock_project,
+    ), patch(
         "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create",
         return_value=mock_test_run,
     ):
@@ -1699,3 +1702,252 @@ def test_create_cli_test_run_execution_with_none_project_id_uses_default(
     data = response.json()
     assert data["title"] == test_run_execution_create.title
     assert data["project_id"] == 1  # Default CLI project ID
+
+def test_create_cli_test_run_execution_updates_existing_project_with_config(
+    mock_db, test_run_execution_create, test_selection, default_config
+):
+    """Test that when project_id is provided, the existing project is updated with the config."""
+    # Set project_id in the test_run_execution_create object
+    test_run_execution_create.project_id = 123
+    
+    # Mock existing project with specific ID
+    mock_project = Project(
+        id=123,
+        name="Existing Test Project",
+        config={"old_key": "old_value"},
+    )
+    
+    # Updated project after config update
+    mock_updated_project = Project(
+        id=123,
+        name="Existing Test Project", 
+        config=default_config,
+    )
+    
+    # Mock test run execution
+    mock_test_run = TestRunExecution(
+        id=1,
+        title=test_run_execution_create.title,
+        description=test_run_execution_create.description,
+        project_id=123,
+        operator_id=1,
+        certification_mode=False,
+        state=TestStateEnum.PENDING,
+        started_at=None,
+        completed_at=None,
+        imported_at=None,
+        archived_at=None,
+    )
+    
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ), patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.get",
+        return_value=mock_project,
+    ) as mock_get, patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.update",
+        return_value=mock_updated_project,
+    ) as mock_update, patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create",
+        return_value=mock_test_run,
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+                "config": default_config,
+                "pics": {},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == test_run_execution_create.title
+    assert data["project_id"] == 123
+    
+    # Verify that project.get was called with the correct ID
+    mock_get.assert_called_once_with(db=ANY, id=123)
+    
+    # Verify that project.update was called to update the config
+    mock_update.assert_called_once()
+    args, kwargs = mock_update.call_args
+    assert kwargs["db"] is not None
+    assert kwargs["db_obj"] == mock_project
+    # Verify the ProjectUpdate object has the config
+    project_update = kwargs["obj_in"]
+    assert project_update.config == default_config
+
+
+def test_create_cli_test_run_execution_updates_existing_project_with_config_and_pics(
+    mock_db, test_run_execution_create, test_selection, default_config
+):
+    """Test that when project_id is provided, the existing project is updated with both config and PICS."""
+    # Set project_id in the test_run_execution_create object
+    test_run_execution_create.project_id = 456
+    
+    # Sample PICS data
+    pics_data = {
+        "clusters": {
+            "OnOff": {
+                "name": "OnOff",
+                "items": {
+                    "OO.S.A0000": {"number": "OO.S.A0000", "enabled": True},
+                    "OO.S.C00.Rsp": {"number": "OO.S.C00.Rsp", "enabled": False}
+                }
+            }
+        }
+    }
+    
+    # Mock existing project with specific ID
+    mock_project = Project(
+        id=456,
+        name="Existing Test Project",
+        config={"old_key": "old_value"},
+        pics=None,
+    )
+    
+    # Updated project after config and PICS update
+    mock_updated_project = Project(
+        id=456,
+        name="Existing Test Project",
+        config=default_config,
+        pics=pics_data,
+    )
+    
+    # Mock test run execution
+    mock_test_run = TestRunExecution(
+        id=1,
+        title=test_run_execution_create.title,
+        description=test_run_execution_create.description,
+        project_id=456,
+        operator_id=1,
+        certification_mode=False,
+        state=TestStateEnum.PENDING,
+        started_at=None,
+        completed_at=None,
+        imported_at=None,
+        archived_at=None,
+    )
+    
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ), patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.get",
+        return_value=mock_project,
+    ) as mock_get, patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.update",
+        return_value=mock_updated_project,
+    ) as mock_update, patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create",
+        return_value=mock_test_run,
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+                "config": default_config,
+                "pics": pics_data,
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == test_run_execution_create.title
+    assert data["project_id"] == 456
+    
+    # Verify that project.get was called with the correct ID
+    mock_get.assert_called_once_with(db=ANY, id=456)
+    
+    # Verify that project.update was called to update both config and PICS
+    mock_update.assert_called_once()
+    args, kwargs = mock_update.call_args
+    assert kwargs["db"] is not None
+    assert kwargs["db_obj"] == mock_project
+    # Verify the ProjectUpdate object has both config and PICS
+    project_update = kwargs["obj_in"]
+    assert project_update.config == default_config
+    assert project_update.pics is not None
+    assert project_update.pics.clusters["OnOff"].name == "OnOff"
+
+
+def test_create_cli_test_run_execution_updates_existing_project_config_only_no_pics(
+    mock_db, test_run_execution_create, test_selection, default_config
+):
+    """Test that when project_id is provided without PICS, only config is updated."""
+    # Set project_id in the test_run_execution_create object
+    test_run_execution_create.project_id = 789
+    
+    # Mock existing project with specific ID and existing PICS
+    mock_project = Project(
+        id=789,
+        name="Existing Test Project",
+        config={"old_key": "old_value"},
+        pics={"clusters": {"existing": "data"}},
+    )
+    
+    # Updated project after config update only
+    mock_updated_project = Project(
+        id=789,
+        name="Existing Test Project",
+        config=default_config,
+        pics={"clusters": {"existing": "data"}},  # PICS should remain unchanged
+    )
+    
+    # Mock test run execution
+    mock_test_run = TestRunExecution(
+        id=1,
+        title=test_run_execution_create.title,
+        description=test_run_execution_create.description,
+        project_id=789,
+        operator_id=1,
+        certification_mode=False,
+        state=TestStateEnum.PENDING,
+        started_at=None,
+        completed_at=None,
+        imported_at=None,
+        archived_at=None,
+    )
+    
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ), patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.get",
+        return_value=mock_project,
+    ) as mock_get, patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.update",
+        return_value=mock_updated_project,
+    ) as mock_update, patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create",
+        return_value=mock_test_run,
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+                "config": default_config,
+                "pics": {},  # Empty PICS
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == test_run_execution_create.title
+    assert data["project_id"] == 789
+    
+    # Verify that project.get was called with the correct ID
+    mock_get.assert_called_once_with(db=ANY, id=789)
+    
+    # Verify that project.update was called to update only config
+    mock_update.assert_called_once()
+    args, kwargs = mock_update.call_args
+    assert kwargs["db"] is not None
+    assert kwargs["db_obj"] == mock_project
+    # Verify the ProjectUpdate object has config but no PICS
+    project_update = kwargs["obj_in"]
+    assert project_update.config == default_config
+    # PICS should be set to empty PICS object when empty dict is provided
+    assert project_update.pics is not None
+    assert project_update.pics.clusters == {}
