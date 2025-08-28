@@ -147,8 +147,10 @@ class ContainerManager(object, metaclass=Singleton):
                     f.write(d)
         except docker.errors.APIError as e:
             logger.error(f"Error while accessing the Docker API: {e}")
+            raise
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
+            raise
 
     def copy_file_to_container(
         self,
@@ -178,8 +180,10 @@ class ContainerManager(object, metaclass=Singleton):
 
         except docker.errors.APIError as e:
             logger.error(f"Error while accessing the Docker API: {e}")
+            raise
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
+            raise
 
 
 container_manager: ContainerManager = ContainerManager()
