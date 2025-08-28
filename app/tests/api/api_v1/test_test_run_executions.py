@@ -1707,7 +1707,7 @@ def test_create_cli_test_run_execution_with_none_project_id_uses_default(
 def test_create_cli_test_run_execution_updates_existing_project_with_config(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test that when project_id is provided, the existing project is updated with the 
+    """Test that when project_id is provided, the existing project is updated with the
     config."""
     # Set project_id in the test_run_execution_create object
     test_run_execution_create.project_id = 123
@@ -1784,7 +1784,7 @@ def test_create_cli_test_run_execution_updates_existing_project_with_config(
 def test_create_cli_test_run_execution_updates_existing_project_with_config_and_pics(
     mock_db, test_run_execution_create, test_selection, default_config
 ):
-    """Test that when project_id is provided, the existing project is updated with both 
+    """Test that when project_id is provided, the existing project is updated with both
     config and PICS."""
     # Set project_id in the test_run_execution_create object
     test_run_execution_create.project_id = 456
