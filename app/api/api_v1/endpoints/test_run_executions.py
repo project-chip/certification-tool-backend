@@ -156,23 +156,30 @@ def create_cli_test_run_execution(
 
     # Use provided project_id or default CLI project
     if test_run_execution_in.project_id is not None:
+        project = crud.project.get(db=db, id=test_run_execution_in.project_id)
         # Use the specified project_id
-        if not crud.project.get(db=db, id=test_run_execution_in.project_id):
+        if not project:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
                 detail=f"Project with id {test_run_execution_in.project_id} not found.",
             )
+        project_update = schemas.ProjectUpdate(config=config)
+
+        if pics_obj:
+            project_update.pics = pics_obj
+
+        project = crud.project.update(db=db, db_obj=project, obj_in=project_update)
     else:
         # Retrieve the default CLI project
         cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
 
         # If the default CLI project does not exist, create it
         if not cli_project:
-            project = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
-            project.config = config
+            project_create = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
+            project_create.config = config
             if pics_obj:
-                project.pics = pics_obj
-            project = crud.project.create(db=db, obj_in=project)
+                project_create.pics = pics_obj
+            project = crud.project.create(db=db, obj_in=project_create)
         else:
             # Update the default CLI project with the cli config argument and pics
             project_update = schemas.ProjectUpdate(config=config)
