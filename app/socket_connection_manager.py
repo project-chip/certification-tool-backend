@@ -268,10 +268,10 @@ class SocketConnectionManager(object, metaclass=Singleton):
             )
 
     async def _webrtc_signal_error(
-        self, dest_type: WebSocketTypeEnum, error_msg: str, data: str
+        self, dest_type: WebSocketTypeEnum, error_msg: str, msg: str
     ) -> None:
         try:
-            data = json.loads(data)
+            data = json.loads(msg)
             data["error"] = error_msg
         except JSONDecodeError:
             return
