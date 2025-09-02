@@ -21,12 +21,13 @@ from typing import Any
 
 import click
 
+from th_cli.colorize import colorize_dump
 from th_cli.config import ATTRIBUTE_MAPPING, VALID_PAIRING_MODES
 from th_cli.exceptions import CLIError, handle_file_error
 
 
 def __print_json(object: Any) -> None:
-    click.echo(__json_string(object))
+    click.echo(colorize_dump(__json_string(object)))
 
 
 def __json_string(object: Any) -> str:

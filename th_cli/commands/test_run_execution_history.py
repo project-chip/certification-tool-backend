@@ -20,20 +20,25 @@ import click
 from th_cli.api_lib_autogen.api_client import SyncApis
 from th_cli.api_lib_autogen.exceptions import UnexpectedResponse
 from th_cli.client import get_client
+from th_cli.colorize import colorize_cmd_help, colorize_header, colorize_help, colorize_state, italic
 from th_cli.exceptions import CLIError, handle_api_error
 from th_cli.utils import __print_json
 
-table_format = "{:<5} {:30} {:10} {:40}"
+table_format_header = "{:<5} {:47} {:12} {:8}"
+table_format = "{:<5} {:55} {:25} {}"
 
 
-@click.command()
+@click.command(
+    short_help=colorize_help("List the test run execution history"),
+    help=colorize_cmd_help("test_run_execution_history", "Read the test run execution history from all projects"),
+)
 @click.option(
     "--id",
     "-i",
     default=None,
     required=False,
     type=int,
-    help="Fetch specific Test Run via ID",
+    help=colorize_help("Fetch specific Test Run via ID"),
 )
 @click.option(
     "--skip",
@@ -41,7 +46,7 @@ table_format = "{:<5} {:30} {:10} {:40}"
     default=None,
     required=False,
     type=int,
-    help="The first N Test Runs to skip, ordered by ID",
+    help=colorize_help("The first N Test Runs to skip, ordered by ID"),
 )
 @click.option(
     "--limit",
@@ -49,13 +54,13 @@ table_format = "{:<5} {:30} {:10} {:40}"
     default=None,
     required=False,
     type=int,
-    help="Maximun number of test runs to fetch",
+    help=colorize_help("Maximun number of test runs to fetch"),
 )
 @click.option(
     "--json",
     is_flag=True,
     default=False,
-    help="Print JSON response for more details",
+    help=colorize_help("Print JSON response for more details"),
 )
 def test_run_execution_history(
     id: Optional[int], skip: Optional[int], limit: Optional[int], json: Optional[bool]
@@ -116,9 +121,14 @@ def __print_table_test_executions(test_execution: list) -> None:
 def __print_table_test_execution(item: dict, print_header=True) -> None:
     print_header and __print_table_header()
     click.echo(
-        table_format.format(item.get("id"), item.get("title"), (item.get("state")).name, item.get("error", "No Error"))
+        table_format.format(
+            item.get("id"),
+            italic(item.get("title")),
+            colorize_state((item.get("state")).value),
+            item.get("error", "No Error"),
+        )
     )
 
 
 def __print_table_header() -> None:
-    click.echo(table_format.format("ID", "Title", "State", "Error"))
+    click.echo(colorize_header(table_format_header.format("ID", "Title", "State", "Error")))

@@ -21,8 +21,9 @@ import tomli
 from th_cli.api_lib_autogen.api_client import SyncApis
 from th_cli.api_lib_autogen.exceptions import UnexpectedResponse
 from th_cli.client import get_client
+from th_cli.colorize import colorize_cmd_help, colorize_header, colorize_help, colorize_key_value
 from th_cli.config import find_git_root, get_package_root
-from th_cli.exceptions import handle_api_error
+from th_cli.exceptions import CLIError, handle_api_error
 
 
 def get_cli_version() -> str:
@@ -69,7 +70,10 @@ def get_cli_sha() -> str:
         return "unknown"
 
 
-@click.command()
+@click.command(
+    short_help=colorize_help("Get the app versions"),
+    help=colorize_cmd_help("versions", "Get the TH application versions information"),
+)
 def versions() -> None:
     """Get application versions information"""
     client = None
@@ -80,6 +84,8 @@ def versions() -> None:
 
         versions_info = versions_api.get_versions_api_v1_versions_get()
         _print_versions_table(versions_info)
+    except CLIError:
+        raise  # Re-raise CLI Errors as-is
     except UnexpectedResponse as e:
         handle_api_error(e, "get versions")
     finally:
@@ -89,17 +95,16 @@ def versions() -> None:
 
 def _print_versions_table(versions_data: dict) -> None:
     """Print versions in a formatted table"""
-    click.echo("Application Versions")
-    click.echo("=" * 30)
     click.echo("")
+    click.echo(colorize_header("TH Application Versions"))
 
     # Add CLI version and SHA first
     cli_version = get_cli_version()
     cli_sha = get_cli_sha()
 
-    click.echo(f"CLI Version: {cli_version}")
-    click.echo(f"CLI SHA: {cli_sha}")
+    click.echo(colorize_key_value("CLI Version", cli_version))
+    click.echo(colorize_key_value("CLI SHA", cli_sha))
 
     # Add server versions
     for key, value in versions_data.items():
-        click.echo(f"{key}: {value}")
+        click.echo(colorize_key_value(key, value))

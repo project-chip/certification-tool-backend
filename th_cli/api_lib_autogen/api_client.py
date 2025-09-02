@@ -22,15 +22,9 @@ from pydantic import ValidationError, parse_obj_as
 from th_cli.api_lib_autogen.api.devices_api import AsyncDevicesApi, SyncDevicesApi
 from th_cli.api_lib_autogen.api.operators_api import AsyncOperatorsApi, SyncOperatorsApi
 from th_cli.api_lib_autogen.api.projects_api import AsyncProjectsApi, SyncProjectsApi
-from th_cli.api_lib_autogen.api.test_collections_api import (
-    AsyncTestCollectionsApi,
-    SyncTestCollectionsApi,
-)
+from th_cli.api_lib_autogen.api.test_collections_api import AsyncTestCollectionsApi, SyncTestCollectionsApi
 from th_cli.api_lib_autogen.api.test_run_configs_api import AsyncTestRunConfigsApi, SyncTestRunConfigsApi
-from th_cli.api_lib_autogen.api.test_run_executions_api import (
-    AsyncTestRunExecutionsApi,
-    SyncTestRunExecutionsApi,
-)
+from th_cli.api_lib_autogen.api.test_run_executions_api import AsyncTestRunExecutionsApi, SyncTestRunExecutionsApi
 from th_cli.api_lib_autogen.api.utils_api import AsyncUtilsApi, SyncUtilsApi
 from th_cli.api_lib_autogen.api.versions_api import AsyncVersionsApi, SyncVersionsApi
 from th_cli.api_lib_autogen.exceptions import ResponseHandlingException, UnexpectedResponse
@@ -86,12 +80,14 @@ class ApiClient:
     @overload
     async def request(
         self, *, type_: Type[T], method: str, url: str, path_params: Optional[Dict[str, Any]] = None, **kwargs: Any
-    ) -> T: ...
+    ) -> T:
+        ...
 
     @overload  # noqa F811
     async def request(
         self, *, type_: None, method: str, url: str, path_params: Optional[Dict[str, Any]] = None, **kwargs: Any
-    ) -> None: ...
+    ) -> None:
+        ...
 
     async def request(  # noqa F811
         self, *, type_: Any, method: str, url: str, path_params: Optional[Dict[str, Any]] = None, **kwargs: Any
@@ -103,10 +99,12 @@ class ApiClient:
         return await self.send(request, type_)
 
     @overload
-    def request_sync(self, *, type_: Type[T], **kwargs: Any) -> T: ...
+    def request_sync(self, *, type_: Type[T], **kwargs: Any) -> T:
+        ...
 
     @overload  # noqa F811
-    def request_sync(self, *, type_: None, **kwargs: Any) -> None: ...
+    def request_sync(self, *, type_: None, **kwargs: Any) -> None:
+        ...
 
     def request_sync(self, *, type_: Any, **kwargs: Any) -> Any:  # noqa F811
         """

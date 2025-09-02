@@ -45,6 +45,7 @@ CLI tool for using the CSA Test Harness
 
 ```
 Commands:
+  abort-testing               Abort the current test execution
   available-tests             Get a list of available tests
   create-project              Creates a project
   delete-project              Deletes a project
@@ -62,7 +63,7 @@ Run `th-cli available-tests` to get a list of tests available in Test Harness, p
 
 ### run-tests
 
-Run `th-cli run-tests --tests-list <tests> [--title, -n <title>] [--config, -c <config>] [--pics-config-folder, -p <pics-config-folder>] [--project-id <ID>]` to start a new test execution.
+Run `th-cli run-tests --tests-list <tests> [--title, -n <title>] [--config, -c <config>] [--pics-config-folder, -p <pics-config-folder>] [--project-id <ID>] [--no-color]` to start a new test execution.
 
 Required:
 - `--tests-list`: Comma-separated list of test case identifiers (e.g. --tests-list TC-ACE-1.1,TC_ACE_1_3)
@@ -72,6 +73,7 @@ Optional:
 - `--config`: Path to the property config file. If not specified, default_config.properties will be used.
 - `--pics-config-folder`: Path to the folder that contains PICS files. If not specified, no PICS file will be used.
 - `--project-id`: Project ID that this test run belongs to. If not provided, uses the default 'CLI Execution Project' in TH.
+- `--no-color`: Disable all colors from the CLI's output text of this test run execution
 
 ### test-run-execution-history
 
@@ -100,6 +102,17 @@ Run `th-cli delete-project --id {id}` to delete a project.
 ### update-project
 
 Run `th-cli update-project --id {id} --config {config file}` to update a project. Both parameters are required. Config must be a full test environment config file.
+
+## Command Colors
+By default, the CLI application presents colored texts for all the available commands, specially for the log of test run executions from the `th-cli run-tests` command.
+If the users need to disable the colors from the tool's output, they may use one of the options presented below:
+
+1. Use the option flag `--no-color` from the `run-tests` command to remove color for that execution (e.g `th-cli run-tests --no-color -t TC-ACE-1.1`)
+2. Prepend the environment variable `TH_CLI_NO_COLOR` set to True to the `run-test` command (e.g `TH_CLI_NO_COLOR=1 th-cli run-tests -t TC-ACE-1.1`)
+3. Export the environment variable and use the CLI normally on the same terminal instance (e.g Use `export TH_CLI_NO_COLOR=1` before using the CLI commands)
+
+For the item `3` above, it's possible to change permanently adding the `TH_CLI_NO_COLOR=1` variable to the shell profile (e.g. `~/.bashrc`).
+After that, resetting that terminal or any new one will present no color for all the CLI commands.
 
 ## Development
 

@@ -19,18 +19,22 @@ import click
 
 from th_cli.api_lib_autogen.api_client import SyncApis
 from th_cli.client import get_client
+from th_cli.colorize import colorize_cmd_help, colorize_header, colorize_help, colorize_key_value, colorize_runner_state
+from th_cli.exceptions import CLIError
 from th_cli.utils import __print_json
 
 
-@click.command()
+@click.command(
+    short_help=colorize_help("Get the current test runner status"),
+   help=colorize_cmd_help("test_runner_status", "Get the current test runner status")
+)
 @click.option(
     "--json",
     is_flag=True,
     default=False,
-    help="Print JSON response for more details",
+    help=colorize_help("Print JSON response for more details"),
 )
 def test_runner_status(json: Optional[bool]) -> None:
-    """Get the current Matter test runner status"""
     client = None
     try:
         client = get_client()
@@ -42,6 +46,8 @@ def test_runner_status(json: Optional[bool]) -> None:
             __print_json(test_runner_status)
         else:
             __print_status_table(test_runner_status.dict())
+    except CLIError:
+        raise  # Re-raise CLI Errors as-is
     finally:
         if client:
             client.close()
@@ -49,12 +55,13 @@ def test_runner_status(json: Optional[bool]) -> None:
 
 def __print_status_table(status_data: dict) -> None:
     """Print status in a formatted table"""
-    click.echo("Matter Test Runner Status")
-    click.echo("=" * 30)
     click.echo("")
-    click.echo(f"State: {status_data.get('state', 'Unknown')}")
+    click.echo(colorize_header("Matter Test Runner Status"))
 
-    if "test_run_execution_id" in status_data:
-        click.echo(f"Active Test Run ID: {status_data.get('test_run_execution_id')}")
+    colorized_status = colorize_runner_state(status_data.get("state", "Unknown").value)
+    click.echo(colorize_key_value("State", colorized_status))
+
+    if "test_run_execution_id" in status_data and status_data.get("test_run_execution_id") is not None:
+        click.echo(colorize_key_value("Active Test Run ID", status_data.get("test_run_execution_id")))
     else:
         click.echo("No active test run")

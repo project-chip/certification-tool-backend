@@ -19,12 +19,16 @@ import click
 from th_cli.api_lib_autogen.api_client import SyncApis
 from th_cli.api_lib_autogen.exceptions import UnexpectedResponse
 from th_cli.client import get_client
-from th_cli.exceptions import handle_api_error
+from th_cli.colorize import colorize_cmd_help, colorize_help, colorize_success
+from th_cli.exceptions import CLIError, handle_api_error
 
 
-@click.command()
+@click.command(
+    short_help=colorize_help("Cancel the current testing"),
+    help=colorize_cmd_help("abort_testing", "Abort the current test run execution"),
+)
 def abort_testing() -> None:
-    """Cancel the current testing"""
+    """Abort the current test run execution"""
     client = None
     try:
         client = get_client()
@@ -32,7 +36,7 @@ def abort_testing() -> None:
         test_run_executions_api = sync_apis.test_run_executions_api
 
         response = test_run_executions_api.abort_testing_api_v1_test_run_executions_abort_testing_post()
-        click.echo(response.get("detail", "Testing aborted"))
+        click.echo(colorize_success(response.get("detail", "Testing aborted")))
     except CLIError:
         raise  # Re-raise CLI Errors as-is
     except UnexpectedResponse as e:

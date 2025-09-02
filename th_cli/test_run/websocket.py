@@ -28,6 +28,7 @@ from th_cli.api_lib_autogen.models import (
     TestStepExecution,
     TestSuiteExecution,
 )
+from th_cli.colorize import HierarchyEnum, colorize_error, colorize_hierarchy_prefix, colorize_state
 from th_cli.config import config
 
 from .prompt_manager import handle_prompt
@@ -63,7 +64,7 @@ class TestRunSocket:
                 # skip messages that are bytes, as we're expecting a string.\
                 if not isinstance(message, str):
                     click.echo(
-                        "Failed to parse incoming websocket message. got bytes, expected text",
+                        colorize_error("Failed to parse incoming websocket message. got bytes, expected text"),
                         err=True,
                     )
                     continue
@@ -71,8 +72,8 @@ class TestRunSocket:
                     message_obj = SocketMessage.parse_raw(message)
                     await self.__handle_incoming_socket_message(socket=socket, message=message_obj)
                 except ValidationError as e:
-                    click.echo(f"Received invalid socket message: {message}", err=True)
-                    click.echo(e.json())
+                    click.echo(colorize_error(f"Received invalid socket message: {message}"), err=True)
+                    click.echo(colorize_error(e.json()), err=True)
 
     async def __handle_incoming_socket_message(self, socket: WebSocketClientProtocol, message: SocketMessage) -> None:
         if isinstance(message.payload, TestUpdate):
@@ -85,10 +86,12 @@ class TestRunSocket:
             # ignore time_out_notification as we handle timeout our selves
             pass
         else:
-            click.echo(f"Unknown socket message type: {message.type}| payload: {message.payload}.", err=True)
+            click.echo(
+                colorize_error(f"Unknown socket message type: {message.type} | payload: {message.payload}."),
+                err=True,
+            )
 
     async def __handle_test_update(self, socket: WebSocketClientProtocol, update: TestUpdate) -> None:
-
         if isinstance(update.body, TestStepUpdate):
             self.__log_test_step_update(update.body)
         elif isinstance(update.body, TestCaseUpdate):
@@ -102,17 +105,23 @@ class TestRunSocket:
                 await socket.close()
 
     def __log_test_run_update(self, update: TestRunUpdate) -> None:
-        click.echo(f"Test Run [{str(update.state.name)}]")
+        test_run_text = colorize_hierarchy_prefix("Test Run", HierarchyEnum.TEST_RUN.value)
+        colored_state = colorize_state(update.state.value)
+        click.echo(f"{test_run_text} {colored_state}")
 
     def __log_test_suite_update(self, update: TestSuiteUpdate) -> None:
         suite = self.__suite(update.test_suite_execution_index)
         title = suite.test_suite_metadata.title
-        click.echo(f"  - {title} [{str(update.state.name)}]")
+        colored_title = colorize_hierarchy_prefix(title, HierarchyEnum.TEST_SUITE.value)
+        colored_state = colorize_state(update.state.value)
+        click.echo(f"  - {colored_title} {colored_state}")
 
     def __log_test_case_update(self, update: TestCaseUpdate) -> None:
         case = self.__case(index=update.test_case_execution_index, suite_index=update.test_suite_execution_index)
         title = case.test_case_metadata.title
-        click.echo(f"      - {title} [{str(update.state.name)}]")
+        colored_title = colorize_hierarchy_prefix(title, HierarchyEnum.TEST_CASE.value)
+        colored_state = colorize_state(update.state.value)
+        click.echo(f"      - {colored_title} {colored_state}")
 
     def __log_test_step_update(self, update: TestStepUpdate) -> None:
         step = self.__step(
@@ -122,7 +131,9 @@ class TestRunSocket:
         )
         if step is not None:
             title = step.title
-            click.echo(f"            - {title} [{str(update.state.name)}]")
+            colored_title = colorize_hierarchy_prefix(title, HierarchyEnum.TEST_STEP.value)
+            colored_state = colorize_state(update.state.value)
+            click.echo(f"            - {colored_title} {colored_state}")
 
     def __handle_log_record(self, records: List[TestLogRecord]) -> None:
         for record in records:

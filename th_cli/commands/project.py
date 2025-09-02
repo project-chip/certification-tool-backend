@@ -23,24 +23,29 @@ from th_cli.api_lib_autogen.api_client import SyncApis
 from th_cli.api_lib_autogen.exceptions import UnexpectedResponse
 from th_cli.api_lib_autogen.models import Project, ProjectCreate, ProjectUpdate, TestEnvironmentConfig
 from th_cli.client import get_client
+from th_cli.colorize import colorize_cmd_help, colorize_error, colorize_header, colorize_help, colorize_success, italic
 from th_cli.exceptions import CLIError, handle_api_error, handle_file_error
 from th_cli.utils import __print_json
 
-TABLE_FORMAT = "{:<5} {:20} {:40}"
+TABLE_FORMAT = "{:<5} {:25} {:28}"
 
 
-def _abort_if_false(ctx, value):
+def _abort_if_false(ctx, param, value):
     if not value:
         ctx.abort()
 
 
-@click.command(no_args_is_help=True)
+@click.command(
+    no_args_is_help=True,
+    short_help=colorize_help("Create a new project"),
+    help=colorize_cmd_help("create_project", "Create a new project"),
+)
 @click.option(
     "--name",
     "-n",
     required=True,
     type=str,
-    help="Name of the project",
+    help=colorize_help("Name of the project"),
 )
 @click.option(
     "--config",
@@ -48,7 +53,7 @@ def _abort_if_false(ctx, value):
     required=False,
     type=click.Path(file_okay=True, dir_okay=False),
     default=None,
-    help="Config JSON file for the project",
+    help=colorize_help("Config JSON file for the project"),
 )
 def create_project(name: str, config: Optional[str]) -> None:
     """Create a new project"""
@@ -78,13 +83,12 @@ def create_project(name: str, config: Optional[str]) -> None:
 
         try:
             response = sync_apis.projects_api.create_project_api_v1_projects_post(project_create=project_create)
-            click.echo(f"Project '{response.name}' created with ID {response.id}")
+            click.echo(colorize_success(f"Project '{response.name}' created with ID {response.id}"))
         except UnexpectedResponse as e:
             handle_api_error(e, f"create project '{name}'")
 
     except CLIError:
-        # Re-raise CLI errors as-is
-        raise
+        raise  # Re-raise CLI Errors as-is
     except Exception as e:
         # Catch any unexpected errors
         raise CLIError(f"Unexpected error creating project: {e}")
@@ -93,13 +97,18 @@ def create_project(name: str, config: Optional[str]) -> None:
             client.close()
 
 
-@click.command(no_args_is_help=True)
+@click.command(
+    no_args_is_help=True,
+    short_help=colorize_help("Delete a project"),
+    help=colorize_cmd_help("delete_project", "Delete an existing project"),
+    epilog=italic('For a list of project IDs, use "th-cli list-projects"'),
+)
 @click.option(
     "--id",
     "-i",
     required=True,
     type=int,
-    help="Project ID to delete",
+    help=colorize_help("Project ID to delete"),
 )
 @click.option(
     "--yes",
@@ -107,8 +116,8 @@ def create_project(name: str, config: Optional[str]) -> None:
     is_flag=True,
     callback=_abort_if_false,
     expose_value=False,
-    prompt="Are you sure you want to delete the project?",
-    help="Delete the project without confirmation",
+    prompt=colorize_error("Are you sure you want to delete the project?"),
+    help=colorize_help("Delete the project without confirmation"),
 )
 def delete_project(id: int) -> None:
     """Delete a project"""
@@ -117,7 +126,9 @@ def delete_project(id: int) -> None:
         client = get_client()
         sync_apis = SyncApis(client)
         sync_apis.projects_api.delete_project_api_v1_projects_id_delete(id=id)
-        click.echo(f"Project {id} was deleted.")
+        click.echo(colorize_success(f"Project {id} was deleted."))
+    except CLIError:
+        raise  # Re-raise CLI Errors as-is
     except UnexpectedResponse as e:
         handle_api_error(e, f"delete project ID '{id}'")
     finally:
@@ -125,14 +136,17 @@ def delete_project(id: int) -> None:
             client.close()
 
 
-@click.command()
+@click.command(
+    short_help=colorize_help("Get a list of projects"),
+    help=colorize_cmd_help("list_projects", "Get a list of the existing projects"),
+)
 @click.option(
     "--id",
     "-i",
     default=None,
     required=False,
     type=int,
-    help="Fetch specific project via ID",
+    help=colorize_help("Fetch specific project via ID"),
 )
 @click.option(
     "--skip",
@@ -140,7 +154,7 @@ def delete_project(id: int) -> None:
     default=None,
     required=False,
     type=int,
-    help="The first N projects to skip, ordered by ID",
+    help=colorize_help("The first N projects to skip, ordered by ID"),
 )
 @click.option(
     "--limit",
@@ -148,19 +162,19 @@ def delete_project(id: int) -> None:
     default=None,
     required=False,
     type=int,
-    help="Maximun number of projects to fetch",
+    help=colorize_help("Maximun number of projects to fetch"),
 )
 @click.option(
     "--archived",
     default=False,
     is_flag=True,
-    help="List only archived projects",
+    help=colorize_help("List only archived projects"),
 )
 @click.option(
     "--json",
     is_flag=True,
     default=False,
-    help="Print JSON response for more details",
+    help=colorize_help("Print JSON response for more details"),
 )
 def list_projects(
     id: Optional[int], archived: Optional[bool], skip: Optional[int], limit: Optional[int], json: Optional[bool]
@@ -185,13 +199,7 @@ def list_projects(
             handle_api_error(e, "list projects")
 
     def __print_table(projects: Any) -> None:
-        click.echo(
-            TABLE_FORMAT.format(
-                "ID",
-                "Project Name",
-                "Updated Time",
-            )
-        )
+        click.echo(colorize_header(TABLE_FORMAT.format("ID", "Project Name", "Updated Time")))
 
         if isinstance(projects, list):
             for item in projects:
@@ -200,7 +208,7 @@ def list_projects(
         if isinstance(projects, Project):
             __print_project(projects.dict())
 
-        click.echo("\nFor more information, please use --json\n")
+        click.echo(italic("\nFor more information, please use --json\n"))
 
     def __print_project(project: dict) -> None:
         click.echo(
@@ -228,27 +236,30 @@ def list_projects(
         else:
             __print_table(projects)
     except CLIError:
-        # Re-raise CLI errors as-is
-        raise
+        raise  # Re-raise CLI Errors as-is
     finally:
         if client:
             client.close()
 
 
-@click.command(no_args_is_help=True)
+@click.command(
+    no_args_is_help=True,
+    short_help=colorize_help("Update a project"),
+    help=colorize_cmd_help("update_project", "Update an existing project configuration"),
+)
 @click.option(
     "--id",
     "-i",
     required=True,
     type=int,
-    help="The ID for the project to update",
+    help=colorize_help("The ID for the project to update"),
 )
 @click.option(
     "--config",
     "-c",
     required=True,
     type=click.Path(file_okay=True, dir_okay=False),
-    help="New config JSON file path",
+    help=colorize_help("New config JSON file path"),
 )
 def update_project(id: int, config: str):
     """Updates project with full test environment config file"""
@@ -260,7 +271,9 @@ def update_project(id: int, config: str):
         config_dict = json.load(file)
         projectUpdate = ProjectUpdate(**config_dict)
         response = sync_apis.projects_api.update_project_api_v1_projects_id_put(id=id, project_update=projectUpdate)
-        click.echo(f"Project {response.name} is updated with the new config.")
+        click.echo(colorize_success(f"Project {response.name} is updated with the new config."))
+    except CLIError:
+        raise  # Re-raise CLI Errors as-is
     except json.JSONDecodeError as e:
         raise CLIError(f"Failed to parse JSON parameter: {e.msg}")
     except FileNotFoundError as e:

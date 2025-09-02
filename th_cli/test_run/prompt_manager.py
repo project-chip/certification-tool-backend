@@ -24,6 +24,8 @@ import click
 # from loguru import logger
 from websockets.client import WebSocketClientProtocol
 
+from th_cli.colorize import colorize_error, colorize_key_value, italic
+
 from .socket_schemas import (
     OptionsSelectPromptRequest,
     PromptRequest,
@@ -40,7 +42,7 @@ async def handle_prompt(socket: WebSocketClientProtocol, request: PromptRequest)
     elif isinstance(request, TextInputPromptRequest):
         await __handle_text_prompt(socket=socket, prompt=request)
     else:
-        click.echo(f"Unsupported prompt request: {request.__class__.__name__}")
+        click.echo(colorize_error(f"Unsupported prompt request: {request.__class__.__name__}"))
     click.echo("=======================================")
 
 
@@ -49,17 +51,17 @@ async def __handle_options_prompt(socket: WebSocketClientProtocol, prompt: Optio
         user_answer = await asyncio.wait_for(__prompt_user_for_option(prompt), float(prompt.timeout))
         await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
     except asyncio.exceptions.TimeoutError:
-        click.echo("Prompt timed out", err=True)
+        click.echo(colorize_error("Prompt timed out"), err=True)
         pass
 
 
 async def __prompt_user_for_option(prompt: OptionsSelectPromptRequest) -> int:
     # Print Prompt
-    click.echo(prompt.prompt)
+    click.echo(italic(prompt.prompt))
     for key in prompt.options.keys():
         id = prompt.options[key]
-        click.echo(f"  {str(id)}: {key}")
-    click.echo("Please enter a number for an option above: ")
+        click.echo(f"  {colorize_key_value(str(id), key)}")
+    click.echo(italic("Please enter a number for an option above: "))
 
     # Wait for input async
     input = await aioconsole.ainput()
@@ -74,7 +76,7 @@ async def __prompt_user_for_option(prompt: OptionsSelectPromptRequest) -> int:
 
     # Recursively Retry
     await asyncio.sleep(0.1)
-    click.echo(f"Invalid input {input}", err=True)
+    click.echo(colorize_error(f"Invalid input {input}"), err=True)
     return await __prompt_user_for_option(prompt)
 
 
@@ -83,13 +85,13 @@ async def __handle_text_prompt(socket: WebSocketClientProtocol, prompt: TextInpu
         user_answer = await asyncio.wait_for(__prompt_user_for_text_input(prompt), float(prompt.timeout))
         await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
     except asyncio.exceptions.TimeoutError:
-        click.echo("Prompt timed out", err=True)
+        click.echo(colorize_error("Prompt timed out"), err=True)
         pass
 
 
 async def __prompt_user_for_text_input(prompt: TextInputPromptRequest) -> str:
     # Print Prompt
-    click.echo(prompt.prompt)
+    click.echo(italic(prompt.prompt))
 
     # TODO: default value, placeholder.
 
@@ -102,7 +104,7 @@ async def __prompt_user_for_text_input(prompt: TextInputPromptRequest) -> str:
 
     # Recursively Retry
     await asyncio.sleep(0.1)
-    click.echo(f"Invalid input {input}", err=True)
+    click.echo(colorize_error(f"Invalid input {input}"), err=True)
     return await __prompt_user_for_text_input(prompt)
 
 
