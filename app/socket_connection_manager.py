@@ -80,11 +80,14 @@ class SocketConnectionManager(object, metaclass=Singleton):
                     # Existing peer is active, reject the new connection.
                     await websocket.close(reason="Peer already connected")
                     logger.error(
-                        f"WebRTC Peer tried to connect but there is already an "
+                        "WebRTC Peer tried to connect but there is already an "
                         "active peer connected."
                     )
                     return False
             else:
+                logger.warning(
+                    f"Unsupported websocket connection type: {connection.type}"
+                )
                 return False
 
         except RuntimeError as e:
@@ -233,46 +236,53 @@ class SocketConnectionManager(object, metaclass=Singleton):
         }
         await self.send_personal_message(message=notify_message, websocket=websocket)
 
-    async def start_webrtc_signaling(self, connection: WebSocketConnection):
+    async def start_webrtc_signaling(self, connection: WebSocketConnection) -> None:
+        # Starts forwarding messages between Webrtc-Peer and Webrtc-Controller 1:1
         while True:
             data = await connection.websocket.receive_text()
             if connection.type == WebSocketTypeEnum.WEBRTC_PEER:
+                # send msg from peer to controller
                 await self._webrtc_signal_controller(data)
             elif connection.type == WebSocketTypeEnum.WEBRTC_CONTROLLER:
+                # send msg from controller to peer
                 await self._webrtc_signal_peer(data)
 
-    async def _webrtc_signal_controller(self, data):
+    async def _webrtc_signal_controller(self, data: str) -> None:
         if self._signaling_webrtc_controller:
             await self._signaling_webrtc_controller.websocket.send_text(data)
         else:
             logger.error("Websocket connection to Controller not found")
+            # signal back peer that controller is missing
             await self._webrtc_signal_error(
                 WebSocketTypeEnum.WEBRTC_PEER, "Controller not found", data
             )
 
-    async def _webrtc_signal_peer(self, data):
+    async def _webrtc_signal_peer(self, data: str) -> None:
         if self._signaling_webrtc_peer:
             await self._signaling_webrtc_peer.websocket.send_text(data)
         else:
             logger.error("Websocket connection to Peer not found")
+            # signal back controller that peer is missing
             await self._webrtc_signal_error(
                 WebSocketTypeEnum.WEBRTC_CONTROLLER, "Peer not found", data
             )
 
-    async def _webrtc_signal_error(self, send_type, error_msg, data):
+    async def _webrtc_signal_error(
+        self, dest_type: WebSocketTypeEnum, error_msg: str, data: str
+    ) -> None:
         try:
             data = json.loads(data)
             data["error"] = error_msg
         except JSONDecodeError:
             return
         if (
-            send_type == WebSocketTypeEnum.WEBRTC_CONTROLLER
+            dest_type == WebSocketTypeEnum.WEBRTC_CONTROLLER
             and self._signaling_webrtc_controller
         ):
             await self._signaling_webrtc_controller.websocket.send_text(
                 json.dumps(data)
             )
-        elif send_type == WebSocketTypeEnum.WEBRTC_PEER and self._signaling_webrtc_peer:
+        elif dest_type == WebSocketTypeEnum.WEBRTC_PEER and self._signaling_webrtc_peer:
             # Error in controller, signal peer to close its connection
             data["type"] = "CLOSE_PEER_CONNECTION"
             await self._signaling_webrtc_peer.websocket.send_text(json.dumps(data))
