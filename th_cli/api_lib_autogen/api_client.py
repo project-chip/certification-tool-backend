@@ -86,7 +86,7 @@ class ApiClient:
     @overload  # noqa F811
     async def request(
         self, *, type_: None, method: str, url: str, path_params: Optional[Dict[str, Any]] = None, **kwargs: Any
-    ) -> None:
+    ) -> str:
         ...
 
     async def request(  # noqa F811
@@ -103,7 +103,7 @@ class ApiClient:
         ...
 
     @overload  # noqa F811
-    def request_sync(self, *, type_: None, **kwargs: Any) -> None:
+    def request_sync(self, *, type_: None, **kwargs: Any) -> str:
         ...
 
     def request_sync(self, *, type_: Any, **kwargs: Any) -> Any:  # noqa F811
@@ -116,6 +116,8 @@ class ApiClient:
         response = await self.middleware(request, self.send_inner)
         if response.status_code in [200, 201]:
             try:
+                if type_ is None:
+                    return response.text
                 return parse_obj_as(type_, response.json())
             except ValidationError as e:
                 raise ResponseHandlingException(e)

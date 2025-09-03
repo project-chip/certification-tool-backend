@@ -18,6 +18,7 @@ from .available_tests import available_tests
 from .project import create_project, delete_project, list_projects, update_project
 from .run_tests import run_tests
 from .test_run_execution_history import test_run_execution_history
+from .test_run_execution_log import test_run_execution_log
 from .test_runner_status import test_runner_status
 from .versions import versions
 
@@ -29,6 +30,7 @@ __all__ = [
     "list_projects",
     "run_tests",
     "test_run_execution_history",
+    "test_run_execution_log",
     "update_project",
     "test_runner_status",
     "versions",

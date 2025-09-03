@@ -27,7 +27,7 @@ import httpx
 from websockets.client import WebSocketClientProtocol
 
 from th_cli.colorize import colorize_error, colorize_key_value, italic
-from config import config
+from th_cli.config import config
 
 from .socket_schemas import (
     OptionsSelectPromptRequest,
