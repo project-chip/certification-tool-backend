@@ -120,6 +120,7 @@ class SocketMessage(BaseModel):
     payload: Union[
         OptionsSelectPromptRequest,
         TextInputPromptRequest,
+        PromptRequest,
         PromptResponse,
         TestUpdate,
         TimeOutNotification,
