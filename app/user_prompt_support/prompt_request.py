@@ -75,3 +75,9 @@ class ImageVerificationPromptRequest(OptionsSelectPromptRequest):
     @property
     def messageType(self) -> MessageTypeEnum:
         return MessageTypeEnum.IMAGE_VERIFICATION_REQUEST
+
+
+class TwoWayTalkVerificationRequest(OptionsSelectPromptRequest):
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.TWO_WAY_TALK_VERIFICATION_REQUEST

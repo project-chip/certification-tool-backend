@@ -20,6 +20,7 @@ from .prompt_request import (
     PromptRequest,
     StreamVerificationPromptRequest,
     TextInputPromptRequest,
+    TwoWayTalkVerificationRequest,
     UploadFilePromptRequest,
 )
 from .prompt_response import PromptResponse
