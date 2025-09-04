@@ -274,6 +274,7 @@ class SocketConnectionManager(object, metaclass=Singleton):
             data = json.loads(msg)
             data["error"] = error_msg
         except JSONDecodeError:
+            logger.error("Failed to parse JSON message")
             return
         if (
             dest_type == WebSocketTypeEnum.WEBRTC_CONTROLLER

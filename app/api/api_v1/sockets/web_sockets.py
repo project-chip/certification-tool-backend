@@ -17,6 +17,7 @@ import asyncio
 
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
+from loguru import logger
 
 from app.constants.websockets_constants import WebSocketConnection, WebSocketTypeEnum
 from app.socket_connection_manager import SocketConnectionManager
@@ -60,7 +61,10 @@ async def websocket_webrtc_controller_endpoint(websocket: WebSocket) -> None:
     try:
         if await socket_connection_manager.connect(connection):
             await socket_connection_manager.start_webrtc_signaling(connection)
-    except Exception:
+    except Exception as e:
+        logger.error(
+            f"An error occurred during WebRTC Controller WebSocket communication: {e}"
+        )
         socket_connection_manager.disconnect(connection)
 
 
@@ -71,5 +75,8 @@ async def websocket_webrtc_peer_endpoint(websocket: WebSocket) -> None:
     try:
         if await socket_connection_manager.connect(connection):
             await socket_connection_manager.start_webrtc_signaling(connection)
-    except Exception:
+    except Exception as e:
+        logger.error(
+            f"An error occurred during WebRTC Peer WebSocket communication: {e}"
+        )
         socket_connection_manager.disconnect(connection)
