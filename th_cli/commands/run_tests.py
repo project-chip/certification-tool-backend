@@ -32,7 +32,7 @@ from th_cli.colorize import (
     colorize_help,
     colorize_key_value,
     italic,
-    set_colors_enabled
+    set_colors_enabled,
 )
 from th_cli.exceptions import CLIError, handle_api_error
 from th_cli.test_run.websocket import TestRunSocket

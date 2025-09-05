@@ -26,7 +26,7 @@ from th_cli.utils import __print_json
 
 @click.command(
     short_help=colorize_help("Get the current test runner status"),
-   help=colorize_cmd_help("test_runner_status", "Get the current test runner status")
+    help=colorize_cmd_help("test_runner_status", "Get the current test runner status"),
 )
 @click.option(
     "--json",

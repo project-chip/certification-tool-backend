@@ -28,7 +28,7 @@ from th_cli.utils import __json_string, __print_json
 
 @click.command(
     short_help=colorize_help("List all available test cases"),
-    help=colorize_cmd_help("available_tests", "Get a list of the available test cases")
+    help=colorize_cmd_help("available_tests", "Get a list of the available test cases"),
 )
 @click.option(
     "--json",

@@ -21,16 +21,20 @@ import click
 from th_cli.api_lib_autogen.api_client import SyncApis
 from th_cli.api_lib_autogen.exceptions import UnexpectedResponse
 from th_cli.client import get_client
+from th_cli.colorize import colorize_cmd_help, colorize_help
 from th_cli.exceptions import CLIError, handle_api_error
 
 
-@click.command()
+@click.command(
+    short_help=colorize_help("Print test execution log for a given test run execution ID"),
+    help=colorize_cmd_help("test_run_execution_log", "Print test execution log for a given test run execution ID"),
+)
 @click.option(
     "--id",
     "-i",
     required=True,
     type=int,
-    help="Test Run Execution ID to fetch logs for",
+    help=colorize_help("Test Run Execution ID to fetch logs for"),
 )
 def test_run_execution_log(id: int) -> None:
     """Print test execution log for a given test run execution ID"""

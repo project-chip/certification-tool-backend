@@ -139,7 +139,7 @@ async def __prompt_user_for_file_upload(prompt: PromptRequest) -> str:
     """Prompt the user to provide a file path for upload."""
     # Print Prompt
     click.echo(prompt.prompt)
-    
+
     while True:
         click.echo("Enter the path to the file to upload (or press Enter to skip): ")
 
@@ -158,6 +158,7 @@ async def __prompt_user_for_file_upload(prompt: PromptRequest) -> str:
         await asyncio.sleep(0.1)
         click.echo(f"Invalid file path or type: {file_path}", err=True)
 
+
 async def __upload_file_and_send_response(
     socket: WebSocketClientProtocol, file_path: str, prompt: PromptRequest
 ) -> None:
@@ -169,24 +170,24 @@ async def __upload_file_and_send_response(
             return
 
         file_size = os.path.getsize(file_path)
-        
+
         # Check file size limit
         if file_size > MAX_FILE_SIZE:
             click.echo(f"❌ File too large: {file_size} bytes (max: {MAX_FILE_SIZE} bytes)", err=True)
             await __send_prompt_response(socket=socket, input="", prompt=prompt)
             return
-        
+
         click.echo(f"File selected: {file_path} (size: {file_size:,} bytes)")
 
         # Build upload URL - handle both hostname and hostname:port formats
         base_url = config.hostname
-        if not base_url.startswith(('http://', 'https://')):
+        if not base_url.startswith(("http://", "https://")):
             base_url = f"http://{base_url}"
         upload_url = f"{base_url}/api/v1/test_run_executions/file_upload/"
 
         async with httpx.AsyncClient() as client:
-            with open(file_path, 'rb') as file:
-                files = {'file': (os.path.basename(file_path), file, 'application/octet-stream')}
+            with open(file_path, "rb") as file:
+                files = {"file": (os.path.basename(file_path), file, "application/octet-stream")}
 
                 response = await client.post(upload_url, files=files)
 
@@ -207,6 +208,7 @@ async def __upload_file_and_send_response(
         click.echo(f"❌ Unexpected error uploading file: {str(e)}", err=True)
         await __send_prompt_response(socket=socket, input="", prompt=prompt)
 
+
 def __valid_text_input(input: Any, prompt: TextInputPromptRequest) -> bool:
     if not isinstance(input, str):
         return False
@@ -224,7 +226,7 @@ def __valid_file_upload(file_path: str, prompt: PromptRequest) -> bool:
         return False
 
     file_ext = os.path.splitext(file_path)[1].lower()
-    if file_ext not in ['.txt', '.log']:
+    if file_ext not in [".txt", ".log"]:
         click.echo(f"Error: Invalid file type '{file_ext}'. Only .txt and .log files are supported.", err=True)
         return False
 
