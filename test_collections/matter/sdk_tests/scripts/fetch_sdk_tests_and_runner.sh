@@ -177,7 +177,7 @@ setup(
 )
 EOF
 
- # Install chipyaml as editable package
+# Install chipyaml as editable package
 cd ${EXTRACTION_ROOT}
 pip install -e .
 
