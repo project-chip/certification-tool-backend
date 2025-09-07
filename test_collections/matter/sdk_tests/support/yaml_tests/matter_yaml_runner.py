@@ -21,6 +21,9 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 import loguru
+from chipyaml.adapters.chiptool import adapter as ChipToolAdapter
+from chipyaml.adapters.chiptool.decoder import MatterLog
+from chipyaml.adapters.placeholder import adapter as ChipAppAdapter
 from matter.yamltests.definitions import SpecDefinitionsFromPaths
 from matter.yamltests.hooks import TestParserHooks, TestRunnerHooks
 
@@ -30,9 +33,6 @@ from matter.yamltests.parser_builder import TestParserBuilderConfig
 from matter.yamltests.pseudo_clusters.pseudo_clusters import get_default_pseudo_clusters
 from matter.yamltests.runner import TestRunnerConfig, TestRunnerOptions
 from matter.yamltests.websocket_runner import WebSocketRunner, WebSocketRunnerConfig
-from matter_chip_tool_adapter import adapter as ChipToolAdapter
-from matter_chip_tool_adapter.decoder import MatterLog
-from matter_placeholder_adapter import adapter as ChipAppAdapter
 
 from app.container_manager.backend_container import backend_container
 from app.schemas.pics import PICS, PICSError

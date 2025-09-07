@@ -17,11 +17,9 @@ import asyncio
 from enum import Enum, IntEnum
 from typing import Any, Optional
 
+from chipyaml.adapters.chiptool.decoder import MatterLog
 from matter.yamltests.hooks import TestParserHooks, TestRunnerHooks
 from matter.yamltests.parser import PostProcessResponseResult, TestStep
-
-# Websocket Test imports:
-from matter_chip_tool_adapter.decoder import MatterLog
 
 from app.models import TestStateEnum
 from app.models.test_case_execution import TestCaseExecution

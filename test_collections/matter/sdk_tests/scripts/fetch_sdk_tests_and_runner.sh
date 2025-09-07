@@ -163,10 +163,24 @@ cd ${SDK_PATH}/scripts/py_matter_idl
 python -m build --outdir ${EXTRACTION_ROOT}
 cd ${SDK_PATH}/scripts/py_matter_yamltests
 python -m build --outdir ${EXTRACTION_ROOT}
-cd ${SDK_PATH}/examples/chip-tool/py_matter_chip_tool_adapter
-python -m build --outdir ${EXTRACTION_ROOT}
-cd ${SDK_PATH}/examples/placeholder/py_matter_placeholder_adapter
-python -m build --outdir ${EXTRACTION_ROOT}
+# Copy the chipyaml adapters and install as editable package
+cp -r ${SDK_PATH}/scripts/tests/chipyaml ${EXTRACTION_ROOT}/chipyaml
+
+# Create a simple setup.py for chipyaml in the extraction root
+cat > ${EXTRACTION_ROOT}/setup.py << 'EOF'
+from setuptools import setup, find_packages
+setup(
+    name='chipyaml',
+    version='1.0.0',
+    packages=find_packages(),
+    install_requires=[]
+)
+EOF
+
+ # Install chipyaml as editable package
+cd ${EXTRACTION_ROOT}
+pip install -e .
+
 install_matter_wheels
 
 # The runner needs some cluster definitions to used when parsing the YAML test. It allows to properly translate YAML
