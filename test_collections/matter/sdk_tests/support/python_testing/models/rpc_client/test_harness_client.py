@@ -22,8 +22,8 @@ import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 
-from chip.testing.commissioning import CommissionDeviceTest
-from chip.testing.matter_testing import (
+from matter.testing.commissioning import CommissionDeviceTest
+from matter.testing.matter_testing import (
     MatterTestConfig,
     TestStep,
     get_test_info,
