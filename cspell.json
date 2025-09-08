@@ -108,7 +108,8 @@
         "PBKDF",
         "PCSC",
         "pcscd",
-        "DGRAM"
+        "DGRAM",
+        "chipyaml"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
