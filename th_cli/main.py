@@ -14,42 +14,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import click
 
-from th_cli.colorize import colorize_cmd_help
-from th_cli.commands import (
-    abort_testing,
-    available_tests,
-    create_project,
-    delete_project,
-    list_projects,
-    run_tests,
-    test_run_execution_history,
-    test_run_execution_log,
-    test_runner_status,
-    update_project,
-    versions,
-)
-from th_cli.commands.versions import get_cli_version
+from th_cli.colorize import colorize_cmd_help, colorize_error, colorize_key_value
+from th_cli.commands import abort_testing, available_tests, project, run_tests, test_run_execution, test_runner_status
+from th_cli.utils import get_cli_sha, get_cli_version, get_versions
+
+
+def get_extended_help() -> str:
+    """Get extended help text including version information"""
+    cli_version = get_cli_version()
+    cli_sha = get_cli_sha()
+
+    help_text = colorize_cmd_help("th-cli", "A CLI tool for Matter Test Harness")
+    help_text += f"\n{colorize_key_value('Version', cli_version)}"
+    help_text += f"\n{colorize_key_value('CLI SHA', cli_sha)}"
+
+    # Try to get server versions, but don't fail if unavailable
+    try:
+        versions_data = get_versions()
+        if versions_data:
+            for key, value in versions_data.items():
+                help_text += f"\n{colorize_key_value(key, value)}"
+    except Exception:
+        help_text += colorize_error("\nNot able to retrieve versions from server.")
+
+    return help_text
 
 
 @click.group(help=colorize_cmd_help("th-cli", "A CLI tool for Matter Test Harness"))
-@click.version_option(version=f"{get_cli_version()}")
+@click.version_option(version=get_extended_help())
 def root() -> None:
     pass
 
 
 root.add_command(abort_testing)
 root.add_command(available_tests)
-root.add_command(create_project)
-root.add_command(list_projects)
+root.add_command(project)
 root.add_command(run_tests)
-root.add_command(test_run_execution_history)
-root.add_command(test_run_execution_log)
+root.add_command(test_run_execution)
 root.add_command(test_runner_status)
-root.add_command(delete_project)
-root.add_command(update_project)
-root.add_command(versions)
 
 
 if __name__ == "__main__":

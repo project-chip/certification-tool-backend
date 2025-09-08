@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from contextlib import closing
 from typing import Optional
 
 import click
@@ -29,8 +30,10 @@ table_format = "{:<5} {:55} {:25} {}"
 
 
 @click.command(
-    short_help=colorize_help("List the test run execution history"),
-    help=colorize_cmd_help("test_run_execution_history", "Read the test run execution history from all projects"),
+    short_help=colorize_help("Manage test run executions"),
+    help=colorize_cmd_help(
+        "test_run_execution", "List test run execution history or fetch logs for a specific execution"
+    ),
 )
 @click.option(
     "--id",
@@ -54,33 +57,46 @@ table_format = "{:<5} {:55} {:25} {}"
     default=None,
     required=False,
     type=int,
-    help=colorize_help("Maximun number of test runs to fetch"),
+    help=colorize_help("Maximum number of test runs to fetch"),
+)
+@click.option(
+    "--log",
+    is_flag=True,
+    default=False,
+    help=colorize_help("Fetch log content for the specified test run execution ID (requires --id)"),
 )
 @click.option(
     "--json",
     is_flag=True,
     default=False,
-    help=colorize_help("Print JSON response for more details"),
+    help=colorize_help("Print JSON response for more details (not applicable with --log)"),
 )
-def test_run_execution_history(
-    id: Optional[int], skip: Optional[int], limit: Optional[int], json: Optional[bool]
-) -> None:
-    """Read test run execution history"""
+def test_run_execution(id: Optional[int], skip: Optional[int], limit: Optional[int], log: bool, json: bool) -> None:
+    """Manage test run executions - list history or fetch logs"""
+
+    # Validate options
+    if log and (skip is not None or limit is not None):
+        raise click.ClickException("--skip and --limit options are not applicable when fetching logs (--log)")
+
+    if log and id is None:
+        raise click.ClickException("--log requires --id to specify which test run execution to fetch logs for")
+
+    if log and json:
+        raise click.ClickException("--json option is not applicable when fetching logs (--log)")
 
     try:
-        client = get_client()
-        sync_apis = SyncApis(client)
-        if id is not None:
-            __test_run_execution_by_id(sync_apis, id, json)
-        elif skip is not None or limit is not None:
-            __test_run_execution_batch(sync_apis, json, skip, limit)
-        else:
-            __test_run_execution_batch(sync_apis, json)
+        with closing(get_client()) as client:
+            sync_apis = SyncApis(client)
+
+            if log:
+                __fetch_test_run_execution_log(sync_apis, id)
+            elif id is not None:
+                __test_run_execution_by_id(sync_apis, id, json)
+            else:
+                __test_run_execution_batch(sync_apis, json, skip, limit)
+
     except CLIError:
         raise  # Re-raise CLI Errors as-is
-    finally:
-        if client:
-            client.close()
 
 
 def __test_run_execution_by_id(sync_apis: SyncApis, id: int, json: bool) -> None:
@@ -92,7 +108,7 @@ def __test_run_execution_by_id(sync_apis: SyncApis, id: int, json: bool) -> None
         else:
             __print_table_test_execution(test_run_execution.dict())
     except UnexpectedResponse as e:
-        handle_api_error(e, "create test run execution")
+        handle_api_error(e, "get test run execution")
 
 
 def __test_run_execution_batch(
@@ -108,7 +124,23 @@ def __test_run_execution_batch(
         else:
             __print_table_test_executions(test_run_executions)
     except UnexpectedResponse as e:
-        handle_api_error(e, "create test run execution")
+        handle_api_error(e, "get test run executions")
+
+
+def __fetch_test_run_execution_log(sync_apis: SyncApis, id: int) -> None:
+    try:
+        test_run_execution_api = sync_apis.test_run_executions_api
+        log_content = test_run_execution_api.download_log_api_v1_test_run_executions_id_log_get(
+            id=id, json_entries=False, download=False
+        )
+
+        if log_content:
+            click.echo(log_content)
+        else:
+            click.echo("No log content available for this test run execution.")
+
+    except UnexpectedResponse as e:
+        handle_api_error(e, "fetch test run execution log")
 
 
 def __print_table_test_executions(test_execution: list) -> None:

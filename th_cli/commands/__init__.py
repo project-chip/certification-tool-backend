@@ -15,23 +15,16 @@
 #
 from .abort_testing import abort_testing
 from .available_tests import available_tests
-from .project import create_project, delete_project, list_projects, update_project
+from .project import project
 from .run_tests import run_tests
-from .test_run_execution_history import test_run_execution_history
-from .test_run_execution_log import test_run_execution_log
+from .test_run_execution import test_run_execution
 from .test_runner_status import test_runner_status
-from .versions import versions
 
 __all__ = [
     "abort_testing",
     "available_tests",
-    "create_project",
-    "delete_project",
-    "list_projects",
+    "project",
     "run_tests",
-    "test_run_execution_history",
-    "test_run_execution_log",
-    "update_project",
+    "test_run_execution",
     "test_runner_status",
-    "versions",
 ]

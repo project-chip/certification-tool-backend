@@ -36,153 +36,154 @@ def _abort_if_false(ctx, param, value):
 
 
 @click.command(
-    no_args_is_help=True,
-    short_help=colorize_help("Create a new project"),
-    help=colorize_cmd_help("create_project", "Create a new project"),
+    short_help=colorize_help("Manage projects"),
+    help=colorize_cmd_help("project", "Create, list, update, or delete projects"),
+)
+@click.argument(
+    "operation",
+    type=click.Choice(["create", "list", "update", "delete"], case_sensitive=False),
+)
+@click.option(
+    "--id",
+    "-i",
+    type=int,
+    help=colorize_help("Project ID (required for update/delete operations, optional for list)"),
 )
 @click.option(
     "--name",
     "-n",
-    required=True,
     type=str,
-    help=colorize_help("Name of the project"),
+    help=colorize_help("Name of the project (required for create operation)"),
 )
 @click.option(
     "--config",
     "-c",
-    required=False,
     type=click.Path(file_okay=True, dir_okay=False),
-    default=None,
-    help=colorize_help("Config JSON file for the project"),
-)
-def create_project(name: str, config: Optional[str]) -> None:
-    """Create a new project"""
-    client = None
-    try:
-        client = get_client()
-        sync_apis = SyncApis(client)
-
-        # Get default config
-        test_environment_config = sync_apis.projects_api.default_config_api_v1_projects_default_config_get()
-
-        # Load custom config if provided
-        if config:
-            try:
-                with open(config, "r") as f:
-                    config_dict = json.load(f)
-                test_environment_config = TestEnvironmentConfig(**config_dict)
-            except FileNotFoundError as e:
-                handle_file_error(e, "config file")
-            except json.JSONDecodeError as e:
-                raise CLIError(f"Invalid JSON in config file: {e.msg}")
-            except ValidationError as e:
-                raise CLIError(f"Invalid configuration: {e}")
-
-        # Create project
-        project_create = ProjectCreate(name=name, config=test_environment_config)
-
-        try:
-            response = sync_apis.projects_api.create_project_api_v1_projects_post(project_create=project_create)
-            click.echo(colorize_success(f"Project '{response.name}' created with ID {response.id}"))
-        except UnexpectedResponse as e:
-            handle_api_error(e, f"create project '{name}'")
-
-    except CLIError:
-        raise  # Re-raise CLI Errors as-is
-    except Exception as e:
-        # Catch any unexpected errors
-        raise CLIError(f"Unexpected error creating project: {e}")
-    finally:
-        if client:
-            client.close()
-
-
-@click.command(
-    no_args_is_help=True,
-    short_help=colorize_help("Delete a project"),
-    help=colorize_cmd_help("delete_project", "Delete an existing project"),
-    epilog=italic('For a list of project IDs, use "th-cli list-projects"'),
-)
-@click.option(
-    "--id",
-    "-i",
-    required=True,
-    type=int,
-    help=colorize_help("Project ID to delete"),
-)
-@click.option(
-    "--yes",
-    "-y",
-    is_flag=True,
-    callback=_abort_if_false,
-    expose_value=False,
-    prompt=colorize_error("Are you sure you want to delete the project?"),
-    help=colorize_help("Delete the project without confirmation"),
-)
-def delete_project(id: int) -> None:
-    """Delete a project"""
-    client = None
-    try:
-        client = get_client()
-        sync_apis = SyncApis(client)
-        sync_apis.projects_api.delete_project_api_v1_projects_id_delete(id=id)
-        click.echo(colorize_success(f"Project {id} was deleted."))
-    except CLIError:
-        raise  # Re-raise CLI Errors as-is
-    except UnexpectedResponse as e:
-        handle_api_error(e, f"delete project ID '{id}'")
-    finally:
-        if client:
-            client.close()
-
-
-@click.command(
-    short_help=colorize_help("Get a list of projects"),
-    help=colorize_cmd_help("list_projects", "Get a list of the existing projects"),
-)
-@click.option(
-    "--id",
-    "-i",
-    default=None,
-    required=False,
-    type=int,
-    help=colorize_help("Fetch specific project via ID"),
+    help=colorize_help("Config JSON file for the project (optional for create, required for update)"),
 )
 @click.option(
     "--skip",
     "-s",
-    default=None,
-    required=False,
     type=int,
-    help=colorize_help("The first N projects to skip, ordered by ID"),
+    help=colorize_help("The first N projects to skip, ordered by ID (list operation only)"),
 )
 @click.option(
     "--limit",
     "-l",
-    default=None,
-    required=False,
     type=int,
-    help=colorize_help("Maximun number of projects to fetch"),
+    help=colorize_help("Maximum number of projects to fetch (list operation only)"),
 )
 @click.option(
     "--archived",
-    default=False,
     is_flag=True,
-    help=colorize_help("List only archived projects"),
+    default=False,
+    help=colorize_help("List only archived projects (list operation only)"),
 )
 @click.option(
     "--json",
     is_flag=True,
     default=False,
-    help=colorize_help("Print JSON response for more details"),
+    help=colorize_help("Print JSON response for more details (list operation only)"),
 )
-def list_projects(
-    id: Optional[int], archived: Optional[bool], skip: Optional[int], limit: Optional[int], json: Optional[bool]
+@click.option(
+    "--yes",
+    "-y",
+    is_flag=True,
+    help=colorize_help("Delete the project without confirmation (delete operation only)"),
+)
+def project(
+    operation: str,
+    id: Optional[int],
+    name: Optional[str],
+    config: Optional[str],
+    skip: Optional[int],
+    limit: Optional[int],
+    archived: Optional[bool] = False,
+    json: Optional[bool] = False,
+    yes: Optional[bool] = False,
 ) -> None:
-    """Get a list of projects"""
+    """Manage projects - create, list, update, or delete"""
+
+    # Validate operation-specific requirements
+    if operation == "create":
+        if not name:
+            raise click.ClickException("--name is required for create operation")
+    elif operation == "update":
+        if not id:
+            raise click.ClickException("--id is required for update operation")
+        if not config:
+            raise click.ClickException("--config is required for update operation")
+    elif operation == "delete":
+        if not id:
+            raise click.ClickException("--id is required for delete operation")
+        if not yes:
+            if not click.confirm(colorize_error("Are you sure you want to delete the project?")):
+                click.echo("Operation cancelled.")
+                return
 
     client = None
     sync_apis = None
+    try:
+        client = get_client()
+        sync_apis = SyncApis(client)
+        if operation == "create":
+            _create_project(sync_apis, name, config)
+        elif operation == "list":
+            _list_projects(sync_apis, id, archived, skip, limit, json)
+        elif operation == "update":
+            _update_project(sync_apis, id, config)
+        elif operation == "delete":
+            _delete_project(sync_apis, id)
+    except CLIError:
+        raise  # Re-raise CLI Errors as-is
+    except Exception as e:
+        # Catch any unexpected errors
+        raise CLIError(f"Unexpected error in {operation} operation: {e}")
+    finally:
+        if client:
+            client.close()
+
+
+def _create_project(sync_apis: SyncApis, name: str, config: Optional[str]) -> None:
+    """Create a new project"""
+    # Get default config
+    try:
+        test_environment_config = sync_apis.projects_api.default_config_api_v1_projects_default_config_get()
+    except UnexpectedResponse as e:
+        handle_api_error(e, "get default config")
+
+    # Load custom config if provided
+    if config:
+        try:
+            with open(config, "r") as f:
+                config_dict = json.load(f)
+            test_environment_config = TestEnvironmentConfig(**config_dict)
+        except FileNotFoundError as e:
+            handle_file_error(e, "config file")
+        except json.JSONDecodeError as e:
+            raise CLIError(f"Invalid JSON in config file: {e.msg}")
+        except ValidationError as e:
+            raise CLIError(f"Invalid configuration: {e}")
+
+    # Create project
+    project_create = ProjectCreate(name=name, config=test_environment_config)
+
+    try:
+        response = sync_apis.projects_api.create_project_api_v1_projects_post(project_create=project_create)
+        click.echo(colorize_success(f"Project '{response.name}' created with ID {response.id}"))
+    except UnexpectedResponse as e:
+        handle_api_error(e, f"create project '{name}'")
+
+
+def _list_projects(
+    sync_apis: SyncApis,
+    id: Optional[int],
+    archived: bool,
+    skip: Optional[int],
+    limit: Optional[int],
+    json: bool,
+) -> None:
+    """List projects"""
 
     def __list_project_by_id(id: int) -> Project:
         try:
@@ -219,61 +220,28 @@ def list_projects(
             )
         )
 
+    if id is not None:
+        projects = __list_project_by_id(id)
+    else:
+        projects = __list_project_by_batch(archived, skip, limit)
+
+    if projects is None or (isinstance(projects, list) and len(projects) == 0):
+        raise CLIError("Server did not return any project")
+
+    if json:
+        __print_json(projects)
+    else:
+        __print_table(projects)
+
+
+def _update_project(sync_apis: SyncApis, id: int, config: str) -> None:
+    """Update an existing project"""
     try:
-        client = get_client()
-        sync_apis = SyncApis(client)
-
-        if id is not None:
-            projects = __list_project_by_id(id)
-        else:
-            projects = __list_project_by_batch(archived, skip, limit)
-
-        if projects is None or (isinstance(projects, list) and len(projects) == 0):
-            raise CLIError("Server did not return any project")
-
-        if json:
-            __print_json(projects)
-        else:
-            __print_table(projects)
-    except CLIError:
-        raise  # Re-raise CLI Errors as-is
-    finally:
-        if client:
-            client.close()
-
-
-@click.command(
-    no_args_is_help=True,
-    short_help=colorize_help("Update a project"),
-    help=colorize_cmd_help("update_project", "Update an existing project configuration"),
-)
-@click.option(
-    "--id",
-    "-i",
-    required=True,
-    type=int,
-    help=colorize_help("The ID for the project to update"),
-)
-@click.option(
-    "--config",
-    "-c",
-    required=True,
-    type=click.Path(file_okay=True, dir_okay=False),
-    help=colorize_help("New config JSON file path"),
-)
-def update_project(id: int, config: str):
-    """Updates project with full test environment config file"""
-    client = None
-    try:
-        client = get_client()
-        sync_apis = SyncApis(client)
-        file = open(config, "r")
-        config_dict = json.load(file)
-        projectUpdate = ProjectUpdate(**config_dict)
-        response = sync_apis.projects_api.update_project_api_v1_projects_id_put(id=id, project_update=projectUpdate)
+        with open(config, "r") as f:
+            config_dict = json.load(f)
+        project_update = ProjectUpdate(**config_dict)
+        response = sync_apis.projects_api.update_project_api_v1_projects_id_put(id=id, project_update=project_update)
         click.echo(colorize_success(f"Project {response.name} is updated with the new config."))
-    except CLIError:
-        raise  # Re-raise CLI Errors as-is
     except json.JSONDecodeError as e:
         raise CLIError(f"Failed to parse JSON parameter: {e.msg}")
     except FileNotFoundError as e:
@@ -282,6 +250,12 @@ def update_project(id: int, config: str):
         raise CLIError(f"Invalid configuration: {e}")
     except UnexpectedResponse as e:
         handle_api_error(e, f"update project with '{id}'")
-    finally:
-        if client:
-            client.close()
+
+
+def _delete_project(sync_apis: SyncApis, id: int) -> None:
+    """Delete a project"""
+    try:
+        sync_apis.projects_api.delete_project_api_v1_projects_id_delete(id=id)
+        click.echo(colorize_success(f"Project {id} was deleted."))
+    except UnexpectedResponse as e:
+        handle_api_error(e, f"delete project ID '{id}'")
