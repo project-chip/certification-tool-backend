@@ -21,6 +21,7 @@ from .prompt_request import (
     PushAVStreamVerificationRequest,
     StreamVerificationPromptRequest,
     TextInputPromptRequest,
+    TwoWayTalkVerificationRequest,
     UploadFilePromptRequest,
 )
 from .prompt_response import PromptResponse

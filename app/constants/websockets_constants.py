@@ -40,6 +40,7 @@ class MessageTypeEnum(str, Enum):
     INVALID_MESSAGE = "invalid_message"
     STREAM_VERIFICATION_REQUEST = "stream_verification_request"
     IMAGE_VERIFICATION_REQUEST = "image_verification_request"
+    TWO_WAY_TALK_VERIFICATION_REQUEST = "two_way_talk_verification_request"
     PUSH_AV_STREAM_VERIFICATION_REQUEST = "push_av_stream_verification_request"
 
 
