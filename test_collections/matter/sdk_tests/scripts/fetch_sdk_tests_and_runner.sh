@@ -158,10 +158,9 @@ rm -rf ${EXTRACTION_ROOT}
 
 mkdir -p ${EXTRACTION_ROOT}
 
-cd ${SDK_PATH}/scripts/py_matter_idl
-python -m build --outdir ${EXTRACTION_ROOT}
-cd ${SDK_PATH}/scripts/py_matter_yamltests
-python -m build --outdir ${EXTRACTION_ROOT}
+
+python -m build --outdir "${EXTRACTION_ROOT}" "${SDK_PATH}/scripts/py_matter_idl"
+python -m build --outdir "${EXTRACTION_ROOT}" "${SDK_PATH}/scripts/py_matter_yamltests"
 # Create chipyaml package with the full adapters structure
 mkdir -p "${EXTRACTION_ROOT}/chipyaml_src"
 cp -r ${SDK_PATH}/scripts/tests/chipyaml ${EXTRACTION_ROOT}/chipyaml_src/
@@ -183,8 +182,7 @@ where = ["."]
 EOF
 
 # Build chipyaml package from the source root
-cd ${EXTRACTION_ROOT}/chipyaml_src
-python -m build --outdir ${EXTRACTION_ROOT}
+python -m build --outdir "${EXTRACTION_ROOT}" "${EXTRACTION_ROOT}/chipyaml_src"
 
 # Clean up temporary source directory
 rm -rf ${EXTRACTION_ROOT}/chipyaml_src
