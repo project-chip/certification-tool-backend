@@ -46,6 +46,8 @@ class MessageTypeEnum(str, Enum):
 class WebSocketTypeEnum(str, Enum):
     MAIN = "main"
     VIDEO = "video"
+    WEBRTC_PEER = "webrtc_peer"
+    WEBRTC_CONTROLLER = "webrtc_controller"
 
 
 class WebSocketConnection:
