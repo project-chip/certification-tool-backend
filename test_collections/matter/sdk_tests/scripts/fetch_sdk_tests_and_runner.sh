@@ -32,8 +32,7 @@ SDK_YAML_PATH="src/app/tests/suites/certification"
 SDK_PYTHON_SCRIPT_PATH="src/python_testing"
 SDK_PYTHON_DATA_MODEL_PATH="data_model"
 SDK_SCRIPTS_PATH="scripts/"
-SDK_EXAMPLE_CHIP_TOOL_PATH="examples/chip-tool"
-SDK_EXAMPLE_PLACEHOLDER_PATH="examples/placeholder"
+SDK_ADAPTER_PATH="scripts/tests/chipyaml"
 SDK_DATA_MODEL_PATH="src/app/zap-templates/zcl/data-model/chip"
 
 TEST_COLLECTIONS_SDK_CHECKOUT_PATH="$MATTER_PROGRAM_DIR/sdk_tests/sdk_checkout"
@@ -102,7 +101,7 @@ then
     git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $TMP_SDK_FOLDER
     cd $TMP_SDK_FOLDER
     git sparse-checkout init
-    git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_EXAMPLE_PLACEHOLDER_PATH $SDK_EXAMPLE_CHIP_TOOL_PATH $SDK_DATA_MODEL_PATH $SDK_PYTHON_SCRIPT_PATH $SDK_PYTHON_DATA_MODEL_PATH
+    git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_ADAPTER_PATH $SDK_DATA_MODEL_PATH $SDK_PYTHON_SCRIPT_PATH $SDK_PYTHON_DATA_MODEL_PATH
     git checkout -q $SDK_SHA
     SDK_PATH="$TMP_SDK_PATH"
 fi
@@ -163,24 +162,37 @@ cd ${SDK_PATH}/scripts/py_matter_idl
 python -m build --outdir ${EXTRACTION_ROOT}
 cd ${SDK_PATH}/scripts/py_matter_yamltests
 python -m build --outdir ${EXTRACTION_ROOT}
-# Copy the chipyaml adapters and install as editable package
-cp -r ${SDK_PATH}/scripts/tests/chipyaml ${EXTRACTION_ROOT}/chipyaml
+# Create chipyaml package with the full adapters structure
+mkdir -p ${EXTRACTION_ROOT}/chipyaml_src
+cp -r ${SDK_PATH}/scripts/tests/chipyaml ${EXTRACTION_ROOT}/chipyaml_src/
 
-# Create a simple setup.py for chipyaml in the extraction root
-cat > ${EXTRACTION_ROOT}/setup.py << 'EOF'
-from setuptools import setup, find_packages
-setup(
-    name='chipyaml',
-    version='1.0.0',
-    packages=find_packages(),
-    install_requires=[]
-)
+# Create pyproject.toml for chipyaml package at the root level
+cat > ${EXTRACTION_ROOT}/chipyaml_src/pyproject.toml << 'EOF'
+[build-system]
+requires = ['setuptools>=45', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "chipyaml"
+version = "0.0.1"
+authors = [{name = "Project CHIP Authors"}]
+description = "Matter chipyaml package with adapters"
+
+[tool.setuptools.packages.find]
+where = ["."]
 EOF
 
-# Install chipyaml as editable package
-cd ${EXTRACTION_ROOT}
-pip install -e .
+# Build chipyaml package from the source root
+cd ${EXTRACTION_ROOT}/chipyaml_src
+python -m build --outdir ${EXTRACTION_ROOT}
 
+# Clean up temporary source directory
+rm -rf ${EXTRACTION_ROOT}/chipyaml_src
+
+# Change to a safe directory before installing wheels
+cd ${EXTRACTION_ROOT}
+
+echo "install_matter_wheels" 
 install_matter_wheels
 
 # The runner needs some cluster definitions to used when parsing the YAML test. It allows to properly translate YAML
