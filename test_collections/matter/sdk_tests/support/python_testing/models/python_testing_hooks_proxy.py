@@ -37,6 +37,7 @@ class SDKPythonTestResultEnum(str, Enum):
     SHOW_VIDEO_PROMPT = "show_video_prompt"
     SHOW_IMAGE_PROMPT = "show_image_prompt"
     SHOW_TWO_WAY_TALK_PROMPT = "show_two_way_talk_prompt"
+    SHOW_PUSH_AV_STREAM_PROMPT = "show_push_av_stream_prompt"
 
 
 class SDKPythonTestResultBase(BaseModel):
@@ -132,6 +133,10 @@ class SDKPythonTestResultShowImagePrompt(SDKPythonTestResultBase):
 
 class SDKPythonTestResultShowTwoWayTalkPrompt(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.SHOW_TWO_WAY_TALK_PROMPT
+
+    
+class SDKPythonTestResultShowPushAVStreamPrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_PUSH_AV_STREAM_PROMPT
     msg: str
 
 
@@ -237,3 +242,6 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
 
     def show_two_way_talk_prompt(self, msg: str) -> None:
         self.results.put(SDKPythonTestResultShowTwoWayTalkPrompt(msg=msg))
+
+    def show_push_av_stream_prompt(self, msg: str) -> None:
+        self.results.put(SDKPythonTestResultShowPushAVStreamPrompt(msg=msg))

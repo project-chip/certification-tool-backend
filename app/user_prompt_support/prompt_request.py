@@ -81,3 +81,9 @@ class TwoWayTalkVerificationRequest(OptionsSelectPromptRequest):
     @property
     def messageType(self) -> MessageTypeEnum:
         return MessageTypeEnum.TWO_WAY_TALK_VERIFICATION_REQUEST
+
+ 
+class PushAVStreamVerificationRequest(OptionsSelectPromptRequest):
+    @property
+    def messageType(self) -> MessageTypeEnum:
+        return MessageTypeEnum.PUSH_AV_STREAM_VERIFICATION_REQUEST

@@ -41,11 +41,14 @@ class MessageTypeEnum(str, Enum):
     STREAM_VERIFICATION_REQUEST = "stream_verification_request"
     IMAGE_VERIFICATION_REQUEST = "image_verification_request"
     TWO_WAY_TALK_VERIFICATION_REQUEST = "two_way_talk_verification_request"
+    PUSH_AV_STREAM_VERIFICATION_REQUEST = "push_av_stream_verification_request"
 
 
 class WebSocketTypeEnum(str, Enum):
     MAIN = "main"
     VIDEO = "video"
+    WEBRTC_PEER = "webrtc_peer"
+    WEBRTC_CONTROLLER = "webrtc_controller"
 
 
 class WebSocketConnection:

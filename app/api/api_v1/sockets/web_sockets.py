@@ -17,6 +17,7 @@ import asyncio
 
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
+from loguru import logger
 
 from app.constants.websockets_constants import WebSocketConnection, WebSocketTypeEnum
 from app.socket_connection_manager import SocketConnectionManager
@@ -51,3 +52,31 @@ async def websocket_video_endpoint(websocket: WebSocket) -> None:
     connection = WebSocketConnection(websocket, WebSocketTypeEnum.VIDEO)
     await socket_connection_manager.connect(connection)
     await socket_connection_manager.relay_video_frames(connection)
+
+
+@router.websocket("/ws/webrtc/controller")
+async def websocket_webrtc_controller_endpoint(websocket: WebSocket) -> None:
+    socket_connection_manager = SocketConnectionManager()
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.WEBRTC_CONTROLLER)
+    try:
+        if await socket_connection_manager.connect(connection):
+            await socket_connection_manager.start_webrtc_signaling(connection)
+    except Exception as e:
+        logger.error(
+            f"An error occurred during WebRTC Controller WebSocket communication: {e}"
+        )
+        socket_connection_manager.disconnect(connection)
+
+
+@router.websocket("/ws/webrtc/peer")
+async def websocket_webrtc_peer_endpoint(websocket: WebSocket) -> None:
+    socket_connection_manager = SocketConnectionManager()
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.WEBRTC_PEER)
+    try:
+        if await socket_connection_manager.connect(connection):
+            await socket_connection_manager.start_webrtc_signaling(connection)
+    except Exception as e:
+        logger.error(
+            f"An error occurred during WebRTC Peer WebSocket communication: {e}"
+        )
+        socket_connection_manager.disconnect(connection)

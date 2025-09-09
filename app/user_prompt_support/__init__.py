@@ -18,6 +18,7 @@ from .prompt_request import (
     ImageVerificationPromptRequest,
     OptionsSelectPromptRequest,
     PromptRequest,
+    PushAVStreamVerificationRequest,
     StreamVerificationPromptRequest,
     TextInputPromptRequest,
     TwoWayTalkVerificationRequest,
