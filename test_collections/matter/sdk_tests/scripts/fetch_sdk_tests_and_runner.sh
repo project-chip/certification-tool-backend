@@ -163,7 +163,7 @@ python -m build --outdir ${EXTRACTION_ROOT}
 cd ${SDK_PATH}/scripts/py_matter_yamltests
 python -m build --outdir ${EXTRACTION_ROOT}
 # Create chipyaml package with the full adapters structure
-mkdir -p ${EXTRACTION_ROOT}/chipyaml_src
+mkdir -p "${EXTRACTION_ROOT}/chipyaml_src"
 cp -r ${SDK_PATH}/scripts/tests/chipyaml ${EXTRACTION_ROOT}/chipyaml_src/
 
 # Create pyproject.toml for chipyaml package at the root level
