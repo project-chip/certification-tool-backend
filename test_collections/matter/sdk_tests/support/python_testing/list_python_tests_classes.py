@@ -75,7 +75,9 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
                 for alias in node.names:
                     imported_base_classes.add(alias.name)
 
-    def inherits_from_matter_base_test(class_def: ast.ClassDef, visited=None) -> bool:
+    def inherits_from_matter_base_test(
+        class_def: ast.ClassDef, visited: set = None
+    ) -> bool:
         if visited is None:
             visited = set()
 
