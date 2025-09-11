@@ -2779,6 +2779,143 @@
             ]
         },
         {
+            "class_name": "TC_AVSM_2_17",
+            "desc": "[TC-AVSM-2.17] Validate stream Soft Privacy and Livestream handling with Server as DUT",
+            "function": "test_TC_AVSM_2_17",
+            "path": "sdk/TC_AVSM_2_17",
+            "pics": [
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "DUT commissioned and allocated audio and video streams",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition"
+                },
+                {
+                    "description": "TH reads FeatureMap attribute from CameraAVStreamManagement Cluster on DUT",
+                    "expectation": "Verify VDO, ADO and PRIV are supported.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on DUT",
+                    "expectation": "Verify the number of allocated video streams in the list is 1.",
+                    "is_commissioning": "Store StreamID as aVideoStreamID.Store ReferenceCount as aVideoRefCount",
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on DUT",
+                    "expectation": "Verify the number of allocated audio streams in the list is 1.",
+                    "is_commissioning": "Store StreamID as aAudioStreamID.Store ReferenceCount as aAudioRefCount",
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH writes attribute `SoftLivestreamPrivacyModeEnabled` to false in the CameraAVStreamManagement Cluster on DUT.",
+                    "expectation": "DUT responds with Success",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH reads `CurrentSessions` attribute from WebRTCTransportProvider Cluster on DUT.",
+                    "expectation": "Verify that the count is equal to 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH sends the ProvideOffer command on the WebRTCTransportProvider Cluster with a null WebRTCSessionID, aVideoStreamID and aAudioStreamID.",
+                    "expectation": "DUT responds with ProvideOfferResponse containing allocated WebRTCSessionID.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH waits for the `Answer` command for the sent `Offer`. DUT sends the `Answer`.",
+                    "expectation": "Verify that the `sessionID` matches that in the `ProvideOfferResponse in step 6.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH reads `CurrentSessions` attribute from WebRTCTransportProvider Cluster on DUT.",
+                    "expectation": "Verify that the count is equal to 1 and the session ID matches the one in the ProvideOfferResponse in step 6.",
+                    "is_commissioning": "Save session as aWebRTCSessionID",
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH reads `AllocatedVideoStreams` attribute from CameraAVStreamManagement Cluster on DUT.",
+                    "expectation": "Verify that the reference count of the VideoStream for `aVideoStreamID` is equal to `aVideoRefCount` + 1.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads `AllocatedAudioStreams` attribute from CameraAVStreamManagement Cluster on DUT.",
+                    "expectation": "Verify that the reference count of the AudioStream for `aAudioStreamID` is equal to `aAudioRefCount` + 1.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH writes attribute `SoftLivestreamPrivacyModeEnabled` to true in the CameraAVStreamManagement Cluster on DUT.",
+                    "expectation": "DUT responds with Success",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH waits for the `End` command for the WebRTC session. DUT sends the `End` command.",
+                    "expectation": "Verify that the `sessionID` matches `aWebRTCSessionID` and reason code is `Privacy`.",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH reads `CurrentSessions` attribute from WebRTCTransportProvider Cluster on DUT.",
+                    "expectation": "Verify that the count is equal to 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH reads `AllocatedVideoStreams` attribute from CameraAVStreamManagement Cluster on DUT.",
+                    "expectation": "Verify that the reference count of the VideoStream for `aVideoStreamID` is equal to `aVideoRefCount`.",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH reads `AllocatedAudioStreams` attribute from CameraAVStreamManagement Cluster on DUT.",
+                    "expectation": "Verify that the reference count of the AudioStream for `aAudioStreamID` is equal to `aAudioRefCount`.",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "TH sends the VideoStreamDeallocate command with VideoStreamID set to aVideoStreamID.",
+                    "expectation": "DUT responds with Success",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "TH sends the AudioStreamDeallocate command with AudioStreamID set to aAudioStreamID.",
+                    "expectation": "DUT responds with Success.",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated video streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                    "expectation": "Verify the number of allocated audio streams in the list is 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "TH writes attribute `SoftLivestreamPrivacyModeEnabled` to false in the CameraAVStreamManagement Cluster on DUT.",
+                    "expectation": "DUT responds with Success",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                }
+            ]
+        },
+        {
             "class_name": "TC_AVSM_2_2",
             "desc": "[TC-AVSM-2.2] Validate Snapshot Stream Allocation functionality with Server as DUT",
             "function": "test_TC_AVSM_2_2",
@@ -5704,6 +5841,107 @@
             ]
         },
         {
+            "class_name": "TC_CADMIN_1_11",
+            "desc": "test_TC_CADMIN_1_11",
+            "function": "test_TC_CADMIN_1_11",
+            "path": "sdk/TC_CADMIN_1_11",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 gets the MaxCumulativeFailsafeSeconds value from BasicCommissioningInfo attribute in GeneralCommissioning Cluster",
+                    "expectation": "Should set the MaxCumulativeFailsafeSeconds value from BasicCommissioningInfo attribute to timeout",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 opens commissioning window on DUT with duration set to value for MaxCumulativeFailsafeSeconds",
+                    "expectation": "Commissioning window should open with timeout set to MaxCumulativeFailsafeSeconds",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH_CR2 fully commissions the DUT",
+                    "expectation": "DUT should fully commission",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 opens commissioning window on DUT with duration set to value from BasicCommissioningInfo",
+                    "expectation": "New commissioning window should open and be set to timeout",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR1 sends an OpenCommissioningWindow command to the DUT and attempts to open another commissioning window",
+                    "expectation": "Commissioning window should fail to be opened due to being busy",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH_CR2 sends an OpenCommissioningWindow command to the DUT and attempts to open another commissioning window",
+                    "expectation": "Commissioning window should fail to be opened due to being busy",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH_CR1 sends an RevokeCommissioning command to the DUT",
+                    "expectation": "Commissioning window should be closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH_CR1 reads the FeatureMap from the Administrator Commissioning Cluster to check to see if BC is supported on DUT",
+                    "expectation": "FeatureMap should be checked to see if BC enum is available feature, if not then test steps 9a-9d will be skipped",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH_CR1 opens commissioning window on DUT with duration set to value from BasicCommissioningInfo",
+                    "expectation": "Opens basic commissioning window on the DUT for timeout set to value of MaxCumulativeFailsafeSeconds",
+                    "is_commissioning": false,
+                    "test_plan_number": "9a"
+                },
+                {
+                    "description": "TH_CR1 sends an OpenBasicCommissioningWindow command to the DUT and attempts to open another commissioning window",
+                    "expectation": "Commissioning window should fail to be opened due to being busy",
+                    "is_commissioning": false,
+                    "test_plan_number": "9b"
+                },
+                {
+                    "description": "TH_CR2 sends an OpenBasicCommissioningWindow command to the DUT and attempts to open another commissioning window",
+                    "expectation": "Commissioning window should fail to be opened due to being busy",
+                    "is_commissioning": false,
+                    "test_plan_number": "9c"
+                },
+                {
+                    "description": "TH_CR1 sends a RevokeCommissioning command to the DUT",
+                    "expectation": "Commissioning window should be closed",
+                    "is_commissioning": false,
+                    "test_plan_number": "9d"
+                },
+                {
+                    "description": "TH_CR2 reads the CurrentFabricIndex attribute from the Operational Credentials cluster and saves as th2_idx",
+                    "expectation": "th2_idx set to value for CurrentFabricIndex attribute from TH_CR2",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH_CR1 sends the RemoveFabric command to the DUT with the FabricIndex set to th2_idx",
+                    "expectation": "TH_CR1 removes TH_CR2 fabric using th2_idx",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                }
+            ]
+        },
+        {
             "class_name": "TC_CADMIN_1_15",
             "desc": "test_TC_CADMIN_1_15",
             "function": "test_TC_CADMIN_1_15",
@@ -5837,6 +6075,190 @@
                     "expectation": "Verify the list shows initial_number_of_fabrics fabrics.",
                     "is_commissioning": false,
                     "test_plan_number": 21
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CADMIN_1_19",
+            "desc": "test_TC_CADMIN_1_19",
+            "function": "test_TC_CADMIN_1_19",
+            "path": "sdk/TC_CADMIN_1_19",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 reads the BasicCommissioningInfo attribute from the General Commissioning cluster and saves the MaxCumulativeFailsafeSeconds field as max_window_duration.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 reads the Fabrics attribute from the Node Operational Credentials cluster using a non-fabric-filtered read. Save the number of fabrics in the list as initial_number_of_fabrics",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH_CR1 reads the SupportedFabrics attribute from the Node Operational Credentials cluster. Save max_fabrics",
+                    "expectation": "Verify that max_fabrics is larger than initial_number_of_fabrics. If not, instruct the tester to remove one non-test-harness fabric and re-start the test.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "Repeat the following steps (5a and 5b) max_fabrics - initial_number_of_fabrics times",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": "5a"
+                },
+                {
+                    "description": "TH creates a controller on a new fabric and commissions DUT_CE using that controller",
+                    "expectation": "Commissioning is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": "5b"
+                },
+                {
+                    "description": "The controller reads the CurrentFabricIndex from the Node Operational Credentials cluster. Save all fabrics in a list as fabric_idxs.",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": "5c"
+                },
+                {
+                    "description": "Shutdown the fabrics created during test step 5b from TH only so that it does not fill up the fabric table",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "5d"
+                },
+                {
+                    "description": "TH reads the CommissionedFabrics attributes from the Node Operational Credentials cluster.",
+                    "expectation": "Verify this is equal to max_fabrics",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH_CR1 send an OpenCommissioningWindow command to DUT_CE using a commissioning timeout of max_window_duration",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH creates a controller on a new fabric and commissions DUT_CE using that controller",
+                    "expectation": "Verify DUT_CE responds with NOCResponse with a StatusCode field value of TableFull(5)",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH_CR1 sends the RemoveFabric command in to DUT_CE to remove fabrics saved on device using fabric_idxs",
+                    "expectation": "{resDutSuccess}",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH reads the CommissionedFabrics attributes from the Node Operational Credentials cluster.",
+                    "expectation": "Verify this is equal to initial_number_of_fabrics.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH subscribes to the window status attribute",
+                    "expectation": "Success",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH sends the RevokeCommissioning command",
+                    "expectation": "Success",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH waits to receive an attribute report that indicates the window status is closed",
+                    "expectation": "Report is received",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CADMIN_1_22_24",
+            "desc": "test_TC_CADMIN_1_22",
+            "function": "test_TC_CADMIN_1_22",
+            "path": "sdk/TC_CADMIN_1_22",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 900 seconds",
+                    "expectation": "DUT_CE opens its Commissioning window to allow a second commissioning",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 sends an RevokeCommissioning command to the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH_CR1 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 901 seconds",
+                    "expectation": "DUT_CE does not open its Commissioning window to allow a second commissioning. DUT_CE shows 'Failed to open commissioning window. Global status 0x85'",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR1 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 180 seconds",
+                    "expectation": "Result is SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH_CR1 sends a RevokeCommissioning command to the DUT_CE",
+                    "expectation": "Result is SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using ECM with a value of 179 seconds",
+                    "expectation": "DUT_CE does not open its Commissioning window to allow a second commissioning. DUT_CE shows 'Failed to open commissioning window. Global status 0x85'",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH_CR1 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
                 }
             ]
         },
@@ -6146,6 +6568,184 @@
             ]
         },
         {
+            "class_name": "TC_CADMIN",
+            "desc": "test_TC_CADMIN_1_3",
+            "function": "test_TC_CADMIN_1_3",
+            "path": "sdk/TC_CADMIN_1_3_4",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "TH_CR1 starts a commissioning process with DUT_CE",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 reads the BasicCommissioningInfo attribute from the General Commissioning cluster and saves the MaxCumulativeFailsafeSeconds field as max_window_duration.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using a commissioning timeout of max_window_duration using ECM",
+                    "expectation": "DUT_CE opens its Commissioning window to allow a second commissioning.",
+                    "is_commissioning": false,
+                    "test_plan_number": "3a"
+                },
+                {
+                    "description": "DNS-SD records shows DUT_CE advertising",
+                    "expectation": "Verify that the DNS-SD advertisement shows CM=2",
+                    "is_commissioning": false,
+                    "test_plan_number": "3b"
+                },
+                {
+                    "description": "TH_CR1 writes and reads the Basic Information Cluster\u2019s NodeLabel mandatory attribute of DUT_CE",
+                    "expectation": "Verify DUT_CE responds to both write/read with a success",
+                    "is_commissioning": false,
+                    "test_plan_number": "3c"
+                },
+                {
+                    "description": "TH creates a controller (TH_CR2) on a new fabric and commissions DUT_CE using that controller. TH_CR2 should commission the device using a different NodeID than TH_CR1.",
+                    "expectation": "Commissioning is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 reads the Fabrics attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the RootPublicKey matches the root public key for TH_CR1 and the NodeID matches the node ID used when TH_CR1 commissioned the device.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR2 reads the Fabrics attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the RootPublicKey matches the root public key for TH_CR2 and the NodeID matches the node ID used when TH_CR2 commissioned the device.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH_CR1 writes and reads the Basic Information Cluster\u2019s NodeLabel mandatory attribute of DUT_CE",
+                    "expectation": "Verify DUT_CE responds to both write/read with a success",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "TH_CR2 reads, writes and then reads the Basic Information Cluster\u2019s NodeLabel mandatory attribute of DUT_CE",
+                    "expectation": "Verify the initial read reflect the value written in the above step. Verify DUT_CE responds to both write/read with a success",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH_CR2 opens a commissioning window on DUT_CE for 180 seconds using ECM",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "Wait for the commissioning window in step 9 to timeout",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH_CR2 reads the window status to verify the DUT_CE window is closed",
+                    "expectation": "DUT_CE windows status shows the window is closed",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH_CR2 opens a commissioning window on DUT_CE using ECM",
+                    "expectation": "DUT_CE opens its Commissioning window to allow a new commissioning",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
+                },
+                {
+                    "description": "TH_CR1 starts a commissioning process with DUT_CE before the timeout from step 12",
+                    "expectation": "Since DUT_CE was already commissioned by TH_CR1 in step 1, AddNOC fails with NOCResponse with StatusCode field set to FabricConflict (9)",
+                    "is_commissioning": false,
+                    "test_plan_number": 13
+                },
+                {
+                    "description": "TH_CR1 sends an RevokeCommissioning command to the DUT to cleanup step 13",
+                    "expectation": "Successfully revoked commissioning",
+                    "is_commissioning": false,
+                    "test_plan_number": 14
+                },
+                {
+                    "description": "TH_CR2 reads the CurrentFabricIndex attribute from the Operational Credentials cluster and saves as th2_idx, TH_CR1 sends the RemoveFabric command to the DUT with the FabricIndex set to th2_idx",
+                    "expectation": "TH_CR1 removes TH_CR2 fabric using th2_idx",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CADMIN",
+            "desc": "test_TC_CADMIN_1_4",
+            "function": "test_TC_CADMIN_1_4",
+            "path": "sdk/TC_CADMIN_1_3_4",
+            "pics": [
+                "CADMIN.S.F00"
+            ],
+            "steps": [
+                {
+                    "description": "TH_CR1 starts a commissioning process with DUT_CE",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH_CR1 reads the BasicCommissioningInfo attribute from the General Commissioning cluster and saves the MaxCumulativeFailsafeSeconds field as max_window_duration.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH_CR1 opens a commissioning window on DUT_CE using a commissioning timeout of max_window_duration using BCM",
+                    "expectation": "DUT_CE opens its Commissioning window to allow a second commissioning.",
+                    "is_commissioning": false,
+                    "test_plan_number": "3a"
+                },
+                {
+                    "description": "DNS-SD records shows DUT_CE advertising",
+                    "expectation": "Verify that the DNS-SD advertisement shows CM=1",
+                    "is_commissioning": false,
+                    "test_plan_number": "3b"
+                },
+                {
+                    "description": "TH_CR1 writes and reads the Basic Information Cluster\u2019s NodeLabel mandatory attribute of DUT_CE",
+                    "expectation": "Verify DUT_CE responds to both write/read with a success",
+                    "is_commissioning": false,
+                    "test_plan_number": "3c"
+                },
+                {
+                    "description": "TH creates a controller (TH_CR2) on a new fabric and commissions DUT_CE using that controller. TH_CR2 should commission the device using a different NodeID than TH_CR1.",
+                    "expectation": "Commissioning is successful",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH_CR1 reads the Fabrics attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the RootPublicKey matches the root public key for TH_CR1 and the NodeID matches the node ID used when TH_CR1 commissioned the device.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH_CR2 reads the Fabrics attribute from the Node Operational Credentials cluster using a fabric-filtered read",
+                    "expectation": "Verify that the RootPublicKey matches the root public key for TH_CR2 and the NodeID matches the node ID used when TH_CR2 commissioned the device.",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH_CR2 reads the CurrentFabricIndex attribute from the Operational Credentials cluster and saves as th2_idx, TH_CR1 sends the RemoveFabric command to the DUT with the FabricIndex set to th2_idx",
+                    "expectation": "TH_CR1 removes TH_CR2 fabric using th2_idx",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                }
+            ]
+        },
+        {
             "class_name": "TC_CADMIN_1_5",
             "desc": "test_TC_CADMIN_1_5",
             "function": "test_TC_CADMIN_1_5",
@@ -6255,6 +6855,53 @@
                     "expectation": "TH_CR1 removes TH_CR2 fabric",
                     "is_commissioning": false,
                     "test_plan_number": 17
+                }
+            ]
+        },
+        {
+            "class_name": "TC_CADMIN_1_9",
+            "desc": "test_TC_CADMIN_1_9",
+            "function": "test_TC_CADMIN_1_9",
+            "path": "sdk/TC_CADMIN_1_9",
+            "pics": [
+                "CADMIN.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "TH1 opens commissioning window on DUT with duration set to value for maxCumulativeFailsafeSeconds",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH2 attempts to connect 20 times to endpoint with incorrect passcode",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH2 attempts to connect to endpoint with correct passcode",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "TH1 opening Commissioning Window one more time to validate ability to do so",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH1 revoking Commissioning Window",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
                 }
             ]
         },
@@ -12729,6 +13376,142 @@
             ]
         },
         {
+            "class_name": "TC_COMMTR_2_1",
+            "desc": "Attributes with Server as DUT",
+            "function": "test_TC_COMMTR_2_1",
+            "path": "sdk/TC_COMMTR_2_1",
+            "pics": [
+                "COMMTR.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "DUT is commissioned",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "TH reads MaximumMeteredQuantities attribute",
+                    "expectation": "\n                     - DUT replies a null value or a uint16 value;\n                     - Store value as MaxMeteredQuantities.",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH reads MeteredQuantity attribute",
+                    "expectation": "\n                     - DUT replies Null or a list of MeteredQuantityStruct entries.\n                     - Verify that the list length less or equal MaxMeteredQuantities from step 3;\n                     - Verify that the TariffComponentIDs field is a list of uint32 values with length less or equal 128;\n                     - Verify that the Quantity field has int64 type;",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads MeteredQuantityTimestamp attribute",
+                    "expectation": "DUT replies a null value or epoch-s type.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads TariffUnit attribute",
+                    "expectation": "DUT replies a null value or TariffUnitEnum value in range 0-1.",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                }
+            ]
+        },
+        {
+            "class_name": "TC_COMMTR_3_1",
+            "desc": "Subscription Report Verification with Server as DUT",
+            "function": "test_TC_COMMTR_3_1",
+            "path": "sdk/TC_COMMTR_3_1",
+            "pics": [
+                "COMMTR.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "DUT is commissioned",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "Set up a subscription to the Commodity Metering cluster attributes:\n                     - MinIntervalFloor: 0\n                     - MaxIntervalCeiling: 10",
+                    "expectation": "Subscription is established successfully.",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH reads MaximumMeteredQuantities attribute.",
+                    "expectation": "\n                     - DUT replies a uint16 value or null;\n                     - Value is saved as MaxMeteredQuantitiesValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads MeteredQuantity attribute.",
+                    "expectation": "\n                     - DUT replies a list of MeteredQuantityStruct entries with length less or equal MaximumMeteredQuantitiesValue from step 2, or null;\n                     - For each entry:\n                        - TariffComponentIDs field has a list of uint32 value with length less or equal 128;\n                        - Quantity field has an int64 value;\n                     - Value is saved as MeteredQuantityValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads MeteredQuantityTimestamp attribute.",
+                    "expectation": "\n                     - DUT replies a epoch-s value, or null;\n                     - Value is saved as MeteredQuantityTimestampValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                },
+                {
+                    "description": "TH reads TariffUnit attribute.",
+                    "expectation": "\n                     - DUT replies a TariffUnitEnum value in range 0-1, or null;\n                     - Value is saved as TariffUnitValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "6"
+                },
+                {
+                    "description": "TH reads TestEventTriggersEnabled attribute from General Diagnostics Cluster.",
+                    "expectation": "Values is True.",
+                    "is_commissioning": false,
+                    "test_plan_number": "7"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.COMMTR.TEST_EVENT_TRIGGER_KEY \n                     and EventTrigger field set to PIXIT.COMMTR.TEST_EVENT_TRIGGER for Attributes Value Set Test Event.",
+                    "expectation": "Status code must be SUCCESS.",
+                    "is_commissioning": false,
+                    "test_plan_number": "8"
+                },
+                {
+                    "description": "TH awaits a MaximumMeteredQuantities attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and it contains a uint16 value, or null;\n                     - Verify the report is received and the value does not match the MaxMeteredQuantitiesValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "9"
+                },
+                {
+                    "description": "TH awaits a MeteredQuantity attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and it contains a list of MeteredQuantityStruct entries with length less or equal MaximumMeteredQuantitiesValue from step 9, or null;\n                     - For each entry:\n                        - TariffComponentIDs field has a list of uint32 value with length less or equal 128;\n                        - Quantity field has an int64 value;\n                     - The value does not match the MeteredQuantityValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "10"
+                },
+                {
+                    "description": "TH awaits a MeteredQuantityTimestamp attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and it contains a epoch-s value, or null;\n                     - The value does not match the MeteredQuantityTimestampValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "11"
+                },
+                {
+                    "description": "TH awaits a TariffUnit attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and it contains a TariffUnitEnum value in range 0-1, or null;\n                     - The value does not match the TariffUnitValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "12"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.COMMTR.TEST_EVENT_TRIGGER_KEY and \n                     EventTrigger field set to PIXIT.COMMTR.TEST_EVENT_TRIGGER for Test Event Clear.",
+                    "expectation": "Status code must be SUCCESS.",
+                    "is_commissioning": false,
+                    "test_plan_number": "13"
+                },
+                {
+                    "description": "TH removes the subscription the Commodity Metering cluster.",
+                    "expectation": "Subscription is removed successfully.",
+                    "is_commissioning": false,
+                    "test_plan_number": "14"
+                }
+            ]
+        },
+        {
             "class_name": "TC_DA_1_2",
             "desc": "Device Attestation Request Validation [DUT - Commissionee]",
             "function": "test_TC_DA_1_2",
@@ -16249,6 +17032,27 @@
                 {
                     "description": "Run entire test",
                     "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_DeviceConformance",
+            "desc": "test_TC_IDM_14_1",
+            "function": "test_TC_IDM_14_1",
+            "path": "sdk/TC_DeviceConformance",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "TH performs a wildcard read of all attributes and endpoints on the device",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 0
+                },
+                {
+                    "description": " For each root-node-restricted cluster in the list, ensure the cluster does not appear on any endpoint that is not the root node.\n                                List of root-node-restricted clusters:\n\n                                * ACL\n                                * Time Synchronization\n                                * TLS Certificate Management\n                                * TLS Client Management\n                         ",
+                    "expectation": "No root-node-restricted clusters appear on non-root endpoints",
                     "is_commissioning": false,
                     "test_plan_number": 1
                 }
@@ -22544,6 +23348,160 @@
             ]
         },
         {
+            "class_name": "TC_MTRID_2_1",
+            "desc": "Attributes with Server as DUT",
+            "function": "test_TC_MTRID_2_1",
+            "path": "sdk/TC_MTRID_2_1",
+            "pics": [
+                "MTRID.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "DUT is commissioned.",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "TH reads MeterType attribute",
+                    "expectation": "\n                     - DUT replies a null or a MeterTypeEnum value;\n                     - Verify that value in range 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH reads PointOfDelivery attribute",
+                    "expectation": "\n                     - DUT replies a null or a value of string type;\n                     - Verify that size is in range 0 - 64.",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads MeterSerialNumber attribute",
+                    "expectation": "\n                     - DUT replies a null or a value of string type;\n                     - Verify that size is in range 0 - 64.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads ProtocolVersion attribute",
+                    "expectation": "\n                     - DUT replies a null or a value of string type;\n                     - Verify that size is in range 0 - 64.",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                },
+                {
+                    "description": "TH reads PowerThreshold attribute",
+                    "expectation": "\n                     - DUT replies a null or a value of PowerThresholdStruct type;\n                     - PowerThreshold field has type int64;\n                     - ApparentPowerThreshold field has type int64;\n                     - PowerThresholdSource field has type PowerThresholdSourceEnum and value in range 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "6"
+                }
+            ]
+        },
+        {
+            "class_name": "TC_MTRID_3_1",
+            "desc": "Subscription Report Verification with Server as DUT",
+            "function": "test_TC_MTRID_3_1",
+            "path": "sdk/TC_MTRID_3_1",
+            "pics": [
+                "MTRID.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "DUT is commissioned.",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "Set up a subscription to the Meter Identification cluster:\n                     - MinIntervalFloor: 0\n                     - MaxIntervalCeiling: 10",
+                    "expectation": "Subscription successfully established.",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH reads MeterType attribute.",
+                    "expectation": "\n                     - DUT replies a null or a MeterTypeEnum value;\n                     - Verify that value in range 0 - 2;\n                     - Store value as meter_type.",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads PointOfDelivery attribute.",
+                    "expectation": "\n                     - DUT replies a null or a value of string type;\n                     - Verify that size is in range 0 - 64;\n                     - Store value as point_of_delivery.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads MeterSerialNumber attribute.",
+                    "expectation": "\n                     - DUT replies a null or a value of string type;\n                     - Verify that size is in range 0 - 64;\n                     - Store value as meter_serial_number.",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                },
+                {
+                    "description": "TH reads ProtocolVersion attribute.",
+                    "expectation": "\n                     - DUT replies a null or a value of string type;\n                     - Verify that size is in range 0 - 64;\n                     - Store value as protocol_version.",
+                    "is_commissioning": false,
+                    "test_plan_number": "6"
+                },
+                {
+                    "description": "TH reads PowerThreshold attribute.",
+                    "expectation": "\n                     - DUT replies a null or a value of PowerThresholdStruct type;\n                     - PowerThreshold field has type int64;\n                     - ApparentPowerThreshold field has type int64;\n                     - PowerThresholdSource field has type PowerThresholdSourceEnum and value in range 0 - 2;\n                     - Store value as power_threshold.",
+                    "is_commissioning": false,
+                    "test_plan_number": "7"
+                },
+                {
+                    "description": "TH reads TestEventTriggersEnabled attribute from General Diagnostics Cluster.",
+                    "expectation": "TestEventTriggersEnabled is True.",
+                    "is_commissioning": false,
+                    "test_plan_number": "8"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.MTRID.TEST_EVENT_TRIGGER_KEY \n                     and EventTrigger field set to PIXIT.MTRID.TEST_EVENT_TRIGGER for Attributes Value Set Test Event.",
+                    "expectation": "DUT returns SUCCESS.",
+                    "is_commissioning": false,
+                    "test_plan_number": "9"
+                },
+                {
+                    "description": "TH awaits a MeterType attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and contains a null or a MeterTypeEnum value;\n                     - Value in range 0 - 2;\n                     - The value does not match the meter_type.",
+                    "is_commissioning": false,
+                    "test_plan_number": "10"
+                },
+                {
+                    "description": "TH awaits a PointOfDelivery attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and contains a null or a value of string type;\n                     - Size in range 0 - 64;\n                     - The value does not match the point_of_delivery.",
+                    "is_commissioning": false,
+                    "test_plan_number": "11"
+                },
+                {
+                    "description": "TH awaits a MeterSerialNumber attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and contains a null or a value of string type;\n                     - Size in range 0 - 64;\n                     - The value does not match the meter_serial_number.",
+                    "is_commissioning": false,
+                    "test_plan_number": "12"
+                },
+                {
+                    "description": "TH awaits a ProtocolVersion attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and contains a null or a value of string type;\n                     - Size in range 0 - 64;\n                     - The value does not match the protocol_version.",
+                    "is_commissioning": false,
+                    "test_plan_number": "13"
+                },
+                {
+                    "description": "TH awaits a PowerThreshold attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify the report is received and contains a null or a value of PowerThresholdStruct type;\n                     - PowerThreshold field has type int64;\n                     - ApparentPowerThreshold field has type int64;\n                     - PowerThresholdSource field has type PowerThresholdSourceEnum and value in range 0 - 2;\n                     - The value does not match the power_threshold.",
+                    "is_commissioning": false,
+                    "test_plan_number": "14"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.MTRID.TEST_EVENT_TRIGGER_KEY \n                     and EventTrigger field set to PIXIT.MTRID.TEST_EVENT_TRIGGER for Test Event Clear.",
+                    "expectation": "DUT returns SUCCESS.",
+                    "is_commissioning": false,
+                    "test_plan_number": "15"
+                },
+                {
+                    "description": "TH removes the subscriptions to the Meter Identification cluster.",
+                    "expectation": "Subscription successfully removed.",
+                    "is_commissioning": false,
+                    "test_plan_number": "16"
+                }
+            ]
+        },
+        {
             "class_name": "TC_MWOCTRL_2_1",
             "desc": "[TC-MWOCTRL-2.1] Primary functionality with DUT as Server",
             "function": "test_TC_MWOCTRL_2_1",
@@ -26515,6 +27473,638 @@
             ]
         },
         {
+            "class_name": "TC_SETRF_2_1",
+            "desc": "Attributes with server as DUT",
+            "function": "test_TC_SETRF_2_1",
+            "path": "sdk/TC_SETRF_2_1",
+            "pics": [
+                "SETRF.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
+                    "expectation": "DUT is commissioned.",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffInfo attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of TariffInformationStruct type;\n                        - Verify that TariffLabel field has type string with max length 128 or null;\n                        - Verify that ProviderName field has type string with max length 128 or null;\n                        - Verify that BlockMode field has type BlockModeEnum. Value has to be between a range of 0 - 2 or null;\n                            - Store the value as BlockModeValue;\n                        - Currency field:\n                            - Verify that it does NOT contain Currency field if SETRF.S.F00(PRICE) is False;\n                            - Verify that it contains Currency field if SETRF.S.F00(PRICE) is True;\n                                - Verify that it has type currency or null;\n                                    - Verify that Currency field of Currency struct has type uint16 with value less or equal 999;\n                                    - Verify that DecimalPoints field of Currency struct has type uint8;\n                        - Store the value as tariffInfoValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffUnit attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of TariffUnitEnum type;\n                     - Value has to be between a range of 0 - 1.",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads from the DUT the StartDate attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of epoch-s type;\n                     - Store the value as startDateAttributeValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads from the DUT the IndividualDays attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of DayStruct entries with list length less or equal 50;\n                     - For each entry:\n                        - Date field:\n                            - Verify that Date field has epoch-s type;\n                            - Verify that the DayStruct in this list are arranged in increasing order by the value of Date field;\n                        - Verify that DayType field has DayTypeEnum type. Value has to be between a range of 0 - 3;\n                        - Verify that DayEntryIDs of DayStruct field is a list of unique uint32 with list length in range 1 - 96;\n                        - If DayType equals 3 (Event), store DayEntryIDs value in dayEntryIDsEvents list.",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                },
+                {
+                    "description": "TH reads from the DUT the DayEntries attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of DayEntryStruct entries with list length less or equal 672;\n                     - For each entry:\n                        - Verify that DayEntryID has a unique uint32 value;\n                        - Verify that StartTime field has uint16 type with value less or equal 1499;\n                            - Store the field value as startTimeFieldValue;\n                        - If DayEntryID is a value from dayEntryIDsEvents list, check that Duration field has a uint16 value less or equal 1500 - startTimeFieldValue;\n                        - RandomizationType field:\n                            - Verify that entry does NOT contain RandomizationType field if SETRF.S.F05(RNDM) is False;\n                            - If SETRF.S.F05(RNDM) is True and RandomizationType field is presented it has DayEntryRandomizationType type. Value has to be between a range of 0 - 4;\n                            - Store the field value randomizationTypeValue;\n                        - RandomizationOffset field:\n                            - Verify that entry does NOT contain RandomizationOffset fields if SETRF.S.F05(RNDM) is False;\n                            - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x01 (Fixed) and RandomizationOffset field is presented, it has an int16 value;\n                            - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x04 (RandomNegative) and RandomizationOffset field is presented, it has an int16 value less or equal 0;\n                            - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive) and RandomizationOffset field is presented, it has an int16 value greater or equal 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": "6"
+                },
+                {
+                    "description": "TH reads from the DUT the DayPatterns attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of DayPatternStruct entries with list length less or equal 28;\n                     - For each entry:\n                        - Verify that DayPatternID field has uint32 type;\n                        - Verify that DaysOfWeek field has DayPatternDayOfWeekBitmap type;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 96.",
+                    "is_commissioning": false,
+                    "test_plan_number": "7"
+                },
+                {
+                    "description": "TH reads from the DUT the CalendarPeriods attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of CalendarPeriodStruct entries with list length in range 1 - 4;\n                     - For each entry:\n                        - StartDate field:\n                            - Verify that StartDate field is null or has type epoch-s with value greater or equal startDateAttributeValue;\n                            - Verify that the calendar period items in this list are arranged in increasing order by the value of StartDate field;\n                            - Verify that if the startDateAttributeValue is null then the StartDate field is null on the first CalendarPeriodStruct item and is not null on any subsequent CalendarPeriodStruct items;\n                        - Verify that DayPatternIDs field is a list of uint32 with list length in range 1 - 7",
+                    "is_commissioning": false,
+                    "test_plan_number": "8"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDay attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayStruct type;\n                        - Verify that Date field of DayStruct has epoch-s type;\n                        - Verify that DayType field of DayStruct has DayTypeEnum type. Value has to be between a range of 0 - 3;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 96.",
+                    "is_commissioning": false,
+                    "test_plan_number": "9"
+                },
+                {
+                    "description": "TH reads NextDay attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayStruct type;\n                        - Verify that DayType field of DayStruct has DayTypeEnum type. Value has to be between a range of 0 - 3;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 96.",
+                    "is_commissioning": false,
+                    "test_plan_number": "10"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntry attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayEntryStruct type;\n                     - Verify that the DUT response contains a null if tariffInfoValue equals null;\n                     - Verify that DayEntryID field has uint32 type;\n                     - Verify that StartTime field has uint16 type with value less or equal 1499;\n                        - Store the field value as startTimeFieldValue;\n                     - RandomizationType field:\n                        - Verify that entry does NOT contain RandomizationType field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and RandomizationType field is presented it has DayEntryRandomizationType type. Value has to be between a range of 0 - 4;\n                        - Store the field value randomizationTypeValue;\n                     - RandomizationOffset field:\n                        - Verify that entry does NOT contain RandomizationOffset fields if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x01 (Fixed) and RandomizationOffset field is presented, it has an int16 value;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x04 (RandomNegative) and RandomizationOffset field is presented, it has an int16 value less or equal 0;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive) and RandomizationOffset field is presented, it has an int16 value greater or equal 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": "11"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntryDate attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of epoch-s type;\n                     - Store the value as currentDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "12"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntry attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayEntryStruct type;\n                     - Verify that DayEntryID field has uint32 type;\n                     - Verify that StartTime field has uint16 type with value less or equal 1499;\n                        - Store the field value as startTimeFieldValue;\n                     - RandomizationType field:\n                        - Verify that entry does NOT contain RandomizationType field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and RandomizationType field is presented it has DayEntryRandomizationType type. Value has to be between a range of 0 - 4;\n                        - Store the field value randomizationTypeValue;\n                     - RandomizationOffset field: \n                        - Verify that entry does NOT contain RandomizationOffset fields if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x01 (Fixed) and RandomizationOffset field is presented, it has an int16 value;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x04 (RandomNegative) and RandomizationOffset field is presented, it has an int16 value less or equal 0;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive) and RandomizationOffset field is presented, it has an int16 value greater or equal 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": "13"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntryDate attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or an epoch-s value greater than currentDayEntryDateValue;",
+                    "is_commissioning": false,
+                    "test_plan_number": "14"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffComponents attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a list of TariffComponentStruct entries with list length in range 1-672;\n                     - For each entry:\n                        - Verify that TariffComponentID field has uint32 type;\n                        - Threshold field:\n                            - Verify that Threshold is null if BlockModeValue is 0 (NoBlock);\n                            - Verify that Threshold has type int64 or null if BlockModeValue is 1 (Combined) or 2 (Individual);\n                        - Verify that if Label field is presented it is null or has type string with max length 128;\n                        - Predicted field:\n                            - Verify that if Predicted field is presented it has type bool;\n                        - Verify that it has at least one of the fields: Price, FriendlyCredit, AuxiliaryLoad, PeakPeriod, PowerThreshold;\n                        - Price field:\n                            - Verify that the entry does NOT contain Price field if SETRF.S.F00(PRICE) is False;\n                            - If SETRF.S.F00(PRICE) is True and if Price field is presented it is null or has type TariffPriceStruct;\n                                - Verify that PriceType field has TariffPriceTypeEnum type. Value has to be between a range of 0 - 4;\n                                - Verify that if Price field is presented it has money type;\n                                - Verify that if PriceLevel field is presented it has int16 type;\n                        - FriendlyCredit field:\n                            - Verify that entry does NOT contain FriendlyCredit field if SETRF.S.F01(FCRED) is False;\n                            - If SETRF.S.F01(FCRED) is True and FriendlyCredit field is presented it has type bool;\n                        - AuxiliaryLoad field:\n                            - Verify that entry does NOT contain AuxiliaryLoad field if SETRF.S.F02(AUXLD) is False;\n                            - If SETRF.S.F02(AUXLD) is True and AuxiliaryLoad field is presented it has AuxiliaryLoadSwitchSettingsStruct type;\n                                - Verify that Number field has uint8 type;\n                                - Verify that RequiredState field has AuxiliaryLoadSettingEnum type. Value has to be between a range of 0 - 2;\n                        - PeakPeriod field:\n                            - Verify that entry does NOT contain PeakPeriod field if SETRF.S.F03(PEAKP) is False;\n                            - If SETRF.S.F03(PEAKP) is True and PeakPeriod field is presented it has PeakPeriodStruct type;\n                                - Verify that Severity field has PeakPeriodSeverityEnum type. Value has to be between a range of 0 - 3;\n                                - Verify that PeakPeriod field has uint16 type and value greater or equal 1;\n                        - PowerThreshold field:\n                            - Verify that entry does NOT contain PowerThreshold field if SETRF.S.F04(PWRTHLD) is False;\n                            - If SETRF.S.F04(PWRTHLD) is True and PowerThreshold field is presented it has PowerThresholdStruct type;\n                                - Verify that PowerThreshold field has power-mW type;\n                                - Verify that ApparentPowerThreshold field has power-mVA type;\n                                - Verify that PowerThresholdSource field has PowerThresholdSourceEnum type. Value has to be between a range of 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "15"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffPeriods attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a list of TariffPeriodStruct entries with list length in range 1-672;\n                     - For each entry:\n                        - Verify that Label field is null or has type string with max length 128;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 20;\n                        - Verify that TariffComponentIDs field is a list of uint32 with list length in range 1 - 20;\n                            - Verify that if Predicted is not True TariffComponentID is a unique identifier for the combination of values of the Price, Threshold, FriendlyCredit, AuxiliaryLoad, and PeakPeriod fields with the value of the DayEntryIDs field on the encompassing TariffPeriodStruct.",
+                    "is_commissioning": false,
+                    "test_plan_number": "16"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentTariffComponents attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of TariffComponentStruct entries with list length less or equal 20;\n                     - For each entry:\n                        - Verify that TariffComponentID field has uint32 type;\n                        - Threshold field:\n                            - Verify that Threshold is null if BlockModeValue is 0 (NoBlock);\n                            - Verify that Threshold has type int64 or null if BlockModeValue is 1 (Combined) or 2 (Individual);\n                        - Verify that if Label field is presented it is null or has type string with max length 128;\n                        - Predicted field:\n                            - Verify that if Predicted field is presented it has type bool;\n                            - Verify that it has at least one of the fields: Price, FriendlyCredit, AuxiliaryLoad, PeakPeriod, PowerThreshold;\n                        - Price field:\n                            - Verify that the entry does NOT contain Price field if SETRF.S.F00(PRICE) is False;\n                            - If SETRF.S.F00(PRICE) is True and if Price field is presented it is null or has type TariffPriceStruct;\n                                - Verify that PriceType field has TariffPriceTypeEnum type. Value has to be between a range of 0 - 4;\n                                - Verify that if Price field is presented it has money type;\n                                - Verify that if PriceLevel field is presented it has int16 type;\n                        - FriendlyCredit field:\n                            - Verify that entry does NOT contain FriendlyCredit field if SETRF.S.F01(FCRED) is False;\n                            - If SETRF.S.F01(FCRED) is True and FriendlyCredit field is presented it has type bool;\n                        - AuxiliaryLoad field:\n                            - Verify that entry does NOT contain AuxiliaryLoad field if SETRF.S.F02(AUXLD) is False;\n                            - If SETRF.S.F02(AUXLD) is True and AuxiliaryLoad field is presented it has AuxiliaryLoadSwitchSettingsStruct type;\n                                - Verify that Number field has uint8 type;\n                                - Verify that RequiredState field has AuxiliaryLoadSettingEnum type. Value has to be between a range of 0 - 2;\n                        - PeakPeriod field:\n                            - Verify that entry does NOT contain PeakPeriod field if SETRF.S.F03(PEAKP) is False;\n                            - If SETRF.S.F03(PEAKP) is True and PeakPeriod field is presented it has PeakPeriodStruct type;\n                                - Verify that Severity field has PeakPeriodSeverityEnum type. Value has to be between a range of 0 - 3;\n                                - Verify that PeakPeriod field has uint16 type and value greater or equal 1;\n                        - PowerThreshold field:\n                            - Verify that entry does NOT contain PowerThreshold field if SETRF.S.F04(PWRTHLD) is False;\n                            - If SETRF.S.F04(PWRTHLD) is True and PowerThreshold field is presented it has PowerThresholdStruct type;\n                                - Verify that PowerThreshold field has power-mW type;\n                                - Verify that ApparentPowerThreshold field has power-mVA type;\n                                - Verify that PowerThresholdSource field has PowerThresholdSourceEnum type. Value has to be between a range of 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "17"
+                },
+                {
+                    "description": "TH reads from the DUT the NextTariffComponents attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of TariffComponentStruct entries with list length less or equal 20;\n                     - For each entry:\n                        - Verify that TariffComponentID field has uint32 type;\n                        - Threshold field:\n                            - Verify that Threshold is null if BlockModeValue is 0 (NoBlock);\n                            - Verify that Threshold has type int64 or null if BlockModeValue is 1 (Combined) or 2 (Individual);\n                        - Verify that if Label field is presented it is null or has type string with max length 128;\n                        - Predicted field:\n                            - Verify that if Predicted field is presented it has type bool;\n                        - Verify that it has at least one of the fields: Price, FriendlyCredit, AuxiliaryLoad, PeakPeriod, PowerThreshold;\n                        - Price field:\n                            - Verify that the entry does NOT contain Price field if SETRF.S.F00(PRICE) is False;\n                            - If SETRF.S.F00(PRICE) is True and if Price field is presented it is null or has type TariffPriceStruct;\n                                - Verify that PriceType field has TariffPriceTypeEnum type. Value has to be between a range of 0 - 4;\n                                - Verify that if Price field is presented it has money type;\n                                - Verify that if PriceLevel field is presented it has int16 type;\n                        - FriendlyCredit field:\n                            - Verify that entry does NOT contain FriendlyCredit field if SETRF.S.F01(FCRED) is False;\n                            - If SETRF.S.F01(FCRED) is True and FriendlyCredit field is presented it has type bool;\n                        - AuxiliaryLoad field:\n                            - Verify that entry does NOT contain AuxiliaryLoad field if SETRF.S.F02(AUXLD) is False;\n                            - If SETRF.S.F02(AUXLD) is True and AuxiliaryLoad field is presented it has AuxiliaryLoadSwitchSettingsStruct type;\n                                - Verify that Number field has uint8 type;\n                                - Verify that RequiredState field has AuxiliaryLoadSettingEnum type. Value has to be between a range of 0 - 2;\n                        - PeakPeriod field:\n                            - Verify that entry does NOT contain PeakPeriod field if SETRF.S.F03(PEAKP) is False;\n                            - If SETRF.S.F03(PEAKP) is True and PeakPeriod field is presented it has PeakPeriodStruct type;\n                                - Verify that Severity field has PeakPeriodSeverityEnum type. Value has to be between a range of 0 - 3;\n                                - Verify that PeakPeriod field has uint16 type and value greater or equal 1;\n                        - PowerThreshold field:\n                            - Verify that entry does NOT contain PowerThreshold field if SETRF.S.F04(PWRTHLD) is False;\n                            - If SETRF.S.F04(PWRTHLD) is True and PowerThreshold field is presented it has PowerThresholdStruct type;\n                                - Verify that PowerThreshold field has power-mW type;\n                                - Verify that ApparentPowerThreshold field has power-mVA type;\n                                - Verify that PowerThresholdSource field has PowerThresholdSourceEnum type. Value has to be between a range of 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "18"
+                },
+                {
+                    "description": "TH reads from the DUT the DefaultRandomizationType attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayEntryRandomizationTypeEnum. Value has to be between a range of 0 - 4;\n                     - Store the value as defaultRandomizationTypeValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "19"
+                },
+                {
+                    "description": "TH reads from the DUT the DefaultRandomizationOffset attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If defaultRandomizationTypeValue is null, Verify that the DUT response contains a null;\n                     - Verify that the DUT response contains a null if tariffInfoValue equals null;\n                     - If defaultRandomizationTypeValue is 0x01 (Fixed), Verify that the DUT response contains an int16 value;\n                     - If defaultRandomizationTypeValue is 0x04 (RandomNegative), Verify that the DUT response contains an int16 value less or equal 0;\n                     - If defaultRandomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive), Verify that the DUT response contains an int16 value greater or equal 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": "20"
+                }
+            ]
+        },
+        {
+            "class_name": "TC_SETRF_2_2",
+            "desc": "Commands with Server as DUT",
+            "function": "test_TC_SETRF_2_2",
+            "path": "sdk/TC_SETRF_2_2",
+            "pics": [
+                "SETRF.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
+                    "expectation": "DUT is commissioned.",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "TH reads TestEventTriggersEnabled attribute from General Diagnostics Cluster.",
+                    "expectation": "Value has to be 1 (True).",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Attributes Value Set Test Event",
+                    "expectation": "Verify DUT responds w/ status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffComponents attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a list of TariffComponentStruct entries with list length in range 1-672;\n                        - Store the values of TariffComponentID field of TariffComponentStruct for all entries as tariffComponentIDs;\n                        - Store the value of TariffComponentID field of the TariffComponentStruct of the first entry as tariffComponentID1;\n                        - Store the TariffComponentStruct of the first entry as tariffComponentStruct1.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffPeriods attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a list of TariffPeriodStruct entries with list length in range 1-672;\n                        - Find TariffPeriodStruct entries that contain tariffComponentID1 value in TariffComponentIDs field;\n                            - Store DayEntryIDs field values of the found TariffPeriodStruct entries from min to max as dayEntryIDs1 list.",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                },
+                {
+                    "description": "TH sends command GetTariffComponent command with TariffComponentID set to tariffComponentID1.",
+                    "expectation": "\n                     - Verify that the DUT response contains a GetTariffComponentResponse command;\n                        - Verify that Label field is a string with max length 128 or null;\n                        - Verify that DayEntryIDs field is a list of unique uint32 entries with list length in range 1 - 96;\n                        - Verify that DayEntryIDs field equals dayEntryIDs1;\n                        - Verify that TariffComponent field is a TariffComponentStruct equal to tariffComponentStruct1.",
+                    "is_commissioning": false,
+                    "test_plan_number": "6"
+                },
+                {
+                    "description": "TH sends command GetTariffComponent command with TariffComponentID set to an uint32 value not equal any from tariffComponentIDs.",
+                    "expectation": "Verify that the DUT response contains status NOT_FOUND(0x8b).",
+                    "is_commissioning": false,
+                    "test_plan_number": "7"
+                },
+                {
+                    "description": "TH reads from the DUT the DayEntries attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a list of DayEntryStruct entries with list length less or equal 672;\n                        - Store the values of DayEntryID field of DayEntryStruct for all entries as dayEntryIDs;\n                        - Store the value of DayEntryID field of the DayEntryStruct of the first entry as dayEntryID1;\n                        - Store the DayEntryStruct of the first entry as dayEntryStruct1.",
+                    "is_commissioning": false,
+                    "test_plan_number": "8"
+                },
+                {
+                    "description": "TH sends command GetDayEntry command with DayEntryID set to dayEntryID1.",
+                    "expectation": "\n                     - Verify that the DUT response contains a GetDayEntry command;\n                        - Verify that DayEntry field is a DayEntryStruct equal to dayEntryStruct1.",
+                    "is_commissioning": false,
+                    "test_plan_number": "9"
+                },
+                {
+                    "description": "TH sends command GetDayEntry command with DayEntryID set to an uint32 value not equal any from dayEntryIDs.",
+                    "expectation": "Verify that the DUT response contains status NOT_FOUND(0x8b).",
+                    "is_commissioning": false,
+                    "test_plan_number": "10"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Test Event Clear",
+                    "expectation": "Verify  DUT  responds  w/  status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "11"
+                }
+            ]
+        },
+        {
+            "class_name": "TC_SETRF_2_3",
+            "desc": "Primary Functionality with server as DUT. Check attributes updating with date changing",
+            "function": "test_TC_SETRF_2_3",
+            "path": "sdk/TC_SETRF_2_3",
+            "pics": [
+                "SETRF.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
+                    "expectation": "DUT is commissioning to TH.",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "TH reads TestEventTriggersEnabled attribute from General Diagnostics Cluster.",
+                    "expectation": "Value has to be 1 (True).",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Test Event Attributes Value Set Test Event.",
+                    "expectation": "Verify DUT responds w/ status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of epoch-s type;\n                     - Store the value as currentDayEntryDateValue;\n                     - Define day of week based on currentDayEntryDateValue epoch-s value. Store the defined value as currentDayEntryDayofWeekValue with DayPatternDayOfWeekBitmap type.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDay attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of DayStruct type;\n                     - Store the value as currentDayValue;\n                     - Store Date field value as dateCurrentValue;\n                     - Store DayType field value as dayTypeCurrentValue;\n                     - Store DayEntryIDs field value as dayEntryIDsCurrentValue",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                },
+                {
+                    "description": "If dayTypeCurrentValue equals 3 (Event), TH reads from the DUT the IndividualDays attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value that is a list of DayStruct entries with list length less or equal 50;\n                     - For each entry:\n                        - If Date field value equals dateCurrentValue, verify that Date field value is unique in the entries list, DayType field value equals dayTypeCurrentValue and DayEntryIDs field value equals dayEntryIDsCurrentValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "6"
+                },
+                {
+                    "description": "If dayTypeCurrentValue does NOT equal 3 (Event), TH reads from the DUT the CalendarPeriods attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value that is a list of CalendarPeriodStruct entries with list length in range 1 - 4;\n                     - Check the list in reverse order and store DayPatternIDs field value as dayPatternIDsCurrentValue for the first entity that fits the condition:\n                        - StartDate field value is less than currentDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "7a"
+                },
+                {
+                    "description": "TH reads from the DUT the DayPatterns attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value that is a list of DayPatternStruct entries with list length less or equal 28;\n                     - For each entry:\n                        - If DayPatternID field value is included in dayPatternIDsCurrentValue and bitwise AND DaysOfWeek field value and currentDayEntryDayofWeekValue equals currentDayEntryDayofWeekValue, verify that DayEntryIDs field value equals dayEntryIDsCurrentValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "7b"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentTariffComponents attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value that is a list of TariffComponentStruct entries with list length less or equal 20;\n                     - Store the value as currentTariffComponentsValue;\n                     - For each entry store TariffComponentID field value in tariffComponentIDsCurrentValue list.",
+                    "is_commissioning": false,
+                    "test_plan_number": "8"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffComponents attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a list of TariffComponentStruct entries with list length in range 1-672;\n                     - For each entry:\n                        - If TariffComponentID equals any from tariffComponentIDsCurrentValue, save the entry value in tariffComponentsCurrentValue list;\n                        - Verify that tariffComponentsCurrentValue matches currentTariffComponentsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "9"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of epoch-s type;\n                     - Store the value as nextDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "10"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDay attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of DayStruct type;\n                     - Store the value as nextDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "11"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Change Time Test Event.",
+                    "expectation": "\n                     Verify DUT responds w/ status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "12"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of epoch-s type;\n                     - The value does NOT match the currentDayEntryDateValue;\n                     - The value matches the nextDayEntryDateValue;\n                     - Store the value as currentDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "13"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDay attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of DayStruct type;\n                     - The value matches the currentDayValue;\n                     - Store the value as currentDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "14"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of epoch-s type;\n                     - The value does NOT match the nextDayEntryDateValue;\n                     - The value does NOT match currentDayEntryDateValue;\n                     - Store the value as nextDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "15"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDay attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of DayStruct type;\n                     - The value does NOT match currentDayValue and matches the nextDayValue;\n                     - Store the value as nextDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "16"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Change Day Test Event.",
+                    "expectation": "\n                     Verify DUT responds w/ status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "17"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of epoch-s type;\n                     - The value does NOT match the currentDayEntryDateValue;\n                     - The value does NOT match the nextDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "18"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDay attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of DayStruct type;\n                     - The value does NOT match the currentDayValue;\n                     - The value matches nextDayValue;\n                     - Store the value as currentDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "19"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of epoch-s type;\n                     - The value does NOT match currentDayEntryDateValue;\n                     - The value does NOT match the nextDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "20"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDay attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a value of DayStruct type;\n                     - The value does NOT match the nextDayValue;\n                     - The value does NOT match the currentDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "21"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Test Event Clear.",
+                    "expectation": "\n                     Verify DUT responds w/ status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "22"
+                }
+            ]
+        },
+        {
+            "class_name": "TC_SETRF_3_1",
+            "desc": "Subscription Report Verification with Server as DUT",
+            "function": "test_TC_SETRF_3_1",
+            "path": "sdk/TC_SETRF_3_1",
+            "pics": [
+                "SETRF.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT to TH (can be skipped if done in a preceding test).",
+                    "expectation": "DUT is commissioned to TH.",
+                    "is_commissioning": true,
+                    "test_plan_number": "1"
+                },
+                {
+                    "description": "Set up a subscription to the Commodity Tariff cluster attributes: MinIntervalFloor: 0, MaxIntervalCeiling: 10",
+                    "expectation": "Subscription successfully established.",
+                    "is_commissioning": false,
+                    "test_plan_number": "2"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffInfo attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of TariffInformationStruct type;\n                     - Store the value as tariffInfoValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "3"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffUnit attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of TariffUnitEnum type;\n                     - Store the value as tariffUnitValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "4"
+                },
+                {
+                    "description": "TH reads from the DUT the StartDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of epoch-s type;\n                     - Store the value as startDateAttributeValue;",
+                    "is_commissioning": false,
+                    "test_plan_number": "5"
+                },
+                {
+                    "description": "TH reads from the DUT the IndividualDays attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value that is a list  of  DayStruct  entries  with  list length less or equal 50;\n                     - Store the value as individualDaysValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "6"
+                },
+                {
+                    "description": "TH reads from the DUT the DayEntries attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value that is a list  of  DayEntryStruct  entries  with list length less or equal 672;\n                     - Store the value as dayEntriesValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "7"
+                },
+                {
+                    "description": "TH reads from the DUT the DayPatterns attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value that is a list of DayPatternStruct entries with list length less or equal 28;\n                     - Store the value as dayPatternsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "8"
+                },
+                {
+                    "description": "TH reads from the DUT the CalendarPeriods attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value that is a list of CalendarPeriodStruct entries with list length in range 1 - 4;\n                     - Store the value as calendarPeriodsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "9"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDay attribute.",
+                    "expectation": "\n                          - Verify that the DUT response contains a null or a value of DayStruct type;\n                          - Store the value as currentDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "10"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDay attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of DayStruct type;\n                     - Store the value as nextDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "11"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntry attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of DayEntryStruct type;\n                     - Store the value as currentDayEntryValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "12"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of epoch-s type;\n                     - Store the value as currentDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "13"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntry attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of DayEntryStruct type;\n                     - Store the value as nextDayEntryValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "14"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntryDate attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or an epoch-s value greater than currentDayEntryDateValue;\n                     - Store the value as nextDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "15"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffComponents attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a list of TariffComponentStruct entries with list length in range 1-672;\n                     - Store the value as tariffComponentsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "16"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffPeriods attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a list of TariffPeriodStruct entries with list length in range 1-672;\n                     - Store the value as tariffPeriodsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "17"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentTariffComponents attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value that is a list of TariffComponentStruct entries with list length less or equal 20;\n                     - Store the value as currentTariffComponentsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "18"
+                },
+                {
+                    "description": "TH reads from the DUT the NextTariffComponents attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value that is a list of TariffComponentStruct entries with list length less or equal 20;\n                     - Store the value as nextTariffComponentsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "19"
+                },
+                {
+                    "description": "TH reads from the DUT the DefaultRandomizationType attribute.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of DayEntryRandomizationTypeEnum. Value has to be between a range of 0 - 4.\n                     - Store the value as defaultRandomizationTypeValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "20"
+                },
+                {
+                    "description": "TH reads from the DUT the DefaultRandomizationOffset attribute.",
+                    "expectation": "\n                     - If defaultRandomizationTypeValue is null, Verify that the DUT response contains a null;\n                     - If defaultRandomizationTypeValue is 0x01 (Fixed), Verify that the DUT response contains an int16 value;\n                     - If defaultRandomizationTypeValue is 0x04 (RandomNegative), Verify that the DUT response contains an int16 value less or equal 0;\n                     - If defaultRandomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive), Verify that the DUT response contains an int16 value greater or equal 0.\n                     - Store the value as DefaultRandomizationOffsetValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "21"
+                },
+                {
+                    "description": "TH reads TestEventTriggersEnabled attribute from General Diagnostics Cluster.",
+                    "expectation": "Value has to be 1 (True).",
+                    "is_commissioning": false,
+                    "test_plan_number": "22"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Attributes Value Set Test Event.",
+                    "expectation": "Verify DUT responds w/ status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "23"
+                },
+                {
+                    "description": "TH awaits a ReportDataMessage from DUT containing a TariffInfo attribute with 10s timeout.",
+                    "expectation": "\n                     - Verify that the DUT response contains a null or a value of TariffInformationStruct type;\n                        - Verify that TariffLabel field has type string with max length 128 or null;\n                        - Verify that ProviderName field has type string with max length 128 or null;\n                        - Verify that BlockMode field has type BlockModeEnum. Value has to be between a range of 0-2 or null;\n                            - Store the value as BlockModeValue;\n                     - Currency field:\n                        - Verify that it does NOT contain Currency field if SETRF.S.F00(PRICE) is False;\n                        - Verify that it contains Currency field if SETRF.S.F00(PRICE) is True;\n                        - Verify that it has type currency or null;\n                            - Verify that Currency field of Currency struct has type uint16 with value less or equal 999;\n                            - Verify that DecimalPoints field of Currency struct has type uint8;\n                    - The value does NOT match the tariffInfoValue;\n                    - Store the value as tariffInfoValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "24"
+                },
+                {
+                    "description": "TH awaits a ReportDataMessage from DUT containing a TariffUnit attribute with 10s timeout.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of TariffUnitEnum type;\n                     - Value has to be between a range of 0 - 1;\n                     - The value does NOT match the tariffUnitValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "25"
+                },
+                {
+                    "description": "TH reads from the DUT the StartDate attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of epoch-s type;\n                     - The value does NOT match the startDateAttributeValue;\n                     - Store the value as startDateAttributeValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "26"
+                },
+                {
+                    "description": "TH reads from the DUT the IndividualDays attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of DayStruct entries with list length less or equal 50;\n                     - For each entry:\n                        - Date field:\n                                - Verify that Date field has epoch-s type;\n                                - Verify that the DayStruct in this list are arranged in increasing order by the value of Date field;\n                        - Verify that DayType field has DayTypeEnum type. Value has to be between a range of 0 - 3;\n                        - Verify that DayEntryIDs of DayStruct field is a list of unique uint32 with list length in range 1 - 96;\n                        - If DayType equals 3 (Event), store DayEntryIDs value in dayEntryIDsEvents list;\n                    - The value does NOT match the individualDaysValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "27"
+                },
+                {
+                    "description": "TH reads from the DUT the DayEntries attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of DayEntryStruct entries with list length less or equal 672;\n                     - The value does NOT match the dayEntriesValue;\n                     - For each entry\n                        - Verify that DayEntryID has a unique uint32 value;\n                        - Verify that StartTime field has uint16 type with value less or equal 1499;\n                            - Store the field value as startTimeFieldValue;\n                        - If DayEntryID is a value from dayEntryIDsEvents list, check that Duration field has a uint16 value less or equal 1500  - startTimeFieldValue;\n                        - RandomizationType field:\n                            - Verify that entry does NOT contain RandomizationType field if SETRF.S.F05(RNDM) is False;\n                            - If SETRF.S.F05(RNDM) is True and RandomizationType field is presented it has DayEntryRandomizationType type. Value has to be between a range of 0 - 4;\n                            - Store the field value randomizationTypeValue;\n                     - RandomizationType field:\n                        - Verify that entry does NOT contain RandomizationType field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and RandomizationType field is presented it has DayEntryRandomizationType type. Value has to be between a range of 0 - 4;\n                        - Store the field value randomizationTypeValue;\n                     - RandomizationOffset field:\n                        - Verify that entry does NOT contain RandomizationOffset field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x01 (Fixed) and RandomizationOffset field is presented, it has int16 value;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x04 (RandomNegative) and RandomizationOffset field is presented, it has an int16 value less or equal 0;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive) and RandomizationOffset field is presented, it has an int16 value greater or equal 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": "28"
+                },
+                {
+                    "description": "TH reads from the DUT the DayPatterns attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of DayPatternStruct entries with list length less or equal 28;\n                     - For each entry:\n                        - Verify that DayPatternID field has uint32 type;\n                        - Verify that DaysOfWeek field has DayPatternDayOfWeekBitmap type;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 96;\n                        - The value does NOT match the dayPatternsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "29"
+                },
+                {
+                    "description": "TH reads from the DUT the CalendarPeriods attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of CalendarPeriodStruct entries with list length in range 1 - 4;\n                     - For each entry:\n                        - StartDate field:\n                            - Verify that StartDate field is null or has type epoch-s with value greater or equal startDateAttributeValue;\n                            - Verify that the calendar period items in this list are arranged in increasing order by the value of StartDate field;\n                            - Verify that if the startDateAttributeValue is null then the StartDate field is null on the first CalendarPeriodStruct item and is not null on any subsequent CalendarPeriodStruct items;\n                        - Verify that DayPatternIDs field is a list of uint32 with list length in range 1 - 7;\n                    - The value does NOT match the calendarPeriodsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "30"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDay attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayStruct type;\n                        - Verify that Date field of DayStruct has epoch-s type;\n                        - Verify that DayType field of DayStruct has DayTypeEnum type. Value has to be between a range of 0 - 3;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 96;\n                     - The value does NOT match the currentDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "31"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDay attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayStruct type;\n                        - Verify that DayType field of DayStruct has DayTypeEnum type. Value has to be between a range of 0 - 3;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 96;\n                     - The value does NOT match the nextDayValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "32"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntry attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayEntryStruct type;\n                     - Verify that the DUT response contains a null if tariffInfoValue equals null;\n                     - The value does NOT match the currentDayEntryValue.\n                     - Verify that DayEntryID field has uint32 type;\n                     - Verify that StartTime field has uint16 type with value less or equal 1499;\n                        - Store the field value as startTimeFieldValue;\n                     - RandomizationType field:\n                        - Verify that entry does NOT contain RandomizationType field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and RandomizationType field is presented it has DayEntryRandomizationType type. Value has to be between a range of 0 - 4;\n                        - Store the field value randomizationTypeValue;\n                     - RandomizationOffset field:\n                        - Verify that entry does NOT contain RandomizationOffset field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x01 (Fixed) and RandomizationOffset field is presented, it has an int16 value;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x04 (RandomNegative) and RandomizationOffset field is presented, it has an int16 value less or equal 0;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive) and RandomizationOffset field is presented, it has an int16 value greater or equal 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": "33"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentDayEntryDate attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of epoch-s type;\n                     - The value does NOT match the currentDayEntryDateValue;\n                     - Store the value as currentDayEntryDateValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "34"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntry attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayEntryStruct type;\n                     - The value does NOT match the nextDayEntryValue;\n                     - Verify that DayEntryID field has uint32 type;\n                     - Verify that StartTime field has uint16 type with value less or equal 1499;\n                        - Store the field value as startTimeFieldValue;\n                     - RandomizationType field:\n                        - Verify that entry does NOT contain RandomizationType field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and RandomizationType field is presented it has DayEntryRandomizationType type. Value has to be between a range of 0 - 4;\n                        - Store the field value randomizationTypeValue;\n                     - RandomizationOffset field:\n                        - Verify that entry does NOT contain RandomizationOffset field if SETRF.S.F05(RNDM) is False;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x01 (Fixed) and RandomizationOffset field is presented, it has an int16 value;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x04 (RandomNegative) and RandomizationOffset field is presented, it has an int16 value less or equal 0;\n                        - If SETRF.S.F05(RNDM) is True and randomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive) and RandomizationOffset field is presented, it has an int16 value greater or equal 0.",
+                    "is_commissioning": false,
+                    "test_plan_number": "35"
+                },
+                {
+                    "description": "TH reads from the DUT the NextDayEntryDate attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or an epoch-s value greater than currentDayEntryDateValue;\n                     - The value does NOT match the nextDayEntryDateValue;",
+                    "is_commissioning": false,
+                    "test_plan_number": "36"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffComponents attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a list of TariffComponentStruct entries with list length in range 1-672;\n                     - The value does NOT match the tariffComponentsValue;\n                     - For each entry:\n                        - Verify that TariffComponentID field has uint32 type;\n                        - Threshold field:\n                            - Verify that Threshold is null if BlockModeValue is 0 (NoBlock);\n                            - Verify that Threshold has type int64 or null if BlockModeValue is 1 (Combined) or 2 (Individual);\n                        - Verify that if Label field is presented it is null or has type string with max length 128;\n                        - Predicted field:\n                            - Verify that if Predicted field is presented it has type bool;\n                        - Verify that it has at least one of the fields: Price, FriendlyCredit, AuxiliaryLoad, PeakPeriod, PowerThreshold;\n                        - Price field:\n                            - Verify that the entry does NOT contain Price field if SETRF.S.F00(PRICE) is False;\n                            - If SETRF.S.F00(PRICE) is True and if Price field is presented it is null or has type TariffPriceStruct;\n                                - Verify that PriceType field has TariffPriceTypeEnum type. Value has to be between a range of 0 - 4;\n                                - Verify that if Price field is presented it has money type;\n                                - Verify that if PriceLevel field is presented it has int16 type;\n                        - FriendlyCredit field:\n                            - Verify that entry does NOT contain FriendlyCredit field if SETRF.S.F01(FCRED) is False;\n                            - If SETRF.S.F01(FCRED) is True and FriendlyCredit field is presented it has type bool;\n                        - AuxiliaryLoad field:\n                            - Verify that entry does NOT contain AuxiliaryLoad field if SETRF.S.F02(AUXLD) is False;\n                            - If SETRF.S.F02(AUXLD) is True and AuxiliaryLoad field is presented it has AuxiliaryLoadSwitchSettingsStruct type;\n                                - Verify that Number field has uint8 type;\n                                - Verify that RequiredState field has AuxiliaryLoadSettingEnum type. Value has to be between a range of 0 - 2;\n                        - PeakPeriod field:\n                            - Verify that entry does NOT contain PeakPeriod field if SETRF.S.F03(PEAKP) is False;\n                            - If SETRF.S.F03(PEAKP) is True and PeakPeriod field is presented it has PeakPeriodStruct type;\n                                - Verify that Severity field has PeakPeriodSeverityEnum type. Value has to be between a range of 0 - 3;\n                                - Verify that PeakPeriod field has uint16 type and value greater or equal 1;\n                        - PowerThreshold field:\n                            - Verify that entry does NOT contain PowerThreshold field if SETRF.S.F04(PWRTHLD) is False;\n                            - If SETRF.S.F04(PWRTHLD) is True and PowerThreshold field is presented it has PowerThresholdStruct type;\n                                - Verify that PowerThreshold field has power-mW type;\n                                - Verify that ApparentPowerThreshold field has power-mVA type;\n                                - Verify that PowerThresholdSource field has PowerThresholdSourceEnum type. Value has to be between a range of 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "37"
+                },
+                {
+                    "description": "TH reads from the DUT the TariffPeriods attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a list of TariffPeriodStruct entries with list length in range 1-672;\n                     - For each entry:\n                        - Verify that Label field is null or has type string with max length 128;\n                        - Verify that DayEntryIDs field is a list of unique uint32 with list length in range 1 - 20;\n                        - Verify that TariffComponentIDs field is a list of uint32 with list length in range 1 - 20;\n                        - The value does NOT match the tariffPeriodsValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "38"
+                },
+                {
+                    "description": "TH reads from the DUT the CurrentTariffComponents attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of TariffComponentStruct entries with list length less or equal 20;\n                     - The value does NOT match the currentTariffComponentsValue;\n                     - For each entry:\n                        - Verify that TariffComponentID field has uint32 type;\n                        - Threshold field:\n                            - Verify that Threshold is null if BlockModeValue is 0 (NoBlock);\n                            - Verify that Threshold has type int64 or null if BlockModeValue is 1 (Combined) or 2 (Individual);\n                        - Verify that if Label field is presented it is null or has type string with max length 128;\n                        - Predicted field:\n                            - Verify that if Predicted field is presented it has type bool;\n                        - Verify that it has at least one of the fields: Price, FriendlyCredit, AuxiliaryLoad, PeakPeriod, PowerThreshold;\n                        - Price field:\n                            - Verify that the entry does NOT contain Price field if SETRF.S.F00(PRICE) is False;\n                            - If SETRF.S.F00(PRICE) is True and if Price field is presented it is null or has type TariffPriceStruct;\n                                - Verify that PriceType field has TariffPriceTypeEnum type. Value has to be between a range of 0 - 4;\n                                - Verify that if Price field is presented it has money type;\n                                - Verify that if PriceLevel field is presented it has int16 type;\n                        - FriendlyCredit field:\n                            - Verify that entry does NOT contain FriendlyCredit field if SETRF.S.F01(FCRED) is False;\n                            - If SETRF.S.F01(FCRED) is True and FriendlyCredit field is presented it has type bool;\n                        - AuxiliaryLoad field:\n                            - Verify that entry does NOT contain AuxiliaryLoad field if SETRF.S.F02(AUXLD) is False;\n                            - If SETRF.S.F02(AUXLD) is True and AuxiliaryLoad field is presented it has AuxiliaryLoadSwitchSettingsStruct type;\n                                - Verify that Number field has uint8 type;\n                                - Verify that RequiredState field has AuxiliaryLoadSettingEnum type. Value has to be between a range of 0 - 2;\n                        - PeakPeriod field:\n                            - Verify that entry does NOT contain PeakPeriod field if SETRF.S.F03(PEAKP) is False;\n                            - If SETRF.S.F03(PEAKP) is True and PeakPeriod field is presented it has PeakPeriodStruct type;\n                                - Verify that Severity field has PeakPeriodSeverityEnum type. Value has to be between a range of 0 - 3;\n                                - Verify that PeakPeriod field has uint16 type and value greater or equal 1;\n                        - PowerThreshold field:\n                            - Verify that entry does NOT contain PowerThreshold field if SETRF.S.F04(PWRTHLD) is False;\n                            - If SETRF.S.F04(PWRTHLD) is True and PowerThreshold field is presented it has PowerThresholdStruct type;\n                                - Verify that PowerThreshold field has power-mW type;\n                                - Verify that ApparentPowerThreshold field has power-mVA type;\n                                - Verify that PowerThresholdSource field has PowerThresholdSourceEnum type. Value has to be between a range of 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "39"
+                },
+                {
+                    "description": "TH reads from the DUT the NextTariffComponents attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value that is a list of TariffComponentStruct entries with list length less or equal 20;\n                     - The value does NOT match the nextTariffComponentsValue;\n                     - For each entry:\n                        - Verify that TariffComponentID field has uint32 type;\n                        - Threshold field:\n                            - Verify that Threshold is null if BlockModeValue is 0 (NoBlock);\n                            - Verify that Threshold has type int64 or null if BlockModeValue is 1 (Combined) or 2 (Individual);\n                        - Verify that if Label field is presented it is null or has type string with max length 128;\n                        - Predicted field:\n                            - Verify that if Predicted field is presented it has type bool;\n                        - Verify that it has at least one of the fields: Price, FriendlyCredit, AuxiliaryLoad, PeakPeriod, PowerThreshold;\n                        - Price field:\n                            - Verify that the entry does NOT contain Price field if SETRF.S.F00(PRICE) is False;\n                            - If SETRF.S.F00(PRICE) is True and if Price field is presented it is null or has type TariffPriceStruct;\n                                - Verify that PriceType field has TariffPriceTypeEnum type. Value has to be between a range of 0 - 4;\n                                - Verify that if Price field is presented it has money type;\n                                - Verify that if PriceLevel field is presented it has int16 type;\n                        - FriendlyCredit field:\n                            - Verify that entry does NOT contain FriendlyCredit field if SETRF.S.F01(FCRED) is False;\n                            - If SETRF.S.F01(FCRED) is True and FriendlyCredit field is presented it has type bool;\n                        - AuxiliaryLoad field:\n                            - Verify that entry does NOT contain AuxiliaryLoad field if SETRF.S.F02(AUXLD) is False;\n                            - If SETRF.S.F02(AUXLD) is True and AuxiliaryLoad field is presented it has AuxiliaryLoadSwitchSettingsStruct type;\n                                - Verify that Number field has uint8 type;\n                                - Verify that RequiredState field has AuxiliaryLoadSettingEnum type. Value has to be between a range of 0 - 2;\n                        - PeakPeriod field:\n                            - Verify that entry does NOT contain PeakPeriod field if SETRF.S.F03(PEAKP) is False;\n                            - If SETRF.S.F03(PEAKP) is True and PeakPeriod field is presented it has PeakPeriodStruct type;\n                                - Verify that Severity field has PeakPeriodSeverityEnum type. Value has to be between a range of 0 - 3;\n                                - Verify that PeakPeriod field has uint16 type and value greater or equal 1;\n                        - PowerThreshold field:\n                            - Verify that entry does NOT contain PowerThreshold field if SETRF.S.F04(PWRTHLD) is False;\n                            - If SETRF.S.F04(PWRTHLD) is True and PowerThreshold field is presented it has PowerThresholdStruct type;\n                            - Verify that PowerThreshold field has power-mW type;\n                            - Verify that ApparentPowerThreshold field has power-mVA type;\n                            - Verify that PowerThresholdSource field has PowerThresholdSourceEnum type. Value has to be between a range of 0 - 2.",
+                    "is_commissioning": false,
+                    "test_plan_number": "40"
+                },
+                {
+                    "description": "TH reads from the DUT the DefaultRandomizationType attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If tariffInfoValue does NOT equal null, Verify that the DUT response contains a null or a value of DayEntryRandomizationTypeEnum. Value has to be between a range of 0 - 4;\n                     - The value does NOT match the defaultRandomizationTypeValue;\n                     - Store the value as defaultRandomizationTypeValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "41"
+                },
+                {
+                    "description": "TH reads from the DUT the DefaultRandomizationOffset attribute.",
+                    "expectation": "\n                     - If tariffInfoValue equals null, Verify that the DUT response contains a null;\n                     - If defaultRandomizationTypeValue is null, Verify that the DUT response contains a null;\n                     - Verify that the DUT response contains a null if tariffInfoValue equals null;\n                     - If defaultRandomizationTypeValue is 0x01 (Fixed), Verify that the DUT response contains an int16 value;\n                     - If defaultRandomizationTypeValue is 0x04 (RandomNegative), Verify that the DUT response contains an int16 value less or equal 0;\n                     - If defaultRandomizationTypeValue is 0x00 (None), 0x02 (Random) or 0x03 (RandomPositive), Verify that the DUT response contains an int16 value greater or equal 0;\n                     - The value does NOT match the DefaultRandomizationOffsetValue.",
+                    "is_commissioning": false,
+                    "test_plan_number": "42"
+                },
+                {
+                    "description": "TH sends TestEventTrigger command to General Diagnostics Cluster on Endpoint 0 with EnableKey field set to PIXIT.SETRF.TEST_EVENT_TRIGGER_KEY and EventTrigger field set to PIXIT.SETRF.TEST_EVENT_TRIGGER for Test Event Clear.",
+                    "expectation": "\n                     Verify  DUT  responds  w/  status SUCCESS(0x00).",
+                    "is_commissioning": false,
+                    "test_plan_number": "43"
+                },
+                {
+                    "description": "TH removes the subscription the Commodity Tariff cluster.",
+                    "expectation": "\n                     Subscription successfully removed.",
+                    "is_commissioning": false,
+                    "test_plan_number": "44"
+                }
+            ]
+        },
+        {
             "class_name": "TC_SOIL_2_1",
             "desc": "[TC-SOIL-2.1] Attributes with DUT as Server",
             "function": "test_TC_SOIL_2_1",
@@ -29668,6 +31258,109 @@
                     "expectation": "DUT responds with SUCCESS status code.",
                     "is_commissioning": false,
                     "test_plan_number": 8
+                }
+            ]
+        },
+        {
+            "class_name": "TC_WEBRTC_1_6",
+            "desc": " [TC-WEBRTC-1.6] Validate Two-Way-Talk Full-Duplex support in camera(DUT) - PROVISIONAL",
+            "function": "test_TC_WEBRTC_1_6",
+            "path": "sdk/TC_WEBRTC_1_6",
+            "pics": [
+                "WEBRTCR.C",
+                "WEBRTCP.S",
+                "AVSM.S"
+            ],
+            "steps": [
+                {
+                    "description": "Commission DUT if not already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": "precondition-1"
+                },
+                {
+                    "description": "Confirm no active WebRTC sessions exist in DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "precondition-2"
+                },
+                {
+                    "description": "Confirm DUT(Camera) supports Speaker feature AVSM.S.F04(SPKR)",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "precondition-3"
+                },
+                {
+                    "description": "TH reads TwoWayTalkSupport Attribute from AVSM cluster from DUT",
+                    "expectation": "Verify DUT responds with status success and contains FullDuplex TwoWayTalkSupportTypeEnum value.",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "If DUT supports AVSM.S.F01(VDO) feature, TH sends the VideoStreamAllocate command with valid values of StreamUsage, VideoCodec, MinResolution, MaxResolution, MinBitRate, MaxBitRate, MinFrameRate, MaxFrameRate, KeyFrameInterval, WatermarkEnabled, OSDEnabled",
+                    "expectation": "DUT responds with VideoStreamAllocateResponse command with a valid VideoStreamID. TH stores this VideoStreamID for later use.",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                },
+                {
+                    "description": "TH sends the AudioStreamAllocate command with valid values of StreamUsage, AudioCodec, ChannelCount, SampleRate, BitDepth, BitRate.",
+                    "expectation": "DUT responds with AudioStreamAllocateResponse command with a valid AudioStreamID. TH stores this AudioStreamID for later use.",
+                    "is_commissioning": false,
+                    "test_plan_number": 3
+                },
+                {
+                    "description": "TH sends the ProvideOffer command with an SDP Offer, null WebRTCSessionID, VideoStreamID and AudioStreamID saved in steps 2, 3 to the DUT.",
+                    "expectation": "DUT responds with ProvideOfferResponse containing allocated WebRTCSessionID, VideoStreamID and AudioStreamID. TH saves the WebRTCSessionID to be used later.",
+                    "is_commissioning": false,
+                    "test_plan_number": 4
+                },
+                {
+                    "description": "DUT sends Answer command to the TH/WEBRTCR.",
+                    "expectation": "Verify that Answer command contains the same WebRTCSessionID saved in step 4 and contain a non-empty SDP string.",
+                    "is_commissioning": false,
+                    "test_plan_number": 5
+                },
+                {
+                    "description": "TH sends the SUCCESS status code to the DUT.",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 6
+                },
+                {
+                    "description": "TH sends the ProvideICECandidates command with a its ICE candidates to the DUT.",
+                    "expectation": "DUT responds with SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 7
+                },
+                {
+                    "description": "DUT sends ICECandidates command to the TH/WEBRTCR.",
+                    "expectation": "Verify that ICECandidates command contains the same WebRTCSessionID saved in step 4 and contain a non-empty ICE candidates.",
+                    "is_commissioning": false,
+                    "test_plan_number": 8
+                },
+                {
+                    "description": "TH waits for 5 seconds",
+                    "expectation": "Verify the WebRTC session has been successfully established. Verify TH is playing live audio received from DUT. Verify DUT is able to play the live audio in its speaker sent by TH. If DUT supports AVSM.S.F01(VDO) feature, Verify TH is playing live video received from DUT.",
+                    "is_commissioning": false,
+                    "test_plan_number": 9
+                },
+                {
+                    "description": "TH sends the EndSession command with the WebRTCSessionID saved in step 4 to the DUT.",
+                    "expectation": "DUT responds with SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 10
+                },
+                {
+                    "description": "TH sends the VideoStreamDeallocate command if allocated, with the VideoStreamID saved in step 2 to the DUT.",
+                    "expectation": "DUT responds with SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 11
+                },
+                {
+                    "description": "TH sends the AudioStreamDeallocate command with the AudioStreamID saved in step 3 to the DUT.",
+                    "expectation": "DUT responds with SUCCESS status code.",
+                    "is_commissioning": false,
+                    "test_plan_number": 12
                 }
             ]
         },
