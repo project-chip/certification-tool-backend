@@ -1,5 +1,5 @@
 {
-    "sdk_sha": "7c9b1260e3daa86aae0d41b894469b295eee70e8",
+    "sdk_sha": "a82e43e06e35c707f9016c38ee83712c2ab58966",
     "tests": [
         {
             "class_name": "TCP_Tests",
@@ -4463,6 +4463,18 @@
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 14
+                },
+                {
+                    "description": "Send a VideoStreamDeallocate command to AVStreamManagement to de-allocate the video stream allocated in step 5. Verify success",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 15
+                },
+                {
+                    "description": "Read the DPTZStreams attribute, verify that the response does not contain any entry with the allocated stream ID from step 5",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
                 }
             ]
         },
@@ -28896,204 +28908,370 @@
         {
             "class_name": "TC_TLSCERT",
             "desc": "[TC-TLSCERT-3.1] ProvisionRootCertificate command basic insertion and modification",
-            "function": "test_TC_TLSCERT_3_1",
+            "function": "test_TC_TLSCERT_2_2",
             "path": "sdk/TC_TLSCERT",
-            "pics": [],
+            "pics": [
+                "TLSCERT.S"
+            ],
             "steps": [
                 {
-                    "description": "Commissioning, already done",
+                    "description": "Commission DUT to CR1 if not already done",
                     "expectation": "",
                     "is_commissioning": true,
-                    "test_plan_number": 1
+                    "test_plan_number": "1.1.1"
                 },
                 {
-                    "description": "CR1 opens commissioning window on DUT",
-                    "expectation": "Commissioning window should open",
+                    "description": "CR1 reads ProvisionedRootCertificates attribute using a fabric-filtered read",
+                    "expectation": "A list of TLSCertStruct. Store all resulting CAID in caidToClean.",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.2"
+                },
+                {
+                    "description": "CR1 sends RemoveRootCertificate command with CAID set to caidToClean[i] for all entries returned",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.3"
+                },
+                {
+                    "description": "CR1 reads ProvisionedClientCertificates attribute using a fabric-filtered read",
+                    "expectation": "A list of TLSClientCertificateDetailStruct. Store all resulting CCDID in ccdidToClean.",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.4"
+                },
+                {
+                    "description": "CR1 sends RemoveClientCertificate command with CCDID set to ccdidToClean[i] for all entries returned.",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.5"
+                },
+                {
+                    "description": "TH opens a commissioning window on the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.2"
+                },
+                {
+                    "description": "Create a new controller on a new fabric called CR2.\nCommission the new controller from CR1 as follows:\n\n- CR1 sends an ArmFailsafe command, followed by a CSRRequest command.\n- Generate credentials on CR2 using the returned CSR.\n- Save the RCAC as `rcac_CR2. Save the ICAC as `icac_CR2`. Save the NOC as `noc_CR2`. Save the IPK as ipk_CR2.\n-  CR1 sends the AddTrustedRootCertificate command with `rcac_CR2`- CR1 sends the AddNOC command with the fields set as follows:\n  * NOCValue:        `noc_CR2`\n  * ICACValue:       `icac_CR2`\n  * IPKValue:        `ipk_CR2`\n  * CaseAdminSubject: CR2 node ID\n  * AdminVendorId:    CR2 vendor ID\n- CR2 connects over CASE and sends the commissioning complete command",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.3"
+                },
+                {
+                    "description": "Populate myRootCert[] with 3 distinct, valid, self-signed, DER-encoded x509 certificates",
+                    "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "CR2 fully commissions DUT_CE",
-                    "expectation": "DUT should fully commission",
+                    "description": "CR1 sends ProvisionRootCertificate command with null CAID and Certificate set to myRootCert[0]",
+                    "expectation": "Verify returned TLSCAID value. Store the returned value as myCaid[0].",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Create two distinct, valid, self-signed, DER-encoded x509 certificates",
-                    "expectation": "",
+                    "description": "CR1 Reads ProvisionedRootCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[0] and Certificate equal to myRootCert[0]",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Read ProvisionedRootCertificates",
-                    "expectation": "",
+                    "description": "CR1 Reads ProvisionedRootCertificates attribute using a fabric-filtered read",
+                    "expectation": "Verify result a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[0] and Certificate not populated (null)",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Sends the RemoveRootCertificate command for any certificates found in step 4",
-                    "expectation": "",
+                    "description": "CR2 Reads ProvisionedRootCertificates attribute using a fabric-filtered read",
+                    "expectation": "Verify result is an empty list",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Sends the ProvisionRootCertificate command to the TlsCertificateManagement cluster",
-                    "expectation": "Verify that the DUT sends ProvisionRootCertificateResponse.",
+                    "description": "CR1 sends ProvisionRootCertificate command with null CAID and Certificate set to myRootCert[0]",
+                    "expectation": "Verify DUT responds w/ status 208",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Sends another ProvisionRootCertificate command to the TlsCertificateManagement cluster",
-                    "expectation": "Verify a new ID is generated.",
+                    "description": "CR1 Reads ProvisionedRootCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[0] and Certificate equal to myRootCert[0]",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Read ProvisionedRootCertificates to from CR1",
-                    "expectation": "",
+                    "description": "CR1 sends FindRootCertificate command with null CAID",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[0] and Certificate equal to myRootCert[0]",
                     "is_commissioning": false,
                     "test_plan_number": 9
                 },
                 {
-                    "description": "Read ProvisionedRootCertificates to from CR2",
-                    "expectation": "",
+                    "description": "CR1 sends ProvisionRootCertificate command with CAID set to myCaid[0] and Certificate set to myRootCert[1]",
+                    "expectation": "Verify returned TLSCAID value equal to myCaid[0]",
                     "is_commissioning": false,
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Read ProvisionedRootCertificates to make sure certificates from step 2 and 3 are present",
-                    "expectation": "",
+                    "description": "CR2 Reads ProvisionedRootCertificates attribute using a fabric-filtered read",
+                    "expectation": "Verify result is an empty list",
                     "is_commissioning": false,
                     "test_plan_number": 11
                 },
                 {
-                    "description": "Sends the FindRootCertificate command specifying a CAID from step 2",
-                    "expectation": "Verify the DUT sends FindRootCertificateResponse with both certificates",
+                    "description": "CR1 sends FindRootCertificate command with null CAID",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[0] and Certificate equal to myRootCert[1]",
                     "is_commissioning": false,
                     "test_plan_number": 12
                 },
                 {
-                    "description": "Sends the FindRootCertificate command specifying a CAID from step 3",
-                    "expectation": "Verify the DUT sends FindRootCertificateResponse with both certificates",
+                    "description": "CR2 sends FindRootCertificate command with null CAID",
+                    "expectation": "Verify DUT responds w/ status 139",
                     "is_commissioning": false,
                     "test_plan_number": 13
                 },
                 {
-                    "description": "Sends the FindRootCertificate command specifying null for CAID",
-                    "expectation": "Verify the DUT sends FindRootCertificateResponse with both certificates",
+                    "description": "CR2 sends ProvisionRootCertificate command with CAID set to myCaid[0] and Certificate set to myRootCert[2]",
+                    "expectation": "Verify DUT responds w/ status 139",
                     "is_commissioning": false,
                     "test_plan_number": 14
                 },
                 {
-                    "description": "Sends the RemoveRootCertificate for both certificates added",
-                    "expectation": "Verify the DUT sends success status",
+                    "description": "CR2 sends ProvisionRootCertificate command with null CAID and Certificate set to myRootCert[2]",
+                    "expectation": "Verify returned TLSCAID value. Store the returned value as myCaid[1].",
                     "is_commissioning": false,
                     "test_plan_number": 15
+                },
+                {
+                    "description": "CR2 sends ProvisionRootCertificate command with CAID set to myCaid[1] and Certificate set to myRootCert[2]",
+                    "expectation": "Verify DUT responds w/ status 208",
+                    "is_commissioning": false,
+                    "test_plan_number": 16
+                },
+                {
+                    "description": "CR1 Reads ProvisionedRootCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[0] and Certificate equal to myRootCert[1]",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "CR2 Reads ProvisionedRootCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[1] and Certificate equal to myRootCert[2]",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "CR1 sends FindRootCertificate command with null CAID",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[0] and Certificate equal to myRootCert[1]",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "CR2 sends FindRootCertificate command with null CAID",
+                    "expectation": "Verify result is a list of TLSCertStruct with one entry. The entry should have CAID equal to myCaid[1] and Certificate equal to myRootCert[2]",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "CR1 sends RemoveRootCertificate command with CAID set to my_caid[0]",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "CR1 sends the RemoveFabric command to the Node Operational Credentials cluster with the FabricIndex set to CR2.",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
                 }
             ]
         },
         {
             "class_name": "TC_TLSCERT",
-            "desc": "[TC-TLSCERT-3.1.8] ProvisionClientCertificate command verification",
-            "function": "test_TC_TLSCERT_3_1_8",
+            "desc": "[TC-TLSCERT-2.9] ProvisionClientCertificate command verification",
+            "function": "test_TC_TLSCERT_2_9",
             "path": "sdk/TC_TLSCERT",
-            "pics": [],
+            "pics": [
+                "TLSCERT.S"
+            ],
             "steps": [
                 {
-                    "description": "Commissioning, already done",
+                    "description": "Commission DUT to CR1 if not already done",
                     "expectation": "",
                     "is_commissioning": true,
-                    "test_plan_number": 1
+                    "test_plan_number": "1.1.1"
                 },
                 {
-                    "description": "CR1 opens commissioning window on DUT",
-                    "expectation": "Commissioning window should open",
+                    "description": "CR1 reads ProvisionedRootCertificates attribute using a fabric-filtered read",
+                    "expectation": "A list of TLSCertStruct. Store all resulting CAID in caidToClean.",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.2"
+                },
+                {
+                    "description": "CR1 sends RemoveRootCertificate command with CAID set to caidToClean[i] for all entries returned",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.3"
+                },
+                {
+                    "description": "CR1 reads ProvisionedClientCertificates attribute using a fabric-filtered read",
+                    "expectation": "A list of TLSClientCertificateDetailStruct. Store all resulting CCDID in ccdidToClean.",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.4"
+                },
+                {
+                    "description": "CR1 sends RemoveClientCertificate command with CCDID set to ccdidToClean[i] for all entries returned.",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.1.5"
+                },
+                {
+                    "description": "TH opens a commissioning window on the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.2"
+                },
+                {
+                    "description": "Create a new controller on a new fabric called CR2.\nCommission the new controller from CR1 as follows:\n\n- CR1 sends an ArmFailsafe command, followed by a CSRRequest command.\n- Generate credentials on CR2 using the returned CSR.\n- Save the RCAC as `rcac_CR2. Save the ICAC as `icac_CR2`. Save the NOC as `noc_CR2`. Save the IPK as ipk_CR2.\n-  CR1 sends the AddTrustedRootCertificate command with `rcac_CR2`- CR1 sends the AddNOC command with the fields set as follows:\n  * NOCValue:        `noc_CR2`\n  * ICACValue:       `icac_CR2`\n  * IPKValue:        `ipk_CR2`\n  * CaseAdminSubject: CR2 node ID\n  * AdminVendorId:    CR2 vendor ID\n- CR2 connects over CASE and sends the commissioning complete command",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": "1.3"
+                },
+                {
+                    "description": "Populate my_nonce[] with 4 distinct, random 32-octet values",
+                    "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 2
                 },
                 {
-                    "description": "Create two distinct, valid, self-signed, DER-encoded x509 certificates",
-                    "expectation": "",
+                    "description": "CR1 sends TLSClientCSR command with Nonce set to my_nonce[i], for each i in [0..1]",
+                    "expectation": "Verify the fields CCDID, CSR and Nonce with types TLSCCDID, octstr and octstr respectively. Store TLSCCDID in my_ccdid[i] and CSR in my_csr[i].",
                     "is_commissioning": false,
                     "test_plan_number": 3
                 },
                 {
-                    "description": "Read ProvisionedClientCertificates",
-                    "expectation": "",
+                    "description": "CR2 sends sends TLSClientCSR command with Nonce set to my_nonce[2]",
+                    "expectation": "Verify the fields CCDID, CSR and Nonce with types TLSCCDID, octstr and octstr respectively. Store TLSCCDID in my_ccdid[2] and CSR in my_csr[2].",
                     "is_commissioning": false,
                     "test_plan_number": 4
                 },
                 {
-                    "description": "Sends the RemoveClientCertificate command for any certificates found in step 4",
+                    "description": "Populate my_intermediate_certs_1 with 10 DER-encoded x509 certificates that form a certificate chain up to (but not including) a root",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 5
                 },
                 {
-                    "description": "Sends the TLSClientCSR command",
+                    "description": "Populate my_intermediate_certs_2 with 1 DER-encoded x509 certificates that form a certificate chain up to (but not including) a root",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 6
                 },
                 {
-                    "description": "Validates the CSR and nonce signature",
+                    "description": "Populate my_client_cert[] with 3 distinct, valid, DER-encoded x509 certificates using each respective public key from my_csr[i], signed by signed by [a root, my_intermediate_certs_1[0], my_intermediate_certs_2[0]]",
                     "expectation": "",
                     "is_commissioning": false,
                     "test_plan_number": 7
                 },
                 {
-                    "description": "Sends the ProvisionClientCertificate command to the TlsCertificateManagement cluster",
-                    "expectation": "Verify that the DUT sends ProvisionClientCertificateResponse.",
+                    "description": "CR1 sends ProvisionClientCertificate command with CCDID set to my_ccdid[0] and ClientCertificate set to my_client_cert[0]",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 8
                 },
                 {
-                    "description": "Sends another ProvisionClientCertificate command to the TlsCertificateManagement cluster",
-                    "expectation": "Verify a new ID is generated.",
+                    "description": "CR1 sends ProvisionClientCertificate command with CCDID set to my_ccdid[1], ClientCertificate set to my_client_cert[1], and IntermediateCertificates set to my_intermediate_certs_1",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 9
                 },
                 {
-                    "description": "Read ProvisionedClientCertificates to from CR1",
-                    "expectation": "",
+                    "description": "CR2 sends ProvisionClientCertificate command with CCDID set to my_ccdid[2], ClientCertificate set to my_client_cert[2], and IntermediateCertificates set to my_intermediate_certs_2",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
                     "is_commissioning": false,
                     "test_plan_number": 10
                 },
                 {
-                    "description": "Read ProvisionedClientCertificates to from CR2",
-                    "expectation": "",
+                    "description": "CR1 reads ProvisionedClientCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with two entries corresponding to my_ccdid[0..1]. The ClientCertificate value should be set to my_client_cert[0..1] and IntermediateCertificates set to my_intermediate_certs_1 for my my_ccdid[1].",
                     "is_commissioning": false,
                     "test_plan_number": 11
                 },
                 {
-                    "description": "Read ProvisionedClientCertificates to make sure certificates from step 2 and 3 are present",
-                    "expectation": "",
+                    "description": "CR2 reads ProvisionedClientCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with one entry corresponding to my_ccdid[2]. The ClientCertificate value should be set to my_client_cert[2] and IntermediateCertificates set to my_intermediate_certs_2.",
                     "is_commissioning": false,
                     "test_plan_number": 12
                 },
                 {
-                    "description": "Sends the FindClientCertificate command specifying a CCDID from step 2",
-                    "expectation": "Verify the DUT sends FindClientCertificateResponse with both certificates",
+                    "description": "CR1 reads ProvisionedClientCertificates attribute using a fabric-filtered read",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with two entries corresponding to my_ccdid[0..1]. The ClientCertificate and IntermediateCertificates values should not be populated (non-present).",
                     "is_commissioning": false,
                     "test_plan_number": 13
                 },
                 {
-                    "description": "Sends the FindClientCertificate command specifying a CCDID from step 3",
-                    "expectation": "Verify the DUT sends FindClientCertificateResponse with both certificates",
+                    "description": "CR1 sends FindClientCertificate command with null CCDID",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with two entries. The entries should correspond to my_client_cert[0..1]",
                     "is_commissioning": false,
                     "test_plan_number": 14
                 },
                 {
-                    "description": "Sends the FindClientCertificate command specifying null for CCDID",
-                    "expectation": "Verify the DUT sends FindClientCertificateResponse with both certificates",
+                    "description": "CR2 sends FindClientCertificate command with null CCDID",
+                    "expectation": "Verify a  list of TLSClientCertificateDetailStruct with one entry. The entry should correspond to my_client_cert[2]",
                     "is_commissioning": false,
                     "test_plan_number": 15
                 },
                 {
-                    "description": "Sends the RemoveClientCertificate for both certificates added",
-                    "expectation": "Verify the DUT sends success status",
+                    "description": "CR1 sends TLSClientCSR command with CCDID set to my_ccdid[0] and Nonce set to my_nonce[3]",
+                    "expectation": "the fields CCDID, CSR and Nonce with types TLSCCDID, octstr and octstr respectively. CCDID should equal my_ccdid[0]. The public key of the resulting CSR should be equal to the public key in my_csr[0]. NonceSignature should be a signature of my_nonce[3] using public key in CSR",
                     "is_commissioning": false,
                     "test_plan_number": 16
+                },
+                {
+                    "description": "CR1 sends ProvisionClientCertificate command with CCDID set to my_ccdid[0] and ClientCertificateDetails set to my_client_cert[3]",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 17
+                },
+                {
+                    "description": "CR1 reads ProvisionedClientCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with two entries. The entries should correspond to my_client_cert[0,3]",
+                    "is_commissioning": false,
+                    "test_plan_number": 18
+                },
+                {
+                    "description": "CR2 reads ProvisionedClientCertificates attribute using a fabric-filtered read on Large Message-capable transport",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with one entry. The entry should correspond to my_client_cert[2]",
+                    "is_commissioning": false,
+                    "test_plan_number": 19
+                },
+                {
+                    "description": "CR1 sends FindClientCertificate command with CCDID set to my_ccdid[0]",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with one entry. The entry should correspond to my_client_cert[3]",
+                    "is_commissioning": false,
+                    "test_plan_number": 20
+                },
+                {
+                    "description": "CR2 sends FindClientCertificate command with CCDID set to my_ccdid[2]",
+                    "expectation": "Verify a list of TLSClientCertificateDetailStruct with one entry. The entry should correspond to my_client_cert[2]",
+                    "is_commissioning": false,
+                    "test_plan_number": 21
+                },
+                {
+                    "description": "CR1 sends ProvisionClientCertificate command with CCDID set to my_ccdid[0] and ClientCertificate set to my_client_cert[2]",
+                    "expectation": "Verify DUT responds w/ status 208",
+                    "is_commissioning": false,
+                    "test_plan_number": 22
+                },
+                {
+                    "description": "CR1 sends RemoveClientCertificate command with CCDID set to my_ccdid[i], for each i in [0..1]",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 23
+                },
+                {
+                    "description": "CR1 sends the RemoveFabric command to the Node Operational Credentials cluster with the FabricIndex set to CR2.",
+                    "expectation": "Verify DUT responds w/ status SUCCESS",
+                    "is_commissioning": false,
+                    "test_plan_number": 24
                 }
             ]
         },
