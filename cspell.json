@@ -109,8 +109,9 @@
         "PCSC",
         "pcscd",
         "DGRAM",
-        "chipyaml", 
-        "webrtc"
+        "chipyaml",
+        "webrtc",
+        "pyproject"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [

@@ -18,6 +18,7 @@ import ast
 import asyncio
 import json
 from pathlib import Path
+from typing import Optional
 
 from test_collections.matter.config import matter_settings
 from test_collections.matter.sdk_tests.support.models.sdk_test_folder import (
@@ -59,13 +60,60 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
         list[ast.ClassDef]: List of classes from the given module that inherit from
         MatterBaseTest.
     """
+
+    # Get all imported classes that could be base test classes
+    imported_base_classes = set()
+    for node in module.body:
+        if isinstance(node, ast.ImportFrom):
+            # Include imports from support_modules, matter_testing,
+            # or any module ending with Base/Test
+            if node.module and (
+                "support_modules" in node.module
+                or "matter_testing" in node.module
+                or node.module.endswith("TestBase")
+                or "TestBase" in node.module
+            ):
+                for alias in node.names:
+                    imported_base_classes.add(alias.name)
+
+    def inherits_from_matter_base_test(
+        class_def: ast.ClassDef, visited: Optional[set] = None
+    ) -> bool:
+        if visited is None:
+            visited = set()
+
+        if class_def.name in visited:
+            return False
+        visited.add(class_def.name)
+
+        # Check direct inheritance from MatterBaseTest or imported base classes
+        for base in class_def.bases:
+            if isinstance(base, ast.Name):
+                if base.id == "MatterBaseTest" or base.id in imported_base_classes:
+                    return True
+
+        # Check inheritance from parent classes in the same module
+        for base in class_def.bases:
+            if isinstance(base, ast.Name):
+                parent_class = next(
+                    (
+                        c
+                        for c in module.body
+                        if isinstance(c, ast.ClassDef) and c.name == base.id
+                    ),
+                    None,
+                )
+                if parent_class and inherits_from_matter_base_test(
+                    parent_class, visited.copy()
+                ):
+                    return True
+
+        return False
+
     return [
         c
         for c in module.body
-        if isinstance(c, ast.ClassDef)
-        and any(
-            b for b in c.bases if isinstance(b, ast.Name) and b.id == "MatterBaseTest"
-        )
+        if isinstance(c, ast.ClassDef) and inherits_from_matter_base_test(c)
     ]
 
 
