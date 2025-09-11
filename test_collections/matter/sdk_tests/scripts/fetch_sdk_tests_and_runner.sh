@@ -173,7 +173,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "chipyaml"
-version = "0.0.1"
+version = "0.1.0"
 authors = [{name = "Project CHIP Authors"}]
 description = "Matter chipyaml package with adapters"
 
