@@ -18,6 +18,7 @@ import ast
 import asyncio
 import json
 from pathlib import Path
+from typing import Optional
 
 from test_collections.matter.config import matter_settings
 from test_collections.matter.sdk_tests.support.models.sdk_test_folder import (
@@ -76,7 +77,7 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
                     imported_base_classes.add(alias.name)
 
     def inherits_from_matter_base_test(
-        class_def: ast.ClassDef, visited: set = None
+        class_def: ast.ClassDef, visited: Optional[set] = None
     ) -> bool:
         if visited is None:
             visited = set()
