@@ -64,7 +64,8 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
     imported_base_classes = set()
     for node in module.body:
         if isinstance(node, ast.ImportFrom):
-            # Include imports from support_modules, matter_testing, or any module ending with Base/Test
+            # Include imports from support_modules, matter_testing,
+            # or any module ending with Base/Test
             if node.module and (
                 "support_modules" in node.module
                 or "matter_testing" in node.module
@@ -74,7 +75,7 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
                 for alias in node.names:
                     imported_base_classes.add(alias.name)
 
-    def inherits_from_matter_base_test(class_def: ast.ClassDef, visited=None):
+    def inherits_from_matter_base_test(class_def: ast.ClassDef, visited=None) -> bool:
         if visited is None:
             visited = set()
 
