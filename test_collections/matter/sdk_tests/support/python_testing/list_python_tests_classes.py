@@ -234,7 +234,7 @@ async def __process_grouped_commands(
 
     if not JSON_OUTPUT_FILE_PATH.exists():
         errors_found.append(
-            f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
+            f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"  # noqa
         )
         return test_function_count, invalid_test_function_count
 
@@ -301,7 +301,7 @@ async def __process_individual_commands(
                 else:
                     errors_found.append(
                         f"Failed running command: {command}.\n"
-                        f"Error message: Command failed with exit code {result.exit_code}. "
+                        f"Error message: Command failed with exit code {result.exit_code}. "  # noqa
                         f"Expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
                     )
             finally:
@@ -309,7 +309,7 @@ async def __process_individual_commands(
 
         if not JSON_OUTPUT_FILE_PATH.exists():
             errors_found.append(
-                f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
+                f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"  # noqa
             )
             continue
 
