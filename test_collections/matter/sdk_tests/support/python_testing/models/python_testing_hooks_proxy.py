@@ -133,6 +133,7 @@ class SDKPythonTestResultShowImagePrompt(SDKPythonTestResultBase):
 
 class SDKPythonTestResultShowTwoWayTalkPrompt(SDKPythonTestResultBase):
     type = SDKPythonTestResultEnum.SHOW_TWO_WAY_TALK_PROMPT
+    msg: str
 
 
 class SDKPythonTestResultShowPushAVStreamPrompt(SDKPythonTestResultBase):
