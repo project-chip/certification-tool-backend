@@ -216,13 +216,26 @@ async def __process_grouped_commands(
     )
 
     if result.exit_code != 0:
-        with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
-            json_data = json.load(json_file)
+        if JSON_OUTPUT_FILE_PATH.exists():
+            with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
+                json_data = json.load(json_file)
+                errors_found.append(
+                    f"Failed running command: {command_string}.\n"
+                    f"Error message: {json_data['detail']}"
+                )
+        else:
             errors_found.append(
                 f"Failed running command: {command_string}.\n"
-                f"Error message: {json_data['detail']}"
+                f"Error message: Command failed with exit code {result.exit_code}. "
+                f"Expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
             )
 
+        return test_function_count, invalid_test_function_count
+
+    if not JSON_OUTPUT_FILE_PATH.exists():
+        errors_found.append(
+            f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
+        )
         return test_function_count, invalid_test_function_count
 
     with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
@@ -278,14 +291,27 @@ async def __process_individual_commands(
 
         if result.exit_code != 0:
             try:
-                with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
-                    json_data = json.load(json_file)
+                if JSON_OUTPUT_FILE_PATH.exists():
+                    with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
+                        json_data = json.load(json_file)
+                        errors_found.append(
+                            f"Failed running command: {command}.\n"
+                            f"Error message: {json_data['detail']}"
+                        )
+                else:
                     errors_found.append(
                         f"Failed running command: {command}.\n"
-                        f"Error message: {json_data['detail']}"
+                        f"Error message: Command failed with exit code {result.exit_code}. "
+                        f"Expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
                     )
             finally:
                 continue
+
+        if not JSON_OUTPUT_FILE_PATH.exists():
+            errors_found.append(
+                f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
+            )
+            continue
 
         with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
             json_data = json.load(json_file)
