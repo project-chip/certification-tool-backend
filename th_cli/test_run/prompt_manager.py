@@ -29,11 +29,17 @@ from websockets.client import WebSocketClientProtocol
 from th_cli.colorize import colorize_error, colorize_key_value, italic
 from th_cli.config import config
 
+from .video_handler import VideoStreamHandler
+
 from .socket_schemas import (
     OptionsSelectPromptRequest,
     PromptRequest,
     PromptResponse,
     TextInputPromptRequest,
+    StreamVerificationPromptRequest,
+    ImageVerificationPromptRequest,
+    TwoWayTalkVerificationRequest,
+    PushAVStreamVerificationRequest,
     UserResponseStatusEnum,
 )
 
@@ -47,6 +53,12 @@ async def handle_prompt(socket: WebSocketClientProtocol, request: PromptRequest)
         await __handle_options_prompt(socket=socket, prompt=request)
     elif isinstance(request, TextInputPromptRequest):
         await __handle_text_prompt(socket=socket, prompt=request)
+    elif isinstance(request, StreamVerificationPromptRequest):
+        await __handle_video_prompt(socket=socket, prompt=request)
+    elif isinstance(request, ImageVerificationPromptRequest):
+        await __handle_image_prompt(socket=socket, prompt=request)
+    elif isinstance(request, (TwoWayTalkVerificationRequest, PushAVStreamVerificationRequest)):
+        await __handle_options_prompt(socket=socket, prompt=request)
     else:
         click.echo(colorize_error(f"Unsupported prompt request: {request.__class__.__name__}"))
     click.echo("=======================================")
@@ -247,3 +259,63 @@ async def __send_prompt_response(
     }
     payload = json.dumps(payload_dict)
     await socket.send(payload)
+
+
+async def __handle_video_prompt(socket: WebSocketClientProtocol, prompt: StreamVerificationPromptRequest) -> None:
+    """Handle video stream verification prompts."""
+    try:
+        # Create video handler and start capturing
+        video_handler = VideoStreamHandler()
+        video_file = await video_handler.start_video_capture(str(prompt.message_id))
+
+        click.echo(italic(prompt.prompt))
+        click.echo(f"📹 Video stream is being captured to: {video_file}")
+        click.echo("Watch the video stream and answer the verification question:")
+
+        # Show options to user
+        for key in prompt.options.keys():
+            id = prompt.options[key]
+            click.echo(f"  {colorize_key_value(str(id), key)}")
+
+        # Get user response
+        user_answer = await asyncio.wait_for(__prompt_user_for_option(prompt), float(prompt.timeout))
+
+        # Stop video capture
+        final_video_file = await video_handler.stop_video_capture()
+        if final_video_file:
+            click.echo(f"✅ Video saved to: {final_video_file}")
+
+        await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
+
+    except asyncio.exceptions.TimeoutError:
+        click.echo(colorize_error("Video prompt timed out"), err=True)
+        # Try to stop video capture on timeout
+        video_handler = VideoStreamHandler()
+        await video_handler.stop_video_capture()
+    except Exception as e:
+        click.echo(colorize_error(f"Error handling video prompt: {e}"), err=True)
+
+
+async def __handle_image_prompt(socket: WebSocketClientProtocol, prompt: ImageVerificationPromptRequest) -> None:
+    """Handle image verification prompts."""
+    try:
+        # Save image from hex string
+        video_handler = VideoStreamHandler()
+        image_file = video_handler.save_image_from_hex(prompt.image_hex_str, str(prompt.message_id))
+
+        click.echo(italic(prompt.prompt))
+        click.echo(f"🖼️  Image saved to: {image_file}")
+        click.echo("Please view the image and answer the verification question:")
+
+        # Show options to user
+        for key in prompt.options.keys():
+            id = prompt.options[key]
+            click.echo(f"  {colorize_key_value(str(id), key)}")
+
+        user_answer = await asyncio.wait_for(__prompt_user_for_option(prompt), float(prompt.timeout))
+        await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
+
+    except asyncio.exceptions.TimeoutError:
+        click.echo(colorize_error("Image prompt timed out"), err=True)
+    except Exception as e:
+        click.echo(colorize_error(f"Error handling image prompt: {e}"), err=True)

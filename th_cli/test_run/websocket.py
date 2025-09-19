@@ -82,6 +82,14 @@ class TestRunSocket:
             # Check if it's a file upload request by message type
             if message.type == MessageTypeEnum.FILE_UPLOAD_REQUEST:
                 await handle_file_upload_request(socket=socket, request=message.payload)
+            # Check if it's a video verification request
+            elif message.type in [
+                MessageTypeEnum.STREAM_VERIFICATION_REQUEST,
+                MessageTypeEnum.IMAGE_VERIFICATION_REQUEST,
+                MessageTypeEnum.TWO_WAY_TALK_VERIFICATION_REQUEST,
+                MessageTypeEnum.PUSH_AV_STREAM_VERIFICATION_REQUEST,
+            ]:
+                await handle_prompt(socket=socket, request=message.payload)
             else:
                 await handle_prompt(socket=socket, request=message.payload)
         elif message.type == MessageTypeEnum.TEST_LOG_RECORDS and isinstance(message.payload, list):
