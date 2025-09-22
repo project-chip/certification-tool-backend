@@ -16,8 +16,10 @@
 import asyncio
 import json
 import os
+import platform
+import subprocess
 import re
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import aioconsole
 import click
@@ -261,39 +263,51 @@ async def __send_prompt_response(
     await socket.send(payload)
 
 
-async def __handle_video_prompt(socket: WebSocketClientProtocol, prompt: StreamVerificationPromptRequest) -> None:
+async def handle_video_prompt_internal(socket: WebSocketClientProtocol, prompt: StreamVerificationPromptRequest) -> Optional[int]:
     """Handle video stream verification prompts."""
     try:
-        # Create video handler and start capturing
+        # Create video handler and configure prompt data
         video_handler = VideoStreamHandler()
-        video_file = await video_handler.start_video_capture(str(prompt.message_id))
+        video_handler.set_prompt_data(prompt.prompt, prompt.options)
+
+        # Start capturing with streaming
+        video_file = await video_handler.start_video_capture_and_stream(str(prompt.message_id))
 
         click.echo(italic(prompt.prompt))
-        click.echo(f"📹 Video stream is being captured to: {video_file}")
-        click.echo("Watch the video stream and answer the verification question:")
+        click.echo(f"🎬 Please verify the video at: http://{config.hostname}:8999/")
 
-        # Show options to user
-        for key in prompt.options.keys():
-            id = prompt.options[key]
-            click.echo(f"  {colorize_key_value(str(id), key)}")
+        # Automatically open browser without asking
+        await __open_live_stream()
 
-        # Get user response
-        user_answer = await asyncio.wait_for(__prompt_user_for_option(prompt), float(prompt.timeout))
+        click.echo("Waiting for your response in the web interface...")
 
-        # Stop video capture
-        final_video_file = await video_handler.stop_video_capture()
-        if final_video_file:
-            click.echo(f"✅ Video saved to: {final_video_file}")
+        # Wait for user response from web UI instead of CLI input
+        user_answer = await video_handler.wait_for_user_response(float(prompt.timeout))
+
+        if user_answer is None:
+            click.echo(colorize_error("No response received from web interface"), err=True)
+            return None
+
+        # Stop video capture and streaming
+        final_video_file = await video_handler.stop_video_capture_and_stream()
 
         await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
+        return user_answer
 
     except asyncio.exceptions.TimeoutError:
         click.echo(colorize_error("Video prompt timed out"), err=True)
         # Try to stop video capture on timeout
         video_handler = VideoStreamHandler()
-        await video_handler.stop_video_capture()
+        await video_handler.stop_video_capture_and_stream()
+        return None
     except Exception as e:
         click.echo(colorize_error(f"Error handling video prompt: {e}"), err=True)
+        return None
+
+
+async def __handle_video_prompt(socket: WebSocketClientProtocol, prompt: StreamVerificationPromptRequest) -> Optional[int]:
+    """Handle video stream verification prompts."""
+    return await handle_video_prompt_internal(socket, prompt)
 
 
 async def __handle_image_prompt(socket: WebSocketClientProtocol, prompt: ImageVerificationPromptRequest) -> None:
@@ -319,3 +333,114 @@ async def __handle_image_prompt(socket: WebSocketClientProtocol, prompt: ImageVe
         click.echo(colorize_error("Image prompt timed out"), err=True)
     except Exception as e:
         click.echo(colorize_error(f"Error handling image prompt: {e}"), err=True)
+
+
+async def handle_video_prompt_direct(socket: WebSocketClientProtocol, request: PromptRequest) -> None:
+    """Handle video prompts directly from websocket routing."""
+    # Convert to StreamVerificationPromptRequest if it has options
+    if hasattr(request, 'options'):
+        video_request = StreamVerificationPromptRequest(
+            prompt=request.prompt,
+            timeout=request.timeout,
+            message_id=request.message_id,
+            options=request.options
+        )
+        await __handle_video_prompt(socket=socket, prompt=video_request)
+    else:
+        await handle_prompt(socket=socket, request=request)
+
+
+async def handle_image_prompt_direct(socket: WebSocketClientProtocol, request: PromptRequest) -> None:
+    """Handle image prompts directly from websocket routing."""
+    # Convert to ImageVerificationPromptRequest if it has the right attributes
+    if hasattr(request, 'options') and hasattr(request, 'image_hex_str'):
+        image_request = ImageVerificationPromptRequest(
+            prompt=request.prompt,
+            timeout=request.timeout,
+            message_id=request.message_id,
+            options=request.options,
+            image_hex_str=request.image_hex_str
+        )
+        await __handle_image_prompt(socket=socket, prompt=image_request)
+    else:
+        await handle_prompt(socket=socket, request=request)
+
+
+async def __open_live_stream() -> None:
+    """Open the CLI live video stream in the default browser."""
+    try:
+        stream_url = f"http://{config.hostname}:8999/"
+        system = platform.system()
+
+        if system == "Darwin":  # macOS
+            subprocess.Popen(["open", stream_url])
+        elif system == "Windows":
+            subprocess.Popen(["start", stream_url], shell=True)
+        elif system == "Linux":
+            subprocess.Popen(["xdg-open", stream_url])
+        else:
+            click.echo(f"⚠️  Cannot open browser automatically on {system}")
+            click.echo(f"📱 Please manually open: {stream_url}")
+            return
+
+        click.echo("🌐 Opening video stream in browser...")
+    except Exception as e:
+        click.echo(f"⚠️  Could not open browser: {e}")
+        click.echo(f"📱 Please manually open: http://{config.hostname}:8999/")
+
+
+async def __open_web_ui() -> None:
+    """Open the web UI in the default browser."""
+    try:
+        # Try different possible URLs in order of likelihood
+        possible_urls = [
+            f"http://{config.hostname}/",           # Traefik main (most likely)
+            f"http://{config.hostname}:4200/",      # Frontend direct
+            f"http://{config.hostname}:8888/",      # Backend direct
+            f"http://{config.hostname}:8090/"       # Traefik dashboard
+        ]
+
+        # Use the first URL (most likely to work)
+        web_url = possible_urls[0]
+        system = platform.system()
+
+        if system == "Darwin":  # macOS
+            subprocess.Popen(["open", web_url])
+        elif system == "Windows":
+            subprocess.Popen(["start", web_url], shell=True)
+        elif system == "Linux":
+            subprocess.Popen(["xdg-open", web_url])
+        else:
+            click.echo(f"⚠️  Cannot open browser automatically on {system}")
+            click.echo("📱 Please manually try these URLs:")
+            for url in possible_urls:
+                click.echo(f"   {url}")
+            return
+
+        click.echo(f"🌐 Opening web UI at: {web_url}")
+        click.echo("💡 If that doesn't work, try these alternatives:")
+        for url in possible_urls[1:]:
+            click.echo(f"   {url}")
+    except Exception as e:
+        click.echo(f"⚠️  Could not open browser: {e}")
+        click.echo(f"📱 Please manually open: http://{config.hostname}/")
+
+
+async def __open_video_file(file_path) -> None:
+    """Open video file with the system's default video player."""
+    try:
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            subprocess.Popen(["open", str(file_path)])
+        elif system == "Windows":
+            subprocess.Popen(["start", str(file_path)], shell=True)
+        elif system == "Linux":
+            subprocess.Popen(["xdg-open", str(file_path)])
+        else:
+            click.echo(f"⚠️  Cannot open file automatically on {system}. File location: {file_path}")
+            return
+
+        click.echo(f"🎬 Opening video file with default player...")
+    except Exception as e:
+        click.echo(f"⚠️  Could not open video file: {e}")
+        click.echo(f"📁 Manual location: {file_path}")

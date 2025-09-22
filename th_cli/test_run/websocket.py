@@ -36,6 +36,8 @@ from .socket_schemas import (
     MessageTypeEnum,
     PromptRequest,
     SocketMessage,
+    StreamVerificationPromptRequest,
+    ImageVerificationPromptRequest,
     TestCaseUpdate,
     TestLogRecord,
     TestRunUpdate,
@@ -79,17 +81,29 @@ class TestRunSocket:
         if isinstance(message.payload, TestUpdate):
             await self.__handle_test_update(socket=socket, update=message.payload)
         elif isinstance(message.payload, PromptRequest):
-            # Check if it's a file upload request by message type
+            # Debug: log the message type
+            logger.debug(f"Received prompt with type: {message.type}")
+
+            # Check message type to route to appropriate handler
             if message.type == MessageTypeEnum.FILE_UPLOAD_REQUEST:
                 await handle_file_upload_request(socket=socket, request=message.payload)
-            # Check if it's a video verification request
+            elif message.type == MessageTypeEnum.STREAM_VERIFICATION_REQUEST:
+                # Handle video verification with proper separators
+                click.echo("=======================================")
+                user_response = await self.__handle_video_verification(socket=socket, request=message.payload)
+                click.echo("=======================================")
+                if user_response is not None:
+                    click.echo(f"✅ Response received: {user_response}")
+            elif message.type == MessageTypeEnum.IMAGE_VERIFICATION_REQUEST:
+                # Convert to ImageVerificationPromptRequest and handle as image
+                click.echo(f"🖼️ Detected image verification request!")
+                await self.__handle_image_verification(socket=socket, request=message.payload)
             elif message.type in [
-                MessageTypeEnum.STREAM_VERIFICATION_REQUEST,
-                MessageTypeEnum.IMAGE_VERIFICATION_REQUEST,
                 MessageTypeEnum.TWO_WAY_TALK_VERIFICATION_REQUEST,
                 MessageTypeEnum.PUSH_AV_STREAM_VERIFICATION_REQUEST,
             ]:
-                await handle_prompt(socket=socket, request=message.payload)
+                # Handle as specialized options prompt
+                await self.__handle_specialized_prompt(socket=socket, request=message.payload, prompt_type=message.type)
             else:
                 await handle_prompt(socket=socket, request=message.payload)
         elif message.type == MessageTypeEnum.TEST_LOG_RECORDS and isinstance(message.payload, list):
@@ -161,3 +175,31 @@ class TestRunSocket:
     def __step(self, index: int, case_index: int, suite_index: int) -> Optional[TestStepExecution]:
         case = self.__case(index=case_index, suite_index=suite_index)
         return case.test_step_executions[index]
+
+    async def __handle_video_verification(self, socket: WebSocketClientProtocol, request: PromptRequest) -> Optional[int]:
+        """Handle video verification by calling the video handler directly."""
+        # Import here to avoid circular import
+        from .prompt_manager import handle_video_prompt_internal
+
+        # Convert to StreamVerificationPromptRequest
+        if hasattr(request, 'options'):
+            from .socket_schemas import StreamVerificationPromptRequest
+            video_request = StreamVerificationPromptRequest(
+                prompt=request.prompt,
+                timeout=request.timeout,
+                message_id=request.message_id,
+                options=request.options
+            )
+            return await handle_video_prompt_internal(socket=socket, prompt=video_request)
+        return None
+
+    async def __handle_image_verification(self, socket: WebSocketClientProtocol, request: PromptRequest) -> None:
+        """Handle image verification by calling the image handler directly."""
+        # Import here to avoid circular import
+        from .prompt_manager import handle_image_prompt_direct
+        await handle_image_prompt_direct(socket=socket, request=request)
+
+    async def __handle_specialized_prompt(self, socket: WebSocketClientProtocol, request: PromptRequest, prompt_type: str) -> None:
+        """Handle specialized prompts like two-way talk or push AV streams."""
+        click.echo(f"🎯 Handling specialized prompt: {prompt_type}")
+        await handle_prompt(socket=socket, request=request)
