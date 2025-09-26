@@ -34,9 +34,6 @@ class MessageTypeEnum(str, Enum):
     TEST_LOG_RECORDS = "test_log_records"
     INVALID_MESSAGE = "invalid_message"
     STREAM_VERIFICATION_REQUEST = "stream_verification_request"
-    IMAGE_VERIFICATION_REQUEST = "image_verification_request"
-    TWO_WAY_TALK_VERIFICATION_REQUEST = "two_way_talk_verification_request"
-    PUSH_AV_STREAM_VERIFICATION_REQUEST = "push_av_stream_verification_request"
 
 
 class TestStateEnum(str, Enum):
@@ -117,18 +114,6 @@ class StreamVerificationPromptRequest(OptionsSelectPromptRequest):
     pass
 
 
-class ImageVerificationPromptRequest(OptionsSelectPromptRequest):
-    image_hex_str: str
-
-
-class TwoWayTalkVerificationRequest(OptionsSelectPromptRequest):
-    pass
-
-
-class PushAVStreamVerificationRequest(OptionsSelectPromptRequest):
-    pass
-
-
 class PromptResponse(BaseModel):
     response: Union[int, str]
     status_code: UserResponseStatusEnum
@@ -141,9 +126,6 @@ class SocketMessage(BaseModel):
         OptionsSelectPromptRequest,
         TextInputPromptRequest,
         StreamVerificationPromptRequest,
-        ImageVerificationPromptRequest,
-        TwoWayTalkVerificationRequest,
-        PushAVStreamVerificationRequest,
         PromptRequest,
         PromptResponse,
         TestUpdate,

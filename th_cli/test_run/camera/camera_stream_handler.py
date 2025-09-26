@@ -20,10 +20,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
-import click
 from loguru import logger
 
-from th_cli.th_utils.ffmpeg_converter import VideoFileConverter
 from .camera_http_server import CameraHTTPServer
 from .websocket_manager import VideoWebSocketManager
 
@@ -41,7 +39,6 @@ class CameraStreamHandler:
 
         # State
         self.current_stream_file: Optional[Path] = None
-        self.video_queue = queue.Queue()  # Raw H.264 data for live streaming
         self.mp4_queue = queue.Queue()    # Converted MP4 data for live streaming
         self.response_queue = queue.Queue()  # User responses from web UI
         self.prompt_options = {}  # Store prompt options
@@ -53,7 +50,7 @@ class CameraStreamHandler:
         self.prompt_options = options
         logger.info(f"Set prompt options: {options}")
 
-    async def start_video_capture_and_stream(self, prompt_id: str, stream_port: int = 8999) -> Path:
+    async def start_video_capture_and_stream(self, prompt_id: str) -> Path:
         """Start capturing video stream to file AND serve via HTTP."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"video_verification_{prompt_id}_{timestamp}.bin"
@@ -81,7 +78,6 @@ class CameraStreamHandler:
         if await self.websocket_manager.wait_and_connect_with_retry():
             await self.websocket_manager.start_capture_and_stream(
                 self.current_stream_file,
-                self.video_queue,
                 self.mp4_queue
             )
 
@@ -112,13 +108,12 @@ class CameraStreamHandler:
         # Stop HTTP server
         self.http_server.stop()
 
-        # Signal end of both streams
-        for q in [self.video_queue, self.mp4_queue]:
-            if not q.full():
-                try:
-                    q.put_nowait(None)
-                except queue.Full:
-                    pass
+        # Signal end of stream
+        if not self.mp4_queue.full():
+            try:
+                self.mp4_queue.put_nowait(None)
+            except queue.Full:
+                pass
 
         if self.current_stream_file and self.current_stream_file.exists():
             file_size = self.current_stream_file.stat().st_size
@@ -127,12 +122,3 @@ class CameraStreamHandler:
         else:
             logger.info("No video data captured")
             return None
-
-    def convert_video_to_mp4(self, bin_file_path: Path) -> Optional[Path]:
-        """Convert .bin video file to .mp4 using ffmpeg if available."""
-        return VideoFileConverter.convert_video_to_mp4(bin_file_path)
-
-    def cleanup(self) -> None:
-        """Clean up resources."""
-        asyncio.create_task(self.websocket_manager.stop())
-        self.http_server.stop()

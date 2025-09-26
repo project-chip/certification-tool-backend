@@ -375,19 +375,6 @@
             video.addEventListener('error', (e) => {{
                 console.error('Video error:', e);
             }});
-
-            // Test server connectivity
-            console.log('Testing server connectivity...');
-            fetch('/submit_response', {{
-                method: 'OPTIONS'
-            }})
-            .then(response => {{
-                console.log('Server connectivity test - Status:', response.status);
-                console.log('Server connectivity test - Headers:', [...response.headers.entries()]);
-            }})
-            .catch(error => {{
-                console.error('Server connectivity test failed:', error);
-            }});
         }};
     </script>
 </head>

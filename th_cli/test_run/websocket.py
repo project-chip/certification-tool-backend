@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
+import datetime
+from pathlib import Path
 from typing import List, Optional
 
-import asyncio
 import click
-import datetime
 import websockets
 from loguru import logger
-from pathlib import Path
 from pydantic import ValidationError
 from websockets.client import WebSocketClientProtocol
 from websockets.client import connect as websocket_connect
@@ -40,7 +40,6 @@ from .socket_schemas import (
     PromptRequest,
     SocketMessage,
     StreamVerificationPromptRequest,
-    ImageVerificationPromptRequest,
     TestCaseUpdate,
     TestLogRecord,
     TestRunUpdate,

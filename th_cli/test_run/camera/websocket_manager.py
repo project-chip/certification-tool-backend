@@ -59,7 +59,7 @@ class VideoWebSocketManager:
             logger.error(f"Failed to connect to video WebSocket: {e}")
             return False
 
-    async def start_capture_and_stream(self, stream_file, video_queue, mp4_queue):
+    async def start_capture_and_stream(self, stream_file, mp4_queue):
         """Start capturing video data and streaming it."""
         if not self.video_websocket:
             logger.error("WebSocket not connected")
@@ -78,9 +78,9 @@ class VideoWebSocketManager:
             self.ffmpeg_converter = None
 
         # Start capturing video data
-        await self._capture_video_data(stream_file, video_queue)
+        await self._capture_video_data(stream_file, mp4_queue)
 
-    async def _capture_video_data(self, stream_file, video_queue):
+    async def _capture_video_data(self, stream_file, mp4_queue):
         """Capture video stream data and save to file."""
         logger.info("Starting video capture and streaming loop")
         stream_data = bytearray()
@@ -112,19 +112,11 @@ class VideoWebSocketManager:
                                 # If not base64, log and continue
                                 logger.debug(f"Received non-binary data (not base64): {data[:100]}... - {e}")
 
-                        # Feed data to FFmpeg and queues
+                        # Feed data to FFmpeg converter
                         if video_data:
                             # Feed data to FFmpeg converter if available
                             if self.ffmpeg_converter:
                                 self.ffmpeg_converter.feed_data(video_data)
-
-                            # Also keep raw data in queue for fallback
-                            if not video_queue.full():
-                                try:
-                                    video_queue.put_nowait(video_data)
-                                    logger.debug(f"Added {len(video_data)} bytes to raw video queue")
-                                except queue.Full:
-                                    logger.warning("Raw video queue full, dropping frame")
 
                         f.flush()  # Ensure data is written immediately
 
@@ -142,9 +134,7 @@ class VideoWebSocketManager:
         except Exception as e:
             logger.error(f"Error capturing video data: {e}")
         finally:
-            logger.info("Video capture loop ended, signaling end of stream")
-            # Signal end of stream
-            self._signal_end_of_stream(video_queue)
+            logger.info("Video capture loop ended")
 
     def _transfer_converted_data(self, mp4_queue):
         """Transfer converted MP4 data from FFmpeg to HTTP queue for live streaming."""
@@ -158,15 +148,6 @@ class VideoWebSocketManager:
                 except queue.Full:
                     logger.warning("MP4 queue full, dropping frame")
         logger.info("LIVE MP4 data transfer thread ended")
-
-    def _signal_end_of_stream(self, video_queue):
-        """Signal end of stream to queues."""
-        if not video_queue.full():
-            try:
-                video_queue.put_nowait(None)
-                logger.debug("Sent end-of-stream signal")
-            except queue.Full:
-                pass
 
     async def stop(self):
         """Stop video capture and streaming."""

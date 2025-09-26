@@ -38,9 +38,6 @@ from .socket_schemas import (
     PromptResponse,
     TextInputPromptRequest,
     StreamVerificationPromptRequest,
-    ImageVerificationPromptRequest,
-    TwoWayTalkVerificationRequest,
-    PushAVStreamVerificationRequest,
     UserResponseStatusEnum,
 )
 
@@ -60,12 +57,6 @@ async def handle_prompt(socket: WebSocketClientProtocol, request: PromptRequest,
 
     if message_type == MessageTypeEnum.STREAM_VERIFICATION_REQUEST or isinstance(request, StreamVerificationPromptRequest):
         await __handle_stream_verification_prompt(socket=socket, prompt=request)
-    elif message_type == MessageTypeEnum.IMAGE_VERIFICATION_REQUEST or isinstance(request, ImageVerificationPromptRequest):
-        await __handle_image_verification_prompt(socket=socket, prompt=request)
-    elif message_type == MessageTypeEnum.TWO_WAY_TALK_VERIFICATION_REQUEST or isinstance(request, TwoWayTalkVerificationRequest):
-        await __handle_two_way_talk_prompt(socket=socket, prompt=request)
-    elif message_type == MessageTypeEnum.PUSH_AV_STREAM_VERIFICATION_REQUEST or isinstance(request, PushAVStreamVerificationRequest):
-        await __handle_push_av_stream_prompt(socket=socket, prompt=request)
     elif isinstance(request, OptionsSelectPromptRequest):
         await __handle_options_prompt(socket=socket, prompt=request)
     elif isinstance(request, TextInputPromptRequest):
@@ -110,8 +101,8 @@ async def __handle_stream_verification_prompt(socket: WebSocketClientProtocol, p
         # Start capturing with streaming
         video_file = await video_handler.start_video_capture_and_stream(str(prompt.message_id))
 
-        # Wait 1 second to ensure stream transmission has started
-        await asyncio.sleep(1)
+        # Wait 1.5 seconds to ensure stream transmission has started
+        await asyncio.sleep(1.5)
 
         click.echo(italic(prompt.prompt))
         click.echo(f"🎬 Please verify the video at: http://{config.hostname}:8999/")
@@ -150,71 +141,6 @@ async def __handle_stream_verification_prompt(socket: WebSocketClientProtocol, p
         click.echo(colorize_error(f"Error handling video prompt: {e}"), err=True)
         # Clean up using the shared instance
         await _cleanup_video_handler()
-
-
-async def __handle_image_verification_prompt(socket: WebSocketClientProtocol, prompt: PromptRequest) -> None:
-    """Handle image verification prompts."""
-    try:
-        # Save image from hex string directly
-        output_dir = Path.cwd() / "videos"
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"image_verification_{prompt.message_id}_{timestamp}.jpg"
-        image_file = output_dir / filename
-
-        # Convert hex string to bytes with validation
-        try:
-            if not hasattr(prompt, 'image_hex_str') or not prompt.image_hex_str:
-                raise ValueError("Invalid or missing image_hex_str")
-
-            hex_array = prompt.image_hex_str.split(',')
-            if not hex_array:
-                raise ValueError("Empty hex array")
-
-            byte_array = bytes([int(hex_val.strip(), 16) for hex_val in hex_array if hex_val.strip()])
-            if not byte_array:
-                raise ValueError("No valid hex values found")
-        except (ValueError, AttributeError) as e:
-            click.echo(colorize_error(f"Invalid hex data: {e}"), err=True)
-            return
-
-        # Save to file asynchronously using aiofiles
-        try:
-            async with aiofiles.open(image_file, 'wb') as f:
-                await f.write(byte_array)
-        except OSError as e:
-            click.echo(colorize_error(f"Failed to save image: {e}"), err=True)
-            return
-
-        click.echo(italic(prompt.prompt))
-        click.echo(f"🖼️  Image saved to: {image_file}")
-        click.echo("Please view the image and answer the verification question:")
-
-        # Show options to user
-        for key in prompt.options.keys():
-            id = prompt.options[key]
-            click.echo(f"  {colorize_key_value(str(id), key)}")
-
-        user_answer = await asyncio.wait_for(_prompt_user_for_option(prompt), float(prompt.timeout))
-        await _send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
-
-    except asyncio.exceptions.TimeoutError:
-        click.echo(colorize_error("Image prompt timed out"), err=True)
-    except Exception as e:
-        click.echo(colorize_error(f"Error handling image prompt: {e}"), err=True)
-
-
-async def __handle_two_way_talk_prompt(socket: WebSocketClientProtocol, prompt: PromptRequest) -> None:
-    """Handle two-way talk verification prompts."""
-    click.echo(f"🎯 Handling two-way talk verification")
-    await __handle_options_prompt(socket=socket, prompt=prompt)
-
-
-async def __handle_push_av_stream_prompt(socket: WebSocketClientProtocol, prompt: PromptRequest) -> None:
-    """Handle push AV stream verification prompts."""
-    click.echo(f"🎯 Handling push AV stream verification")
-    await __handle_options_prompt(socket=socket, prompt=prompt)
 
 
 async def handle_file_upload_request(socket: WebSocketClientProtocol, request: PromptRequest) -> None:
