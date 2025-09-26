@@ -14,14 +14,15 @@
 # limitations under the License.
 #
 import asyncio
+import datetime
 import json
 import os
-import platform
-import subprocess
 import re
+from pathlib import Path
 from typing import Any, Union, Optional
 
 import aioconsole
+import aiofiles
 import click
 import httpx
 
@@ -30,8 +31,6 @@ from websockets.client import WebSocketClientProtocol
 
 from th_cli.colorize import colorize_error, colorize_key_value, italic
 from th_cli.config import config
-
-from .video_handler import VideoStreamHandler
 
 from .socket_schemas import (
     OptionsSelectPromptRequest,
@@ -46,24 +45,176 @@ from .socket_schemas import (
 )
 
 # Constants
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB in bytes
+MAX_FILE_SIZE = 200 * 1024 * 1024  # 200MB in bytes
+
+# Global video handler instance for reuse
+_video_handler_instance = None
 
 
-async def handle_prompt(socket: WebSocketClientProtocol, request: PromptRequest) -> None:
+async def handle_prompt(socket: WebSocketClientProtocol, request: PromptRequest, message_type: str = None) -> None:
+    """Handle all types of prompts with correct inheritance order."""
     click.echo("=======================================")
-    if isinstance(request, OptionsSelectPromptRequest):
+
+    # Import MessageTypeEnum here to avoid circular imports
+    from .socket_schemas import MessageTypeEnum
+
+    if message_type == MessageTypeEnum.STREAM_VERIFICATION_REQUEST or isinstance(request, StreamVerificationPromptRequest):
+        await __handle_stream_verification_prompt(socket=socket, prompt=request)
+    elif message_type == MessageTypeEnum.IMAGE_VERIFICATION_REQUEST or isinstance(request, ImageVerificationPromptRequest):
+        await __handle_image_verification_prompt(socket=socket, prompt=request)
+    elif message_type == MessageTypeEnum.TWO_WAY_TALK_VERIFICATION_REQUEST or isinstance(request, TwoWayTalkVerificationRequest):
+        await __handle_two_way_talk_prompt(socket=socket, prompt=request)
+    elif message_type == MessageTypeEnum.PUSH_AV_STREAM_VERIFICATION_REQUEST or isinstance(request, PushAVStreamVerificationRequest):
+        await __handle_push_av_stream_prompt(socket=socket, prompt=request)
+    elif isinstance(request, OptionsSelectPromptRequest):
         await __handle_options_prompt(socket=socket, prompt=request)
     elif isinstance(request, TextInputPromptRequest):
         await __handle_text_prompt(socket=socket, prompt=request)
-    elif isinstance(request, StreamVerificationPromptRequest):
-        await __handle_video_prompt(socket=socket, prompt=request)
-    elif isinstance(request, ImageVerificationPromptRequest):
-        await __handle_image_prompt(socket=socket, prompt=request)
-    elif isinstance(request, (TwoWayTalkVerificationRequest, PushAVStreamVerificationRequest)):
-        await __handle_options_prompt(socket=socket, prompt=request)
     else:
         click.echo(colorize_error(f"Unsupported prompt request: {request.__class__.__name__}"))
+
     click.echo("=======================================")
+
+def _get_video_handler():
+    """Get or create a reusable video handler instance."""
+    global _video_handler_instance
+    if _video_handler_instance is None:
+        # Import here to avoid circular import
+        from .camera import CameraStreamHandler
+        _video_handler_instance = CameraStreamHandler()
+    return _video_handler_instance
+
+
+async def _cleanup_video_handler():
+    """Clean up the global video handler instance."""
+    global _video_handler_instance
+    if _video_handler_instance is not None:
+        try:
+            await _video_handler_instance.stop_video_capture_and_stream()
+        except Exception:
+            pass  # Ignore cleanup errors
+
+
+async def __handle_stream_verification_prompt(socket: WebSocketClientProtocol, prompt: PromptRequest) -> None:
+    """Handle video stream verification prompts."""
+    try:
+        # Validate prompt has required attributes
+        if not hasattr(prompt, 'options') or not prompt.options:
+            click.echo(colorize_error("Video prompt missing required options"), err=True)
+            return
+
+        # Get reusable video handler instance
+        video_handler = _get_video_handler()
+        video_handler.set_prompt_data(prompt.prompt, prompt.options)
+
+        # Start capturing with streaming
+        video_file = await video_handler.start_video_capture_and_stream(str(prompt.message_id))
+
+        # Wait 1 second to ensure stream transmission has started
+        await asyncio.sleep(1)
+
+        click.echo(italic(prompt.prompt))
+        click.echo(f"🎬 Please verify the video at: http://{config.hostname}:8999/")
+
+        click.echo("Waiting for your response in the web interface...")
+
+        # Wait for user response from web UI instead of CLI input
+        user_answer = await video_handler.wait_for_user_response(float(prompt.timeout))
+
+        if user_answer is None:
+            click.echo(colorize_error("No response received from web interface"), err=True)
+            return
+
+        # Display the user's selected response
+        selected_option = None
+        for option_text, option_id in prompt.options.items():
+            if option_id == user_answer:
+                selected_option = option_text
+                break
+
+        if selected_option:
+            click.echo(f"✅ User selected: {colorize_key_value(str(user_answer), selected_option)}")
+        else:
+            click.echo(f"✅ User response: {user_answer}")
+
+        # Stop video capture and streaming
+        final_video_file = await video_handler.stop_video_capture_and_stream()
+
+        await _send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
+
+    except asyncio.exceptions.TimeoutError:
+        click.echo(colorize_error("Video prompt timed out"), err=True)
+        # Clean up using the shared instance
+        await _cleanup_video_handler()
+    except Exception as e:
+        click.echo(colorize_error(f"Error handling video prompt: {e}"), err=True)
+        # Clean up using the shared instance
+        await _cleanup_video_handler()
+
+
+async def __handle_image_verification_prompt(socket: WebSocketClientProtocol, prompt: PromptRequest) -> None:
+    """Handle image verification prompts."""
+    try:
+        # Save image from hex string directly
+        output_dir = Path.cwd() / "videos"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"image_verification_{prompt.message_id}_{timestamp}.jpg"
+        image_file = output_dir / filename
+
+        # Convert hex string to bytes with validation
+        try:
+            if not hasattr(prompt, 'image_hex_str') or not prompt.image_hex_str:
+                raise ValueError("Invalid or missing image_hex_str")
+
+            hex_array = prompt.image_hex_str.split(',')
+            if not hex_array:
+                raise ValueError("Empty hex array")
+
+            byte_array = bytes([int(hex_val.strip(), 16) for hex_val in hex_array if hex_val.strip()])
+            if not byte_array:
+                raise ValueError("No valid hex values found")
+        except (ValueError, AttributeError) as e:
+            click.echo(colorize_error(f"Invalid hex data: {e}"), err=True)
+            return
+
+        # Save to file asynchronously using aiofiles
+        try:
+            async with aiofiles.open(image_file, 'wb') as f:
+                await f.write(byte_array)
+        except OSError as e:
+            click.echo(colorize_error(f"Failed to save image: {e}"), err=True)
+            return
+
+        click.echo(italic(prompt.prompt))
+        click.echo(f"🖼️  Image saved to: {image_file}")
+        click.echo("Please view the image and answer the verification question:")
+
+        # Show options to user
+        for key in prompt.options.keys():
+            id = prompt.options[key]
+            click.echo(f"  {colorize_key_value(str(id), key)}")
+
+        user_answer = await asyncio.wait_for(_prompt_user_for_option(prompt), float(prompt.timeout))
+        await _send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
+
+    except asyncio.exceptions.TimeoutError:
+        click.echo(colorize_error("Image prompt timed out"), err=True)
+    except Exception as e:
+        click.echo(colorize_error(f"Error handling image prompt: {e}"), err=True)
+
+
+async def __handle_two_way_talk_prompt(socket: WebSocketClientProtocol, prompt: PromptRequest) -> None:
+    """Handle two-way talk verification prompts."""
+    click.echo(f"🎯 Handling two-way talk verification")
+    await __handle_options_prompt(socket=socket, prompt=prompt)
+
+
+async def __handle_push_av_stream_prompt(socket: WebSocketClientProtocol, prompt: PromptRequest) -> None:
+    """Handle push AV stream verification prompts."""
+    click.echo(f"🎯 Handling push AV stream verification")
+    await __handle_options_prompt(socket=socket, prompt=prompt)
 
 
 async def handle_file_upload_request(socket: WebSocketClientProtocol, request: PromptRequest) -> None:
@@ -75,14 +226,14 @@ async def handle_file_upload_request(socket: WebSocketClientProtocol, request: P
 
 async def __handle_options_prompt(socket: WebSocketClientProtocol, prompt: OptionsSelectPromptRequest) -> None:
     try:
-        user_answer = await asyncio.wait_for(__prompt_user_for_option(prompt), float(prompt.timeout))
-        await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
+        user_answer = await asyncio.wait_for(_prompt_user_for_option(prompt), float(prompt.timeout))
+        await _send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
     except asyncio.exceptions.TimeoutError:
         click.echo(colorize_error("Prompt timed out"), err=True)
         pass
 
 
-async def __prompt_user_for_option(prompt: OptionsSelectPromptRequest) -> int:
+async def _prompt_user_for_option(prompt: OptionsSelectPromptRequest) -> int:
     # Print Prompt
     click.echo(italic(prompt.prompt))
     for key in prompt.options.keys():
@@ -104,13 +255,13 @@ async def __prompt_user_for_option(prompt: OptionsSelectPromptRequest) -> int:
     # Recursively Retry
     await asyncio.sleep(0.1)
     click.echo(colorize_error(f"Invalid input {input}"), err=True)
-    return await __prompt_user_for_option(prompt)
+    return await _prompt_user_for_option(prompt)
 
 
 async def __handle_text_prompt(socket: WebSocketClientProtocol, prompt: TextInputPromptRequest) -> None:
     try:
         user_answer = await asyncio.wait_for(__prompt_user_for_text_input(prompt), float(prompt.timeout))
-        await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
+        await _send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
     except asyncio.exceptions.TimeoutError:
         click.echo(colorize_error("Prompt timed out"), err=True)
         pass
@@ -124,7 +275,7 @@ async def __handle_file_upload_prompt(socket: WebSocketClientProtocol, prompt: P
             await __upload_file_and_send_response(socket=socket, file_path=file_path, prompt=prompt)
         else:
             # User cancelled or provided empty path
-            await __send_prompt_response(socket=socket, input="", prompt=prompt)
+            await _send_prompt_response(socket=socket, input="", prompt=prompt)
     except asyncio.exceptions.TimeoutError:
         click.echo("File upload prompt timed out", err=True)
         pass
@@ -180,7 +331,7 @@ async def __upload_file_and_send_response(
     try:
         if not os.path.isfile(file_path):
             click.echo(f"Error: File '{file_path}' does not exist or is not accessible", err=True)
-            await __send_prompt_response(socket=socket, input="", prompt=prompt)
+            await _send_prompt_response(socket=socket, input="", prompt=prompt)
             return
 
         file_size = os.path.getsize(file_path)
@@ -188,7 +339,7 @@ async def __upload_file_and_send_response(
         # Check file size limit
         if file_size > MAX_FILE_SIZE:
             click.echo(f"❌ File too large: {file_size} bytes (max: {MAX_FILE_SIZE} bytes)", err=True)
-            await __send_prompt_response(socket=socket, input="", prompt=prompt)
+            await _send_prompt_response(socket=socket, input="", prompt=prompt)
             return
 
         click.echo(f"File selected: {file_path} (size: {file_size:,} bytes)")
@@ -200,27 +351,29 @@ async def __upload_file_and_send_response(
         upload_url = f"{base_url}/api/v1/test_run_executions/file_upload/"
 
         async with httpx.AsyncClient() as client:
-            with open(file_path, "rb") as file:
-                files = {"file": (os.path.basename(file_path), file, "application/octet-stream")}
+            # Read file asynchronously using aiofiles
+            async with aiofiles.open(file_path, 'rb') as f:
+                file_content = await f.read()
 
-                response = await client.post(upload_url, files=files)
+            files = {"file": (os.path.basename(file_path), file_content, "application/octet-stream")}
+            response = await client.post(upload_url, files=files)
 
-                if response.status_code == 200:
-                    click.echo("✅ File uploaded successfully")
-                    await __send_prompt_response(socket=socket, input="SUCCESS", prompt=prompt)
-                else:
-                    click.echo(f"❌ File upload failed: {response.status_code} - {response.text}", err=True)
-                    await __send_prompt_response(socket=socket, input="", prompt=prompt)
+            if response.status_code == 200:
+                click.echo("✅ File uploaded successfully")
+                await _send_prompt_response(socket=socket, input="SUCCESS", prompt=prompt)
+            else:
+                click.echo(f"❌ File upload failed: {response.status_code} - {response.text}", err=True)
+                await _send_prompt_response(socket=socket, input="", prompt=prompt)
 
     except httpx.RequestError as e:
         click.echo(f"❌ Network error during file upload: {str(e)}", err=True)
-        await __send_prompt_response(socket=socket, input="", prompt=prompt)
+        await _send_prompt_response(socket=socket, input="", prompt=prompt)
     except httpx.HTTPStatusError as e:
         click.echo(f"❌ HTTP error during file upload: {e.response.status_code} - {e.response.text}", err=True)
-        await __send_prompt_response(socket=socket, input="", prompt=prompt)
+        await _send_prompt_response(socket=socket, input="", prompt=prompt)
     except Exception as e:
         click.echo(f"❌ Unexpected error uploading file: {str(e)}", err=True)
-        await __send_prompt_response(socket=socket, input="", prompt=prompt)
+        await _send_prompt_response(socket=socket, input="", prompt=prompt)
 
 
 def __valid_text_input(input: Any, prompt: TextInputPromptRequest) -> bool:
@@ -247,7 +400,7 @@ def __valid_file_upload(file_path: str, prompt: PromptRequest) -> bool:
     return True
 
 
-async def __send_prompt_response(
+async def _send_prompt_response(
     socket: WebSocketClientProtocol, input: Union[str, int], prompt: PromptRequest
 ) -> None:
     response = PromptResponse(
@@ -261,186 +414,3 @@ async def __send_prompt_response(
     }
     payload = json.dumps(payload_dict)
     await socket.send(payload)
-
-
-async def handle_video_prompt_internal(socket: WebSocketClientProtocol, prompt: StreamVerificationPromptRequest) -> Optional[int]:
-    """Handle video stream verification prompts."""
-    try:
-        # Create video handler and configure prompt data
-        video_handler = VideoStreamHandler()
-        video_handler.set_prompt_data(prompt.prompt, prompt.options)
-
-        # Start capturing with streaming
-        video_file = await video_handler.start_video_capture_and_stream(str(prompt.message_id))
-
-        click.echo(italic(prompt.prompt))
-        click.echo(f"🎬 Please verify the video at: http://{config.hostname}:8999/")
-
-        # Automatically open browser without asking
-        await __open_live_stream()
-
-        click.echo("Waiting for your response in the web interface...")
-
-        # Wait for user response from web UI instead of CLI input
-        user_answer = await video_handler.wait_for_user_response(float(prompt.timeout))
-
-        if user_answer is None:
-            click.echo(colorize_error("No response received from web interface"), err=True)
-            return None
-
-        # Stop video capture and streaming
-        final_video_file = await video_handler.stop_video_capture_and_stream()
-
-        await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
-        return user_answer
-
-    except asyncio.exceptions.TimeoutError:
-        click.echo(colorize_error("Video prompt timed out"), err=True)
-        # Try to stop video capture on timeout
-        video_handler = VideoStreamHandler()
-        await video_handler.stop_video_capture_and_stream()
-        return None
-    except Exception as e:
-        click.echo(colorize_error(f"Error handling video prompt: {e}"), err=True)
-        return None
-
-
-async def __handle_video_prompt(socket: WebSocketClientProtocol, prompt: StreamVerificationPromptRequest) -> Optional[int]:
-    """Handle video stream verification prompts."""
-    return await handle_video_prompt_internal(socket, prompt)
-
-
-async def __handle_image_prompt(socket: WebSocketClientProtocol, prompt: ImageVerificationPromptRequest) -> None:
-    """Handle image verification prompts."""
-    try:
-        # Save image from hex string
-        video_handler = VideoStreamHandler()
-        image_file = video_handler.save_image_from_hex(prompt.image_hex_str, str(prompt.message_id))
-
-        click.echo(italic(prompt.prompt))
-        click.echo(f"🖼️  Image saved to: {image_file}")
-        click.echo("Please view the image and answer the verification question:")
-
-        # Show options to user
-        for key in prompt.options.keys():
-            id = prompt.options[key]
-            click.echo(f"  {colorize_key_value(str(id), key)}")
-
-        user_answer = await asyncio.wait_for(__prompt_user_for_option(prompt), float(prompt.timeout))
-        await __send_prompt_response(socket=socket, input=user_answer, prompt=prompt)
-
-    except asyncio.exceptions.TimeoutError:
-        click.echo(colorize_error("Image prompt timed out"), err=True)
-    except Exception as e:
-        click.echo(colorize_error(f"Error handling image prompt: {e}"), err=True)
-
-
-async def handle_video_prompt_direct(socket: WebSocketClientProtocol, request: PromptRequest) -> None:
-    """Handle video prompts directly from websocket routing."""
-    # Convert to StreamVerificationPromptRequest if it has options
-    if hasattr(request, 'options'):
-        video_request = StreamVerificationPromptRequest(
-            prompt=request.prompt,
-            timeout=request.timeout,
-            message_id=request.message_id,
-            options=request.options
-        )
-        await __handle_video_prompt(socket=socket, prompt=video_request)
-    else:
-        await handle_prompt(socket=socket, request=request)
-
-
-async def handle_image_prompt_direct(socket: WebSocketClientProtocol, request: PromptRequest) -> None:
-    """Handle image prompts directly from websocket routing."""
-    # Convert to ImageVerificationPromptRequest if it has the right attributes
-    if hasattr(request, 'options') and hasattr(request, 'image_hex_str'):
-        image_request = ImageVerificationPromptRequest(
-            prompt=request.prompt,
-            timeout=request.timeout,
-            message_id=request.message_id,
-            options=request.options,
-            image_hex_str=request.image_hex_str
-        )
-        await __handle_image_prompt(socket=socket, prompt=image_request)
-    else:
-        await handle_prompt(socket=socket, request=request)
-
-
-async def __open_live_stream() -> None:
-    """Open the CLI live video stream in the default browser."""
-    try:
-        stream_url = f"http://{config.hostname}:8999/"
-        system = platform.system()
-
-        if system == "Darwin":  # macOS
-            subprocess.Popen(["open", stream_url])
-        elif system == "Windows":
-            subprocess.Popen(["start", stream_url], shell=True)
-        elif system == "Linux":
-            subprocess.Popen(["xdg-open", stream_url])
-        else:
-            click.echo(f"⚠️  Cannot open browser automatically on {system}")
-            click.echo(f"📱 Please manually open: {stream_url}")
-            return
-
-        click.echo("🌐 Opening video stream in browser...")
-    except Exception as e:
-        click.echo(f"⚠️  Could not open browser: {e}")
-        click.echo(f"📱 Please manually open: http://{config.hostname}:8999/")
-
-
-async def __open_web_ui() -> None:
-    """Open the web UI in the default browser."""
-    try:
-        # Try different possible URLs in order of likelihood
-        possible_urls = [
-            f"http://{config.hostname}/",           # Traefik main (most likely)
-            f"http://{config.hostname}:4200/",      # Frontend direct
-            f"http://{config.hostname}:8888/",      # Backend direct
-            f"http://{config.hostname}:8090/"       # Traefik dashboard
-        ]
-
-        # Use the first URL (most likely to work)
-        web_url = possible_urls[0]
-        system = platform.system()
-
-        if system == "Darwin":  # macOS
-            subprocess.Popen(["open", web_url])
-        elif system == "Windows":
-            subprocess.Popen(["start", web_url], shell=True)
-        elif system == "Linux":
-            subprocess.Popen(["xdg-open", web_url])
-        else:
-            click.echo(f"⚠️  Cannot open browser automatically on {system}")
-            click.echo("📱 Please manually try these URLs:")
-            for url in possible_urls:
-                click.echo(f"   {url}")
-            return
-
-        click.echo(f"🌐 Opening web UI at: {web_url}")
-        click.echo("💡 If that doesn't work, try these alternatives:")
-        for url in possible_urls[1:]:
-            click.echo(f"   {url}")
-    except Exception as e:
-        click.echo(f"⚠️  Could not open browser: {e}")
-        click.echo(f"📱 Please manually open: http://{config.hostname}/")
-
-
-async def __open_video_file(file_path) -> None:
-    """Open video file with the system's default video player."""
-    try:
-        system = platform.system()
-        if system == "Darwin":  # macOS
-            subprocess.Popen(["open", str(file_path)])
-        elif system == "Windows":
-            subprocess.Popen(["start", str(file_path)], shell=True)
-        elif system == "Linux":
-            subprocess.Popen(["xdg-open", str(file_path)])
-        else:
-            click.echo(f"⚠️  Cannot open file automatically on {system}. File location: {file_path}")
-            return
-
-        click.echo(f"🎬 Opening video file with default player...")
-    except Exception as e:
-        click.echo(f"⚠️  Could not open video file: {e}")
-        click.echo(f"📁 Manual location: {file_path}")

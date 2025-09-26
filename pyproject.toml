@@ -45,6 +45,8 @@ dependencies = [
     "aioconsole>=0.3.2,<1.0.0",
     "PyYAML>=6.0.1,<7.0.0",
     "tomli>=1.2.0,<3.0.0",
+    "aiofiles>=23.0.0,<24.0.0",
+    "aiortc>=1.4.0,<2.0.0",  # WebRTC implementation
 ]
 
 [project.scripts]

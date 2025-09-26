@@ -15,9 +15,12 @@
 #
 from typing import List, Optional
 
+import asyncio
 import click
+import datetime
 import websockets
 from loguru import logger
+from pathlib import Path
 from pydantic import ValidationError
 from websockets.client import WebSocketClientProtocol
 from websockets.client import connect as websocket_connect
@@ -28,7 +31,7 @@ from th_cli.api_lib_autogen.models import (
     TestStepExecution,
     TestSuiteExecution,
 )
-from th_cli.colorize import HierarchyEnum, colorize_error, colorize_hierarchy_prefix, colorize_state
+from th_cli.colorize import HierarchyEnum, colorize_error, colorize_hierarchy_prefix, colorize_state, italic
 from th_cli.config import config
 
 from .prompt_manager import handle_file_upload_request, handle_prompt
@@ -87,25 +90,9 @@ class TestRunSocket:
             # Check message type to route to appropriate handler
             if message.type == MessageTypeEnum.FILE_UPLOAD_REQUEST:
                 await handle_file_upload_request(socket=socket, request=message.payload)
-            elif message.type == MessageTypeEnum.STREAM_VERIFICATION_REQUEST:
-                # Handle video verification with proper separators
-                click.echo("=======================================")
-                user_response = await self.__handle_video_verification(socket=socket, request=message.payload)
-                click.echo("=======================================")
-                if user_response is not None:
-                    click.echo(f"✅ Response received: {user_response}")
-            elif message.type == MessageTypeEnum.IMAGE_VERIFICATION_REQUEST:
-                # Convert to ImageVerificationPromptRequest and handle as image
-                click.echo(f"🖼️ Detected image verification request!")
-                await self.__handle_image_verification(socket=socket, request=message.payload)
-            elif message.type in [
-                MessageTypeEnum.TWO_WAY_TALK_VERIFICATION_REQUEST,
-                MessageTypeEnum.PUSH_AV_STREAM_VERIFICATION_REQUEST,
-            ]:
-                # Handle as specialized options prompt
-                await self.__handle_specialized_prompt(socket=socket, request=message.payload, prompt_type=message.type)
             else:
-                await handle_prompt(socket=socket, request=message.payload)
+                # Pass both the request and the message type to handle_prompt
+                await handle_prompt(socket=socket, request=message.payload, message_type=message.type)
         elif message.type == MessageTypeEnum.TEST_LOG_RECORDS and isinstance(message.payload, list):
             self.__handle_log_record(message.payload)
         elif isinstance(message.payload, TimeOutNotification):
@@ -175,31 +162,3 @@ class TestRunSocket:
     def __step(self, index: int, case_index: int, suite_index: int) -> Optional[TestStepExecution]:
         case = self.__case(index=case_index, suite_index=suite_index)
         return case.test_step_executions[index]
-
-    async def __handle_video_verification(self, socket: WebSocketClientProtocol, request: PromptRequest) -> Optional[int]:
-        """Handle video verification by calling the video handler directly."""
-        # Import here to avoid circular import
-        from .prompt_manager import handle_video_prompt_internal
-
-        # Convert to StreamVerificationPromptRequest
-        if hasattr(request, 'options'):
-            from .socket_schemas import StreamVerificationPromptRequest
-            video_request = StreamVerificationPromptRequest(
-                prompt=request.prompt,
-                timeout=request.timeout,
-                message_id=request.message_id,
-                options=request.options
-            )
-            return await handle_video_prompt_internal(socket=socket, prompt=video_request)
-        return None
-
-    async def __handle_image_verification(self, socket: WebSocketClientProtocol, request: PromptRequest) -> None:
-        """Handle image verification by calling the image handler directly."""
-        # Import here to avoid circular import
-        from .prompt_manager import handle_image_prompt_direct
-        await handle_image_prompt_direct(socket=socket, request=request)
-
-    async def __handle_specialized_prompt(self, socket: WebSocketClientProtocol, request: PromptRequest, prompt_type: str) -> None:
-        """Handle specialized prompts like two-way talk or push AV streams."""
-        click.echo(f"🎯 Handling specialized prompt: {prompt_type}")
-        await handle_prompt(socket=socket, request=request)
