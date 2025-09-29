@@ -244,7 +244,7 @@ def __remove_disabled_test_cases(
         if not collection.test_suites:
             emptied_collections.append(index)
 
-    for emptied_collection in emptied_collections:
+    for emptied_collection in reversed(emptied_collections):
         del test_collections[emptied_collection]
 
 

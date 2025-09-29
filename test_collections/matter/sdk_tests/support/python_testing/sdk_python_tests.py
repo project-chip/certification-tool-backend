@@ -181,6 +181,7 @@ def custom_python_test_collection(
         generate_python_test_json_file(
             test_folder=python_test_folder,
             json_output_file=tests_file_path,
+            grouped_commands=True,
         )
     )
 

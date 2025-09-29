@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 import os
+
+from .list_python_tests_classes import generate_python_test_json_file
 
 # Verify if this execution comes from python_tests_validator.
 if not os.getenv("DRY_RUN"):
@@ -26,6 +29,8 @@ if not os.getenv("DRY_RUN"):
         sdk_mandatory_python_test_collection,
         sdk_python_test_collection,
     )
+
+    asyncio.run(generate_python_test_json_file(grouped_commands=True))
 
     # Test engine will auto load TestCollectionDeclarations declared inside the package
     # initializer
