@@ -45,9 +45,6 @@ from ...python_testing.list_python_tests_classes import (
         ("TC_MCORE_FS_1_4.py", True),  # underscore in cluster name
         ("TC_ACE_1_1-custom.py", True),  # with -custom suffix at end
         ("TC_MCORE_FS_1_4-custom.py", True),  # underscore + custom suffix at end
-        ("TC_ACE_1_1-Custom.py", True),  # with -Custom suffix at end
-        ("TC_ACE_1_1-CUSTOM.py", True),  # with -CUSTOM suffix at end
-        ("TC_ace_1_2.py", True),  # cluster name with lowercase letters
         # Negative test cases - should NOT match pattern
         ("TC_A_0_0.py", False),  # cluster name too short (1 letter)
         ("TC_test.py", False),
@@ -66,12 +63,15 @@ from ...python_testing.list_python_tests_classes import (
         ("TC_ACE_1_2.txt", False),  # wrong extension
         ("TC_1test_1_2.py", False),  # cluster name starts with number
         ("TC_ANOTHERVERYLONGCLUSTERNAME_99_99.py", False),  # cluster name > 20 chars
+        ("TC_ACE_1_1-Custom.py", False),  # with -Custom suffix at end
+        ("TC_ACE_1_1-CUSTOM.py", False),  # with -CUSTOM suffix at end
+        ("TC_ace_1_2.py", False),  # cluster name with lowercase letters
     ],
 )
 def test_filename_pattern_validation(filename: str, should_match: bool) -> None:
     """Parametrized test for filename pattern validation."""
-    # Use the same constant pattern as the actual implementation with case insensitive flag
-    tc_pattern = re.compile(TC_FILENAME_PATTERN, re.IGNORECASE)
+    # Use the same constant pattern as the actual implementation
+    tc_pattern = re.compile(TC_FILENAME_PATTERN)
 
     result = tc_pattern.match(filename)
     if should_match:

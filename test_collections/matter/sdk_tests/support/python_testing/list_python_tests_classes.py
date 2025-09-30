@@ -32,8 +32,6 @@ GET_TEST_INFO_ARGUMENT = "--get_test_info"
 TEST_INFO_JSON_FILENAME = "test_info.json"
 
 # Pattern to match TC_<AlphaNumeric>_<number>_<number>_<number>....py format
-# TC_ followed by cluster name (2-20 uppercase letters/underscores),
-# then _digit_digit and optionally more _digit, followed by -custom (lowercase only), then .py
 TC_FILENAME_PATTERN = r"^TC_[A-Z_]{2,20}_\d+_\d+(_\d+)*(-custom)?\.py$"
 
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
