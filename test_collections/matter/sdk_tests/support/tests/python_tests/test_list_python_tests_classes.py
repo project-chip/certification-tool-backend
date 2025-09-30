@@ -59,7 +59,7 @@ from ...python_testing.list_python_tests_classes import (
         ("TC_1test_1_2.py", False),  # cluster name starts with number
     ],
 )
-def test_filename_pattern_validation(filename, should_match):
+def test_filename_pattern_validation(filename, should_match) -> None:
     """Parametrized test for filename pattern validation."""
     # Use the same constant pattern as the actual implementation
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
@@ -71,7 +71,7 @@ def test_filename_pattern_validation(filename, should_match):
         assert result is None, f"Filename '{filename}' should NOT match the pattern"
 
 
-def test_get_command_list_with_valid_files():
+def test_get_command_list_with_valid_files() -> None:
     """Test get_command_list with valid TC files (integration test)."""
     # This test requires the actual imports to work
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -127,7 +127,7 @@ def test_get_command_list_with_valid_files():
             assert invalid_file not in file_stems
 
 
-def test_empty_folder_scenario():
+def test_empty_folder_scenario() -> None:
     """Test pattern validation with empty folder scenario."""
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
