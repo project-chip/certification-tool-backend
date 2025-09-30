@@ -34,7 +34,7 @@ TEST_INFO_JSON_FILENAME = "test_info.json"
 # Pattern to match TC_*_number_number.py format
 # TC_ followed by cluster name (each part starts with letter),
 # then exactly _digit_digit.py
-TC_FILENAME_PATTERN = r"^TC_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z][A-Za-z0-9]*)*_\d+_\d+\.py$"
+TC_FILENAME_PATTERN = r"^TC_[A-Z_]{2,20}(_\d+){2}\.py$"
 
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
 PYTHON_TESTING_PATH = SDK_TESTS_PATH / "sdk_checkout/python_testing"
@@ -132,7 +132,7 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
 
     for python_test_file in python_test_files:
-        # Check if the file follows the TC_*_number_number.py pattern
+        # Check if the file follows the TC_<AlphaNumeric>_<number>_<number>.py pattern
         if not tc_pattern.match(python_test_file.name):
             continue
 

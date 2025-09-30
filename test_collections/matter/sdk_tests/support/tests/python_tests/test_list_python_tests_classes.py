@@ -37,11 +37,11 @@ from ...python_testing.list_python_tests_classes import (
         ("TC_DA_1_7.py", True),
         ("TC_BINFO_2_1.py", True),
         ("TC_LVL_8_1.py", True),
-        ("TC_SOMEVERYLONGCLUSTERNAME_99_99.py", True),
-        ("TC_A_0_0.py", True),
+        ("TC_VERYLONGCLUSTERNAME_99_99.py", True),
         ("TC_CLUSTER_1_1.py", True),
-        ("TC_MCORE_FS_1_4.py", True),
+        ("TC_MCORE_FS_1_4.py", True),  # underscore in cluster name
         # Negative test cases - should NOT match pattern
+        ("TC_A_0_0.py", False),  # cluster name too short (1 letter)
         ("TC_test.py", False),
         ("TC_ACE_1.py", False),
         ("TC_ACE_a_b.py", False),
@@ -57,9 +57,11 @@ from ...python_testing.list_python_tests_classes import (
         ("TC_ACE_1_2", False),  # missing .py extension
         ("TC_ACE_1_2.txt", False),  # wrong extension
         ("TC_1test_1_2.py", False),  # cluster name starts with number
+        ("TC_ace_1_2.py", False),  # cluster name with lowercase letters
+        ("TC_ANOTHERVERYLONGCLUSTERNAME_99_99.py", False),  # cluster name > 20 chars
     ],
 )
-def test_filename_pattern_validation(filename, should_match) -> None:
+def test_filename_pattern_validation(filename: str, should_match: bool) -> None:
     """Parametrized test for filename pattern validation."""
     # Use the same constant pattern as the actual implementation
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
