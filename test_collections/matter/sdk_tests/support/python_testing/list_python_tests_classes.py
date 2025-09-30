@@ -31,7 +31,7 @@ from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 GET_TEST_INFO_ARGUMENT = "--get_test_info"
 TEST_INFO_JSON_FILENAME = "test_info.json"
 
-# Pattern to match TC_*_number_number.py format
+# Pattern to match TC_<AlphaNumeric>_<number>_<number>.py  format
 # TC_ followed by cluster name (each part starts with letter),
 # then exactly _digit_digit.py
 TC_FILENAME_PATTERN = r"^TC_[A-Z_]{2,20}(_\d+){2}\.py$"
