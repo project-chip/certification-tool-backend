@@ -17,6 +17,7 @@
 import ast
 import asyncio
 import json
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -29,6 +30,10 @@ from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 # Make these constants synced with "test_harness_client.py"
 GET_TEST_INFO_ARGUMENT = "--get_test_info"
 TEST_INFO_JSON_FILENAME = "test_info.json"
+
+# Pattern to match TC_*_number_number.py format
+# TC_ followed by cluster name (each part starts with letter), then exactly _digit_digit.py
+TC_FILENAME_PATTERN = r"^TC_[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z][A-Za-z0-9]*)*_\d+_\d+\.py$"
 
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
 PYTHON_TESTING_PATH = SDK_TESTS_PATH / "sdk_checkout/python_testing"
@@ -122,7 +127,14 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     python_test_files = test_folder.file_paths(extension=".py")
     python_test_files.sort()
 
+    # Use the constant pattern for TC filename validation
+    tc_pattern = re.compile(TC_FILENAME_PATTERN)
+
     for python_test_file in python_test_files:
+        # Check if the file follows the TC_*_number_number.py pattern
+        if not tc_pattern.match(python_test_file.name):
+            continue
+
         parent_folder = python_test_file.parent.name
         with open(python_test_file, "r") as python_file:
             parsed_python_file = ast.parse(python_file.read())
