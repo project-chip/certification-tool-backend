@@ -73,7 +73,7 @@ def test_filename_pattern_validation(filename: str, should_match: bool) -> None:
         assert result is None, f"Filename '{filename}' should NOT match the pattern"
 
 
-def test_get_command_list_with_valid_files() -> None:
+def test_get_command_list_with_valid_and_invalid_files() -> None:
     """Test get_command_list with valid TC files (integration test)."""
     # This test requires the actual imports to work
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -121,11 +121,11 @@ def test_get_command_list_with_valid_files() -> None:
 
         # Verify only valid files are included
         file_stems = [cmd[0].split("/")[-1] for cmd in commands]
-        for valid_file in ["TC_ACE_1_2", "TC_CNET_4_12", "TC_DA_1_7"]:
+        for valid_file in valid_files:
             assert valid_file in file_stems
 
         # Verify invalid files are not included
-        for invalid_file in ["TC_test", "helper", "TC_ACE_1"]:
+        for invalid_file in invalid_files:
             assert invalid_file not in file_stems
 
 
