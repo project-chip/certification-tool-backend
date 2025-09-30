@@ -34,21 +34,29 @@ from ...python_testing.list_python_tests_classes import (
         # Positive test cases - should match pattern
         ("TC_ACE_1_2.py", True),
         ("TC_CNET_4_12.py", True),
+        ("TC_CNET_4_99.py", True),
         ("TC_DA_1_7.py", True),
         ("TC_BINFO_2_1.py", True),
         ("TC_LVL_8_1.py", True),
         ("TC_VERYLONGCLUSTERNAME_99_99.py", True),
         ("TC_CLUSTER_1_1.py", True),
+        ("TC_ACE_1_2_3.py", True),  # too many numbers - main fix
+        ("TC_ACE_1_2_300.py", True),  # too many numbers - main fix
         ("TC_MCORE_FS_1_4.py", True),  # underscore in cluster name
+        ("TC_ACE_1_1-custom.py", True),  # with -custom suffix at end
+        ("TC_MCORE_FS_1_4-custom.py", True),  # underscore + custom suffix at end
+        ("TC_ACE_1_1-Custom.py", True),  # with -Custom suffix at end
+        ("TC_ACE_1_1-CUSTOM.py", True),  # with -CUSTOM suffix at end
+        ("TC_ace_1_2.py", True),  # cluster name with lowercase letters
         # Negative test cases - should NOT match pattern
         ("TC_A_0_0.py", False),  # cluster name too short (1 letter)
         ("TC_test.py", False),
         ("TC_ACE_1.py", False),
         ("TC_ACE_a_b.py", False),
         ("helper.py", False),
+        ("TC_C4_1_1.py", False),
         ("TC_.py", False),
         ("test_helper.py", False),
-        ("TC_ACE_1_2_3.py", False),  # too many numbers - main fix
         ("TC_ACE_1_2_extra.py", False),  # extra content after numbers
         ("TC_ACE_.py", False),  # missing second number
         ("TC_ACE_1_.py", False),  # missing second number
@@ -57,14 +65,13 @@ from ...python_testing.list_python_tests_classes import (
         ("TC_ACE_1_2", False),  # missing .py extension
         ("TC_ACE_1_2.txt", False),  # wrong extension
         ("TC_1test_1_2.py", False),  # cluster name starts with number
-        ("TC_ace_1_2.py", False),  # cluster name with lowercase letters
         ("TC_ANOTHERVERYLONGCLUSTERNAME_99_99.py", False),  # cluster name > 20 chars
     ],
 )
 def test_filename_pattern_validation(filename: str, should_match: bool) -> None:
     """Parametrized test for filename pattern validation."""
-    # Use the same constant pattern as the actual implementation
-    tc_pattern = re.compile(TC_FILENAME_PATTERN)
+    # Use the same constant pattern as the actual implementation with case insensitive flag
+    tc_pattern = re.compile(TC_FILENAME_PATTERN, re.IGNORECASE)
 
     result = tc_pattern.match(filename)
     if should_match:
