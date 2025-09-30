@@ -122,11 +122,11 @@ def test_get_command_list_with_valid_and_invalid_files() -> None:
         # Verify only valid files are included
         file_stems = [cmd[0].split("/")[-1] for cmd in commands]
         for valid_file in valid_files:
-            assert valid_file in file_stems
+            assert Path(valid_file).stem in file_stems
 
         # Verify invalid files are not included
         for invalid_file in invalid_files:
-            assert invalid_file not in file_stems
+            assert Path(invalid_file).stem not in file_stems
 
 
 def test_empty_folder_scenario() -> None:
