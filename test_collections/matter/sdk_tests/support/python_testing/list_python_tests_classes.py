@@ -130,7 +130,8 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
 
     for python_test_file in python_test_files:
-        # Check if the file follows the TC_<AlphaNumeric>_<number>_<number>.py pattern
+        # Check if the file follows the 
+        # TC_<AlphaNumeric>_<number>_<number>_<number>....py pattern
         if not tc_pattern.match(python_test_file.name):
             continue
 
