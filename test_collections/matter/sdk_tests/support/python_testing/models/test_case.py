@@ -101,7 +101,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self._cached_file_content: str = ""
         self._last_file_size: int = 0
         self._last_logged_position: int = 0  # Track where we last logged to
-        self._remaining_content_logged: bool = False  # Prevent duplicate logging of remaining content
+        self._remaining_content_logged: bool = (
+            False  # Prevent duplicate logging of remaining content
+        )
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -142,13 +144,23 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.current_python_step_number += 1
         self.step_over()
 
-    async def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
+    async def step_success(
+        self, logger: Any, logs: str, duration: int, request: Any
+    ) -> None:
         # Display logs captured during this step
         await self._display_step_logs()
 
     async def _display_step_logs(self) -> None:
         """Display logs that were captured during the current step."""
-        if not self.file_output_path or not self.file_output_path.exists():
+        # Validate file path is set and file exists
+        if not self.file_output_path:
+            logger.debug("Test output file path not initialized, skipping log display")
+            return
+
+        if not self.file_output_path.exists():
+            logger.debug(
+                f"Test output file does not exist yet: {self.file_output_path}"
+            )
             return
 
         try:
@@ -156,12 +168,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
             content = self._read_file_incrementally()
 
             # Extract logs for the current step (returns tuple of logs and end position)
-            step_logs, end_pos = self._extract_logs_for_step(content, self.current_python_step_number)
+            step_logs, end_pos = self._extract_logs_for_step(
+                content, self.current_python_step_number
+            )
 
             if step_logs:
                 # Send logs in batches to avoid overwhelming the UI
                 for i in range(0, len(step_logs), LOG_BATCH_SIZE):
-                    batch = step_logs[i:i + LOG_BATCH_SIZE]
+                    batch = step_logs[i : i + LOG_BATCH_SIZE]
                     for line in batch:
                         logger.log(PYTHON_TEST_LEVEL, line)
                     # Small delay between batches to allow UI to process
@@ -174,6 +188,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")
+        except Exception as e:
+            logger.error(
+                f"Unexpected error while displaying step logs: {e}", exc_info=True
+            )
 
     def _read_file_incrementally(self) -> str:
         """Read file incrementally, caching content to avoid re-reading entire file.
@@ -190,13 +208,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             # File has grown, read only new content
             if current_size > self._last_file_size and self._cached_file_content:
-                with open(self.file_output_path, 'r', encoding='utf-8') as f:
+                with open(self.file_output_path, "r", encoding="utf-8") as f:
                     f.seek(self._last_file_size)
                     new_content = f.read()
                     self._cached_file_content += new_content
             else:
                 # First read or file was truncated
-                with open(self.file_output_path, 'r', encoding='utf-8') as f:
+                with open(self.file_output_path, "r", encoding="utf-8") as f:
                     self._cached_file_content = f.read()
 
             self._last_file_size = current_size
@@ -205,7 +223,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         except (IOError, OSError):
             return self._cached_file_content
 
-    def _extract_logs_for_step(self, content: str, step_number: int) -> tuple[list[str], int]:
+    def _extract_logs_for_step(
+        self, content: str, step_number: int
+    ) -> tuple[list[str], int]:
         """Extract logs for a specific test step from the full log content.
 
         Args:
@@ -213,7 +233,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
             step_number: The step number to extract logs for
 
         Returns:
-            Tuple of (list of log lines for the specified step, end position of step content)
+            Tuple of (list of log lines for the specified step,
+            end position of step content)
         """
         current_step_marker = f"***** Test Step {step_number} :"
         next_step_marker = f"***** Test Step {step_number + 1} :"
@@ -236,7 +257,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             end_pos = len(content)
 
         # Split into lines and return with end position
-        return (step_content.split('\n'), end_pos)
+        return (step_content.split("\n"), end_pos)
 
     async def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
@@ -395,6 +416,36 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         return title
 
+    @staticmethod
+    def _get_sdk_tests_base_path() -> Path:
+        """Get the base path for SDK tests directory.
+
+        This method safely navigates the directory structure to find the sdk_tests
+        directory, handling potential changes in file organization.
+
+        Returns:
+            Path to the sdk_tests base directory
+
+        Raises:
+            FileNotFoundError: If the sdk_tests directory cannot be found
+        """
+        current_file = Path(__file__).resolve()
+
+        # Navigate up from current file to find sdk_tests directory
+        # Current structure: .../sdk_tests/support/python_testing/models/test_case.py
+        for parent in current_file.parents:
+            if parent.name == "sdk_tests":
+                return parent
+
+        # Fallback: try parents[3] for backward compatibility
+        try:
+            return Path(__file__).parents[3]
+        except IndexError:
+            raise FileNotFoundError(
+                f"Could not determine sdk_tests base path from {current_file}. "
+                "Directory structure may have changed."
+            )
+
     async def setup(self) -> None:
         logger.info("Test Setup")
 
@@ -409,7 +460,15 @@ class PythonTestCase(TestCase, UserPromptSupport):
         if self._remaining_content_logged:
             return
 
-        if not self.file_output_path or not self.file_output_path.exists():
+        # Validate file path is set
+        if not self.file_output_path:
+            logger.debug(
+                "Test output file path not initialized, skipping remaining content logging"
+            )
+            return
+
+        if not self.file_output_path.exists():
+            logger.debug(f"Test output file does not exist: {self.file_output_path}")
             return
 
         try:
@@ -418,7 +477,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             # Check if there's content after the last logged position
             if self._last_logged_position < len(content):
-                remaining_content = content[self._last_logged_position:]
+                remaining_content = content[self._last_logged_position :]
 
                 if remaining_content.strip():
                     logger.info("---- Remaining logs not captured by steps ----")
@@ -431,6 +490,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read remaining test output: {e}")
+        except Exception as e:
+            logger.error(
+                f"Unexpected error while logging remaining content: {e}", exc_info=True
+            )
 
     async def execute(self) -> None:
         try:
@@ -477,8 +540,20 @@ class PythonTestCase(TestCase, UserPromptSupport):
             self.test_socket = exec_result.socket
 
             # Initialize file output path for step-by-step log capture
-            sdk_tests_path = Path(Path(__file__).parents[3])
-            self.file_output_path = sdk_tests_path / TEST_OUTPUT_FILE_PATH
+            try:
+                sdk_tests_path = self._get_sdk_tests_base_path()
+                self.file_output_path = sdk_tests_path / TEST_OUTPUT_FILE_PATH
+
+                # Validate that the output directory exists
+                output_dir = self.file_output_path.parent
+                if not output_dir.exists():
+                    logger.warning(
+                        f"Test output directory does not exist: {output_dir}. "
+                        "It will be created when tests run."
+                    )
+            except FileNotFoundError as e:
+                logger.error(f"Failed to initialize test output path: {e}")
+                self.file_output_path = None
 
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
