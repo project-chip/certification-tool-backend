@@ -199,6 +199,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
         Returns:
             Full content of the file up to current position
         """
+        # Validate file path is set
+        if not self.file_output_path:
+            return self._cached_file_content
+
         try:
             current_size = self.file_output_path.stat().st_size
 
@@ -233,8 +237,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             step_number: The step number to extract logs for
 
         Returns:
-            Tuple of (list of log lines for the specified step,
-            end position of step content)
+            Tuple of (list of log lines for the specified step, end position of step content)
         """
         current_step_marker = f"***** Test Step {step_number} :"
         next_step_marker = f"***** Test Step {step_number + 1} :"
@@ -463,7 +466,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
         # Validate file path is set
         if not self.file_output_path:
             logger.debug(
-                "Test output file path not initialized, skipping remaining content logging"
+                "Test output file path not initialized, "
+                "skipping remaining content logging"
             )
             return
 
