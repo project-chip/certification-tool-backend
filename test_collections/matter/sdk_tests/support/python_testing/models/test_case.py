@@ -89,6 +89,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.__runned = 0
         self.test_stop_called = False
         self.test_socket = None
+        self.file_output_path: Optional[Path] = None
+        self.current_python_step_number = 0
+        self._cached_file_content: str = ""
+        self._last_file_size: int = 0
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -125,14 +129,107 @@ class PythonTestCase(TestCase, UserPromptSupport):
             self.current_test_step.mark_as_not_applicable(skiped_msg)
 
     def step_start(self, name: str) -> None:
+        # Increment Python test step counter
+        self.current_python_step_number += 1
         self.step_over()
 
-    def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
-        pass
+    async def step_success(self, logger: Any, logs: str, duration: int, request: Any) -> None:
+        # Display logs captured during this step
+        await self._display_step_logs()
 
-    def step_failure(
+    async def _display_step_logs(self) -> None:
+        """Display logs that were captured during the current step."""
+        if not self.file_output_path or not self.file_output_path.exists():
+            return
+
+        try:
+            # Read file content with incremental caching for performance
+            content = self._read_file_incrementally()
+
+            # Extract logs for the current step
+            step_logs = self._extract_logs_for_step(content, self.current_python_step_number)
+
+            if step_logs:
+                # Send logs in batches to avoid overwhelming the UI
+                batch_size = 50  # Send 50 lines at a time
+                for i in range(0, len(step_logs), batch_size):
+                    batch = step_logs[i:i + batch_size]
+                    for line in batch:
+                        logger.log(PYTHON_TEST_LEVEL, line)
+                    # Small delay between batches to allow UI to update
+                    if i + batch_size < len(step_logs):
+                        await sleep(0.1)
+
+        except (IOError, OSError) as e:
+            logger.warning(f"Failed to read test output file: {e}")
+
+    def _read_file_incrementally(self) -> str:
+        """Read file incrementally, caching content to avoid re-reading entire file.
+
+        Returns:
+            Full content of the file up to current position
+        """
+        try:
+            current_size = self.file_output_path.stat().st_size
+
+            # If file hasn't grown, return cached content
+            if current_size == self._last_file_size and self._cached_file_content:
+                return self._cached_file_content
+
+            # File has grown, read only new content
+            if current_size > self._last_file_size and self._cached_file_content:
+                with open(self.file_output_path, 'r') as f:
+                    f.seek(self._last_file_size)
+                    new_content = f.read()
+                    self._cached_file_content += new_content
+            else:
+                # First read or file was truncated
+                with open(self.file_output_path, 'r') as f:
+                    self._cached_file_content = f.read()
+
+            self._last_file_size = current_size
+            return self._cached_file_content
+
+        except (IOError, OSError):
+            return self._cached_file_content
+
+    def _extract_logs_for_step(self, content: str, step_number: int) -> list[str]:
+        """Extract logs for a specific test step from the full log content.
+
+        Args:
+            content: Full content of the test_output.txt file
+            step_number: The step number to extract logs for
+
+        Returns:
+            List of log lines for the specified step
+        """
+        current_step_marker = f"***** Test Step {step_number} :"
+        next_step_marker = f"***** Test Step {step_number + 1} :"
+
+        # Find the start position of current step
+        start_idx = content.find(current_step_marker)
+        if start_idx == -1:
+            return []
+
+        # Find the start position of next step
+        next_idx = content.find(next_step_marker, start_idx)
+
+        # Extract the section between current and next step
+        if next_idx != -1:
+            step_content = content[start_idx:next_idx]
+        else:
+            # Last step, extract until end of content
+            step_content = content[start_idx:]
+
+        # Split into lines and return
+        return step_content.split('\n')
+
+    async def step_failure(
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
+        # Display logs captured during this step before marking as failure
+        await self._display_step_logs()
+
         failure_msg = "Python test step failure"
         if logs:
             failure_msg += f": {logs}"
@@ -345,6 +442,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
             )
             self.test_socket = exec_result.socket
 
+            # Initialize file output path for step-by-step log capture
+            sdk_tests_path = Path(Path(__file__).parents[3])
+            self.file_output_path = sdk_tests_path / "sdk_checkout/python_testing/test_output.txt"
+
             while ((update := test_runner_hooks.update_test()) is not None) or (
                 not test_runner_hooks.is_finished()
             ):
@@ -358,12 +459,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
             if self.current_test_step_index < len(self.test_steps) - 1:
                 self.skip_to_last_step()
 
-            logger.info("---- Start of Python test logs ----")
-            self.handle_logs_temp()
-            # Uncomment line bellow when the workaround has a definitive solution
-            # handle_logs(cast(Generator, exec_result.output), logger)
-
-            logger.info("---- End of Python test logs ----")
+            # No longer needed to show all logs at the end since they're displayed per step
+            # logger.info("---- Start of Python test logs ----")
+            # self.handle_logs_temp()
+            # logger.info("---- End of Python test logs ----")
 
             self.current_test_step.mark_as_completed()
         finally:
