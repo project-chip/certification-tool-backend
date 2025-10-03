@@ -100,10 +100,8 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.current_python_step_number = 0
         self._cached_file_content: str = ""
         self._last_file_size: int = 0
-        self._last_logged_position: int = 0  # Track where we last logged to
-        self._remaining_content_logged: bool = (
-            False  # Prevent duplicate logging of remaining content
-        )
+        self._last_logged_position: int = 0  # Track last logged position
+        self._remaining_content_logged: bool = False
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -140,7 +138,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
             self.current_test_step.mark_as_not_applicable(skiped_msg)
 
     def step_start(self, name: str) -> None:
-        # Increment Python test step counter
         self.current_python_step_number += 1
         self.step_over()
 
@@ -154,13 +151,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
         """Display logs that were captured during the current step."""
         # Validate file path is set and file exists
         if not self.file_output_path:
-            logger.debug("Test output file path not initialized, skipping log display")
+            logger.debug("Test output file not found, skipping log display")
             return
 
         if not self.file_output_path.exists():
-            logger.debug(
-                f"Test output file does not exist yet: {self.file_output_path}"
-            )
+            logger.debug(f"Test output file does not exist: {self.file_output_path}")
             return
 
         try:
@@ -237,7 +232,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
             step_number: The step number to extract logs for
 
         Returns:
-            Tuple of (list of log lines for the specified step, end position of step content)
+            Tuple of:
+            - list of log lines for the specified step.
+            - End position of step content
         """
         current_step_marker = f"***** Test Step {step_number} :"
         next_step_marker = f"***** Test Step {step_number + 1} :"
@@ -466,8 +463,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         # Validate file path is set
         if not self.file_output_path:
             logger.debug(
-                "Test output file path not initialized, "
-                "skipping remaining content logging"
+                "Test output file path not found, " "skipping remaining content logging"
             )
             return
 
