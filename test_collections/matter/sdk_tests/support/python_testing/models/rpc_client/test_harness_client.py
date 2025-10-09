@@ -48,7 +48,7 @@ TEST_INFO_JSON_PATH = "/root/python_testing/" + TEST_INFO_JSON_FILENAME
 EXECUTION_LOG_OUTPUT = "/root/python_testing/test_output.txt"
 
 
-def sanitize_th_arguments(args: list) -> tuple:
+def sanitize_th_arguments(args: list[str]) -> tuple[list[str], dict]:
     """
     Sanitize TH-specific arguments before passing to parse_matter_test_args.
 
