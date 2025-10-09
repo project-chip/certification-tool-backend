@@ -28,7 +28,7 @@ from test_collections.matter.sdk_tests.support.models.sdk_test_folder import (
 from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 
 # Make these constants synced with "test_harness_client.py"
-GET_TEST_INFO_ARGUMENT = "--get_test_info"
+GET_TEST_INFO_ARGUMENT = "--get-test-info"
 TEST_INFO_JSON_FILENAME = "test_info.json"
 
 # Pattern to match TC_<AlphaNumeric>_<number>_<number>_<number>....py format

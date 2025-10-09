@@ -321,7 +321,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             ).with_suffix("")
 
             command = [
-                f"{RUNNER_CLASS_PATH} {test_script_relative_path}"
+                f"{RUNNER_CLASS_PATH} --th-client-test {test_script_relative_path}"
                 f" {self.python_test.class_name} --tests test_{self.python_test.name}"
             ]
 
