@@ -188,7 +188,7 @@ def main() -> None:
         # are generating a big amount of log
         with open(EXECUTION_LOG_OUTPUT, "w") as f:
             with redirect_stdout(f):
-                # Check if 'commission' was passed as first argument
+                # Check if 'commission' was passed
                 if th_args[TH_COMMISSION_ARGUMENT]:
                     commission(config)
                 elif th_args[TH_ARG_TH_CLIENT_TEST]:
