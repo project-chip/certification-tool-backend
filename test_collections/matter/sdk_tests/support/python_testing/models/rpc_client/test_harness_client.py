@@ -262,34 +262,9 @@ def commission(config: MatterTestConfig) -> None:
     run_tests(CommissionDeviceTest, config, None)
 
 
-def process_test_list(sys_argv: list, config: MatterTestConfig) -> list:
-    # Find the position of --get-test-info and the token
-    get_info_pos = sys_argv.index(GET_TEST_INFO_ARGUMENT)
-    token_pos = (
-        sys_argv.index(GET_TEST_LIST_ARGUMENT)
-        if GET_TEST_LIST_ARGUMENT in sys_argv
-        else None
-    )
-
-    if token_pos is None or token_pos >= get_info_pos:
-        raise ValueError(
-            f"{GET_TEST_LIST_ARGUMENT} token must be present and before {GET_TEST_INFO_ARGUMENT}"
-        )
-
-    # Parse test files and classes from arguments between token and --get-test-info
-    test_pairs = []
-    args_between = sys_argv[token_pos + 1 : get_info_pos]
-    if len(args_between) % 2 != 0:
-        raise ValueError(
-            f"Invalid parameters. The arguments provided after {GET_TEST_LIST_ARGUMENT} must be in "
-            "pairs: (script_path, class_name)"
-        )
-    for i in range(0, len(args_between), 2):
-        script_path = args_between[i]
-        class_name = args_between[i + 1]
-        test_pairs.append((script_path, class_name))
-
-    # Process each test pair
+def _process_test_pairs(
+    test_pairs: list[tuple[str, str]], config: MatterTestConfig
+) -> list:
     all_tests_info = []
     for script_path, class_name in test_pairs:
         try:
@@ -300,17 +275,17 @@ def process_test_list(sys_argv: list, config: MatterTestConfig) -> list:
                 {"script_path": script_path, "class_name": class_name, "info": info}
             )
         except Exception as e:
-            error_msg = {
-                "detail": f"{str(e)}",
-                "script_path": script_path,
-                "class_name": class_name,
-            }
-            all_tests_info.append(error_msg)
-
+            all_tests_info.append(
+                {
+                    "detail": f"{str(e)}",
+                    "script_path": script_path,
+                    "class_name": class_name,
+                }
+            )
     return all_tests_info
 
 
-def process_test_list_sanitized(test_list: list, config: MatterTestConfig) -> list:
+def process_test_list_sanitized(test_list: list[str], config: MatterTestConfig) -> list:
     """
     Process a sanitized test list containing pairs of (script_path, class_name).
 
@@ -334,25 +309,7 @@ def process_test_list_sanitized(test_list: list, config: MatterTestConfig) -> li
         class_name = test_list[i + 1]
         test_pairs.append((script_path, class_name))
 
-    # Process each test pair
-    all_tests_info = []
-    for script_path, class_name in test_pairs:
-        try:
-            info = get_test_info_support(
-                script_path=script_path, class_name=class_name, config=config
-            )
-            all_tests_info.append(
-                {"script_path": script_path, "class_name": class_name, "info": info}
-            )
-        except Exception as e:
-            error_msg = {
-                "detail": f"{str(e)}",
-                "script_path": script_path,
-                "class_name": class_name,
-            }
-            all_tests_info.append(error_msg)
-
-    return all_tests_info
+    return _process_test_pairs(test_pairs, config)
 
 
 if __name__ == "__main__":
