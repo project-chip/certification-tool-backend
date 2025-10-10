@@ -31,7 +31,6 @@ from matter.testing.matter_testing import (
     run_tests,
 )
 
-
 # TH-specific argument keys
 TH_ARG_GET_TEST_INFO = "get-test-info"
 TH_ARG_TH_CLIENT_TEST = "th-client-test"
