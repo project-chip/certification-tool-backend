@@ -253,7 +253,7 @@ class PerformanceTestCase(TestCase, UserPromptSupport):
             ).with_suffix("")
 
             command = [
-                f"{RUNNER_CLASS_PATH} {test_script_relative_path}"
+                f"{RUNNER_CLASS_PATH} --th-client-test {test_script_relative_path}"
                 f" {self.performance_test.class_name}"
                 f" --tests test_{self.performance_test.name}"
             ]
