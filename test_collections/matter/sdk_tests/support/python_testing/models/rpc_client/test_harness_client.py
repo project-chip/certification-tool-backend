@@ -31,12 +31,12 @@ from matter.testing.matter_testing import (
     run_tests,
 )
 
-COMMISSION_ARGUMENT = "commission"
 
 # TH-specific argument keys
 TH_ARG_GET_TEST_INFO = "get-test-info"
 TH_ARG_TH_CLIENT_TEST = "th-client-test"
 TH_ARG_TEST_LIST = "test-list"
+TH_COMMISSION_ARGUMENT = "commission"
 
 # CLI argument flags (derived from TH argument keys)
 GET_TEST_INFO_ARGUMENT = f"--{TH_ARG_GET_TEST_INFO}"
@@ -61,6 +61,7 @@ def sanitize_th_arguments(args: list[str]) -> tuple[list[str], dict]:
         TH_ARG_GET_TEST_INFO: False,
         TH_ARG_TH_CLIENT_TEST: None,
         TH_ARG_TEST_LIST: None,
+        TH_COMMISSION_ARGUMENT: False,
     }
 
     sanitized = []
@@ -89,6 +90,10 @@ def sanitize_th_arguments(args: list[str]) -> tuple[list[str], dict]:
                 test_list.append(args[i])
                 i += 1
             th_specific[TH_ARG_TEST_LIST] = test_list
+        elif arg == TH_COMMISSION_ARGUMENT:
+            # Commission is a TH-specific command
+            th_specific[TH_COMMISSION_ARGUMENT] = True
+            i += 1
         else:
             sanitized.append(arg)
             i += 1
@@ -185,12 +190,7 @@ def main() -> None:
         with open(EXECUTION_LOG_OUTPUT, "w") as f:
             with redirect_stdout(f):
                 # Check if 'commission' was passed as first argument
-                if sanitized_args and sanitized_args[0] == COMMISSION_ARGUMENT:
-                    commission(config)
-                elif (
-                    th_args[TH_ARG_TH_CLIENT_TEST]
-                    and th_args[TH_ARG_TH_CLIENT_TEST][0] == COMMISSION_ARGUMENT
-                ):
+                if th_args[TH_COMMISSION_ARGUMENT]:
                     commission(config)
                 elif th_args[TH_ARG_TH_CLIENT_TEST]:
                     script_path, class_name = th_args[TH_ARG_TH_CLIENT_TEST]
