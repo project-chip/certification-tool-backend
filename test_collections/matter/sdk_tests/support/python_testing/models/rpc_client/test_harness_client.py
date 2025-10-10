@@ -159,7 +159,7 @@ def main() -> None:
     # Use TH-specific arguments
     if th_args[TH_ARG_GET_TEST_INFO]:
         try:
-            # Check if test_list is present
+            # Check if test-list is present
             if th_args[TH_ARG_TEST_LIST]:
                 # process the test list
                 info = process_test_list_sanitized(th_args[TH_ARG_TEST_LIST], config)
