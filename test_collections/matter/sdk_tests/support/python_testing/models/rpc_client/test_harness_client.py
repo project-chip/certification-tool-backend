@@ -164,7 +164,7 @@ def main() -> None:
                 # process the test list
                 info = process_test_list_sanitized(th_args[TH_ARG_TEST_LIST], config)
             elif th_args[TH_ARG_TH_CLIENT_TEST]:
-                # Use th_client_test values for script_path and class_name
+                # Use th-client-test values for script_path and class_name
                 script_path, class_name = th_args[TH_ARG_TH_CLIENT_TEST]
                 info = get_test_info_support(
                     script_path=script_path, class_name=class_name, config=config
