@@ -111,7 +111,8 @@
         "DGRAM",
         "chipyaml",
         "webrtc",
-        "pyproject"
+        "pyproject",
+        "CNET"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [

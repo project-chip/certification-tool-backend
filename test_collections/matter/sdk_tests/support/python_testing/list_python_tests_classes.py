@@ -22,6 +22,9 @@ from pathlib import Path
 from typing import Optional
 
 from test_collections.matter.config import matter_settings
+from test_collections.matter.sdk_tests.support.exec_run_in_container import (
+    ExecResultExtended,
+)
 from test_collections.matter.sdk_tests.support.models.sdk_test_folder import (
     SDKTestFolder,
 )
@@ -33,7 +36,6 @@ TEST_INFO_JSON_FILENAME = "test_info.json"
 
 # Pattern to match TC_<AlphaNumeric>_<number>_<number>_<number>....py format
 TC_FILENAME_PATTERN = r"^TC_[A-Z_]{2,20}_\d+_\d+(_\d+)*(-custom)?\.py$"
-
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
 PYTHON_TESTING_PATH = SDK_TESTS_PATH / "sdk_checkout/python_testing"
 JSON_OUTPUT_FILE_PATH = PYTHON_TESTING_PATH / TEST_INFO_JSON_FILENAME
@@ -52,6 +54,37 @@ CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "custom_python_tests_info.jso
 CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
 sdk_container: SDKContainer = SDKContainer()
+
+
+def __get_error_message_from_result(result: ExecResultExtended) -> str:
+    """Extract error message from command result, preferring JSON detail if available.
+
+    Args:
+        result: ExecResultExtended from sdk_container.send_command()
+
+    Returns:
+        str: Error message from JSON detail or command output
+    """
+    error_message = None
+    # Try to get error from JSON file first
+    if JSON_OUTPUT_FILE_PATH.exists():
+        try:
+            with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
+                json_data = json.load(json_file)
+                if isinstance(json_data, dict) and "detail" in json_data:
+                    error_message = json_data["detail"]
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Fall back to command output if JSON error not available
+    if error_message is None:
+        error_message = (
+            result.output.decode("utf-8")
+            if isinstance(result.output, bytes)
+            else str(result.output)
+        )
+
+    return error_message
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -130,14 +163,18 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
 
     for python_test_file in python_test_files:
-        # Check if the file follows the
-        # TC_<AlphaNumeric>_<number>_<number>_<number>....py pattern
+        # Check if the file follows the TC_<AlphaNumeric>_<number>_<number>.py pattern
         if not tc_pattern.match(python_test_file.name):
             continue
 
         parent_folder = python_test_file.parent.name
-        with open(python_test_file, "r") as python_file:
-            parsed_python_file = ast.parse(python_file.read())
+        try:
+            with open(python_test_file, "r") as python_file:
+                parsed_python_file = ast.parse(python_file.read())
+        except SyntaxError:
+            # Skip files with syntax errors (e.g., unterminated strings)
+            print(f"Warning: Skipping {python_test_file.name} due to syntax error")
+            continue
 
         test_classes = base_test_classes(parsed_python_file)
         for test_class in test_classes:
@@ -228,20 +265,11 @@ async def __process_grouped_commands(
     )
 
     if result.exit_code != 0:
-        if JSON_OUTPUT_FILE_PATH.exists():
-            with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
-                json_data = json.load(json_file)
-                errors_found.append(
-                    f"Failed running command: {command_string}.\n"
-                    f"Error message: {json_data['detail']}"
-                )
-        else:
-            errors_found.append(
-                f"Failed running command: {command_string}.\n"
-                f"Error message: Command failed with exit code {result.exit_code}. "
-                f"Expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
-            )
-
+        error_message = __get_error_message_from_result(result)
+        errors_found.append(
+            f"Failed running command: {command_string}.\n"
+            f"Error message: {error_message}"
+        )
         return test_function_count, invalid_test_function_count
 
     if not JSON_OUTPUT_FILE_PATH.exists():
@@ -302,22 +330,12 @@ async def __process_individual_commands(
         )
 
         if result.exit_code != 0:
-            try:
-                if JSON_OUTPUT_FILE_PATH.exists():
-                    with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
-                        json_data = json.load(json_file)
-                        errors_found.append(
-                            f"Failed running command: {command}.\n"
-                            f"Error message: {json_data['detail']}"
-                        )
-                else:
-                    errors_found.append(
-                        f"Failed running command: {command}.\n"
-                        f"Error message: Command failed with exit code {result.exit_code}. "  # noqa
-                        f"Expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"
-                    )
-            finally:
-                continue
+            error_message = __get_error_message_from_result(result)
+            errors_found.append(
+                f"Failed running command: {command}.\n"
+                f"Error message: {error_message}"
+            )
+            continue
 
         if not JSON_OUTPUT_FILE_PATH.exists():
             errors_found.append(
