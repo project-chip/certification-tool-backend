@@ -69,14 +69,18 @@ def __get_error_message_from_result(result) -> str:
         try:
             with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
                 json_data = json.load(json_file)
-                if isinstance(json_data, dict) and 'detail' in json_data:
-                    error_message = json_data['detail']
+                if isinstance(json_data, dict) and "detail" in json_data:
+                    error_message = json_data["detail"]
         except (json.JSONDecodeError, KeyError):
             pass
 
     # Fall back to command output if JSON error not available
     if error_message is None:
-        error_message = result.output.decode('utf-8') if isinstance(result.output, bytes) else str(result.output)
+        error_message = (
+            result.output.decode("utf-8")
+            if isinstance(result.output, bytes)
+            else str(result.output)
+        )
 
     return error_message
 
