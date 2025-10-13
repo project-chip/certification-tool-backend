@@ -71,8 +71,8 @@ def _get_error_message_from_result(result: "ExecResultExtended") -> str:
                 json_data = json.load(json_file)
                 if isinstance(json_data, dict) and "detail" in json_data:
                     error_message = json_data["detail"]
-        except (json.JSONDecodeError, KeyError):
-            pass
+        except json.JSONDecodeError as e:
+            print(f"Warning: Could not parse JSON from '{JSON_OUTPUT_FILE_PATH}': {e}")
 
     # Fall back to command output if JSON error not available
     if error_message is None:
