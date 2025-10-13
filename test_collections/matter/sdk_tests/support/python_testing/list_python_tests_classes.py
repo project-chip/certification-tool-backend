@@ -22,6 +22,9 @@ from pathlib import Path
 from typing import Optional
 
 from test_collections.matter.config import matter_settings
+from test_collections.matter.sdk_tests.support.exec_run_in_container import (
+    ExecResultExtended,
+)
 from test_collections.matter.sdk_tests.support.models.sdk_test_folder import (
     SDKTestFolder,
 )
@@ -32,6 +35,8 @@ GET_TEST_INFO_ARGUMENT = "--get-test-info"
 TEST_INFO_JSON_FILENAME = "test_info.json"
 
 # Pattern to match TC_<AlphaNumeric>_<number>_<number>_<number>....py format
+# TC_ followed by cluster name (2-20 uppercase letters/underscores),
+# then _digit_digit and optionally more _digit, followed by -custom (lowercase only), then .py
 TC_FILENAME_PATTERN = r"^TC_[A-Z_]{2,20}_\d+_\d+(_\d+)*(-custom)?\.py$"
 
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
@@ -54,7 +59,7 @@ CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_test
 sdk_container: SDKContainer = SDKContainer()
 
 
-def _get_error_message_from_result(result: "ExecResultExtended") -> str:
+def __get_error_message_from_result(result: ExecResultExtended) -> str:
     """Extract error message from command result, preferring JSON detail if available.
 
     Args:
@@ -71,8 +76,8 @@ def _get_error_message_from_result(result: "ExecResultExtended") -> str:
                 json_data = json.load(json_file)
                 if isinstance(json_data, dict) and "detail" in json_data:
                     error_message = json_data["detail"]
-        except json.JSONDecodeError as e:
-            print(f"Warning: Could not parse JSON from '{JSON_OUTPUT_FILE_PATH}': {e}")
+        except (json.JSONDecodeError, KeyError):
+            pass
 
     # Fall back to command output if JSON error not available
     if error_message is None:
