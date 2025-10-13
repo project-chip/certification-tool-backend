@@ -54,7 +54,7 @@ CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_test
 sdk_container: SDKContainer = SDKContainer()
 
 
-def __get_error_message_from_result(result) -> str:
+def _get_error_message_from_result(result: "ExecResultExtended") -> str:
     """Extract error message from command result, preferring JSON detail if available.
 
     Args:
