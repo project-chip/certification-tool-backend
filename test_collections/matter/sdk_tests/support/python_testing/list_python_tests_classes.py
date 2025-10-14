@@ -93,21 +93,33 @@ def __get_error_message_from_result(result: ExecResultExtended) -> str:
     return error_message
 
 
+def __load_file_list(file_path: Path) -> set[str]:
+    """Load a list of filenames from a text file.
+
+    Args:
+        file_path: Path to the file containing the list
+
+    Returns:
+        set[str]: Set of filenames from the file
+    """
+    file_list = set()
+    if file_path.exists():
+        with open(file_path, "r") as f:
+            for line in f:
+                # Strip whitespace and skip empty lines or comments
+                filename = line.strip()
+                if filename and not filename.startswith("#"):
+                    file_list.add(filename)
+    return file_list
+
+
 def load_ignore_list() -> set[str]:
     """Load the list of Python test files to ignore.
 
     Returns:
         set[str]: Set of filenames to ignore (e.g., {'TC_TEST_1_1.py'})
     """
-    ignore_list = set()
-    if PYTHON_TESTS_IGNORE_FILE.exists():
-        with open(PYTHON_TESTS_IGNORE_FILE, "r") as f:
-            for line in f:
-                # Strip whitespace and skip empty lines or comments
-                filename = line.strip()
-                if filename and not filename.startswith("#"):
-                    ignore_list.add(filename)
-    return ignore_list
+    return __load_file_list(PYTHON_TESTS_IGNORE_FILE)
 
 
 def load_include_list() -> set[str]:
@@ -116,15 +128,7 @@ def load_include_list() -> set[str]:
     Returns:
         set[str]: Set of filenames to always include (e.g., {'TCP_Tests.py'})
     """
-    include_list = set()
-    if PYTHON_TESTS_INCLUDE_FILE.exists():
-        with open(PYTHON_TESTS_INCLUDE_FILE, "r") as f:
-            for line in f:
-                # Strip whitespace and skip empty lines or comments
-                filename = line.strip()
-                if filename and not filename.startswith("#"):
-                    include_list.add(filename)
-    return include_list
+    return __load_file_list(PYTHON_TESTS_INCLUDE_FILE)
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
