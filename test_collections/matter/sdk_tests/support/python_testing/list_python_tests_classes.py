@@ -21,6 +21,8 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from loguru import logger
+
 from test_collections.matter.config import matter_settings
 from test_collections.matter.sdk_tests.support.exec_run_in_container import (
     ExecResultExtended,
@@ -34,8 +36,10 @@ from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 GET_TEST_INFO_ARGUMENT = "--get-test-info"
 TEST_INFO_JSON_FILENAME = "test_info.json"
 
-# Pattern to match TC_<AlphaNumeric>_<number>_<number>_<number>....py format
-TC_FILENAME_PATTERN = r"^TC_[A-Z_]{2,20}_\d+_\d+(_\d+)*(-custom)?\.py$"
+# Pattern to match TC_*.py format
+# TC_ followed by at least one character/digit, then .py
+TC_FILENAME_PATTERN = r"^TC_.+\.py$"
+
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
 PYTHON_TESTING_PATH = SDK_TESTS_PATH / "sdk_checkout/python_testing"
 JSON_OUTPUT_FILE_PATH = PYTHON_TESTING_PATH / TEST_INFO_JSON_FILENAME
@@ -50,6 +54,8 @@ CUSTOM_PYTHON_SCRIPTS_FOLDER = SDKTestFolder(
 
 PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "python_tests_info.json"
 CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "custom_python_tests_info.json"
+PYTHON_TESTS_IGNORE_FILE = SDK_TESTS_PATH / "python_tests_ignore.txt"
+PYTHON_TESTS_INCLUDE_FILE = SDK_TESTS_PATH / "python_tests_include.txt"
 
 CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
@@ -85,6 +91,44 @@ def __get_error_message_from_result(result: ExecResultExtended) -> str:
         )
 
     return error_message
+
+
+def __load_file_list(file_path: Path) -> set[str]:
+    """Load a list of filenames from a text file.
+
+    Args:
+        file_path: Path to the file containing the list
+
+    Returns:
+        set[str]: Set of filenames from the file
+    """
+    file_list = set()
+    if file_path.exists():
+        with open(file_path, "r") as f:
+            for line in f:
+                # Strip whitespace and skip empty lines or comments
+                filename = line.strip()
+                if filename and not filename.startswith("#"):
+                    file_list.add(filename)
+    return file_list
+
+
+def load_ignore_list() -> set[str]:
+    """Load the list of Python test files to ignore.
+
+    Returns:
+        set[str]: Set of filenames to ignore (e.g., {'TC_TEST_1_1.py'})
+    """
+    return __load_file_list(PYTHON_TESTS_IGNORE_FILE)
+
+
+def load_include_list() -> set[str]:
+    """Load the list of Python test files to always include (bypass regex check).
+
+    Returns:
+        set[str]: Set of filenames to always include (e.g., {'TCP_Tests.py'})
+    """
+    return __load_file_list(PYTHON_TESTS_INCLUDE_FILE)
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -162,9 +206,21 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     # Use the constant pattern for TC filename validation
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
 
+    # Load ignore and include lists
+    ignore_list = load_ignore_list()
+    include_list = load_include_list()
+
     for python_test_file in python_test_files:
-        # Check if the file follows the TC_<AlphaNumeric>_<number>_<number>.py pattern
-        if not tc_pattern.match(python_test_file.name):
+        # Check if file is in include list (bypass regex check)
+        if python_test_file.name in include_list:
+            logger.warning(f"Including {python_test_file.name} (in include list)")
+        # Check if the file follows the TC_*.py pattern
+        elif not tc_pattern.match(python_test_file.name):
+            continue
+
+        # Check if the file is in the ignore list
+        if python_test_file.name in ignore_list:
+            logger.warning(f"Skipping {python_test_file.name} (in ignore list)")
             continue
 
         parent_folder = python_test_file.parent.name
@@ -173,7 +229,9 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
                 parsed_python_file = ast.parse(python_file.read())
         except SyntaxError:
             # Skip files with syntax errors (e.g., unterminated strings)
-            print(f"Warning: Skipping {python_test_file.name} due to syntax error")
+            logger.warning(
+                f"Warning: Skipping {python_test_file.name} due to syntax error"
+            )
             continue
 
         test_classes = base_test_classes(parsed_python_file)
@@ -322,7 +380,7 @@ async def __process_individual_commands(
     invalid_test_function_count: int = 0
     total_commands = len(commands)
     for index, command in enumerate(commands):
-        print(f"Progress {index+1}/{total_commands}...")
+        logger.info(f"Progress {index+1}/{total_commands}...")
         command_string = " ".join(command + [GET_TEST_INFO_ARGUMENT])
         result = sdk_container.send_command(
             command_string,
@@ -372,25 +430,33 @@ def __print_report(
     warnings_found: list[str],
     errors_found: list[str],
 ) -> None:
-    print("###########################################################################")
-    print("###############################   REPORT   ################################")
-    print("###########################################################################")
-    print(f">>>>>>>> Output JSON file: {json_output_file}")
-    print(f">>>>>>>> Total of test functions: {test_function_count}")
-    print(
+    logger.info(
+        "###########################################################################"
+    )
+    logger.info(
+        "###############################   REPORT   ################################"
+    )
+    logger.info(
+        "###########################################################################"
+    )
+    logger.info(f">>>>>>>> Output JSON file: {json_output_file}")
+    logger.info(f">>>>>>>> Total of test functions: {test_function_count}")
+    logger.info(
         (
             ">>>>>>>> Total of invalid test functions (don't start with 'test_TC_'): "
             f"{invalid_test_function_count}"
         )
     )
     if len(warnings_found) > 0:
-        print(*warnings_found, sep="\n")
+        logger.info(*warnings_found, sep="\n")
     error_count = len(errors_found)
-    print(f">>>>>>>> Total of scripts with error: {error_count}")
+    logger.info(f">>>>>>>> Total of scripts with error: {error_count}")
     if error_count > 0:
         for i, error in enumerate(errors_found):
-            print(f"Error {i+1}: {error}")
-    print("###########################################################################")
+            logger.info(f"Error {i+1}: {error}")
+    logger.info(
+        "###########################################################################"
+    )
 
 
 async def generate_python_test_json_file(

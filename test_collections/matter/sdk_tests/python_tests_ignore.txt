@@ -1,0 +1,4 @@
+# Files to be ignored
+TC_TestAttrAvail.py
+TC_COLORCONTROL.py
+TC_AVSM_StreamReuseRangeParams.py
