@@ -25,6 +25,7 @@ from ...models.sdk_test_folder import SDKTestFolder
 from ...python_testing.list_python_tests_classes import (
     TC_FILENAME_PATTERN,
     get_command_list,
+    load_ignore_list,
 )
 
 
@@ -45,27 +46,27 @@ from ...python_testing.list_python_tests_classes import (
         ("TC_MCORE_FS_1_4.py", True),  # underscore in cluster name
         ("TC_ACE_1_1-custom.py", True),  # with -custom suffix at end
         ("TC_MCORE_FS_1_4-custom.py", True),  # underscore + custom suffix at end
+        ("TC_A_0_0.py", True),  # cluster name too short (1 letter)
+        ("TC_test.py", True),
+        ("TC_ACE_1.py", True),
+        ("TC_ACE_a_b.py", True),
+        ("TC_C4_1_1.py", True),
+        ("TC_ACE_1_2_extra.py", True),  # extra content after numbers
+        ("TC_ACE_.py", True),  # missing second number
+        ("TC_ACE_1_.py", True),  # missing second number
+        ("TC_ACE__2.py", True),  # missing first number
+        ("TC_ANOTHERVERYLONGCLUSTERNAME_99_99.py", True),  # cluster name > 20 chars
+        ("TC_ACE_1_1-Custom.py", True),  # with -Custom suffix at end
+        ("TC_ACE_1_1-CUSTOM.py", True),  # with -CUSTOM suffix at end
+        ("TC_ace_1_2.py", True),  # cluster name with lowercase letters
+        ("TC_1test_1_2.py", True),  # cluster name starts with number
         # Negative test cases - should NOT match pattern
-        ("TC_A_0_0.py", False),  # cluster name too short (1 letter)
-        ("TC_test.py", False),
-        ("TC_ACE_1.py", False),
-        ("TC_ACE_a_b.py", False),
         ("helper.py", False),
-        ("TC_C4_1_1.py", False),
         ("TC_.py", False),
         ("test_helper.py", False),
-        ("TC_ACE_1_2_extra.py", False),  # extra content after numbers
-        ("TC_ACE_.py", False),  # missing second number
-        ("TC_ACE_1_.py", False),  # missing second number
-        ("TC_ACE__2.py", False),  # missing first number
         ("XTC_ACE_1_2.py", False),  # wrong prefix
         ("TC_ACE_1_2", False),  # missing .py extension
         ("TC_ACE_1_2.txt", False),  # wrong extension
-        ("TC_1test_1_2.py", False),  # cluster name starts with number
-        ("TC_ANOTHERVERYLONGCLUSTERNAME_99_99.py", False),  # cluster name > 20 chars
-        ("TC_ACE_1_1-Custom.py", False),  # with -Custom suffix at end
-        ("TC_ACE_1_1-CUSTOM.py", False),  # with -CUSTOM suffix at end
-        ("TC_ace_1_2.py", False),  # cluster name with lowercase letters
     ],
 )
 def test_filename_pattern_validation(filename: str, should_match: bool) -> None:
@@ -90,7 +91,7 @@ def test_get_command_list_with_valid_and_invalid_files() -> None:
         valid_files = ["TC_ACE_1_2.py", "TC_CNET_4_12.py", "TC_DA_1_7.py"]
 
         # Create invalid test files
-        invalid_files = ["TC_test.py", "helper.py", "TC_ACE_1.py"]
+        invalid_files = ["test_TC.py", "helper.py", "TC_.py"]
 
         # Simple test file content
         test_content = """
@@ -146,3 +147,149 @@ def test_empty_folder_scenario() -> None:
 
     except ImportError:
         pytest.skip("Skipping integration test due to import dependencies")
+
+
+def test_load_ignore_list_file_exists() -> None:
+    """Test load_ignore_list when ignore file exists with valid content."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        ignore_file = Path(temp_dir) / "python_tests_ignore.txt"
+        ignore_content = """# Comment line
+TC_PAVST_2_6.py
+TC_PAVST_2_7.py
+
+# Another comment
+TC_WEBRTCR_2_5.py
+"""
+        ignore_file.write_text(ignore_content)
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_IGNORE_FILE",
+            ignore_file,
+        ):
+            result = load_ignore_list()
+
+        assert result == {"TC_PAVST_2_6.py", "TC_PAVST_2_7.py", "TC_WEBRTCR_2_5.py"}
+
+
+def test_load_ignore_list_file_not_exists() -> None:
+    """Test load_ignore_list when ignore file does not exist."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        non_existent_file = Path(temp_dir) / "non_existent.txt"
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_IGNORE_FILE",
+            non_existent_file,
+        ):
+            result = load_ignore_list()
+
+        assert result == set()
+
+
+def test_load_ignore_list_empty_file() -> None:
+    """Test load_ignore_list with empty file."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        ignore_file = Path(temp_dir) / "python_tests_ignore.txt"
+        ignore_file.write_text("")
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_IGNORE_FILE",
+            ignore_file,
+        ):
+            result = load_ignore_list()
+
+        assert result == set()
+
+
+def test_load_ignore_list_only_comments() -> None:
+    """Test load_ignore_list with file containing only comments."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        ignore_file = Path(temp_dir) / "python_tests_ignore.txt"
+        ignore_content = """# Only comments here
+# No actual files to ignore
+"""
+        ignore_file.write_text(ignore_content)
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_IGNORE_FILE",
+            ignore_file,
+        ):
+            result = load_ignore_list()
+
+        assert result == set()
+
+
+def test_load_ignore_list_with_whitespace() -> None:
+    """Test load_ignore_list handles whitespace correctly."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        ignore_file = Path(temp_dir) / "python_tests_ignore.txt"
+        ignore_content = """  TC_TEST_1_1.py
+TC_TEST_2_2.py
+
+    TC_TEST_3_3.py
+"""
+        ignore_file.write_text(ignore_content)
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_IGNORE_FILE",
+            ignore_file,
+        ):
+            result = load_ignore_list()
+
+        assert result == {"TC_TEST_1_1.py", "TC_TEST_2_2.py", "TC_TEST_3_3.py"}
+
+
+def test_get_command_list_with_ignore_file() -> None:
+    """Test get_command_list respects ignore file."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+
+        # Create test files
+        all_files = ["TC_ACE_1_2.py", "TC_CNET_4_12.py", "TC_DA_1_7.py"]
+        files_to_ignore = ["TC_CNET_4_12.py"]
+
+        test_content = """
+from matter_testing_support import MatterBaseTest
+
+class TestClass(MatterBaseTest):
+    def test_TC_example_1_1(self):
+        pass
+"""
+
+        for filename in all_files:
+            (temp_path / filename).write_text(test_content)
+
+        test_folder = SDKTestFolder(path=temp_path, filename_pattern="*")
+
+        # Mock the load_ignore_list function to return our test data
+        mock_path = (
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.load_ignore_list"
+        )
+        with mock.patch(mock_path, return_value=set(files_to_ignore)):
+            with mock.patch("ast.parse") as mock_parse:
+                with mock.patch(
+                    "test_collections.matter.sdk_tests.support.python_testing."
+                    "list_python_tests_classes.base_test_classes"
+                ) as mock_base_classes:
+                    mock_parse.return_value = mock.MagicMock()
+                    mock_class = mock.MagicMock()
+                    mock_class.name = "TestClass"
+                    mock_base_classes.return_value = [mock_class]
+
+                    commands = get_command_list(test_folder)
+
+        # Should only process 2 files (3 total - 1 ignored)
+        assert len(commands) == 2
+
+        # Verify ignored file is not included
+        file_stems = [cmd[0].split("/")[-1] for cmd in commands]
+        assert "TC_CNET_4_12" not in file_stems
+
+        # Verify non-ignored files are included
+        assert "TC_ACE_1_2" in file_stems
+        assert "TC_DA_1_7" in file_stems

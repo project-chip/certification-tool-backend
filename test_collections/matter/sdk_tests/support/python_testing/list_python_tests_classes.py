@@ -34,8 +34,10 @@ from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 GET_TEST_INFO_ARGUMENT = "--get-test-info"
 TEST_INFO_JSON_FILENAME = "test_info.json"
 
-# Pattern to match TC_<AlphaNumeric>_<number>_<number>_<number>....py format
-TC_FILENAME_PATTERN = r"^TC_[A-Z_]{2,20}_\d+_\d+(_\d+)*(-custom)?\.py$"
+# Pattern to match TC_*.py format
+# TC_ followed by at least one character/digit, then .py
+TC_FILENAME_PATTERN = r"^TC_.+\.py$"
+
 SDK_TESTS_PATH = Path(__file__).parent.parent.parent
 PYTHON_TESTING_PATH = SDK_TESTS_PATH / "sdk_checkout/python_testing"
 JSON_OUTPUT_FILE_PATH = PYTHON_TESTING_PATH / TEST_INFO_JSON_FILENAME
@@ -50,6 +52,7 @@ CUSTOM_PYTHON_SCRIPTS_FOLDER = SDKTestFolder(
 
 PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "python_tests_info.json"
 CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "custom_python_tests_info.json"
+PYTHON_TESTS_IGNORE_FILE = SDK_TESTS_PATH / "python_tests_ignore.txt"
 
 CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
@@ -85,6 +88,23 @@ def __get_error_message_from_result(result: ExecResultExtended) -> str:
         )
 
     return error_message
+
+
+def load_ignore_list() -> set[str]:
+    """Load the list of Python test files to ignore.
+
+    Returns:
+        set[str]: Set of filenames to ignore (e.g., {'TC_TEST_1_1.py'})
+    """
+    ignore_list = set()
+    if PYTHON_TESTS_IGNORE_FILE.exists():
+        with open(PYTHON_TESTS_IGNORE_FILE, "r") as f:
+            for line in f:
+                # Strip whitespace and skip empty lines or comments
+                filename = line.strip()
+                if filename and not filename.startswith("#"):
+                    ignore_list.add(filename)
+    return ignore_list
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -162,9 +182,17 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     # Use the constant pattern for TC filename validation
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
 
+    # Load ignore list
+    ignore_list = load_ignore_list()
+
     for python_test_file in python_test_files:
-        # Check if the file follows the TC_<AlphaNumeric>_<number>_<number>.py pattern
+        # Check if the file follows the TC_*.py pattern
         if not tc_pattern.match(python_test_file.name):
+            continue
+
+        # Check if the file is in the ignore list
+        if python_test_file.name in ignore_list:
+            print(f"Skipping {python_test_file.name} (in ignore list)")
             continue
 
         parent_folder = python_test_file.parent.name
