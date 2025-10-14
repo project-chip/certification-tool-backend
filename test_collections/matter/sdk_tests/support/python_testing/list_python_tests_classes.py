@@ -53,6 +53,7 @@ CUSTOM_PYTHON_SCRIPTS_FOLDER = SDKTestFolder(
 PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "python_tests_info.json"
 CUSTOM_PYTHON_TESTS_PARSED_FILE = SDK_TESTS_PATH / "custom_python_tests_info.json"
 PYTHON_TESTS_IGNORE_FILE = SDK_TESTS_PATH / "python_tests_ignore.txt"
+PYTHON_TESTS_INCLUDE_FILE = SDK_TESTS_PATH / "python_tests_include.txt"
 
 CONTAINER_TH_CLIENT_EXEC = "python3 /root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
@@ -105,6 +106,23 @@ def load_ignore_list() -> set[str]:
                 if filename and not filename.startswith("#"):
                     ignore_list.add(filename)
     return ignore_list
+
+
+def load_include_list() -> set[str]:
+    """Load the list of Python test files to always include (bypass regex check).
+
+    Returns:
+        set[str]: Set of filenames to always include (e.g., {'TCP_Tests.py'})
+    """
+    include_list = set()
+    if PYTHON_TESTS_INCLUDE_FILE.exists():
+        with open(PYTHON_TESTS_INCLUDE_FILE, "r") as f:
+            for line in f:
+                # Strip whitespace and skip empty lines or comments
+                filename = line.strip()
+                if filename and not filename.startswith("#"):
+                    include_list.add(filename)
+    return include_list
 
 
 def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
@@ -182,12 +200,16 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     # Use the constant pattern for TC filename validation
     tc_pattern = re.compile(TC_FILENAME_PATTERN)
 
-    # Load ignore list
+    # Load ignore and include lists
     ignore_list = load_ignore_list()
+    include_list = load_include_list()
 
     for python_test_file in python_test_files:
+        # Check if file is in include list (bypass regex check)
+        if python_test_file.name in include_list:
+            print(f"Including {python_test_file.name} (in include list)")
         # Check if the file follows the TC_*.py pattern
-        if not tc_pattern.match(python_test_file.name):
+        elif not tc_pattern.match(python_test_file.name):
             continue
 
         # Check if the file is in the ignore list

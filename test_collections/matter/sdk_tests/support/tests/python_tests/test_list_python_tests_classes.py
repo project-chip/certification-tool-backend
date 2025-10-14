@@ -26,6 +26,7 @@ from ...python_testing.list_python_tests_classes import (
     TC_FILENAME_PATTERN,
     get_command_list,
     load_ignore_list,
+    load_include_list,
 )
 
 
@@ -293,3 +294,200 @@ class TestClass(MatterBaseTest):
         # Verify non-ignored files are included
         assert "TC_ACE_1_2" in file_stems
         assert "TC_DA_1_7" in file_stems
+
+
+def test_load_include_list_file_exists() -> None:
+    """Test load_include_list when include file exists with valid content."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        include_file = Path(temp_dir) / "python_tests_include.txt"
+        include_content = """# Special test files
+TCP_Tests.py
+CUSTOM_Test.py
+
+# Another special file
+SPECIAL_CASE.py
+"""
+        include_file.write_text(include_content)
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_INCLUDE_FILE",
+            include_file,
+        ):
+            result = load_include_list()
+
+        assert result == {"TCP_Tests.py", "CUSTOM_Test.py", "SPECIAL_CASE.py"}
+
+
+def test_load_include_list_file_not_exists() -> None:
+    """Test load_include_list when include file does not exist."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        non_existent_file = Path(temp_dir) / "non_existent.txt"
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_INCLUDE_FILE",
+            non_existent_file,
+        ):
+            result = load_include_list()
+
+        assert result == set()
+
+
+def test_load_include_list_empty_file() -> None:
+    """Test load_include_list with empty file."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        include_file = Path(temp_dir) / "python_tests_include.txt"
+        include_file.write_text("")
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_INCLUDE_FILE",
+            include_file,
+        ):
+            result = load_include_list()
+
+        assert result == set()
+
+
+def test_load_include_list_only_comments() -> None:
+    """Test load_include_list with file containing only comments."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        include_file = Path(temp_dir) / "python_tests_include.txt"
+        include_content = """# Only comments here
+# No actual files to include
+"""
+        include_file.write_text(include_content)
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_INCLUDE_FILE",
+            include_file,
+        ):
+            result = load_include_list()
+
+        assert result == set()
+
+
+def test_load_include_list_with_whitespace() -> None:
+    """Test load_include_list handles whitespace correctly."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        include_file = Path(temp_dir) / "python_tests_include.txt"
+        include_content = """  TCP_Tests.py
+CUSTOM_Test.py
+
+    SPECIAL_CASE.py
+"""
+        include_file.write_text(include_content)
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.PYTHON_TESTS_INCLUDE_FILE",
+            include_file,
+        ):
+            result = load_include_list()
+
+        assert result == {"TCP_Tests.py", "CUSTOM_Test.py", "SPECIAL_CASE.py"}
+
+
+def test_get_command_list_with_include_file() -> None:
+    """Test get_command_list includes files from include list regardless of pattern."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+
+        # Create test files - mix of matching and non-matching patterns
+        all_files = ["TC_ACE_1_2.py", "TCP_Tests.py", "CUSTOM_Test.py"]
+
+        test_content = """
+from matter_testing_support import MatterBaseTest
+
+class TestClass(MatterBaseTest):
+    def test_TC_example_1_1(self):
+        pass
+"""
+
+        for filename in all_files:
+            (temp_path / filename).write_text(test_content)
+
+        test_folder = SDKTestFolder(path=temp_path, filename_pattern="*")
+
+        # Mock load_include_list to return files that don't match pattern
+        files_to_include = ["TCP_Tests.py", "CUSTOM_Test.py"]
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.load_include_list",
+            return_value=set(files_to_include),
+        ):
+            with mock.patch(
+                "test_collections.matter.sdk_tests.support.python_testing."
+                "list_python_tests_classes.load_ignore_list",
+                return_value=set(),
+            ):
+                with mock.patch("ast.parse") as mock_parse:
+                    with mock.patch(
+                        "test_collections.matter.sdk_tests.support.python_testing."
+                        "list_python_tests_classes.base_test_classes"
+                    ) as mock_base_classes:
+                        mock_parse.return_value = mock.MagicMock()
+                        mock_class = mock.MagicMock()
+                        mock_class.name = "TestClass"
+                        mock_base_classes.return_value = [mock_class]
+
+                        commands = get_command_list(test_folder)
+
+        # Should process all 3 files (1 matching pattern + 2 in include list)
+        assert len(commands) == 3
+
+        # Verify all files are included
+        file_stems = [cmd[0].split("/")[-1] for cmd in commands]
+        assert "TC_ACE_1_2" in file_stems
+        assert "TCP_Tests" in file_stems
+        assert "CUSTOM_Test" in file_stems
+
+
+def test_get_command_list_include_overrides_pattern() -> None:
+    """Test that include list bypasses pattern matching."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+
+        # File that doesn't match TC_ pattern but is in include list
+        special_file = "TCP_Special.py"
+
+        test_content = """
+from matter_testing_support import MatterBaseTest
+
+class TestClass(MatterBaseTest):
+    def test_TC_example_1_1(self):
+        pass
+"""
+
+        (temp_path / special_file).write_text(test_content)
+
+        test_folder = SDKTestFolder(path=temp_path, filename_pattern="*")
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.load_include_list",
+            return_value={special_file},
+        ):
+            with mock.patch(
+                "test_collections.matter.sdk_tests.support.python_testing."
+                "list_python_tests_classes.load_ignore_list",
+                return_value=set(),
+            ):
+                with mock.patch("ast.parse") as mock_parse:
+                    with mock.patch(
+                        "test_collections.matter.sdk_tests.support.python_testing."
+                        "list_python_tests_classes.base_test_classes"
+                    ) as mock_base_classes:
+                        mock_parse.return_value = mock.MagicMock()
+                        mock_class = mock.MagicMock()
+                        mock_class.name = "TestClass"
+                        mock_base_classes.return_value = [mock_class]
+
+                        commands = get_command_list(test_folder)
+
+        # Should include the file even though it doesn't match TC_ pattern
+        assert len(commands) == 1
+        assert "TCP_Special" in commands[0][0]
