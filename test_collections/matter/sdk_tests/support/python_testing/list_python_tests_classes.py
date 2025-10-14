@@ -21,6 +21,8 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from loguru import logger
+
 from test_collections.matter.config import matter_settings
 from test_collections.matter.sdk_tests.support.exec_run_in_container import (
     ExecResultExtended,
@@ -207,14 +209,14 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     for python_test_file in python_test_files:
         # Check if file is in include list (bypass regex check)
         if python_test_file.name in include_list:
-            print(f"Including {python_test_file.name} (in include list)")
+            logger.warning(f"Including {python_test_file.name} (in include list)")
         # Check if the file follows the TC_*.py pattern
         elif not tc_pattern.match(python_test_file.name):
             continue
 
         # Check if the file is in the ignore list
         if python_test_file.name in ignore_list:
-            print(f"Skipping {python_test_file.name} (in ignore list)")
+            logger.warning(f"Skipping {python_test_file.name} (in ignore list)")
             continue
 
         parent_folder = python_test_file.parent.name
@@ -223,7 +225,9 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
                 parsed_python_file = ast.parse(python_file.read())
         except SyntaxError:
             # Skip files with syntax errors (e.g., unterminated strings)
-            print(f"Warning: Skipping {python_test_file.name} due to syntax error")
+            logger.warning(
+                f"Warning: Skipping {python_test_file.name} due to syntax error"
+            )
             continue
 
         test_classes = base_test_classes(parsed_python_file)
@@ -372,7 +376,7 @@ async def __process_individual_commands(
     invalid_test_function_count: int = 0
     total_commands = len(commands)
     for index, command in enumerate(commands):
-        print(f"Progress {index+1}/{total_commands}...")
+        logger.info(f"Progress {index+1}/{total_commands}...")
         command_string = " ".join(command + [GET_TEST_INFO_ARGUMENT])
         result = sdk_container.send_command(
             command_string,
@@ -422,25 +426,33 @@ def __print_report(
     warnings_found: list[str],
     errors_found: list[str],
 ) -> None:
-    print("###########################################################################")
-    print("###############################   REPORT   ################################")
-    print("###########################################################################")
-    print(f">>>>>>>> Output JSON file: {json_output_file}")
-    print(f">>>>>>>> Total of test functions: {test_function_count}")
-    print(
+    logger.info(
+        "###########################################################################"
+    )
+    logger.info(
+        "###############################   REPORT   ################################"
+    )
+    logger.info(
+        "###########################################################################"
+    )
+    logger.info(f">>>>>>>> Output JSON file: {json_output_file}")
+    logger.info(f">>>>>>>> Total of test functions: {test_function_count}")
+    logger.info(
         (
             ">>>>>>>> Total of invalid test functions (don't start with 'test_TC_'): "
             f"{invalid_test_function_count}"
         )
     )
     if len(warnings_found) > 0:
-        print(*warnings_found, sep="\n")
+        logger.info(*warnings_found, sep="\n")
     error_count = len(errors_found)
-    print(f">>>>>>>> Total of scripts with error: {error_count}")
+    logger.info(f">>>>>>>> Total of scripts with error: {error_count}")
     if error_count > 0:
         for i, error in enumerate(errors_found):
-            print(f"Error {i+1}: {error}")
-    print("###########################################################################")
+            logger.info(f"Error {i+1}: {error}")
+    logger.info(
+        "###########################################################################"
+    )
 
 
 async def generate_python_test_json_file(
