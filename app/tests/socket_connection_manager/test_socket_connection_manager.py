@@ -205,32 +205,37 @@ async def test_broadcast_failed_for_ConnectionClosed() -> None:
 
 
 @pytest.mark.asyncio
-async def test_broadcast_failed_for_RuntimeError() -> None:
+async def test_broadcast_with_failed_connection() -> None:
     """
-    Tests if broadcast() is able to handle run time errors.
+    Tests if broadcast() is able to output to multiple connections,
+    where one is closed / failed.
 
     Expected results:
-    1. RuntimeError is raised
-    2. "Send" is called in an attempt to broadcast
+    1. Broadcast runs without an error, skipping over the bad connection
+    2. Message is sent successfully on the working connection
     """
     test_message = "Test"
-    expected_parameter = {"type": "websocket.send", "text": test_message}
-
-    # Add a websocket object to the "active_connections" list to imitate
-    # an existing active connection
     socket_connection_manager.active_connections.clear()
-    socket = mock.MagicMock(spec=WebSocket)
-    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
+
+    # Add a closed socket to the active connection list
+    socket_bad = mock.MagicMock(spec=WebSocket)
+    connection = WebSocketConnection(socket_bad, WebSocketTypeEnum.MAIN)
     socket_connection_manager.active_connections.append(connection)
     assert len(socket_connection_manager.active_connections) == 1
-
-    socket.send_text.side_effect = RuntimeError(
+    # Force a connection closed exception
+    socket_bad.send_text.side_effect = RuntimeError(
         'Cannot call "receive" once a disconnect message has been received.'
     )
 
-    with pytest.raises(RuntimeError):
-        await socket_connection_manager.broadcast(message=test_message)
-        socket.send_text.assert_called_with(expected_parameter)
+    # Add a working socket to the active connection list
+    socket_good = mock.MagicMock(spec=WebSocket)
+    connection = WebSocketConnection(socket_good, WebSocketTypeEnum.MAIN)
+    socket_connection_manager.active_connections.append(connection)
+    assert len(socket_connection_manager.active_connections) == 2
+
+    await socket_connection_manager.broadcast(message=test_message)
+    socket_bad.send_text.assert_called_with(test_message)
+    socket_good.send_text.assert_called_with(test_message)
 
     # Cleanup
     socket_connection_manager.active_connections.clear()
