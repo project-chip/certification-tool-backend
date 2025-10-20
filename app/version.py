@@ -87,7 +87,7 @@ def read_matter_sdk_docker_tag() -> Optional[str]:
     if matter_settings is None:
         return None
 
-    return matter_settings.SDK_DOCKER_TAG[:7]
+    return matter_settings.SDK_DOCKER_TAG
 
 
 version_information = read_test_harness_backend_version()
