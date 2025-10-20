@@ -108,9 +108,10 @@ class PythonTestSuite(TestSuite):
         logger.info("Setting up SDK container")
         await self.sdk_container.start()
 
+        self.matter_config = TestEnvironmentConfigMatter(**self.config)
         if self.matter_config.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD:
-            # When PCSC reader is used in a Docker container, PCSC daemon (aka "pcscd")
-            #  should be started with polkit disabled
+            # When PCSC reader is used in a Docker container, pollkit should
+            #  be disabled
             self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
 
         if len(self.pics.clusters) > 0:
@@ -133,23 +134,21 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
         await super().setup()
 
-        matter_config = TestEnvironmentConfigMatter(**self.config)
-
         # If in BLE-Thread or NFC-Thread mode and a Thread Auto-Config was provided by
         # the user, start a new OTBR container app with the according Thread topology
         # for all tests in the Python Tests Suite.
         if (
-            matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
-            or matter_config.dut_config.pairing_mode == DutPairingModeEnum.NFC_THREAD
-        ) and isinstance(matter_config.network.thread, ThreadAutoConfig):
-            await self.border_router.start_device(matter_config.network.thread)
+            self.matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
+            or self.matter_config.dut_config.pairing_mode == DutPairingModeEnum.NFC_THREAD
+        ) and isinstance(self.matter_config.network.thread, ThreadAutoConfig):
+            await self.border_router.start_device(self.matter_config.network.thread)
             await self.border_router.form_thread_topology()
 
         # If a local copy of admin_storage.json file exists, prompt user if the
         # execution should retrieve the previous commissioning information or
         # if it should perform a new commissioning
         if await should_perform_new_commissioning(
-            self, config=matter_config, logger=logger
+            self, config=self.matter_config, logger=logger
         ):
             logger.info("User chose prompt option YES")
             user_response = await prompt_for_commissioning_mode(
@@ -162,4 +161,4 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
                 )
 
             logger.info("Commission DUT")
-            await commission_device(matter_config, logger=logger)
+            await commission_device(self.matter_config, logger=logger)

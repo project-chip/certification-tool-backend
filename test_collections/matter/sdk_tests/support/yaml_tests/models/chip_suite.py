@@ -72,8 +72,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
         await self.sdk_container.start()
 
         if self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD:
-            # When PCSC reader is used in a Docker container, PCSC daemon (aka "pcscd")
-            #  should be started with polkit disabled
+            # When PCSC reader is used in a Docker container, pollkit should
+            #  be disabled
             self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
 
         logger.info("Setting up test runner")
