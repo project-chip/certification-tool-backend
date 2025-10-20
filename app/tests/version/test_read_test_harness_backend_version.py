@@ -20,12 +20,23 @@ from unittest import mock
 import pytest
 
 from app import utils_db
+from app.schemas.test_harness_backend_version import TestHarnessBackendVersion
 from app.version import (
     _get_matter_settings,
     read_matter_sdk_docker_tag,
     read_matter_sdk_sha,
     read_test_harness_backend_version,
 )
+
+
+def _assert_sdk_info(backend_version: TestHarnessBackendVersion) -> None:
+    matter_sdk_sha = read_matter_sdk_sha()
+    if matter_sdk_sha is not None:
+        assert backend_version.sdk_sha == matter_sdk_sha
+
+    matter_sdk_docker_tag = read_matter_sdk_docker_tag()
+    if matter_sdk_docker_tag is not None:
+        assert backend_version.sdk_docker_tag == matter_sdk_docker_tag
 
 
 @pytest.mark.serial
@@ -54,12 +65,7 @@ def test_read_test_harness_backend_version() -> None:
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
             assert backend_version.db_revision == expected_db_revision
-            matter_sdk_sha = read_matter_sdk_sha()
-            if matter_sdk_sha is not None:
-                assert backend_version.sdk_sha == matter_sdk_sha
-            matter_sdk_docker_tag = read_matter_sdk_docker_tag()
-            if matter_sdk_docker_tag is not None:
-                assert backend_version.sdk_docker_tag == matter_sdk_docker_tag
+            _assert_sdk_info(backend_version)
 
         mock_utils.assert_called_once()
 
@@ -90,12 +96,7 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
             assert backend_version.db_revision == expected_db_revision
-            matter_sdk_sha = read_matter_sdk_sha()
-            if matter_sdk_sha is not None:
-                assert backend_version.sdk_sha == matter_sdk_sha
-            matter_sdk_docker_tag = read_matter_sdk_docker_tag()
-            if matter_sdk_docker_tag is not None:
-                assert backend_version.sdk_docker_tag == matter_sdk_docker_tag
+            _assert_sdk_info(backend_version)
 
 
 @pytest.mark.serial
@@ -123,12 +124,7 @@ def test_read_test_harness_backend_version_with_missing_files() -> None:
             assert backend_version.version == expected_version_value
             assert backend_version.sha == expected_sha_value
             assert backend_version.db_revision == expected_db_revision
-            matter_sdk_sha = read_matter_sdk_sha()
-            if matter_sdk_sha is not None:
-                assert backend_version.sdk_sha == matter_sdk_sha
-            matter_sdk_docker_tag = read_matter_sdk_docker_tag()
-            if matter_sdk_docker_tag is not None:
-                assert backend_version.sdk_docker_tag == matter_sdk_docker_tag
+            _assert_sdk_info(backend_version)
 
 
 @pytest.mark.serial
