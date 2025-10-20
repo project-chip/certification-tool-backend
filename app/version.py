@@ -15,7 +15,7 @@
 #
 import importlib
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from loguru import logger
 
@@ -56,7 +56,7 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
     )
 
 
-def _get_matter_settings() -> Optional[str]:
+def _get_matter_settings() -> Optional[Any]:
     """
     Helper function to import and return matter_settings module.
     Returns None if the module is not found.
