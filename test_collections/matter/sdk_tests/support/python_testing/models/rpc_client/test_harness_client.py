@@ -16,6 +16,7 @@
 #
 # type: ignore
 # flake8: noqa
+import argparse
 import importlib
 import json
 import sys
@@ -47,57 +48,60 @@ TEST_INFO_JSON_PATH = "/root/python_testing/" + TEST_INFO_JSON_FILENAME
 EXECUTION_LOG_OUTPUT = "/root/python_testing/test_output.txt"
 
 
-def sanitize_th_arguments(args: list[str]) -> tuple[list[str], dict]:
+def parse_th_arguments(args: list[str]) -> tuple[list[str], dict]:
     """
-    Sanitize TH-specific arguments before passing to parse_matter_test_args.
+    Parse TH-specific arguments using argparse before passing remaining args to parse_matter_test_args.
 
     Returns:
-        tuple: (sanitized_args, th_specific_args)
-            - sanitized_args: Arguments safe to pass to parse_matter_test_args
+        tuple: (remaining_args, th_specific_args)
+            - remaining_args: Arguments to pass to parse_matter_test_args
             - th_specific_args: Dictionary containing TH-specific argument values
     """
+    # Create parser that doesn't add help to avoid conflicts
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # Add TH-specific arguments
+    parser.add_argument(
+        GET_TEST_INFO_ARGUMENT,
+        action="store_true",
+        dest="get_test_info",
+        help="Get test information and write to JSON file",
+    )
+
+    parser.add_argument(
+        TH_CLIENT_TEST_ARGUMENT,
+        nargs=2,
+        metavar=("SCRIPT_PATH", "CLASS_NAME"),
+        dest="th_client_test",
+        help="Specify test script path and class name",
+    )
+
+    parser.add_argument(
+        GET_TEST_LIST_ARGUMENT,
+        nargs="+",
+        dest="test_list",
+        help="List of test script paths and class names (pairs)",
+    )
+
+    parser.add_argument(
+        f"--{TH_COMMISSION_ARGUMENT}",
+        action="store_true",
+        dest="commission",
+        help="Run commissioning only",
+    )
+
+    # Parse known args, leaving the rest for parse_matter_test_args
+    th_args, remaining_args = parser.parse_known_args(args)
+
+    # Convert to dictionary format matching the original interface
     th_specific = {
-        TH_ARG_GET_TEST_INFO: False,
-        TH_ARG_TH_CLIENT_TEST: None,
-        TH_ARG_TEST_LIST: None,
-        TH_COMMISSION_ARGUMENT: False,
+        TH_ARG_GET_TEST_INFO: th_args.get_test_info,
+        TH_ARG_TH_CLIENT_TEST: th_args.th_client_test,
+        TH_ARG_TEST_LIST: th_args.test_list,
+        TH_COMMISSION_ARGUMENT: th_args.commission,
     }
 
-    sanitized = []
-    i = 0
-
-    while i < len(args):
-        arg = args[i]
-
-        if arg == GET_TEST_INFO_ARGUMENT:
-            th_specific[TH_ARG_GET_TEST_INFO] = True
-            i += 1
-        elif arg == TH_CLIENT_TEST_ARGUMENT:
-            # Next 2 arguments are script_path and class_name
-            if i + 2 < len(args):
-                th_specific[TH_ARG_TH_CLIENT_TEST] = [args[i + 1], args[i + 2]]
-                i += 3
-            else:
-                raise ValueError(
-                    f"{TH_CLIENT_TEST_ARGUMENT} requires 2 arguments: SCRIPT_PATH CLASS_NAME"
-                )
-        elif arg == GET_TEST_LIST_ARGUMENT:
-            # Collect all arguments until the next flag
-            test_list = []
-            i += 1
-            while i < len(args) and not args[i].startswith("--"):
-                test_list.append(args[i])
-                i += 1
-            th_specific[TH_ARG_TEST_LIST] = test_list
-        elif arg == TH_COMMISSION_ARGUMENT:
-            # Commission is a TH-specific command
-            th_specific[TH_COMMISSION_ARGUMENT] = True
-            i += 1
-        else:
-            sanitized.append(arg)
-            i += 1
-
-    return sanitized, th_specific
+    return remaining_args, th_specific
 
 
 class TestRunnerHooks:
@@ -142,17 +146,17 @@ def main() -> None:
 
     test_args = configure_iterations(test_args1)
 
-    # Sanitize TH-specific arguments
-    sanitized_args, th_args = sanitize_th_arguments(test_args)
+    # Parse TH-specific arguments using argparse
+    remaining_args, th_args = parse_th_arguments(test_args)
 
-    print("Sanitized args:", sanitized_args)
+    print("Remaining args:", remaining_args)
     print("TH-specific args:", th_args)
 
     # Temporarily override sys.argv to prevent parse_matter_test_args from using it
     original_argv = sys.argv
     try:
-        sys.argv = [sys.argv[0]] + sanitized_args
-        config = parse_matter_test_args(sanitized_args)
+        sys.argv = [sys.argv[0]] + remaining_args
+        config = parse_matter_test_args(remaining_args)
     finally:
         sys.argv = original_argv
 
