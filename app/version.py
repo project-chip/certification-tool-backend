@@ -40,28 +40,54 @@ def read_test_harness_backend_version() -> TestHarnessBackendVersion:
     sha_value = utils.read_information_from_file(SHA_FILEPATH)
     db_revision = utils_db.get_db_revision()
     sdk_sha_value = read_matter_sdk_sha() or ""
+    sdk_docker_tag_value = read_matter_sdk_docker_tag() or ""
 
     logger.info(f"Test Engine version is {version_value}")
     logger.info(f"Test Engine SHA is {sha_value}")
     logger.info(f"Test Engine SDK SHA is {sdk_sha_value}")
+    logger.info(f"Test Engine SDK Docker Tag is {sdk_docker_tag_value}")
 
     return TestHarnessBackendVersion(
         version=version_value,
         sha=sha_value,
         sdk_sha=sdk_sha_value,
+        sdk_docker_tag=sdk_docker_tag_value,
         db_revision=db_revision,
     )
+
+
+def _get_matter_settings() -> Optional[str]:
+    """
+    Helper function to import and return matter_settings module.
+    Returns None if the module is not found.
+    """
+    if importlib.find_loader(MATTER_CONFIG_MODULE) is None:
+        return None
+
+    matter_config_module = importlib.import_module(MATTER_CONFIG_MODULE)
+    return matter_config_module.matter_settings
 
 
 def read_matter_sdk_sha() -> Optional[str]:
     """
     Retrieve short SDK SHA from settings (The information is kept in config.py file)
     """
-    if importlib.find_loader(MATTER_CONFIG_MODULE) is None:
+    matter_settings = _get_matter_settings()
+    if matter_settings is None:
         return None
 
-    matter_config_module = importlib.import_module(MATTER_CONFIG_MODULE)
-    return matter_config_module.matter_settings.SDK_SHA[:7]
+    return matter_settings.SDK_SHA[:7]
+
+
+def read_matter_sdk_docker_tag() -> Optional[str]:
+    """
+    Retrieve SDK Docker Tag from settings (The information is kept in config.py file)
+    """
+    matter_settings = _get_matter_settings()
+    if matter_settings is None:
+        return None
+
+    return matter_settings.SDK_DOCKER_TAG[:7]
 
 
 version_information = read_test_harness_backend_version()

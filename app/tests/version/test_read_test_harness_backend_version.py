@@ -20,7 +20,12 @@ from unittest import mock
 import pytest
 
 from app import utils_db
-from app.version import read_matter_sdk_sha, read_test_harness_backend_version
+from app.version import (
+    _get_matter_settings,
+    read_matter_sdk_docker_tag,
+    read_matter_sdk_sha,
+    read_test_harness_backend_version,
+)
 
 
 @pytest.mark.serial
@@ -52,6 +57,9 @@ def test_read_test_harness_backend_version() -> None:
             matter_sdk_sha = read_matter_sdk_sha()
             if matter_sdk_sha is not None:
                 assert backend_version.sdk_sha == matter_sdk_sha
+            matter_sdk_docker_tag = read_matter_sdk_docker_tag()
+            if matter_sdk_docker_tag is not None:
+                assert backend_version.sdk_docker_tag == matter_sdk_docker_tag
 
         mock_utils.assert_called_once()
 
@@ -85,6 +93,9 @@ def test_read_test_harness_backend_version_with_empty_files() -> None:
             matter_sdk_sha = read_matter_sdk_sha()
             if matter_sdk_sha is not None:
                 assert backend_version.sdk_sha == matter_sdk_sha
+            matter_sdk_docker_tag = read_matter_sdk_docker_tag()
+            if matter_sdk_docker_tag is not None:
+                assert backend_version.sdk_docker_tag == matter_sdk_docker_tag
 
 
 @pytest.mark.serial
@@ -115,3 +126,48 @@ def test_read_test_harness_backend_version_with_missing_files() -> None:
             matter_sdk_sha = read_matter_sdk_sha()
             if matter_sdk_sha is not None:
                 assert backend_version.sdk_sha == matter_sdk_sha
+            matter_sdk_docker_tag = read_matter_sdk_docker_tag()
+            if matter_sdk_docker_tag is not None:
+                assert backend_version.sdk_docker_tag == matter_sdk_docker_tag
+
+
+@pytest.mark.serial
+def test_get_matter_settings() -> None:
+    """Test _get_matter_settings returns matter_settings when module exists."""
+    matter_settings = _get_matter_settings()
+    if matter_settings is not None:
+        # If the module is available, verify it has the expected attributes
+        assert hasattr(matter_settings, "SDK_SHA")
+        assert hasattr(matter_settings, "SDK_DOCKER_TAG")
+
+
+@pytest.mark.serial
+def test_read_matter_sdk_sha() -> None:
+    """Test read_matter_sdk_sha returns shortened SHA."""
+    sdk_sha = read_matter_sdk_sha()
+    if sdk_sha is not None:
+        # SHA should be shortened to 7 characters
+        assert len(sdk_sha) == 7
+        # Verify it matches the expected format
+        assert isinstance(sdk_sha, str)
+
+
+@pytest.mark.serial
+def test_read_matter_sdk_docker_tag() -> None:
+    """Test read_matter_sdk_docker_tag returns docker tag."""
+    sdk_docker_tag = read_matter_sdk_docker_tag()
+    if sdk_docker_tag is not None:
+        # Docker tag should be a non-empty string
+        assert isinstance(sdk_docker_tag, str)
+        assert len(sdk_docker_tag) > 0
+
+
+@pytest.mark.serial
+def test_read_matter_sdk_sha_and_docker_tag_consistency() -> None:
+    """Test that SDK SHA and Docker Tag are both available or both None."""
+    sdk_sha = read_matter_sdk_sha()
+    sdk_docker_tag = read_matter_sdk_docker_tag()
+
+    # Both should be None or both should have values
+    # (they come from the same module)
+    assert (sdk_sha is None) == (sdk_docker_tag is None)
