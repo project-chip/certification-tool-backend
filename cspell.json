@@ -112,7 +112,10 @@
         "chipyaml",
         "webrtc",
         "pyproject",
-        "CNET"
+        "CNET",
+        "AVSM",
+        "PAVST",
+        "WEBRTCR"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [

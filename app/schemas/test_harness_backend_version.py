@@ -21,4 +21,5 @@ class TestHarnessBackendVersion(BaseModel):
     version: str
     sha: str
     sdk_sha: str
+    sdk_docker_tag: str
     db_revision: str
