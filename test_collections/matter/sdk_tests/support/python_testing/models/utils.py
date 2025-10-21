@@ -168,7 +168,10 @@ def log_test_output_file(logger: loguru.Logger) -> None:
     """
     try:
         # Navigate up 3 levels from utils.py to sdk_tests directory
-        sdk_tests_path = next((p for p in Path(__file__).resolve().parents if p.name == "sdk_tests"), Path(__file__).parents[3])
+        sdk_tests_path = next(
+            (p for p in Path(__file__).resolve().parents if p.name == "sdk_tests"),
+            Path(__file__).parents[3],
+        )
         file_output_path = sdk_tests_path / TEST_OUTPUT_FILE_PATH
 
         if file_output_path.exists():
