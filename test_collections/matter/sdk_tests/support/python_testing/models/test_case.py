@@ -51,6 +51,7 @@ from .python_testing_hooks_proxy import (
 from .utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
+    TEST_OUTPUT_FILE_PATH,
     DUTCommissioningError,
     PromptOption,
     commission_device,
@@ -64,9 +65,6 @@ USER_PROMPT_TIMEOUT = 120
 # Log batching configuration
 LOG_BATCH_SIZE = 50  # Number of log lines to send per batch
 LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
-
-# Test output file path relative to sdk_tests directory
-TEST_OUTPUT_FILE_PATH = "sdk_checkout/python_testing/test_output.txt"
 
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
