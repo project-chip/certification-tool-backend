@@ -48,6 +48,40 @@ TEST_INFO_JSON_PATH = "/root/python_testing/" + TEST_INFO_JSON_FILENAME
 EXECUTION_LOG_OUTPUT = "/root/python_testing/test_output.txt"
 
 
+# Create argument parser for TH-specific arguments
+# Using add_help=False to avoid conflicts with Matter SDK's parser
+TH_ARGUMENT_PARSER = argparse.ArgumentParser(add_help=False)
+
+TH_ARGUMENT_PARSER.add_argument(
+    GET_TEST_INFO_ARGUMENT,
+    action="store_true",
+    dest="get_test_info",
+    help="Get test information and write to JSON file",
+)
+
+TH_ARGUMENT_PARSER.add_argument(
+    TH_CLIENT_TEST_ARGUMENT,
+    nargs=2,
+    metavar=("SCRIPT_PATH", "CLASS_NAME"),
+    dest="th_client_test",
+    help="Specify test script path and class name",
+)
+
+TH_ARGUMENT_PARSER.add_argument(
+    GET_TEST_LIST_ARGUMENT,
+    nargs="+",
+    dest="test_list",
+    help="List of test script paths and class names (pairs)",
+)
+
+TH_ARGUMENT_PARSER.add_argument(
+    f"--{TH_COMMISSION_ARGUMENT}",
+    action="store_true",
+    dest="commission",
+    help="Run commissioning only",
+)
+
+
 def parse_th_arguments(args: list[str]) -> tuple[list[str], dict]:
     """
     Parse TH-specific arguments using argparse before passing remaining args to parse_matter_test_args.
@@ -57,41 +91,8 @@ def parse_th_arguments(args: list[str]) -> tuple[list[str], dict]:
             - remaining_args: Arguments to pass to parse_matter_test_args
             - th_specific_args: Dictionary containing TH-specific argument values
     """
-    # Create parser that doesn't add help to avoid conflicts
-    parser = argparse.ArgumentParser(add_help=False)
-
-    # Add TH-specific arguments
-    parser.add_argument(
-        GET_TEST_INFO_ARGUMENT,
-        action="store_true",
-        dest="get_test_info",
-        help="Get test information and write to JSON file",
-    )
-
-    parser.add_argument(
-        TH_CLIENT_TEST_ARGUMENT,
-        nargs=2,
-        metavar=("SCRIPT_PATH", "CLASS_NAME"),
-        dest="th_client_test",
-        help="Specify test script path and class name",
-    )
-
-    parser.add_argument(
-        GET_TEST_LIST_ARGUMENT,
-        nargs="+",
-        dest="test_list",
-        help="List of test script paths and class names (pairs)",
-    )
-
-    parser.add_argument(
-        f"--{TH_COMMISSION_ARGUMENT}",
-        action="store_true",
-        dest="commission",
-        help="Run commissioning only",
-    )
-
     # Parse known args, leaving the rest for parse_matter_test_args
-    th_args, remaining_args = parser.parse_known_args(args)
+    th_args, remaining_args = TH_ARGUMENT_PARSER.parse_known_args(args)
 
     # Convert to dictionary format matching the original interface
     th_specific = {
