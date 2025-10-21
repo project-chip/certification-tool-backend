@@ -178,7 +178,7 @@ def log_test_output_file(logger: loguru.Logger) -> None:
                     logger.log(PYTHON_TEST_LEVEL, content)
         else:
             logger.debug(f"test_output.txt not found at {file_output_path}")
-    except Exception as e:
+    except (OSError, IndexError) as e:
         logger.warning(f"Could not read test_output.txt: {e}")
 
 
