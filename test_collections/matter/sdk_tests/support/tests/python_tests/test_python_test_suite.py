@@ -28,6 +28,7 @@ from app.tests.utils.test_pics_data import create_random_pics
 from test_collections.matter.sdk_tests.support.python_testing.models.utils import (
     DUTCommissioningError,
 )
+from test_collections.matter.test_environment_config import DutPairingModeEnum
 
 from ...python_testing.models.test_suite import (
     CommissioningPythonTestSuite,
@@ -314,6 +315,9 @@ async def test_commissioning_suite_setup() -> None:
     mock_prompt_response = mock.Mock()
     mock_prompt_response.response = PromptOption.PASS
 
+    mock_matter_config = mock.Mock()
+    mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -332,6 +336,7 @@ async def test_commissioning_suite_setup() -> None:
         "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
         return_value=mock_prompt_response,
     ):
+        suite_instance.matter_config = mock_matter_config
         await suite_instance.setup()
         python_suite_setup.assert_called_once()
 
@@ -355,6 +360,9 @@ async def test_commissioning_suite_setup_fail() -> None:
     mock_prompt_response = mock.Mock()
     mock_prompt_response.response = PromptOption.FAIL
 
+    mock_matter_config = mock.Mock()
+    mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -374,6 +382,7 @@ async def test_commissioning_suite_setup_fail() -> None:
         "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
         return_value=mock_prompt_response,
     ):
+        suite_instance.matter_config = mock_matter_config
         with pytest.raises(DUTCommissioningError) as exc_info:
             await suite_instance.setup()
 
@@ -400,6 +409,9 @@ async def test_should_perform_new_commissioning_yes() -> None:
 
     suite_instance = suite_class(TestSuiteExecution())
 
+    mock_matter_config = mock.Mock()
+    mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -420,6 +432,7 @@ async def test_should_perform_new_commissioning_yes() -> None:
         ".should_perform_new_commissioning",
         return_value=True,
     ) as mock_should_perform_new_commissioning:
+        suite_instance.matter_config = mock_matter_config
         await suite_instance.setup()
 
         mock_should_perform_new_commissioning.assert_called_once()
@@ -446,6 +459,9 @@ async def test_should_perform_new_commissioning_no() -> None:
     mock_prompt_response = mock.Mock()
     mock_prompt_response.response = PromptOption.PASS
 
+    mock_matter_config = mock.Mock()
+    mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.setup"
@@ -469,6 +485,7 @@ async def test_should_perform_new_commissioning_no() -> None:
         "app.user_prompt_support.user_prompt_support.UserPromptSupport.send_prompt_request",
         return_value=mock_prompt_response,
     ):
+        suite_instance.matter_config = mock_matter_config
         await suite_instance.setup()
 
         mock_should_perform_new_commissioning.assert_called_once()
