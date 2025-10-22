@@ -22,6 +22,12 @@ import loguru
 from docker.models.containers import Container
 
 from app.container_manager import container_manager
+from app.container_manager.docker_shell_commands import (
+    docker_exec_command,
+    docker_kill_command,
+    docker_rm_command,
+    docker_run_command,
+)
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import test_engine_logger as logger
@@ -198,6 +204,12 @@ class SDKContainer(metaclass=Singleton):
         # Ensure there's no existing container running using the same name.
         self.__destroy_existing_container()
 
+        # Log equivalent shell command for container creation
+        shell_cmd = docker_run_command(self.image_tag, self.run_parameters)
+        self.logger.info(
+            f"Starting SDK container - equivalent shell command:\n{shell_cmd}"
+        )
+
         # Async return when the container is running
         self.__container = await container_manager.create_container(
             self.image_tag, self.run_parameters
@@ -211,6 +223,16 @@ class SDKContainer(metaclass=Singleton):
     def destroy(self) -> None:
         """Destroy the container."""
         if self.__container is not None:
+            # Log equivalent shell commands for destroying the container
+            cmds = []
+            if container_manager.is_running(self.__container):
+                cmds.append(docker_kill_command(self.container_name))
+            cmds.append(docker_rm_command(self.container_name, force=True))
+
+            self.logger.info(
+                "Destroying SDK container - equivalent shell command(s) \n".join(cmds)
+            )
+
             container_manager.destroy(self.__container)
         self.__container = None
 
@@ -231,11 +253,23 @@ class SDKContainer(metaclass=Singleton):
         else:
             full_cmd.append(str(command))
 
-        self.logger.info("Sending command to SDK container: " + " ".join(full_cmd))
+        full_cmd_str = " ".join(full_cmd)
+        self.logger.info("Sending command to SDK container: " + full_cmd_str)
+
+        # Log equivalent shell command
+        shell_cmd = docker_exec_command(
+            self.container_name,
+            full_cmd_str,
+            stream=is_stream,
+            socket=is_socket,
+            stdin=True,
+            detach=is_detach,
+        )
+        self.logger.info(f"Docker API call equivalent shell command:\n{shell_cmd}")
 
         result = exec_run_in_container(
             self.__container,
-            " ".join(full_cmd),
+            full_cmd_str,
             socket=is_socket,
             stream=is_stream,
             stdin=True,
