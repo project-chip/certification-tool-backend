@@ -47,6 +47,9 @@ from ...utils import (
 RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 EXECUTABLE = "python3"
 
+# Test output file path relative to sdk_tests directory
+TEST_OUTPUT_FILE_PATH = "sdk_checkout/python_testing/test_output.txt"
+
 TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
 
 
@@ -157,13 +160,38 @@ def __copy_admin_storage_file(
     )
 
 
+def log_test_output_file(logger: loguru.Logger) -> None:
+    """Log the entire content of test_output.txt file.
+
+    Args:
+        logger: Logger instance to write logs to
+    """
+    try:
+        # Navigate up 3 levels from utils.py to sdk_tests directory
+        sdk_tests_path = next(
+            (p for p in Path(__file__).resolve().parents if p.name == "sdk_tests"),
+            Path(__file__).parents[3],
+        )
+        file_output_path = sdk_tests_path / TEST_OUTPUT_FILE_PATH
+
+        if file_output_path.exists():
+            with open(file_output_path, "r") as f:
+                content = f.read()
+                if content.strip():  # Only log if there's actual content
+                    logger.log(PYTHON_TEST_LEVEL, content)
+        else:
+            logger.debug(f"test_output.txt not found at {file_output_path}")
+    except (OSError, IndexError) as e:
+        logger.warning(f"Could not read test_output.txt: {e}")
+
+
 async def commission_device(
     config: TestEnvironmentConfigMatter,
     logger: loguru.Logger,
 ) -> None:
     sdk_container = SDKContainer(logger)
 
-    command = [f"{RUNNER_CLASS_PATH} commission"]
+    command = [f"{RUNNER_CLASS_PATH} --commission"]
     command_arguments = await generate_command_arguments(config)
     command.extend(command_arguments)
 
@@ -180,6 +208,11 @@ async def commission_device(
 
     if exit_code:
         raise DUTCommissioningError("Failed to commission DUT")
+
+    # Print all content from test_output.txt file after commissioning
+    logger.info("---- Start of commissioning test output ----")
+    log_test_output_file(logger)
+    logger.info("---- End of commissioning test output ----")
 
     # Copy admin_storage.json file from container, in case the user wants to
     # reuse this information in the next execution

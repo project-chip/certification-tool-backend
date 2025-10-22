@@ -438,7 +438,7 @@ async def test_commission_device() -> None:
     sdk_container: SDKContainer = SDKContainer()
 
     command_args = ["arg1", "arg2", "arg3"]
-    expected_command = [f"{RUNNER_CLASS_PATH} commission"]
+    expected_command = [f"{RUNNER_CLASS_PATH} --commission"]
     expected_command.extend(command_args)
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
@@ -451,7 +451,10 @@ async def test_commission_device() -> None:
     ), mock.patch(
         target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
         ".handle_logs"
-    ) as mock_handle_logs, mock.patch.object(
+    ) as mock_handle_logs, mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".log_test_output_file"
+    ) as mock_log_test_output, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=0
     ):
         await commission_device(
@@ -462,6 +465,7 @@ async def test_commission_device() -> None:
         expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
     )
     mock_handle_logs.assert_called_once()
+    mock_log_test_output.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -469,7 +473,7 @@ async def test_commission_device_failure() -> None:
     sdk_container: SDKContainer = SDKContainer()
 
     command_args = ["arg1", "arg2", "arg3"]
-    expected_command = [f"{RUNNER_CLASS_PATH} commission"]
+    expected_command = [f"{RUNNER_CLASS_PATH} --commission"]
     expected_command.extend(command_args)
     mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
 
