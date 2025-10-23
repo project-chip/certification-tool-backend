@@ -228,4 +228,4 @@ def docker_cp_to_container_command(
     Returns:
         String representation of equivalent shell command
     """
-    return f"docker cp {host_path} {escape_shell_arg(container_name)}:{container_path}"
+    return f"docker cp {escape_shell_arg(str(host_path))} {escape_shell_arg(f'{container_name}:{container_path}')}"
