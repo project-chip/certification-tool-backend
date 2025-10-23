@@ -28,7 +28,7 @@ def escape_shell_arg(arg: str) -> str:
         for c in ["'", '"', "$", "`", "\\", "!", "&", "|", ";", "(", ")", "<", ">"]
     ):
         # Use single quotes and escape any single quotes within
-        return f"'{arg.replace(chr(39), chr(39) + chr(92) + chr(39) + chr(39))}'"
+        return f"'{arg.replace("'", "'\\''")}'"
     return arg
 
 
