@@ -230,7 +230,8 @@ class SDKContainer(metaclass=Singleton):
             cmds.append(docker_rm_command(self.container_name, force=True))
 
             self.logger.info(
-                f"Destroying SDK container - equivalent shell command(s):\n{'\n'.join(cmds)}"
+                "Destroying SDK container - equivalent shell command(s):\n"
+                + "\n".join(cmds)
             )
 
             container_manager.destroy(self.__container)
@@ -260,8 +261,6 @@ class SDKContainer(metaclass=Singleton):
         shell_cmd = docker_exec_command(
             self.container_name,
             full_cmd_str,
-            stream=is_stream,
-            socket=is_socket,
             stdin=True,
             detach=is_detach,
         )

@@ -23,7 +23,6 @@ from typing import Dict, Optional
 import docker
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
-from loguru import logger
 
 from app.container_manager.docker_shell_commands import (
     docker_cp_from_container_command,
@@ -33,6 +32,7 @@ from app.container_manager.docker_shell_commands import (
     docker_run_command,
 )
 from app.singleton import Singleton
+from app.test_engine.logger import test_engine_logger as logger
 
 # Note: Can we use a base docker image and single RPC process(OR a Bash script) entry
 # point to later configure the image to be a particular type

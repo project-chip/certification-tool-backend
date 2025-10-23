@@ -28,7 +28,7 @@ def escape_shell_arg(arg: str) -> str:
         for c in ["'", '"', "$", "`", "\\", "!", "&", "|", ";", "(", ")", "<", ">"]
     ):
         # Use single quotes and escape any single quotes within
-        return f"'{arg.replace("'", "'\\''")}'"
+        return arg.replace("'", "'\\''")
     return arg
 
 
@@ -66,7 +66,9 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
         for host_path, mount_config in volumes.items():
             bind_path = mount_config.get("bind")
             mode = mount_config.get("mode", "rw")
-            cmd_parts.append(f"-v {escape_shell_arg(f'{host_path}:{bind_path}')}:{mode}")
+            cmd_parts.append(
+                f"-v {escape_shell_arg(f'{host_path}:{bind_path}')}:{mode}"
+            )
 
     # Handle environment variables
     if environment := parameters.get("environment"):
@@ -124,8 +126,6 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
 def docker_exec_command(
     container_name: str,
     command: Union[str, List[str]],
-    stream: bool = False,
-    socket: bool = False,
     stdin: bool = False,
     detach: bool = False,
 ) -> str:
@@ -135,8 +135,6 @@ def docker_exec_command(
     Args:
         container_name: Name or ID of the container
         command: Command to execute (string or list)
-        stream: Whether output is streamed
-        socket: Whether to use socket mode
         stdin: Whether stdin is enabled
         detach: Whether to run in detached mode
 
