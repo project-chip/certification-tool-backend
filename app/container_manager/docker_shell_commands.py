@@ -72,7 +72,7 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
     if environment := parameters.get("environment"):
         if isinstance(environment, dict):
             for key, value in environment.items():
-                cmd_parts.append(f"-e {key}={escape_shell_arg(str(value))}")
+                cmd_parts.append(f"-e {escape_shell_arg(f'{key}={value}')}")
         elif isinstance(environment, list):
             for env_var in environment:
                 cmd_parts.append(f"-e {escape_shell_arg(env_var)}")
