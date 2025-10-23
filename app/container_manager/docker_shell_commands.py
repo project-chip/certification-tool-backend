@@ -66,7 +66,7 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
         for host_path, mount_config in volumes.items():
             bind_path = mount_config.get("bind")
             mode = mount_config.get("mode", "rw")
-            cmd_parts.append(f"-v {host_path}:{bind_path}:{mode}")
+            cmd_parts.append(f"-v {escape_shell_arg(f'{host_path}:{bind_path}')}:{mode}")
 
     # Handle environment variables
     if environment := parameters.get("environment"):
