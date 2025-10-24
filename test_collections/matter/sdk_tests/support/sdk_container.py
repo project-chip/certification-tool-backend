@@ -25,9 +25,6 @@ from app.container_manager import container_manager
 from app.container_manager.docker_shell_commands import (
     SHELL_CMD_LOG_PREFIX,
     docker_exec_command,
-    docker_kill_command,
-    docker_rm_command,
-    docker_run_command,
 )
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton

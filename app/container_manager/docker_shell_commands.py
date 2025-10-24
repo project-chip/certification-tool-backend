@@ -47,7 +47,8 @@ def escape_shell_arg(arg: str) -> str:
     Escape shell argument if it contains spaces or special characters.
 
     Uses single-quote wrapping for safety. Any single quotes in the argument
-    are escaped using the pattern: ' becomes '\'' (close quote, escaped quote, open quote).
+    are escaped using the pattern: ' becomes '\''
+    (close quote, escaped quote, open quote).
 
     Returns:
         The argument wrapped in single quotes if it contains special characters,
