@@ -20,15 +20,44 @@ Useful for debugging and understanding what Docker operations are being performe
 from pathlib import Path
 from typing import Dict, List, Union
 
+# Log message constants
+SHELL_CMD_LOG_PREFIX = "Docker API call equivalent shell command:\n"
+
+# Shell special characters that require escaping
+SHELL_SPECIAL_CHARS = [
+    " ",
+    "'",
+    '"',
+    "$",
+    "`",
+    "\\",
+    "!",
+    "&",
+    "|",
+    ";",
+    "(",
+    ")",
+    "<",
+    ">",
+]
+
 
 def escape_shell_arg(arg: str) -> str:
-    """Escape shell argument if it contains spaces or special characters."""
-    if " " in arg or any(
-        c in arg
-        for c in ["'", '"', "$", "`", "\\", "!", "&", "|", ";", "(", ")", "<", ">"]
-    ):
-        # Use single quotes and escape any single quotes within
-        return arg.replace("'", "'\\''")
+    """
+    Escape shell argument if it contains spaces or special characters.
+
+    Uses single-quote wrapping for safety. Any single quotes in the argument
+    are escaped using the pattern: ' becomes '\'' (close quote, escaped quote, open quote).
+
+    Returns:
+        The argument wrapped in single quotes if it contains special characters,
+        otherwise returns the argument unchanged.
+    """
+    if any(c in arg for c in SHELL_SPECIAL_CHARS):
+        # Escape any single quotes: ' becomes '\''
+        escaped_arg = arg.replace("'", "'\\''")
+        # Wrap the entire argument in single quotes
+        return f"'{escaped_arg}'"
     return arg
 
 
@@ -55,7 +84,7 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
 
     # Handle network
     if network := parameters.get("network"):
-        cmd_parts.append(f"--network {network}")
+        cmd_parts.append(f"--network {escape_shell_arg(network)}")
 
     # Handle name
     if name := parameters.get("name"):
@@ -66,15 +95,15 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
         for host_path, mount_config in volumes.items():
             bind_path = mount_config.get("bind")
             mode = mount_config.get("mode", "rw")
-            cmd_parts.append(
-                f"-v {escape_shell_arg(f'{host_path}:{bind_path}')}:{mode}"
-            )
+            volume_spec = f"{host_path}:{bind_path}:{mode}"
+            cmd_parts.append(f"-v {escape_shell_arg(volume_spec)}")
 
     # Handle environment variables
     if environment := parameters.get("environment"):
         if isinstance(environment, dict):
             for key, value in environment.items():
-                cmd_parts.append(f"-e {escape_shell_arg(f'{key}={value}')}")
+                env_spec = f"{key}={value}"
+                cmd_parts.append(f"-e {escape_shell_arg(env_spec)}")
         elif isinstance(environment, list):
             for env_var in environment:
                 cmd_parts.append(f"-e {escape_shell_arg(env_var)}")
@@ -90,12 +119,15 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
                 if isinstance(host_config, list):
                     for host_port_config in host_config:
                         host_port = host_port_config.get("HostPort")
-                        cmd_parts.append(f"-p {host_port}:{container_port}")
+                        port_spec = f"{host_port}:{container_port}"
+                        cmd_parts.append(f"-p {escape_shell_arg(port_spec)}")
                 elif isinstance(host_config, tuple):
                     host_ip, host_port = host_config
-                    cmd_parts.append(f"-p {host_ip}:{host_port}:{container_port}")
+                    port_spec = f"{host_ip}:{host_port}:{container_port}"
+                    cmd_parts.append(f"-p {escape_shell_arg(port_spec)}")
                 else:
-                    cmd_parts.append(f"-p {host_config}:{container_port}")
+                    port_spec = f"{host_config}:{container_port}"
+                    cmd_parts.append(f"-p {escape_shell_arg(port_spec)}")
 
     # Handle user
     if user := parameters.get("user"):
@@ -110,7 +142,7 @@ def docker_run_command(image_tag: str, parameters: Dict) -> str:
         cmd_parts.append("-t")
 
     # Add image tag
-    cmd_parts.append(image_tag)
+    cmd_parts.append(escape_shell_arg(image_tag))
 
     # Handle command
     if command := parameters.get("command"):
@@ -207,7 +239,8 @@ def docker_cp_from_container_command(
     Returns:
         String representation of equivalent shell command
     """
-    return f"docker cp {escape_shell_arg(f'{container_name}:{container_path}')} {escape_shell_arg(str(host_path))}"  # noqa
+    source = f"{container_name}:{container_path}"
+    return f"docker cp {escape_shell_arg(source)} {escape_shell_arg(str(host_path))}"
 
 
 def docker_cp_to_container_command(
@@ -226,4 +259,7 @@ def docker_cp_to_container_command(
     Returns:
         String representation of equivalent shell command
     """
-    return f"docker cp {escape_shell_arg(str(host_path))} {escape_shell_arg(f'{container_name}:{container_path}')}"  # noqa
+    destination = f"{container_name}:{container_path}"
+    return (
+        f"docker cp {escape_shell_arg(str(host_path))} {escape_shell_arg(destination)}"
+    )

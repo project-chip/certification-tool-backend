@@ -25,6 +25,7 @@ from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
 
 from app.container_manager.docker_shell_commands import (
+    SHELL_CMD_LOG_PREFIX,
     docker_cp_from_container_command,
     docker_cp_to_container_command,
     docker_kill_command,
@@ -56,12 +57,12 @@ class ContainerManager(object, metaclass=Singleton):
         if self.is_running(container):
             # Log equivalent shell command for kill
             shell_cmd = docker_kill_command(container.name)
-            logger.info(f"Docker API call equivalent shell command:\n{shell_cmd}")
+            logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
             container.kill()
 
         # Log equivalent shell command for remove
         shell_cmd = docker_rm_command(container.name, force=True)
-        logger.info(f"Docker API call equivalent shell command:\n{shell_cmd}")
+        logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
         container.remove(force=True)
 
     def get_container(self, id_or_name: str) -> Optional[Container]:
@@ -109,7 +110,7 @@ class ContainerManager(object, metaclass=Singleton):
         try:
             # Log equivalent shell command
             shell_cmd = docker_run_command(docker_image_tag, parameters)
-            logger.info(f"Docker API call equivalent shell command:\n{shell_cmd}")
+            logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
             return self.__client.containers.run(docker_image_tag, **parameters)
         except DockerException as error:
@@ -163,7 +164,7 @@ class ContainerManager(object, metaclass=Singleton):
                 container_file_path,
                 destination_path / destination_file_name,
             )
-            logger.info(f"Docker API call equivalent shell command:\n{shell_cmd}")
+            logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
             stream, _ = container.get_archive(str(container_file_path))
             with open(
@@ -197,7 +198,7 @@ class ContainerManager(object, metaclass=Singleton):
             shell_cmd = docker_cp_to_container_command(
                 container.name, host_file_path, destination_container_path
             )
-            logger.info(f"Docker API call equivalent shell command:\n{shell_cmd}")
+            logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
             tar_stream = io.BytesIO()
             with tarfile.open(f"{host_file_path}", mode="r") as tar_in:

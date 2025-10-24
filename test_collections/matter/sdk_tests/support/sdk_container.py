@@ -23,6 +23,7 @@ from docker.models.containers import Container
 
 from app.container_manager import container_manager
 from app.container_manager.docker_shell_commands import (
+    SHELL_CMD_LOG_PREFIX,
     docker_exec_command,
     docker_kill_command,
     docker_rm_command,
@@ -204,12 +205,6 @@ class SDKContainer(metaclass=Singleton):
         # Ensure there's no existing container running using the same name.
         self.__destroy_existing_container()
 
-        # Log equivalent shell command for container creation
-        shell_cmd = docker_run_command(self.image_tag, self.run_parameters)
-        self.logger.info(
-            f"Starting SDK container - equivalent shell command:\n{shell_cmd}"
-        )
-
         # Async return when the container is running
         self.__container = await container_manager.create_container(
             self.image_tag, self.run_parameters
@@ -223,17 +218,6 @@ class SDKContainer(metaclass=Singleton):
     def destroy(self) -> None:
         """Destroy the container."""
         if self.__container is not None:
-            # Log equivalent shell commands for destroying the container
-            cmds = []
-            if container_manager.is_running(self.__container):
-                cmds.append(docker_kill_command(self.container_name))
-            cmds.append(docker_rm_command(self.container_name, force=True))
-
-            self.logger.info(
-                "Destroying SDK container - equivalent shell command(s):\n"
-                + "\n".join(cmds)
-            )
-
             container_manager.destroy(self.__container)
         self.__container = None
 
@@ -264,7 +248,7 @@ class SDKContainer(metaclass=Singleton):
             stdin=True,
             detach=is_detach,
         )
-        self.logger.info(f"Docker API call equivalent shell command:\n{shell_cmd}")
+        self.logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
         result = exec_run_in_container(
             self.__container,
