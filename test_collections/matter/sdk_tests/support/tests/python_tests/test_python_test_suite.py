@@ -317,6 +317,7 @@ async def test_commissioning_suite_setup() -> None:
 
     mock_matter_config = mock.Mock()
     mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+    mock_matter_config.test_parameters = None  # Add test_parameters as None or {}
 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
@@ -362,6 +363,7 @@ async def test_commissioning_suite_setup_fail() -> None:
 
     mock_matter_config = mock.Mock()
     mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+    mock_matter_config.test_parameters = None  # Add test_parameters as None or {}
 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
@@ -411,6 +413,7 @@ async def test_should_perform_new_commissioning_yes() -> None:
 
     mock_matter_config = mock.Mock()
     mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+    mock_matter_config.test_parameters = None  # Add test_parameters as None or {}
 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
@@ -461,6 +464,7 @@ async def test_should_perform_new_commissioning_no() -> None:
 
     mock_matter_config = mock.Mock()
     mock_matter_config.dut_config.pairing_mode = DutPairingModeEnum.ON_NETWORK
+    mock_matter_config.test_parameters = None  # Add test_parameters as None or {}
 
     with mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
