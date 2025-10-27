@@ -17,11 +17,8 @@ from unittest import mock
 
 import pytest
 
-from app.constants.websockets_constants import (
-    MESSAGE_ID_KEY,
-    MessageKeysEnum,
-    MessageTypeEnum,
-)
+from app.constants.shared_constants import MessageTypeEnum
+from app.constants.websockets_constants import MESSAGE_ID_KEY, MessageKeysEnum
 from app.user_prompt_support.user_prompt_manager import (
     PromptExchange,
     user_prompt_manager,

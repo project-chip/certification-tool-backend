@@ -20,8 +20,8 @@ from typing import Generator, cast
 
 import loguru
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig
-from test_collections.matter.test_environment_config import DutPairingModeEnum
 
 from ...python_testing.models.utils import (
     EXECUTABLE,

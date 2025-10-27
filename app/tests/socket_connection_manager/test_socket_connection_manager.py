@@ -22,11 +22,11 @@ from fastapi import WebSocket
 from starlette.websockets import WebSocketState
 from websockets.exceptions import ConnectionClosedOK
 
+from app.constants.shared_constants import MessageTypeEnum
 from app.constants.websockets_constants import (
     INVALID_JSON_ERROR_STR,
     MESSAGE_ID_KEY,
     MessageKeysEnum,
-    MessageTypeEnum,
     WebSocketConnection,
     WebSocketTypeEnum,
 )

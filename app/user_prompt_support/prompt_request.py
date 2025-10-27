@@ -17,7 +17,7 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel
 
-from app.constants.websockets_constants import MessageTypeEnum
+from app.constants.shared_constants import MessageTypeEnum
 
 default_timeout_s = 60  # Seconds
 

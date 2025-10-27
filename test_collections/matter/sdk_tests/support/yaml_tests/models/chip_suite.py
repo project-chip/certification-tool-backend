@@ -15,6 +15,7 @@
 #
 from typing import Optional
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.models import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
@@ -24,7 +25,6 @@ from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import 
     ThreadBorderRouter,
 )
 from test_collections.matter.test_environment_config import (
-    DutPairingModeEnum,
     TestEnvironmentConfigMatter,
     ThreadAutoConfig,
     ThreadExternalConfig,

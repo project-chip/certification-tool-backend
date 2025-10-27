@@ -26,6 +26,7 @@ from loguru import logger
 from starlette.websockets import WebSocketState
 from websockets.exceptions import ConnectionClosedOK
 
+from app.constants.shared_constants import MessageTypeEnum
 from app.constants.websockets_constants import (
     INVALID_JSON_ERROR_STR,
     MISSING_TYPE_ERROR_STR,
@@ -33,7 +34,6 @@ from app.constants.websockets_constants import (
     UDP_SOCKET_INTERFACE,
     UDP_SOCKET_PORT,
     MessageKeysEnum,
-    MessageTypeEnum,
     WebSocketConnection,
     WebSocketTypeEnum,
 )

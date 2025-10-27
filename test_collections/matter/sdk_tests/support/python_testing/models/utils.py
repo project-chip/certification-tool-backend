@@ -21,6 +21,7 @@ from typing import Generator, cast
 
 import loguru
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.user_prompt_support import UserPromptSupport
@@ -28,7 +29,6 @@ from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import 
     ThreadBorderRouter,
 )
 from test_collections.matter.test_environment_config import (
-    DutPairingModeEnum,
     TestEnvironmentConfigMatter,
     ThreadExternalConfig,
 )

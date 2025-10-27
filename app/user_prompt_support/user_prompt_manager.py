@@ -20,11 +20,8 @@ from fastapi import WebSocket
 from loguru import logger
 from pydantic import ValidationError
 
-from app.constants.websockets_constants import (
-    MESSAGE_ID_KEY,
-    MessageKeysEnum,
-    MessageTypeEnum,
-)
+from app.constants.shared_constants import MessageTypeEnum
+from app.constants.websockets_constants import MESSAGE_ID_KEY, MessageKeysEnum
 from app.singleton import Singleton
 from app.socket_connection_manager import socket_connection_manager
 from app.user_prompt_support.constants import (
