@@ -19,8 +19,7 @@ from typing import Any, Optional, Union
 
 from loguru import logger
 
-from app.constants.shared_constants import MessageTypeEnum
-from app.constants.websockets_constants import MessageKeysEnum
+from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
 from app.models.test_enums import TestStateEnum
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.socket_connection_manager import socket_connection_manager

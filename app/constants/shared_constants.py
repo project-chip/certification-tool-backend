@@ -51,9 +51,9 @@ class MessageTypeEnum(str, Enum):
 
 
 # Enum keys used with messages at the top level
-# class MessageKeysEnum(str, Enum):
-#     TYPE = "type"
-#     PAYLOAD = "payload"
+class MessageKeysEnum(str, Enum):
+    TYPE = "type"
+    PAYLOAD = "payload"
 
 
 # Enum for DUT Pairing Modes

@@ -38,9 +38,3 @@ class WebSocketConnection:
     def __init__(self, websocket: WebSocket, socket_type: WebSocketTypeEnum) -> None:
         self.websocket = websocket
         self.type = socket_type
-
-
-# Enum keys used with messages at the top level
-class MessageKeysEnum(str, Enum):
-    TYPE = "type"
-    PAYLOAD = "payload"
