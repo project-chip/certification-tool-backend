@@ -19,8 +19,7 @@ from typing import Any, Dict, Optional
 from faker import Faker
 from sqlalchemy.orm import Session
 
-from app.models import TestCaseExecution
-from app.models.test_enums import TestStateEnum
+from app.models import TestCaseExecution, TestStateEnum
 from app.tests.utils.test_case_metadata import create_random_test_case_metadata
 from app.tests.utils.test_suite_execution import create_random_test_suite_execution
 from app.tests.utils.utils import random_test_public_id

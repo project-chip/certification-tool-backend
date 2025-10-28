@@ -18,7 +18,7 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 
 from .operator import Operator, OperatorToExport
 from .test_run_config import TestRunConfigToExport

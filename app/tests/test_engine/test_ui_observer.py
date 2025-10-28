@@ -20,8 +20,11 @@ from unittest import mock
 import pytest
 from sqlalchemy.orm import Session
 
-from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
-from app.models.test_enums import TestStateEnum
+from app.constants.shared_constants import (
+    MessageKeysEnum,
+    MessageTypeEnum,
+    TestStateEnum,
+)
 from app.models.test_run_execution import TestRunExecution
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.models import TestRun

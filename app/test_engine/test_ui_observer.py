@@ -19,8 +19,11 @@ from typing import Any, Optional, Union
 
 from loguru import logger
 
-from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
-from app.models.test_enums import TestStateEnum
+from app.constants.shared_constants import (
+    MessageKeysEnum,
+    MessageTypeEnum,
+    TestStateEnum,
+)
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.socket_connection_manager import socket_connection_manager
 from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite

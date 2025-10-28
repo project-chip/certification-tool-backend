@@ -18,7 +18,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 
 
 # Shared properties

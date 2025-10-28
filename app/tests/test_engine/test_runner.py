@@ -19,7 +19,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.test_engine.test_runner import (
     AbortError,

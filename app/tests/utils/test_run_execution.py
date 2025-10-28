@@ -20,8 +20,7 @@ from faker import Faker
 from sqlalchemy.orm import Session
 
 from app import crud, models
-from app.models import TestRunExecution
-from app.models.test_enums import TestStateEnum
+from app.models import TestRunExecution, TestStateEnum
 from app.schemas import TestSelection
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.tests.utils.project import create_random_project

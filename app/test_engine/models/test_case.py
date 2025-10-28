@@ -16,8 +16,7 @@
 from asyncio import CancelledError
 from typing import Any, List, Union
 
-from app.models import Project, TestCaseExecution
-from app.models.test_enums import TestStateEnum
+from app.models import Project, TestCaseExecution, TestStateEnum
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models.utils import LogSeparator
 from app.test_engine.test_observable import TestObservable

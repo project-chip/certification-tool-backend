@@ -18,7 +18,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 
 from .test_case_execution import TestCaseExecution, TestCaseExecutionToExport
 from .test_suite_metadata import TestSuiteMetadata, TestSuiteMetadataBase

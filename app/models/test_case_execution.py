@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 
-from .test_enums import TestStateEnum
+from . import TestStateEnum
 
 if TYPE_CHECKING:
     from .test_case_metadata import TestCaseMetadata  # noqa: F401

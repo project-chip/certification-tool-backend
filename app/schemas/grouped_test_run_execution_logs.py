@@ -17,7 +17,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 from app.schemas.test_run_log_entry import TestRunLogEntry
 
 

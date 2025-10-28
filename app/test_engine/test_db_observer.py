@@ -22,8 +22,8 @@ from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models import TestStateEnum
 from app.models.test_case_execution import TestCaseExecution
-from app.models.test_enums import TestStateEnum
 from app.models.test_run_execution import TestRunExecution
 from app.models.test_step_execution import TestStepExecution
 from app.models.test_suite_execution import TestSuiteExecution

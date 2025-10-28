@@ -21,9 +21,12 @@ from unittest.mock import DEFAULT, MagicMock, call
 import pytest
 from sqlalchemy.orm import Session
 
-from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
+from app.constants.shared_constants import (
+    MessageKeysEnum,
+    MessageTypeEnum,
+    TestStateEnum,
+)
 from app.constants.websockets_constants import MESSAGE_ID_KEY
-from app.models.test_enums import TestStateEnum
 from app.schemas.test_runner_status import TestRunnerState
 from app.socket_connection_manager import socket_connection_manager
 from app.tests.test_engine.test_runner import load_and_run_tool_unit_tests

@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from faker import Faker
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 
 fake = Faker()
 

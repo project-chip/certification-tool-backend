@@ -15,7 +15,7 @@
 #
 from typing import List, Optional
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 from app.models.test_step_execution import TestStepExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models.utils import LogSeparator

@@ -16,8 +16,7 @@
 from asyncio import CancelledError, Task, create_task
 from typing import List, Optional
 
-from app.models import Project, TestRunExecution
-from app.models.test_enums import TestStateEnum
+from app.models import Project, TestRunExecution, TestStateEnum
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.test_observable import TestObservable

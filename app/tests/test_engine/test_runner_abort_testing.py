@@ -19,7 +19,7 @@ from typing import Tuple
 import pytest
 from sqlalchemy.orm import Session
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 from app.test_engine.test_runner import TestRunner
 from app.tests.utils.test_runner import (
     get_test_case_for_public_id,

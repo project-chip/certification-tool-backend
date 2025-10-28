@@ -31,8 +31,7 @@ from app.api.api_v1.endpoints.test_run_executions import (
     import_test_run_execution,
 )
 from app.crud.crud_test_run_execution import ImportError
-from app.models import TestRunExecution
-from app.models.test_enums import TestStateEnum
+from app.models import TestRunExecution, TestStateEnum
 from app.tests.utils.test_run_execution import test_run_execution_base_dict
 
 

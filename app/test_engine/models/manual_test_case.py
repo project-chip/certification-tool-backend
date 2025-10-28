@@ -16,8 +16,7 @@
 from enum import IntEnum
 from typing import Optional
 
-from app.models import TestCaseExecution
-from app.models.test_enums import TestStateEnum
+from app.models import TestCaseExecution, TestStateEnum
 from app.test_engine.logger import test_engine_logger as logger
 from app.user_prompt_support import (
     OptionsSelectPromptRequest,
