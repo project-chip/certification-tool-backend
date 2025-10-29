@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from ..constants.shared_constants import TestStateEnum
+from app.constants.shared_constants import TestStateEnum
+
 from .operator import Operator
 from .project import Project
 from .test_case_execution import TestCaseExecution
