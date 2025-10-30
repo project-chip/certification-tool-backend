@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 from enum import IntEnum
 from typing import Optional
 
-from app.models import TestCaseExecution
-from app.models.test_enums import TestStateEnum
+from app.models import TestCaseExecution, TestStateEnum
 from app.test_engine.logger import test_engine_logger as logger
 from app.user_prompt_support import (
     OptionsSelectPromptRequest,

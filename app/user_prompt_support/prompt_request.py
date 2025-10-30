@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel
 
-from app.constants.websockets_constants import MessageTypeEnum
+from app.constants.shared_constants import MessageTypeEnum
 
 default_timeout_s = 60  # Seconds
 

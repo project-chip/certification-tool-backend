@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,11 +20,8 @@ from fastapi import WebSocket
 from loguru import logger
 from pydantic import ValidationError
 
-from app.constants.websockets_constants import (
-    MESSAGE_ID_KEY,
-    MessageKeysEnum,
-    MessageTypeEnum,
-)
+from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
+from app.constants.websockets_constants import MESSAGE_ID_KEY
 from app.singleton import Singleton
 from app.socket_connection_manager import socket_connection_manager
 from app.user_prompt_support.constants import (

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from enum import Enum
 from typing import Optional, Union
 
 from pydantic import BaseModel
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig, ThreadAutoConfig
 
 
 class TestEnvironmentConfigMatterError(Exception):
     """Raised when the validation for the matter config fails"""
-
-
-class DutPairingModeEnum(str, Enum):
-    ON_NETWORK = "onnetwork"
-    BLE_WIFI = "ble-wifi"
-    BLE_THREAD = "ble-thread"
-    WIFIPAF_WIFI = "wifipaf-wifi"
-    NFC_THREAD = "nfc-thread"
 
 
 class WiFiConfig(BaseModel):

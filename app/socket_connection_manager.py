@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,14 +26,13 @@ from loguru import logger
 from starlette.websockets import WebSocketState
 from websockets.exceptions import ConnectionClosedOK
 
+from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
 from app.constants.websockets_constants import (
     INVALID_JSON_ERROR_STR,
     MISSING_TYPE_ERROR_STR,
     NO_HANDLER_FOR_MSG_ERROR_STR,
     UDP_SOCKET_INTERFACE,
     UDP_SOCKET_PORT,
-    MessageKeysEnum,
-    MessageTypeEnum,
     WebSocketConnection,
     WebSocketTypeEnum,
 )

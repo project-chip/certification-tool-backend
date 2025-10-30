@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ from app.api.api_v1.endpoints.test_run_executions import (
     import_test_run_execution,
 )
 from app.crud.crud_test_run_execution import ImportError
-from app.models import TestRunExecution
-from app.models.test_enums import TestStateEnum
+from app.models import TestRunExecution, TestStateEnum
 from app.tests.utils.test_run_execution import test_run_execution_base_dict
 
 

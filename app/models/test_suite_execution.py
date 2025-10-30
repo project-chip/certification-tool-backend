@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 
+from . import TestStateEnum
 from .test_case_execution import TestCaseExecution
-from .test_enums import TestStateEnum
 
 if TYPE_CHECKING:
     from .test_run_execution import TestRunExecution  # noqa: F401

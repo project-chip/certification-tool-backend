@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ from unittest.mock import DEFAULT, MagicMock, call
 import pytest
 from sqlalchemy.orm import Session
 
-from app.constants.websockets_constants import (
-    MESSAGE_ID_KEY,
+from app.constants.shared_constants import (
     MessageKeysEnum,
     MessageTypeEnum,
+    TestStateEnum,
 )
-from app.models.test_enums import TestStateEnum
+from app.constants.websockets_constants import MESSAGE_ID_KEY
 from app.schemas.test_runner_status import TestRunnerState
 from app.socket_connection_manager import socket_connection_manager
 from app.tests.test_engine.test_runner import load_and_run_tool_unit_tests

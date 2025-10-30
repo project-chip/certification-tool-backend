@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.test_engine.test_runner import (
     AbortError,

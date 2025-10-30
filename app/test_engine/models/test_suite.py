@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 from asyncio import CancelledError, sleep
 from typing import List, Optional, Type
 
-from app.models import Project, TestSuiteExecution
-from app.models.test_enums import TestStateEnum
+from app.models import Project, TestStateEnum, TestSuiteExecution
 from app.schemas.pics import PICS
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models.utils import LogSeparator

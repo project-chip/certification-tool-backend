@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 from enum import Enum
 from typing import Type, TypeVar
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
@@ -23,10 +24,7 @@ from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
     ThreadBorderRouter,
 )
-from test_collections.matter.test_environment_config import (
-    DutPairingModeEnum,
-    TestEnvironmentConfigMatter,
-)
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...sdk_container import SDKContainer
 from ...utils import PromptOption, prompt_for_commissioning_mode

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ from unittest import mock
 
 import pytest
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.default_environment_config import default_environment_config
 from app.test_engine.logger import test_engine_logger
 from test_collections.matter.test_environment_config import (
     DutConfig,
-    DutPairingModeEnum,
     ThreadExternalConfig,
 )
 

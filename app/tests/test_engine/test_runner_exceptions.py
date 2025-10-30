@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ from typing import Tuple
 import pytest
 from sqlalchemy.orm import Session
 
-from app.models.test_enums import TestStateEnum
+from app.models import TestStateEnum
 from app.test_engine.models import TestCase, TestSuite
 from app.tests.utils.test_runner import (
     get_test_case_for_public_id,

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,11 @@ from typing import Any, Optional, Union
 
 from loguru import logger
 
-from app.constants.websockets_constants import MessageKeysEnum, MessageTypeEnum
-from app.models.test_enums import TestStateEnum
+from app.constants.shared_constants import (
+    MessageKeysEnum,
+    MessageTypeEnum,
+    TestStateEnum,
+)
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.socket_connection_manager import socket_connection_manager
 from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite

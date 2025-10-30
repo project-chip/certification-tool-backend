@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,9 +32,8 @@ from app import crud, schemas
 from app.api.api_v1.endpoints.test_run_executions import DEFAULT_CLI_PROJECT_NAME
 from app.core.config import settings
 from app.main import app
-from app.models import TestRunExecution
+from app.models import TestRunExecution, TestStateEnum
 from app.models.project import Project
-from app.models.test_enums import TestStateEnum
 from app.test_engine import (
     TEST_ENGINE_ABORTING_TESTING_MESSAGE,
     TEST_ENGINE_BUSY_MESSAGE,

@@ -25,7 +25,7 @@ from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship, with_p
 from app.db.base_class import Base
 from app.db.pydantic_data_type import PydanticListType
 
-from .test_enums import TestStateEnum
+from . import TestStateEnum
 from .test_suite_execution import TestSuiteExecution
 
 if TYPE_CHECKING:

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,7 @@ from faker import Faker
 from sqlalchemy.orm import Session
 
 from app import crud, models
-from app.models import TestRunExecution
-from app.models.test_enums import TestStateEnum
+from app.models import TestRunExecution, TestStateEnum
 from app.schemas import TestSelection
 from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.tests.utils.project import create_random_project

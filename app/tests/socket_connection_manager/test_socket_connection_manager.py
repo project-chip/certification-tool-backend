@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ from fastapi import WebSocket
 from starlette.websockets import WebSocketState
 from websockets.exceptions import ConnectionClosedOK
 
+from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
 from app.constants.websockets_constants import (
     INVALID_JSON_ERROR_STR,
     MESSAGE_ID_KEY,
-    MessageKeysEnum,
-    MessageTypeEnum,
     WebSocketConnection,
     WebSocketTypeEnum,
 )

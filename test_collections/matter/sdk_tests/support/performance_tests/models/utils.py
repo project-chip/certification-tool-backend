@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ from typing import Generator, cast
 
 import loguru
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig
-from test_collections.matter.test_environment_config import DutPairingModeEnum
 
 from ...python_testing.models.utils import (
     EXECUTABLE,
