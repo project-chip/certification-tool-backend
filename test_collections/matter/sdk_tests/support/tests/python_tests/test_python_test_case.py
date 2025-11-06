@@ -21,13 +21,11 @@ from unittest import mock
 
 import pytest
 
-from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.models.test_case_execution import TestCaseExecution
 from app.models.test_run_execution import TestRunExecution
 from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger
-from app.user_prompt_support import UserPromptSupport
 
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...python_testing.models import PythonTestCase

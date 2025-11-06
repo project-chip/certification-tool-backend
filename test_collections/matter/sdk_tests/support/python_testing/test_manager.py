@@ -69,7 +69,7 @@ def _update_module_collections(
 
 
 async def _generate_all_test_files() -> None:
-    """Generate both standard and custom test JSON files in a single container session."""
+    """Generate standard and custom test JSON files in a single container session."""
     logger.info("Starting test file generation with shared container session")
 
     try:
