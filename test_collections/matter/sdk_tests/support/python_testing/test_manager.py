@@ -17,7 +17,6 @@
 import asyncio
 import logging
 import sys
-from typing import Optional
 
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
 
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 def _update_module_collections(
     sdk_collection: TestCollectionDeclaration,
     mandatory_collection: TestCollectionDeclaration,
-    custom_collection: Optional[TestCollectionDeclaration],
+    custom_collection: TestCollectionDeclaration | None,
 ) -> None:
     """
     Update module references for Python test collections.
@@ -95,7 +94,7 @@ def _create_collections() -> (
     tuple[
         TestCollectionDeclaration,
         TestCollectionDeclaration,
-        Optional[TestCollectionDeclaration],
+        TestCollectionDeclaration | None,
     ]
 ):
     """Create and return all Python test collection declarations."""
@@ -110,7 +109,7 @@ def initialize_python_tests_sync() -> (
     tuple[
         TestCollectionDeclaration,
         TestCollectionDeclaration,
-        Optional[TestCollectionDeclaration],
+        TestCollectionDeclaration | None,
     ]
 ):
     """
@@ -144,7 +143,7 @@ def initialize_python_tests_sync() -> (
 async def initialize_python_tests() -> tuple[
     TestCollectionDeclaration,
     TestCollectionDeclaration,
-    Optional[TestCollectionDeclaration],
+    TestCollectionDeclaration | None,
 ]:
     """
     Async version for application startup.
