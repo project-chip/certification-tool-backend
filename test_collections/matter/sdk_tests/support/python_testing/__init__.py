@@ -20,9 +20,9 @@ if TYPE_CHECKING or not os.getenv("DRY_RUN"):
     from app.test_engine.models.test_declarations import TestCollectionDeclaration
 
 # Global variables to hold test collections (initialized later during startup)
-sdk_python_collection: TestCollectionDeclaration | None = None
-sdk_mandatory_python_collection: TestCollectionDeclaration | None = None
-custom_python_collection: TestCollectionDeclaration | None = None
+sdk_python_collection: "TestCollectionDeclaration | None" = None
+sdk_mandatory_python_collection: "TestCollectionDeclaration | None" = None
+custom_python_collection: "TestCollectionDeclaration | None" = None
 
 # Import initialization functions only in non-DRY_RUN mode
 if not os.getenv("DRY_RUN"):
