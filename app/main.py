@@ -19,6 +19,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.api_v1.api import api_router
 from app.core.config import settings
+from app.test_engine.test_script_manager import test_script_manager
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
@@ -35,6 +36,19 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    """
+    Initialize Python test collections during application startup.
+
+    This ensures that Python test collections are properly initialized
+    with optimized container usage after the main application has started,
+    preventing blocking operations during module imports.
+    """
+    await test_script_manager.initialize_python_tests()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=80, log_config=None)

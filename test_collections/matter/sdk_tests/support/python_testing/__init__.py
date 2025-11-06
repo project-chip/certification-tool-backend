@@ -13,32 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import asyncio
 import os
+from typing import TYPE_CHECKING
 
-from .list_python_tests_classes import generate_python_test_json_file
-
-# Verify if this execution comes from python_tests_validator.
-if not os.getenv("DRY_RUN"):
-    from typing import Optional
-
+if TYPE_CHECKING or not os.getenv("DRY_RUN"):
     from app.test_engine.models.test_declarations import TestCollectionDeclaration
 
-    from .sdk_python_tests import (
-        custom_python_test_collection,
-        sdk_mandatory_python_test_collection,
-        sdk_python_test_collection,
-    )
+# Global variables to hold test collections (initialized later during startup)
+sdk_python_collection: TestCollectionDeclaration | None = None
+sdk_mandatory_python_collection: TestCollectionDeclaration | None = None
+custom_python_collection: TestCollectionDeclaration | None = None
 
-    asyncio.run(generate_python_test_json_file(grouped_commands=True))
+# Import initialization functions only in non-DRY_RUN mode
+if not os.getenv("DRY_RUN"):
+    from .test_manager import initialize_python_tests, initialize_python_tests_sync
 
-    # Test engine will auto load TestCollectionDeclarations declared inside the package
-    # initializer
-    sdk_python_collection: TestCollectionDeclaration = sdk_python_test_collection()
-    sdk_mandatory_python_collection: TestCollectionDeclaration = (
-        sdk_mandatory_python_test_collection()
-    )
-
-    custom_python_collection: Optional[
-        TestCollectionDeclaration
-    ] = custom_python_test_collection()
+__all__ = [
+    "sdk_python_collection",
+    "sdk_mandatory_python_collection",
+    "custom_python_collection",
+    "initialize_python_tests",
+    "initialize_python_tests_sync",
+]

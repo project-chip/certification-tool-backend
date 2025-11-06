@@ -123,6 +123,20 @@ def block_on_serial_marker(request: pytest.FixtureRequest) -> Generator:
 By default, test_script_manager does not discover all test collections including
 unit tests. Make sure we discover all test collections here.
 """
+# Initialize Python tests synchronously for test environment
+try:
+    from test_collections.matter.sdk_tests.support.python_testing import (
+        initialize_python_tests_sync,
+    )
+
+    initialize_python_tests_sync()
+except ImportError:
+    # Python testing module not available (e.g., DRY_RUN mode)
+    pass
+except Exception as e:
+    # Log the error but don't fail tests - some tests may not need Python collections
+    print(f"Warning: Failed to initialize Python test collections for tests: {e}")
+
 test_script_manager.test_script_manager.test_collections = discover_test_collections(
     disabled_collections=[]
 )
