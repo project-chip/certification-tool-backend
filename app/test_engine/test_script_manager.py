@@ -81,16 +81,6 @@ class TestScriptManager(object, metaclass=Singleton):
 
         self.test_collections = self._discover_test_collections()
 
-    def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:
-        # Use same discovery behavior as in conftest.py
-        # (include all collections for tests)
-        if "pytest" in sys.modules:
-            # In test environment, discover all collections (same as conftest.py)
-            return discover_test_collections(disabled_collections=[])
-        else:
-            # In production, use default discovery
-            return discover_test_collections()
-
     def _ensure_python_tests_initialized(self) -> None:
         """
         Ensure Python test collections are initialized for test environments.
@@ -136,26 +126,33 @@ class TestScriptManager(object, metaclass=Singleton):
                 initialize_python_tests,
             )
 
-            # Always run initialization during FastAPI startup to ensure collections are available
+            # Always run initialization during FastAPI startup to ensure collections
+            # are available
             await initialize_python_tests()
 
-            # Refresh test collections to include the newly initialized Python collections
+            # Refresh test collections to include the initialized Python collections
             # Use same discovery logic as constructor
-            if "pytest" in sys.modules:
-                self.test_collections = discover_test_collections(
-                    disabled_collections=[]
-                )
-            else:
-                self.test_collections = discover_test_collections()
+            self.test_collections = self._discover_test_collections()
 
             self._python_tests_initialized = True
 
         except ImportError as e:
-            # Handle case where python_testing module is not available (e.g., DRY_RUN mode)
+            # Handle case where python_testing module is not available
+            # (e.g., DRY_RUN mode)
             logging.warning(f"Python testing module not available: {e}")
         except Exception as e:
             logging.error(f"Failed to initialize Python tests: {e}")
             raise
+
+    def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:
+        # Use same discovery behavior as in conftest.py
+        # (include all collections for tests)
+        if "pytest" in sys.modules:
+            # In test environment, discover all collections (same as conftest.py)
+            return discover_test_collections(disabled_collections=[])
+        else:
+            # In production, use default discovery
+            return discover_test_collections()
 
     def pending_test_suite_executions_for_selected_tests(
         self, selected_tests: TestSelection
