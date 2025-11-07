@@ -16,7 +16,6 @@
 # flake8: noqa
 # Ignore flake8 check for this file
 from pathlib import Path
-from unittest import mock
 
 from ...python_testing.models.python_test_parser import parse_python_script
 

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Dict, List, Type
+import logging
+import sys
+from typing import Type
 
 from sqlalchemy.orm import Session
 
@@ -66,17 +68,93 @@ class TestCaseNotFound(TestNotFound):
 class TestScriptManager(object, metaclass=Singleton):
     __test__ = False
 
-    test_collections: Dict[str, TestCollectionDeclaration]
+    test_collections: dict[str, TestCollectionDeclaration]
 
     def __init__(self) -> None:
         """
         Dynamically discover test collections, ignoring internal test collections.
         """
-        self.test_collections = discover_test_collections()
+        self._python_tests_initialized = False
+
+        # Initialize Python tests if not already done (important for tests)
+        self._ensure_python_tests_initialized()
+
+        self.test_collections = self._discover_test_collections()
+
+    def _ensure_python_tests_initialized(self) -> None:
+        """
+        Ensure Python test collections are initialized for test environments.
+
+        This is called during TestScriptManager construction to handle cases where
+        tests create new instances that bypass the global initialization.
+        """
+        if self._python_tests_initialized:
+            return
+
+        try:
+            from test_collections.matter.sdk_tests.support.python_testing import (
+                initialize_python_tests_sync,
+                sdk_python_collection,
+            )
+
+            if sdk_python_collection is None:
+                # Initialize collections for test environment
+                initialize_python_tests_sync()
+
+            self._python_tests_initialized = True
+
+        except ImportError:
+            # Python testing module not available (e.g., DRY_RUN mode)
+            self._python_tests_initialized = True
+        except Exception as e:
+            # Log warning but don't fail - FastAPI startup will handle initialization
+            logging.warning(
+                f"Failed to ensure Python test collections initialization: {e}"
+            )
+
+    async def initialize_python_tests(self) -> None:
+        """
+        Initialize Python test collections with optimized container usage.
+
+        This should be called once during application startup to ensure
+        Python test collections are properly initialized without blocking
+        the initial import process.
+        """
+        try:
+            # Import the initialize function from python_testing
+            from test_collections.matter.sdk_tests.support.python_testing import (
+                initialize_python_tests,
+            )
+
+            # Always run initialization during FastAPI startup to ensure collections
+            # are available
+            await initialize_python_tests()
+
+            # Refresh test collections to include the initialized Python collections
+            # Use same discovery logic as constructor
+            self.test_collections = self._discover_test_collections()
+
+            self._python_tests_initialized = True
+
+        except ImportError as e:
+            # Handle case where python_testing module is not available
+            # (e.g., DRY_RUN mode)
+            logging.warning(f"Python testing module not available: {e}")
+        except Exception as e:
+            logging.error(f"Failed to initialize Python tests: {e}")
+            raise
+
+    def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:
+        if "pytest" in sys.modules:
+            # In test environment, discover all collections (same as conftest.py)
+            return discover_test_collections(disabled_collections=[])
+        else:
+            # In production, use default discovery
+            return discover_test_collections()
 
     def pending_test_suite_executions_for_selected_tests(
         self, selected_tests: TestSelection
-    ) -> List[TestSuiteExecution]:
+    ) -> list[TestSuiteExecution]:
         """
         This will create and associate pending test suites and test cases, based on the
         selected test cases.
@@ -99,8 +177,8 @@ class TestScriptManager(object, metaclass=Singleton):
     def __pending_test_suites_for_test_collection(
         self,
         test_collection: TestCollectionDeclaration,
-        selected_test_suites: Dict[str, dict],
-    ) -> List[TestSuiteExecution]:
+        selected_test_suites: dict[str, dict],
+    ) -> list[TestSuiteExecution]:
         # Return Value
         test_suites = []
 
@@ -153,8 +231,8 @@ class TestScriptManager(object, metaclass=Singleton):
     def ___pending_test_cases_for_test_suite(
         self,
         test_suite: TestSuiteDeclaration,
-        selected_test_cases: Dict[str, int],
-    ) -> List[TestCaseExecution]:
+        selected_test_cases: dict[str, int],
+    ) -> list[TestCaseExecution]:
         # Return Value
         suite_test_cases = []
         for test_case_id, iterations in selected_test_cases.items():
@@ -180,7 +258,7 @@ class TestScriptManager(object, metaclass=Singleton):
 
     def __pending_test_cases_for_iterations(
         self, test_case: TestCaseDeclaration, iterations: int
-    ) -> List[TestCaseExecution]:
+    ) -> list[TestCaseExecution]:
         """
         This will create and associate pending test case executions, based on the number
         of iterations.
@@ -279,7 +357,7 @@ class TestScriptManager(object, metaclass=Singleton):
         db: Session,
         test_suite: TestSuite,
         test_suite_declaration: TestSuiteDeclaration,
-        test_case_executions: List[TestCaseExecution],
+        test_case_executions: list[TestCaseExecution],
     ) -> None:
         test_suite.test_cases = []
 
