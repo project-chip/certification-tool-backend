@@ -145,8 +145,6 @@ class TestScriptManager(object, metaclass=Singleton):
             raise
 
     def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:
-        # Use same discovery behavior as in conftest.py
-        # (include all collections for tests)
         if "pytest" in sys.modules:
             # In test environment, discover all collections (same as conftest.py)
             return discover_test_collections(disabled_collections=[])
