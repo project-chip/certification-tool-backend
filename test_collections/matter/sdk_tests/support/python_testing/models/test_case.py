@@ -21,8 +21,8 @@ from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
-from app.models import TestCaseExecution
 from app.core.config import settings
+from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
