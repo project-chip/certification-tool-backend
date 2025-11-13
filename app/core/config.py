@@ -107,6 +107,9 @@ class Settings(BaseSettings):
     NOTIFIER_TO: str = "xiole.chip.test@gmail.com"
     NOTIFIER_SUBJECT: str = "CHIP Tool Crash Log"
 
+    # Python Test Logging
+    ENABLE_REALTIME_PYTHON_TEST_LOGS: bool = False
+
     class Config:
         case_sensitive = True
 
