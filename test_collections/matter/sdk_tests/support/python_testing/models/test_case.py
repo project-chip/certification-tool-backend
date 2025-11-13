@@ -508,6 +508,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
         This method logs all test output at once after test execution completes,
         rather than displaying logs incrementally as each step executes.
         """
+        # Check idempotency flag to prevent duplicate logging
+        if getattr(self, "_batch_logs_displayed", False):
+                return
+
         # Validate file path is set
         if not self.file_output_path:
             logger.debug("Test output file not found, skipping log display")
@@ -520,13 +524,15 @@ class PythonTestCase(TestCase, UserPromptSupport):
         try:
             logger.info("---- Start of Python test logs ----")
             with open(self.file_output_path, "r", encoding="utf-8") as f:
-                lines = f.read()
-                logger.log(PYTHON_TEST_LEVEL, lines)
+                for line in f:
+                    logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
             logger.info("---- End of Python test logs ----")
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")
         except Exception as e:
             logger.error(f"Unexpected error while reading logs: {e}", exc_info=True)
+
+        setattr(self, "_batch_logs_displayed", True)
 
     async def execute(self) -> None:
         try:
