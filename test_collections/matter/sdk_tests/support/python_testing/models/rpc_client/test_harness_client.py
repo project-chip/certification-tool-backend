@@ -219,10 +219,30 @@ def configure_iterations(args) -> []:
         pass
     return result
 
+
+def get_test_info_support(script_path: str, class_name: str, config: MatterTestConfig):
+    module = importlib.import_module(script_path.replace("/", "."))
+    TestClassReference = getattr(module, class_name)
+    test_info = get_test_info(TestClassReference, config)
+    return json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
+
+
+def configure_interactions(args) -> []:
+    result = args
     try:
-        subprocess.check_call("kill $(pidof  chip-all-clusters-app)", shell=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error while trying to remove rogue simulators: {e}")
+        position = sys.argv.index("--interactions")
+        interactions_value = sys.argv[position + 1]
+        result = args + ["--int-arg", f"interactions:{interactions_value}"]
+    except ValueError:
+        pass
+    return result
+
+
+def get_test_info_support(script_path: str, class_name: str, config: MatterTestConfig):
+    module = importlib.import_module(script_path.replace("/", "."))
+    TestClassReference = getattr(module, class_name)
+    test_info = get_test_info(TestClassReference, config)
+    return json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:

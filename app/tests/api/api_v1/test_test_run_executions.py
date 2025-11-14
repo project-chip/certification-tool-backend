@@ -35,6 +35,7 @@ from app.main import app
 from app.models import TestRunExecution
 from app.models.project import Project
 from app.models.test_enums import TestStateEnum
+from app.schemas.test_run_execution import TestRunExecutionCreate
 from app.test_engine import (
     TEST_ENGINE_ABORTING_TESTING_MESSAGE,
     TEST_ENGINE_BUSY_MESSAGE,

@@ -135,18 +135,6 @@ class SDKContainer(metaclass=Singleton):
                 "bind": DOCKER_RPC_PYTHON_TESTING_PATH,
                 "mode": "rw",
             },
-            LOCAL_STRESS_TEST_SCRIPT_PATH: {
-                "bind": DOCKER_STRESS_TEST_SCRIPT_PATH,
-                "mode": "rw",
-            },
-            LOCAL_STRESS_TEST_ACCESSORY_MANAGER_SCRIPT_PATH: {
-                "bind": DOCKER_STRESS_TEST_ACCESSORY_MANAGER_SCRIPT_PATH,
-                "mode": "rw",
-            },
-            LOCAL_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH: {
-                "bind": DOCKER_STRESS_TEST_SIMULATED_ACCESSORY_SCRIPT_PATH,
-                "mode": "rw",
-            },
         },
     }
 
@@ -220,7 +208,6 @@ class SDKContainer(metaclass=Singleton):
         prefix: str,
         is_stream: bool = False,
         is_socket: bool = False,
-        is_detach: bool = False,
     ) -> ExecResultExtended:
         if self.__container is None:
             raise SDKContainerNotRunning()
@@ -239,7 +226,6 @@ class SDKContainer(metaclass=Singleton):
             socket=is_socket,
             stream=is_stream,
             stdin=True,
-            detach=is_detach,
         )
 
         return result

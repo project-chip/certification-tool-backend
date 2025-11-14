@@ -143,10 +143,7 @@ def __test_classes(module: ast.Module) -> list[ast.ClassDef]:
         for c in module.body
         if isinstance(c, ast.ClassDef)
         and any(
-            b
-            for b in c.bases
-            if isinstance(b, ast.Name)
-            and (b.id == "MatterBaseTest" or b.id == "MatterQABaseTestCaseClass")
+            b for b in c.bases if isinstance(b, ast.Name) and b.id == "MatterBaseTest"
         )
     ]
 
