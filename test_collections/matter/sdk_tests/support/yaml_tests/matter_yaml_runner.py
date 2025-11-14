@@ -15,10 +15,11 @@
 #
 from __future__ import annotations
 
+import asyncio
 import json
 import subprocess
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Generator, Optional, Union
 
 import loguru
 from chipyaml.adapters.chiptool import adapter as ChipToolAdapter
@@ -116,6 +117,17 @@ class MatterYAMLRunner(metaclass=Singleton):
         self.__test_harness_runner = WebSocketRunner(config=web_socket_config)
 
         self.__chip_tool_log = await self.chip_server.start(server_type, use_paa_certs)
+
+        def read_chip_log(gen: Generator) -> None:
+            try:
+                with open(YAML_TESTS_PATH_BASE / "chip_output.log", "wb") as f:
+                    for data in gen:
+                        f.write(data)
+            except Exception as e:
+                self.logger.error(f"Error in chip-tool log reader thread: {e}")
+
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, read_chip_log, self.__chip_tool_log)
 
     async def stop(self) -> None:
         await self.stop_runner()
