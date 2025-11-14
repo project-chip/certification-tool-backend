@@ -510,7 +510,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         """
         # Check idempotency flag to prevent duplicate logging
         if getattr(self, "_batch_logs_displayed", False):
-                return
+            return
 
         # Validate file path is set
         if not self.file_output_path:
