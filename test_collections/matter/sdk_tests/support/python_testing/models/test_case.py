@@ -21,6 +21,7 @@ from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
+from app.core.config import settings
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
@@ -142,8 +143,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
     async def step_success(
         self, logger: Any, logs: str, duration: int, request: Any
     ) -> None:
-        # Display logs captured during this step
-        await self._display_step_logs()
+        # Display logs captured during this step only if real-time logging is enabled
+        if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+            await self._display_step_logs()
 
     async def _display_step_logs(self) -> None:
         """Display logs that were captured during the current step."""
@@ -261,7 +263,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self, logger: Any, logs: str, duration: int, request: Any, received: Any
     ) -> None:
         # Display logs captured during this step before marking as failure
-        await self._display_step_logs()
+        # only if real-time logging is enabled
+        if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+            await self._display_step_logs()
 
         failure_msg = "Python test step failure"
         if logs:
@@ -450,7 +454,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
         # Log any remaining content that wasn't captured by steps
-        await self._log_remaining_content()
+        # only if real-time logging is enabled
+        if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+            await self._log_remaining_content()
+        else:
+            # Use batch logging when real-time logging is disabled
+            self.display_batch_logs()
 
     async def _log_remaining_content(self) -> None:
         """Log any content from the test output file that wasn't logged yet."""
@@ -492,6 +501,38 @@ class PythonTestCase(TestCase, UserPromptSupport):
             logger.error(
                 f"Unexpected error while logging remaining content: {e}", exc_info=True
             )
+
+    def display_batch_logs(self) -> None:
+        """Batch logging method for when real-time logging is disabled.
+
+        This method logs all test output at once after test execution completes,
+        rather than displaying logs incrementally as each step executes.
+        """
+        # Check idempotency flag to prevent duplicate logging
+        if getattr(self, "_batch_logs_displayed", False):
+            return
+
+        # Validate file path is set
+        if not self.file_output_path:
+            logger.debug("Test output file not found, skipping log display")
+            return
+
+        if not self.file_output_path.exists():
+            logger.debug(f"Test output file does not exist: {self.file_output_path}")
+            return
+
+        try:
+            logger.info("---- Start of Python test logs ----")
+            with open(self.file_output_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
+            logger.info("---- End of Python test logs ----")
+        except (IOError, OSError) as e:
+            logger.warning(f"Failed to read test output file: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error while reading logs: {e}", exc_info=True)
+
+        setattr(self, "_batch_logs_displayed", True)
 
     async def execute(self) -> None:
         try:
@@ -567,7 +608,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 self.skip_to_last_step()
 
             # Check for any remaining logs that weren't captured by steps
-            await self._log_remaining_content()
+            # or show all logs if real-time logging is disabled
+            if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+                await self._log_remaining_content()
+            else:
+                # Use batch logging when real-time logging is disabled
+                self.display_batch_logs()
 
             self.current_test_step.mark_as_completed()
         finally:
