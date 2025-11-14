@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .constants import UserResponseStatusEnum
-from .prompt_request import (
-    ImageVerificationPromptRequest,
-    OptionsSelectPromptRequest,
-    PromptRequest,
-    PushAVStreamVerificationRequest,
-    StreamVerificationPromptRequest,
-    TextInputPromptRequest,
-    TwoWayTalkVerificationRequest,
-    UploadFilePromptRequest,
-)
-from .prompt_response import PromptResponse
-from .uploaded_file_support import UploadedFileSupport, UploadFile
-from .user_prompt_support import UserPromptSupport
+
+USER_ACTIONS = ["UserPrompt", "PromptWithResponse", "VerifyVideoStream"]

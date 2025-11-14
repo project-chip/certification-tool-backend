@@ -107,7 +107,12 @@
         "wpan",
         "PBKDF",
         "PCSC",
-        "pcscd"
+        "pcscd",
+        "DGRAM",
+        "chipyaml",
+        "webrtc",
+        "pyproject",
+        "CNET"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [

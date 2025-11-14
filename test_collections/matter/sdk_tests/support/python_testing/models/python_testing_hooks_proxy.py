@@ -34,6 +34,10 @@ class SDKPythonTestResultEnum(str, Enum):
     STEP_UNKNOWN = "step_unknown"
     STEP_MANUAL = "step_manual"
     SHOW_PROMPT = "show_prompt"
+    SHOW_VIDEO_PROMPT = "show_video_prompt"
+    SHOW_IMAGE_PROMPT = "show_image_prompt"
+    SHOW_TWO_WAY_TALK_PROMPT = "show_two_way_talk_prompt"
+    SHOW_PUSH_AV_STREAM_PROMPT = "show_push_av_stream_prompt"
 
 
 class SDKPythonTestResultBase(BaseModel):
@@ -114,6 +118,27 @@ class SDKPythonTestResultShowPrompt(SDKPythonTestResultBase):
     msg: str
     placeholder: Optional[str]
     default_value: Optional[str]
+
+
+class SDKPythonTestResultShowVideoPrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_VIDEO_PROMPT
+    msg: str
+
+
+class SDKPythonTestResultShowImagePrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_IMAGE_PROMPT
+    msg: str
+    img_hex_str: str
+
+
+class SDKPythonTestResultShowTwoWayTalkPrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_TWO_WAY_TALK_PROMPT
+    msg: str
+
+
+class SDKPythonTestResultShowPushAVStreamPrompt(SDKPythonTestResultBase):
+    type = SDKPythonTestResultEnum.SHOW_PUSH_AV_STREAM_PROMPT
+    msg: str
 
 
 class SDKPythonTestRunnerHooks(TestRunnerHooks):
@@ -205,5 +230,19 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
             )
         )
 
+    def show_video_prompt(self, msg: str) -> None:
+        self.results.put(SDKPythonTestResultShowVideoPrompt(msg=msg))
+
+    def show_image_prompt(self, msg: str, img_hex_str: str) -> None:
+        self.results.put(
+            SDKPythonTestResultShowImagePrompt(msg=msg, img_hex_str=img_hex_str)
+        )
+
     def step_start_list(self) -> None:
         pass
+
+    def show_two_way_talk_prompt(self, msg: str) -> None:
+        self.results.put(SDKPythonTestResultShowTwoWayTalkPrompt(msg=msg))
+
+    def show_push_av_stream_prompt(self, msg: str) -> None:
+        self.results.put(SDKPythonTestResultShowPushAVStreamPrompt(msg=msg))

@@ -253,7 +253,7 @@ class PerformanceTestCase(TestCase, UserPromptSupport):
             ).with_suffix("")
 
             command = [
-                f"{RUNNER_CLASS_PATH} {test_script_relative_path}"
+                f"{RUNNER_CLASS_PATH} --th-client-test {test_script_relative_path}"
                 f" {self.performance_test.class_name}"
                 f" --tests test_{self.performance_test.name}"
             ]
@@ -270,14 +270,13 @@ class PerformanceTestCase(TestCase, UserPromptSupport):
             if self.sdk_container.pics_file_created:
                 command.append(f" --PICS {PICS_FILE_PATH}")
 
-            command.append(f" --interactions {(len(self.test_steps) - 2)}")
+            command.append(f" --iterations {(len(self.test_steps) - 2)}")
 
             self.sdk_container.send_command(
                 command,
                 prefix=EXECUTABLE,
                 is_stream=False,
                 is_socket=False,
-                is_detach=True,
             )
 
             while ((update := test_runner_hooks.update_test()) is not None) or (

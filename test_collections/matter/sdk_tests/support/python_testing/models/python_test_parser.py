@@ -69,60 +69,61 @@ def parse_python_script(path: Path) -> list[PythonTest]:
         return python_tests
 
     for script_info in parsed_scripts["tests"]:
-        test_function = script_info["function"]
-        test_name = __test_case_name(test_function)
-        if test_name is None:
-            logger.info(f"Failed to parse test name [{test_function}].")
-            continue
+        if "function" in script_info:
+            test_function = script_info["function"]
+            test_name = __test_case_name(test_function)
+            if test_name is None:
+                logger.info(f"Failed to parse test name [{test_function}].")
+                continue
 
-        test_description = script_info["desc"]
-        test_pics = script_info["pics"]
-        test_path = script_info["path"]
-        test_class_name = script_info["class_name"]
-        parsed_steps = script_info["steps"]
+            test_description = script_info["desc"]
+            test_pics = script_info["pics"]
+            test_path = script_info["path"]
+            test_class_name = script_info["class_name"]
+            parsed_steps = script_info["steps"]
 
-        is_commssioning = False
-        test_steps: list[MatterTestStep] = []
-        for index, step in enumerate(parsed_steps):
-            step_description = step["description"]
+            is_commssioning = False
+            test_steps: list[MatterTestStep] = []
+            for index, step in enumerate(parsed_steps):
+                step_description = step["description"]
 
-            if index == 0:
-                is_commssioning = step["is_commissioning"]
+                if index == 0:
+                    is_commssioning = step["is_commissioning"]
 
-            test_steps.append(
-                MatterTestStep(
-                    label=step_description,
-                    is_commissioning=is_commssioning,
+                test_steps.append(
+                    MatterTestStep(
+                        label=step_description,
+                        is_commissioning=is_commssioning,
+                    )
+                )
+
+            # - PythonTestType.MANDATORY: Mandatory test cases
+            # - PythonTestType.LEGACY: Tests that have only one step and with this
+            #   name: "Run entire test"
+            # - PythonTestType.COMMISSIONING: Test cases flagged as commissioning
+            # - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning
+            if test_name in mandatory_python_tcs_public_id:
+                python_test_type = PythonTestType.MANDATORY
+            elif len(test_steps) == 1 and test_steps[0].label == "Run entire test":
+                python_test_type = PythonTestType.LEGACY
+            elif is_commssioning:
+                python_test_type = PythonTestType.COMMISSIONING
+            else:
+                python_test_type = PythonTestType.NO_COMMISSIONING
+
+            python_tests.append(
+                PythonTest(
+                    name=test_name,
+                    description=test_description,
+                    steps=test_steps,
+                    config={},  # Currently config is not configured in Python Testing
+                    PICS=test_pics,
+                    path=test_path,
+                    type=MatterTestType.AUTOMATED,
+                    class_name=test_class_name,
+                    python_test_type=python_test_type,
                 )
             )
-
-        # - PythonTestType.MANDATORY: Mandatory test cases
-        # - PythonTestType.LEGACY: Tests that have only one step and with this
-        #   name: "Run entire test"
-        # - PythonTestType.COMMISSIONING: Test cases flagged as commissioning
-        # - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning
-        if test_name in mandatory_python_tcs_public_id:
-            python_test_type = PythonTestType.MANDATORY
-        elif len(test_steps) == 1 and test_steps[0].label == "Run entire test":
-            python_test_type = PythonTestType.LEGACY
-        elif is_commssioning:
-            python_test_type = PythonTestType.COMMISSIONING
-        else:
-            python_test_type = PythonTestType.NO_COMMISSIONING
-
-        python_tests.append(
-            PythonTest(
-                name=test_name,
-                description=test_description,
-                steps=test_steps,
-                config={},  # Currently config is not configured in Python Testing
-                PICS=test_pics,
-                path=test_path,
-                type=MatterTestType.AUTOMATED,
-                class_name=test_class_name,
-                python_test_type=python_test_type,
-            )
-        )
 
     return python_tests
 
