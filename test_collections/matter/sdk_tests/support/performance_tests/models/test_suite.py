@@ -63,11 +63,7 @@ class PerformanceTestSuite(TestSuite):
                 "name": name,
                 "performance_test_version": performance_test_version,
                 "metadata": {
-                    "public_id": (
-                        name
-                        if performance_test_version != "custom"
-                        else name + "-custom"
-                    ),
+                    "public_id": name,
                     "version": "0.0.1",
                     "title": name,
                     "description": name,
