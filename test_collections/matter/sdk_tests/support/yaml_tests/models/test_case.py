@@ -97,9 +97,9 @@ class YamlTestCase(TestCase):
         class_name = cls.__class_name(identifier)
         title = cls.__title(identifier=identifier, test_yaml=test)
         custom_suffix = (
-            ""
-            if yaml_version != CUSTOM_TEST_IDENTIFIER
-            else "-" + CUSTOM_TEST_IDENTIFIER
+            f"-{CUSTOM_TEST_IDENTIFIER}"
+            if yaml_version == CUSTOM_TEST_IDENTIFIER
+            else ""
         )
 
         return type(

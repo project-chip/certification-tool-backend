@@ -380,9 +380,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
         title = cls.__title(test.name)
         class_name = cls.__class_name(test.name)
         custom_suffix = (
-            ""
-            if python_test_version != CUSTOM_TEST_IDENTIFIER
-            else "-" + CUSTOM_TEST_IDENTIFIER
+            f"-{CUSTOM_TEST_IDENTIFIER}"
+            if python_test_version == CUSTOM_TEST_IDENTIFIER
+            else ""
         )
 
         return type(
