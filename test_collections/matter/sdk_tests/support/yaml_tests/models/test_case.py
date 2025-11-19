@@ -96,6 +96,11 @@ class YamlTestCase(TestCase):
         identifier = cls.__test_identifier(test.name)
         class_name = cls.__class_name(identifier)
         title = cls.__title(identifier=identifier, test_yaml=test)
+        custom_suffix = (
+            ""
+            if yaml_version != CUSTOM_TEST_IDENTIFIER
+            else "-" + CUSTOM_TEST_IDENTIFIER
+        )
 
         return type(
             class_name,
@@ -105,13 +110,9 @@ class YamlTestCase(TestCase):
                 "yaml_version": yaml_version,
                 "chip_test_identifier": class_name,
                 "metadata": {
-                    "public_id": (
-                        identifier
-                        if yaml_version != CUSTOM_TEST_IDENTIFIER
-                        else identifier + "-" + CUSTOM_TEST_IDENTIFIER
-                    ),
+                    "public_id": identifier + custom_suffix,
                     "version": "0.0.1",
-                    "title": title,
+                    "title": title + custom_suffix,
                     "description": test.name,
                 },
             },
