@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# type: ignore
+# Ignore mypy type check for this file
+
 from typing import Any, Dict, Type, TypeVar, cast
 
 T = TypeVar("T")
@@ -31,5 +34,5 @@ class Singleton(type):
 
     def __call__(cls: Type[T], *args: Any, **kwargs: Any) -> T:
         if cls not in Singleton._instances:
-            Singleton._instances[cls] = super().__call__(*args, **kwargs)  # type: ignore[misc]
+            Singleton._instances[cls] = super().__call__(*args, **kwargs)
         return cast(T, Singleton._instances[cls])

@@ -126,33 +126,43 @@ def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
 
 def __cli_project(
     db: Session,
-    test_run_execution_in: schemas.TestRunExecutionCreate,
-    pics_obj: Optional[schemas.PICS],
+    project_id: Optional[int],
+    config: Optional[dict],
+    pics_obj: schemas.PICS,
 ) -> Project:
     """Retrieve or create the default CLI project."""
 
-    # If project_id is provided, try to retrieve the project
-    if test_run_execution_in.project_id is not None:
-        if cli_project := crud.project.get(db=db, id=test_run_execution_in.project_id):
-            return cli_project
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail=f"Project with ID {test_run_execution_in.project_id} not found.",
-        )
+    # If project_id not is provided, try to retrieve the Default CLI project
+    if project_id is None:
+        # If the default CLI project does not exist, create it
+        if not (
+            cli_project := crud.project.get_by_name(
+                db=db, name=DEFAULT_CLI_PROJECT_NAME
+            )
+        ):
+            new_config = (
+                default_environment_config.__dict__ if config is None else config
+            )
+            project_create = schemas.ProjectCreate(
+                name=DEFAULT_CLI_PROJECT_NAME, config=new_config, pics=pics_obj
+            )
+            return crud.project.create(db=db, obj_in=project_create)
+    else:
+        cli_project = crud.project.get(db=db, id=project_id)
+        if not cli_project:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail=f"Project with ID {project_id} not found.",
+            )
 
-    # Else, retrieve the default CLI project
-    cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
-
-    # If the default CLI project does not exist, create it
-    if not cli_project:
-        default_config = default_environment_config.__dict__
-        if pics_obj is None:
-            pics_obj = schemas.PICS(clusters={})
-        project_create = schemas.ProjectCreate(
-            name=DEFAULT_CLI_PROJECT_NAME, config=default_config, pics=pics_obj
+    if config is not None:
+        logger.info(f"CLI Config Arguments: {config}")
+        project_update = schemas.ProjectUpdate(
+            name=cli_project.name, config=config, pics=pics_obj
         )
-        cli_project = crud.project.create(db=db, obj_in=project_create)
-    test_run_execution_in.project_id = cli_project.id
+        cli_project = crud.project.update(
+            db=db, db_obj=cli_project, obj_in=project_update
+        )
 
     return cli_project
 
@@ -176,6 +186,7 @@ def create_cli_test_run_execution(
     """
 
     # Convert pics dict to PICS object if provided
+    logger.info(f"CLI PICS Arguments: {pics}")
     pics_obj = __convert_pics_dict_to_object(pics)
     if pics_obj is None:
         raise HTTPException(
@@ -184,16 +195,8 @@ def create_cli_test_run_execution(
         )
 
     # Retrieve or create the CLI project
-    cli_project = __cli_project(db, test_run_execution_in, pics_obj)
-
-    if config is not None:
-        project_update = schemas.ProjectUpdate(
-            name=cli_project.name, config=config, pics=pics_obj
-        )
-        _ = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
-        logger.info(f"CLI Config Arguments: {config}")
-
-    logger.info(f"CLI PICS Arguments: {pics}")
+    cli_project = __cli_project(db, test_run_execution_in.project_id, config, pics_obj)
+    test_run_execution_in.project_id = cli_project.id
 
     test_run_execution_in.certification_mode = False
 
