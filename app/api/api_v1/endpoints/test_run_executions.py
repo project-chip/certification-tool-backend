@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ from app.api import DEFAULT_404_MESSAGE
 from app.crud.crud_test_run_execution import ImportError
 from app.db.session import get_db
 from app.default_environment_config import default_environment_config
+from app.models.project import Project
 from app.models.test_run_execution import TestRunExecution
 from app.schemas.test_run_execution import TestRunExecutionUpdate
 from app.test_engine import TEST_ENGINE_ABORTING_TESTING_MESSAGE
@@ -123,6 +124,39 @@ def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
         return None
 
 
+def __cli_project(
+    db: Session,
+    test_run_execution_in: schemas.TestRunExecutionCreate,
+    pics_obj: Optional[schemas.PICS],
+) -> Project:
+    """Retrieve or create the default CLI project."""
+
+    # If project_id is provided, try to retrieve the project
+    if test_run_execution_in.project_id is not None:
+        if cli_project := crud.project.get(db=db, id=test_run_execution_in.project_id):
+            return cli_project
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f"Project with ID {test_run_execution_in.project_id} not found.",
+        )
+
+    # Else, retrieve the default CLI project
+    cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
+
+    # If the default CLI project does not exist, create it
+    if not cli_project:
+        default_config = default_environment_config.__dict__
+        if pics_obj is None:
+            pics_obj = schemas.PICS(clusters={})
+        project_create = schemas.ProjectCreate(
+            name=DEFAULT_CLI_PROJECT_NAME, config=default_config, pics=pics_obj
+        )
+        cli_project = crud.project.create(db=db, obj_in=project_create)
+    test_run_execution_in.project_id = cli_project.id
+
+    return cli_project
+
+
 @router.post("/cli", response_model=schemas.TestRunExecutionWithChildren)
 def create_cli_test_run_execution(
     *,
@@ -140,11 +174,6 @@ def create_cli_test_run_execution(
         config: Configuration parameters (optional)
         pics: PICS configuration (optional)
     """
-    if config is None:
-        config = default_environment_config.__dict__
-
-    logger.info(f"CLI Config Arguments: {config}")
-    logger.info(f"CLI PICS Arguments: {pics}")
 
     # Convert pics dict to PICS object if provided
     pics_obj = __convert_pics_dict_to_object(pics)
@@ -154,41 +183,17 @@ def create_cli_test_run_execution(
             detail="Invalid PICS data provided. Please check the format.",
         )
 
-    # Use provided project_id or default CLI project
-    if test_run_execution_in.project_id is not None:
-        project = crud.project.get(db=db, id=test_run_execution_in.project_id)
-        # Use the specified project_id
-        if not project:
-            raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND,
-                detail=f"Project with id {test_run_execution_in.project_id} not found.",
-            )
-        project_update = schemas.ProjectUpdate(config=config)
+    # Retrieve or create the CLI project
+    cli_project = __cli_project(db, test_run_execution_in, pics_obj)
 
-        if pics_obj:
-            project_update.pics = pics_obj
+    if config is not None:
+        project_update = schemas.ProjectUpdate(
+            name=cli_project.name, config=config, pics=pics_obj
+        )
+        _ = crud.project.update(db=db, db_obj=cli_project, obj_in=project_update)
+        logger.info(f"CLI Config Arguments: {config}")
 
-        project = crud.project.update(db=db, db_obj=project, obj_in=project_update)
-    else:
-        # Retrieve the default CLI project
-        cli_project = crud.project.get_by_name(db=db, name=DEFAULT_CLI_PROJECT_NAME)
-
-        # If the default CLI project does not exist, create it
-        if not cli_project:
-            project_create = schemas.ProjectCreate(name=DEFAULT_CLI_PROJECT_NAME)
-            project_create.config = config
-            if pics_obj:
-                project_create.pics = pics_obj
-            project = crud.project.create(db=db, obj_in=project_create)
-        else:
-            # Update the default CLI project with the cli config argument and pics
-            project_update = schemas.ProjectUpdate(config=config)
-            if pics_obj:
-                project_update.pics = pics_obj
-            project = crud.project.update(
-                db=db, db_obj=cli_project, obj_in=project_update
-            )
-        test_run_execution_in.project_id = project.id
+    logger.info(f"CLI PICS Arguments: {pics}")
 
     test_run_execution_in.certification_mode = False
 
@@ -386,13 +391,14 @@ def repeat_test_run_execution(
     date_now = formated_datetime_now_str()
     title += date_now
 
-    test_run_execution_in = schemas.TestRunExecutionCreate(title=title)
-    test_run_execution_in.description = execution_to_repeat.description
-    test_run_execution_in.project_id = execution_to_repeat.project_id
-    test_run_execution_in.operator_id = execution_to_repeat.operator_id
-    test_run_execution_in.certification_mode = execution_to_repeat.certification_mode
-    # TODO: Remove test_run_config completely from the project
-    test_run_execution_in.test_run_config_id = None
+    test_run_execution_in = schemas.TestRunExecutionCreate(
+        title=title,
+        description=execution_to_repeat.description,
+        project_id=execution_to_repeat.project_id,
+        operator_id=execution_to_repeat.operator_id,
+        certification_mode=execution_to_repeat.certification_mode,
+        test_run_config_id=None,
+    )
 
     selected_tests = selected_tests_from_execution(execution_to_repeat)
 
