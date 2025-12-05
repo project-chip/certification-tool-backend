@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2025 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Any, Dict, Type
+from typing import Any, Dict, Type, TypeVar, cast
+
+T = TypeVar("T")
 
 
 class Singleton(type):
-    """This is a metaclass for declaring classes a singletons
+    """This is a metaclass for declaring classes as singletons
 
     usage:
     ```
@@ -27,7 +29,9 @@ class Singleton(type):
 
     _instances: Dict[Type, object] = {}
 
-    def __call__(cls, *args: Any, **kwargs: Any) -> object:
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+    def __call__(cls: Type[T], *args: Any, **kwargs: Any) -> T:
+        if cls not in Singleton._instances:
+            Singleton._instances[cls] = super().__call__(  # type: ignore[misc]
+                *args, **kwargs
+            )
+        return cast(T, Singleton._instances[cls])

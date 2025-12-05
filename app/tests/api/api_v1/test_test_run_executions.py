@@ -1528,7 +1528,7 @@ def test_create_cli_test_run_execution_with_invalid_project_id_in_execution(
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     data = response.json()
-    assert "Project with id 999 not found" in data["detail"]
+    assert "Project with ID 999 not found" in data["detail"]
 
 
 def test_create_cli_test_run_execution_without_project_id_in_execution_uses_default(
@@ -1612,6 +1612,8 @@ def test_create_cli_test_run_execution_creates_default_project_when_missing(
         description=test_run_execution_create.description,
         project_id=1,
         operator_id=1,
+        certification_mode=False,
+        state=TestStateEnum.PENDING,
     )
 
     with patch(
@@ -1623,7 +1625,10 @@ def test_create_cli_test_run_execution_creates_default_project_when_missing(
         "app.api.api_v1.endpoints.test_run_executions.crud.project.create",
         return_value=mock_new_project,
     ), patch(
-        "app.api.api_v1.endpoints.test_run_executions.create_test_run_execution",
+        "app.api.api_v1.endpoints.test_run_executions.crud.project.update",
+        return_value=mock_new_project,
+    ), patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create",
         return_value=mock_test_run,
     ):
         response = client.post(
