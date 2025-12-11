@@ -70,21 +70,27 @@ printf "\nSDK_PATH: $SDK_PATH\n"
 # Back to execution dir
 cd $CURRENT_DIR
 
-# Create folder if missing (owned by user)
-if [ ! -d "$CERT_PATH" ]
+# Remove and recreate certification folder to avoid permission issues
+if [ -d "$CERT_PATH" ]
 then
-    print_script_step "Creating certification folder"
-    sudo mkdir -p $CERT_PATH
-    sudo chown $USER:$USER $CERT_PATH
+    print_script_step "Removing existing certification folder to fix permissions"
+    sudo rm -rf $CERT_PATH
 fi
 
-# Create folder if missing (owned by user)
-if [ ! -d "$DEVELOPMENT_PATH" ]
+print_script_step "Creating certification folder"
+sudo mkdir -p $CERT_PATH
+sudo chown $USER:$USER $CERT_PATH
+
+# Remove and recreate development certification folder to avoid permission issues
+if [ -d "$DEVELOPMENT_PATH" ]
 then
-    print_script_step "Creating development certification folder"
-    sudo mkdir -p $DEVELOPMENT_PATH
-    sudo chown $USER:$USER $DEVELOPMENT_PATH
+    print_script_step "Removing existing development certification folder to fix permissions"
+    sudo rm -rf $DEVELOPMENT_PATH
 fi
+
+print_script_step "Creating development certification folder"
+sudo mkdir -p $DEVELOPMENT_PATH
+sudo chown $USER:$USER $DEVELOPMENT_PATH
 
 print_script_step "Copying Certificates from SDK"
 echo "Running copy command: cp "$SDK_PATH/$SDK_CERT_PATH/"* $CERT_PATH/"
