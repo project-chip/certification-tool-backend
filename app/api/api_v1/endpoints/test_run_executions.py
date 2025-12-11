@@ -44,6 +44,7 @@ from app.utils import (
     selected_tests_from_execution,
 )
 from app.version import version_information
+from test_collections.matter.sdk_tests.support.chip.chip_server import ChipServer
 from test_collections.matter.sdk_tests.support.performance_tests.utils import (
     create_summary_report,
 )
@@ -262,6 +263,22 @@ def get_test_runner_status() -> dict[str, Any]:
         status["test_run_execution_id"] = test_runner.test_run.test_run_execution.id
 
     return status
+
+
+@router.get("/chip-server/info", response_model=schemas.ChipServerInfo)
+def get_chip_server_info() -> dict[str, Any]:
+    """
+    Retrieve ChipServer node ID information.
+
+    Returns:
+        ChipServerInfo: Contains node_id (int) and node_id_hex (str) values.
+    """
+    chip_server: ChipServer = ChipServer()
+    node_id = chip_server.node_id
+    return {
+        "node_id": node_id,
+        "node_id_hex": hex(node_id),
+    }
 
 
 @router.get("/{id}", response_model=schemas.TestRunExecutionWithChildren)
