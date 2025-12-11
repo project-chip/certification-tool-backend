@@ -40,6 +40,18 @@ source "$TH_SCRIPTS_DIR/utils.sh"
 # Store the current dir
 CURRENT_DIR=$(pwd)
 
+recreate_dir_with_ownership() {
+    local dir_path="$1"
+    local dir_desc="$2"
+    if [ -d "$dir_path" ]; then
+        print_script_step "Removing existing $dir_desc folder to fix permissions"
+        sudo rm -rf "$dir_path"
+    fi
+    print_script_step "Creating $dir_desc folder"
+    sudo mkdir -p "$dir_path"
+    sudo chown "$USER:$USER" "$dir_path"
+}
+
 print_start_of_script
 
 # If SDK path is not present, then do local checkout
@@ -70,27 +82,9 @@ printf "\nSDK_PATH: $SDK_PATH\n"
 # Back to execution dir
 cd $CURRENT_DIR
 
-# Remove and recreate certification folder to avoid permission issues
-if [ -d "$CERT_PATH" ]
-then
-    print_script_step "Removing existing certification folder to fix permissions"
-    sudo rm -rf $CERT_PATH
-fi
-
-print_script_step "Creating certification folder"
-sudo mkdir -p $CERT_PATH
-sudo chown $USER:$USER $CERT_PATH
-
-# Remove and recreate development certification folder to avoid permission issues
-if [ -d "$DEVELOPMENT_PATH" ]
-then
-    print_script_step "Removing existing development certification folder to fix permissions"
-    sudo rm -rf $DEVELOPMENT_PATH
-fi
-
-print_script_step "Creating development certification folder"
-sudo mkdir -p $DEVELOPMENT_PATH
-sudo chown $USER:$USER $DEVELOPMENT_PATH
+# Recreate certification folders to avoid permission issues
+recreate_dir_with_ownership "$CERT_PATH" "certification"
+recreate_dir_with_ownership "$DEVELOPMENT_PATH" "development certification"
 
 print_script_step "Copying Certificates from SDK"
 echo "Running copy command: cp "$SDK_PATH/$SDK_CERT_PATH/"* $CERT_PATH/"
