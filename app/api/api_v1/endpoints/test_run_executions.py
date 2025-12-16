@@ -266,19 +266,16 @@ def get_test_runner_status() -> dict[str, Any]:
 
 
 @router.get("/chip-server/info", response_model=schemas.ChipServerInfo)
-def get_chip_server_info() -> dict[str, Any]:
+def get_chip_server_info() -> schemas.ChipServerInfo:
     """
     Retrieve ChipServer node ID information.
 
     Returns:
         ChipServerInfo: Contains node_id (int) and node_id_hex (str) values.
     """
-    chip_server: ChipServer = ChipServer()
+    chip_server = ChipServer()
     node_id = chip_server.node_id
-    return {
-        "node_id": node_id,
-        "node_id_hex": hex(node_id),
-    }
+    return schemas.ChipServerInfo(node_id=node_id, node_id_hex=hex(node_id))
 
 
 @router.get("/{id}", response_model=schemas.TestRunExecutionWithChildren)
