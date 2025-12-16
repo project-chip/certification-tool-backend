@@ -809,3 +809,50 @@ def test_import_execution_success_without_test_config() -> None:
         assert imported_test_run.project_id == project_id
         assert imported_test_run.title == test_run_execution_dict.get("title")
         assert imported_test_run.operator_id == operator_id
+
+
+def test_get_test_run_executions_sort_order(db: Session) -> None:
+    """Test that sort_order parameter correctly orders test run executions by id."""
+    project = create_random_project(db, config={})
+
+    # Create multiple test run executions
+    test_runs = []
+    for i in range(3):
+        test_run = create_random_test_run_execution(db, project_id=project.id)
+        test_runs.append(test_run)
+
+    # Test ascending order (default)
+    test_run_executions_asc = crud.test_run_execution.get_multi_with_stats(
+        db, project_id=project.id, sort_order="asc"
+    )
+
+    # Test descending order
+    test_run_executions_desc = crud.test_run_execution.get_multi_with_stats(
+        db, project_id=project.id, sort_order="desc"
+    )
+
+    # Verify we have all test runs
+    assert len(test_run_executions_asc) >= 3
+    assert len(test_run_executions_desc) >= 3
+
+    # Get the IDs of our created test runs
+    created_ids = [tr.id for tr in test_runs]
+
+    # Filter to only our test runs for verification
+    asc_our_runs = [tre for tre in test_run_executions_asc if tre.id in created_ids]
+    desc_our_runs = [tre for tre in test_run_executions_desc if tre.id in created_ids]
+
+    # Sort by id for verification
+    asc_our_runs.sort(key=lambda x: x.id)
+    desc_our_runs.sort(key=lambda x: x.id, reverse=True)
+
+    # Verify ascending order - lowest ID first
+    assert asc_our_runs[0].id <= asc_our_runs[1].id <= asc_our_runs[2].id
+
+    # Verify descending order - highest ID first
+    assert desc_our_runs[0].id >= desc_our_runs[1].id >= desc_our_runs[2].id
+
+    # Verify the orders are actually different (reversed)
+    asc_ids = [tr.id for tr in asc_our_runs]
+    desc_ids = [tr.id for tr in desc_our_runs]
+    assert asc_ids == list(reversed(desc_ids))

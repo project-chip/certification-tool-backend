@@ -62,6 +62,7 @@ class CRUDTestRunExecution(
         archived: Optional[bool] = False,
         search_query: Optional[str] = None,
         order_by: Optional[str] = None,
+        sort_order: Optional[str] = "asc",
         skip: Optional[int] = 0,
         limit: Optional[int] = 100,
     ) -> Sequence[TestRunExecution]:
@@ -85,7 +86,11 @@ class CRUDTestRunExecution(
             )
 
         if order_by is None:
-            query = query.order_by(self.model.id)
+            # Default to ordering by id with specified sort order
+            if sort_order == "desc":
+                query = query.order_by(self.model.id.desc())
+            else:
+                query = query.order_by(self.model.id.asc())
         else:
             query = query.order_by(order_by)
 
@@ -101,6 +106,7 @@ class CRUDTestRunExecution(
         archived: Optional[bool] = False,
         search_query: Optional[str] = None,
         order_by: Optional[str] = None,
+        sort_order: Optional[str] = "asc",
         skip: Optional[int] = 0,
         limit: Optional[int] = 100,
     ) -> List[TestRunExecutionWithStats]:
@@ -110,6 +116,7 @@ class CRUDTestRunExecution(
             archived=archived,
             search_query=search_query,
             order_by=order_by,
+            sort_order=sort_order,
             skip=skip,
             limit=limit,
         )

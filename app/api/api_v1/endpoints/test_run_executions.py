@@ -63,6 +63,7 @@ def read_test_run_executions(
     search_query: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
+    sort_order: str = "asc",
 ) -> list[schemas.TestRunExecutionWithStats]:
     """Retrieve test runs, including statistics.
 
@@ -72,6 +73,8 @@ def read_test_run_executions(
             test runs only, when false only non-archived test runs are returned.
         skip: Pagination offset.
         limit: Max number of records to return.
+        sort_order: Sort order for results. Either "asc" or "desc". Defaults to "asc".
+            Results are sorted by ID.
 
     Returns:
         List of test runs with execution statistics.
@@ -83,6 +86,7 @@ def read_test_run_executions(
         search_query=search_query,
         skip=skip,
         limit=limit,
+        sort_order=sort_order,
     )
 
 

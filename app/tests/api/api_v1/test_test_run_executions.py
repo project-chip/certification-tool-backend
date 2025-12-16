@@ -1958,3 +1958,4 @@ def test_create_cli_test_run_execution_updates_existing_project_config_only_no_p
     # PICS should be set to empty PICS object when empty dict is provided
     assert project_update.pics is not None
     assert project_update.pics.clusters == {}
+    
