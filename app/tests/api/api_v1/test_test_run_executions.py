@@ -939,6 +939,41 @@ def test_read_multiple_test_run_executions_with_search_query(
     assert not any(test_run.get("id") == test_run_execution.id for test_run in content)
 
 
+def test_read_multiple_test_run_executions_with_limit_zero_returns_all(
+    client: TestClient, db: Session
+) -> None:
+    """Test that limit=0 returns all test run executions."""
+
+    # Create several test executions to ensure we have more than default limit
+    test_runs = []
+    for i in range(5):
+        test_run = create_random_test_run_execution(db)
+        test_runs.append(test_run)
+
+    # Ensure changes are committed
+    db.commit()
+
+    # Test with limit=0 to get all results
+    response = client.get(f"{settings.API_V1_STR}/test_run_executions?limit=0")
+    assert response.status_code == HTTPStatus.OK
+    content = response.json()
+    assert isinstance(content, list)
+
+    # Verify that all our created test runs are in the response
+    created_ids = {tr.id for tr in test_runs}
+    response_ids = {tr["id"] for tr in content}
+
+    # All created test runs should be present (and potentially more from other tests)
+    assert created_ids.issubset(
+        response_ids
+    ), f"Created IDs {created_ids} not found in response IDs"
+
+    # Verify we got more than the default limit (should be at least our 5 created runs)
+    assert (
+        len(content) >= 5
+    ), f"Expected at least 5 test runs with limit=0, got {len(content)}"
+
+
 def test_read_test_run_execution(client: TestClient, db: Session) -> None:
     # We generate a random test run for this test.
     # To validate that all test cases are returned in the response,
@@ -1958,4 +1993,3 @@ def test_create_cli_test_run_execution_updates_existing_project_config_only_no_p
     # PICS should be set to empty PICS object when empty dict is provided
     assert project_update.pics is not None
     assert project_update.pics.clusters == {}
-    

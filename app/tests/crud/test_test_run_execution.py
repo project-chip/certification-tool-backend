@@ -856,3 +856,36 @@ def test_get_test_run_executions_sort_order(db: Session) -> None:
     asc_ids = [tr.id for tr in asc_our_runs]
     desc_ids = [tr.id for tr in desc_our_runs]
     assert asc_ids == list(reversed(desc_ids))
+
+
+def test_get_test_run_executions_limit_zero_returns_all(db: Session) -> None:
+    """Test that limit=0 returns all test run executions without applying limit."""
+    project = create_random_project(db, config={})
+
+    # Create several test runs to ensure we have multiple records
+    test_runs = []
+    for i in range(5):
+        test_run = create_random_test_run_execution(db, project_id=project.id)
+        test_runs.append(test_run)
+
+    db.commit()
+
+    # Test with default limit (should be limited to 2)
+    limited_results = crud.test_run_execution.get_multi_with_stats(
+        db, project_id=project.id, limit=2
+    )
+
+    # Test with limit=0 (should return all for this project)
+    all_results = crud.test_run_execution.get_multi_with_stats(
+        db, project_id=project.id, limit=0
+    )
+
+    # Verify that limit=0 returns more results than the limited query
+    assert len(all_results) > len(limited_results)
+    assert len(limited_results) == 2  # Verify limited query worked
+    assert len(all_results) >= 5  # Should have at least our 5 test runs
+
+    # Verify all our created test runs are in the unlimited results
+    created_ids = {tr.id for tr in test_runs}
+    result_ids = {tr.id for tr in all_results}
+    assert created_ids.issubset(result_ids)

@@ -94,7 +94,11 @@ class CRUDTestRunExecution(
         else:
             query = query.order_by(order_by)
 
-        query = query.offset(skip).limit(limit)
+        query = query.offset(skip)
+
+        # If limit is 0, return all results without limit
+        if limit != 0:
+            query = query.limit(limit)
 
         return db.scalars(query).all()
 

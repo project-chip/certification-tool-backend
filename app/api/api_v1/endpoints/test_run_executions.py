@@ -72,7 +72,7 @@ def read_test_run_executions(
         archived: Get archived test runs, when true will return archived
             test runs only, when false only non-archived test runs are returned.
         skip: Pagination offset.
-        limit: Max number of records to return.
+        limit: Max number of records to return. Set to 0 to return all results.
         sort_order: Sort order for results. Either "asc" or "desc". Defaults to "asc".
             Results are sorted by ID.
 
