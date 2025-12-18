@@ -62,9 +62,9 @@ class CRUDTestRunExecution(
         archived: Optional[bool] = False,
         search_query: Optional[str] = None,
         order_by: Optional[str] = None,
-        sort_order: str = "asc",
         skip: Optional[int] = 0,
         limit: Optional[int] = 100,
+        sort_order: str = "asc",
     ) -> Sequence[TestRunExecution]:
         query = self.select()
 
@@ -110,9 +110,9 @@ class CRUDTestRunExecution(
         archived: Optional[bool] = False,
         search_query: Optional[str] = None,
         order_by: Optional[str] = None,
-        sort_order: str = "asc",
         skip: Optional[int] = 0,
         limit: Optional[int] = 100,
+        sort_order: str = "asc",
     ) -> List[TestRunExecutionWithStats]:
         results = self.get_multi(
             db=db,
