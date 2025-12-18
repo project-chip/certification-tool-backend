@@ -70,7 +70,8 @@ def __load_json_with_retry(
                 # Check for empty or incomplete content
                 if not content.strip():
                     logger.warning(
-                        f"JSON file {path} is empty on attempt {attempt + 1}/{max_retries}"
+                        f"JSON file {path} is empty on attempt "
+                        f"{attempt + 1}/{max_retries}"
                     )
                     if attempt < max_retries - 1:
                         time.sleep(delay)
