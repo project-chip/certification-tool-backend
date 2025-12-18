@@ -62,7 +62,7 @@ class CRUDTestRunExecution(
         archived: Optional[bool] = False,
         search_query: Optional[str] = None,
         order_by: Optional[str] = None,
-        sort_order: Optional[str] = "asc",
+        sort_order: str = "asc",
         skip: Optional[int] = 0,
         limit: Optional[int] = 100,
     ) -> Sequence[TestRunExecution]:
