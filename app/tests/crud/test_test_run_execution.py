@@ -842,19 +842,15 @@ def test_get_test_run_executions_sort_order(db: Session) -> None:
     asc_our_runs = [tre for tre in test_run_executions_asc if tre.id in created_ids]
     desc_our_runs = [tre for tre in test_run_executions_desc if tre.id in created_ids]
 
-    # Sort by id for verification
-    asc_our_runs.sort(key=lambda x: x.id)
-    desc_our_runs.sort(key=lambda x: x.id, reverse=True)
+    # Verify ascending order
+    asc_ids = [tr.id for tr in asc_our_runs]
+    assert asc_ids == sorted(created_ids)
 
-    # Verify ascending order - lowest ID first
-    assert asc_our_runs[0].id <= asc_our_runs[1].id <= asc_our_runs[2].id
-
-    # Verify descending order - highest ID first
-    assert desc_our_runs[0].id >= desc_our_runs[1].id >= desc_our_runs[2].id
+    # Verify descending order
+    desc_ids = [tr.id for tr in desc_our_runs]
+    assert desc_ids == sorted(created_ids, reverse=True)
 
     # Verify the orders are actually different (reversed)
-    asc_ids = [tr.id for tr in asc_our_runs]
-    desc_ids = [tr.id for tr in desc_our_runs]
     assert asc_ids == list(reversed(desc_ids))
 
 
