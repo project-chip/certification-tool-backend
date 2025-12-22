@@ -20,7 +20,7 @@ import sys
 from importlib import import_module
 from typing import AsyncGenerator, Generator
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import pytest_asyncio
@@ -132,7 +132,7 @@ try:
     # Create a mock that returns valid JSON for dynamic files, original for static files
     original_json_load = json.load
 
-    def mock_json_load(fp):
+    def mock_json_load(fp) -> dict:
         """Smart mock that handles dynamic vs static JSON files differently."""
         filename = getattr(fp, "name", str(fp))
 
@@ -174,13 +174,13 @@ test_script_manager.test_script_manager.test_collections = discover_test_collect
 
 
 @pytest.fixture(scope="session", autouse=True)
-def mock_json_loading():
+def mock_json_loading() -> Generator:
     """Session-scoped fixture to mock JSON loading globally for all tests to prevent
     race conditions."""
 
     original_json_load = json.load
 
-    def safe_json_load(fp):
+    def safe_json_load(fp) -> dict:
         """Mock json.load to return safe data for dynamic files."""
         filename = getattr(fp, "name", str(fp))
 
