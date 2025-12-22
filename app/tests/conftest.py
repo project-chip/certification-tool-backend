@@ -18,7 +18,7 @@ import contextlib
 import json
 import sys
 from importlib import import_module
-from typing import AsyncGenerator, Generator
+from typing import Any, AsyncGenerator, Generator
 from unittest import mock
 from unittest.mock import patch
 
@@ -132,7 +132,7 @@ try:
     # Create a mock that returns valid JSON for dynamic files, original for static files
     original_json_load = json.load
 
-    def mock_json_load(fp) -> dict:
+    def mock_json_load(fp: Any) -> dict:
         """Smart mock that handles dynamic vs static JSON files differently."""
         filename = getattr(fp, "name", str(fp))
 
@@ -180,7 +180,7 @@ def mock_json_loading() -> Generator:
 
     original_json_load = json.load
 
-    def safe_json_load(fp) -> dict:
+    def safe_json_load(fp: Any) -> dict:
         """Mock json.load to return safe data for dynamic files."""
         filename = getattr(fp, "name", str(fp))
 
