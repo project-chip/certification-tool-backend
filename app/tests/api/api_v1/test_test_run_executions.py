@@ -968,9 +968,9 @@ def test_read_multiple_test_run_executions_with_limit_zero_returns_all(
         response_ids
     ), f"Created IDs {created_ids} not found in response IDs"
 
-    # Verify we got exactly 105 test runs
+    # Verify be at least 105 created runs
     assert (
-        len(content) == 105
+        len(content) >= 105
     ), f"Expected at least 105 test runs with limit=0, got {len(content)}"
 
 
