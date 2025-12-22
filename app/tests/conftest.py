@@ -20,7 +20,7 @@ import sys
 from importlib import import_module
 from typing import AsyncGenerator, Generator
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import pytest_asyncio
@@ -129,10 +129,6 @@ unit tests. Make sure we discover all test collections here.
 # Initialize Python tests synchronously for test environment
 try:
     # Apply JSON mocking for dynamically generated files to prevent race conditions
-    import json
-    import pytest
-    from unittest.mock import patch, MagicMock
-
     # Create a mock that returns valid JSON for dynamic files, original for static files
     original_json_load = json.load
 
@@ -171,7 +167,6 @@ except ImportError:
 except Exception as e:
     # Log the error but don't fail tests - some tests may not need Python collections
     print(f"Warning: Failed to initialize Python test collections for tests: {e}")
-    # Continue anyway - the mock should prevent most issues
 
 test_script_manager.test_script_manager.test_collections = discover_test_collections(
     disabled_collections=[]
