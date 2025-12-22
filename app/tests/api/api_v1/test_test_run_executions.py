@@ -946,7 +946,7 @@ def test_read_multiple_test_run_executions_with_limit_zero_returns_all(
 
     # Create several test executions to ensure we have more than default limit
     test_runs = []
-    for i in range(5):
+    for i in range(105):
         test_run = create_random_test_run_execution(db)
         test_runs.append(test_run)
 
@@ -970,8 +970,8 @@ def test_read_multiple_test_run_executions_with_limit_zero_returns_all(
 
     # Verify we got more than the default limit (should be at least our 5 created runs)
     assert (
-        len(content) >= 5
-    ), f"Expected at least 5 test runs with limit=0, got {len(content)}"
+        len(content) >= 105
+    ), f"Expected at least 105 test runs with limit=0, got {len(content)}"
 
 
 def test_read_test_run_execution(client: TestClient, db: Session) -> None:

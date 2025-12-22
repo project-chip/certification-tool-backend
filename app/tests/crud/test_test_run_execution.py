@@ -831,10 +831,6 @@ def test_get_test_run_executions_sort_order(db: Session) -> None:
         db, project_id=project.id, sort_order="desc"
     )
 
-    # Verify we have all test runs
-    assert len(test_run_executions_asc) >= 3
-    assert len(test_run_executions_desc) >= 3
-
     # Get the IDs of our created test runs
     created_ids = [tr.id for tr in test_runs]
 
@@ -852,6 +848,10 @@ def test_get_test_run_executions_sort_order(db: Session) -> None:
 
     # Verify the orders are actually different (reversed)
     assert asc_ids == list(reversed(desc_ids))
+
+    # Verify we have all test runs
+    assert len(asc_ids) == 3
+    assert len(desc_ids) == 3
 
 
 def test_get_test_run_executions_limit_zero_returns_all(db: Session) -> None:

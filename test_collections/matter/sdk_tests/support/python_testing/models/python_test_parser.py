@@ -43,67 +43,6 @@ mandatory_python_tcs_public_id = [
 ]
 
 
-def __load_json_with_retry(
-    path: Path, max_retries: int = 5, delay: float = 0.2
-) -> dict:
-    """Load JSON file with retry logic to handle race conditions during file generation.
-
-    Args:
-        path: Path to the JSON file
-        max_retries: Maximum number of retry attempts
-        delay: Delay between retries in seconds
-
-    Returns:
-        dict: Parsed JSON content
-
-    Raises:
-        json.JSONDecodeError: If JSON parsing fails after all retries
-        FileNotFoundError: If file doesn't exist after all retries
-    """
-    last_exception = None
-
-    for attempt in range(max_retries):
-        try:
-            with open(path, "r") as json_file:
-                content = json_file.read()
-
-                # Check for empty or incomplete content
-                if not content.strip():
-                    logger.warning(
-                        f"JSON file {path} is empty on attempt "
-                        f"{attempt + 1}/{max_retries}"
-                    )
-                    if attempt < max_retries - 1:
-                        time.sleep(delay)
-                        continue
-                    else:
-                        raise json.JSONDecodeError("File is empty", str(path), 0)
-
-                # Try to parse JSON
-                return json.loads(content)
-
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            last_exception = e
-            logger.warning(
-                f"Attempt {attempt + 1}/{max_retries} failed for {path}: {e}"
-            )
-
-            # If this is the last attempt, raise the exception
-            if attempt == max_retries - 1:
-                raise e
-
-            # Wait before retrying
-            time.sleep(delay)
-
-    # This should never be reached, but just in case
-    if last_exception:
-        raise last_exception
-    else:
-        raise RuntimeError(
-            f"Failed to load JSON from {path} after {max_retries} attempts"
-        )
-
-
 def parse_python_script(path: Path) -> list[PythonTest]:
     """Parse a python file into a list of PythonTest models.
 
@@ -124,11 +63,8 @@ def parse_python_script(path: Path) -> list[PythonTest]:
     """
     python_tests: list[PythonTest] = []
 
-    try:
-        parsed_scripts = __load_json_with_retry(path)
-    except Exception as e:
-        logger.error(f"Failed to parse JSON file {path}: {e}")
-        return python_tests
+    with open(path, "r") as json_file:
+        parsed_scripts = json.load(json_file)
 
     if len(parsed_scripts) == 0:
         return python_tests
