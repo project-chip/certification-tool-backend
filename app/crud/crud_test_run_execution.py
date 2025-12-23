@@ -92,7 +92,12 @@ class CRUDTestRunExecution(
             else:
                 query = query.order_by(self.model.id.asc())
         else:
-            query = query.order_by(order_by)
+            # Apply sort_order to the specified order_by column
+            column = getattr(self.model, order_by)
+            if sort_order == "desc":
+                query = query.order_by(column.desc())
+            else:
+                query = query.order_by(column.asc())
 
         query = query.offset(skip)
 
