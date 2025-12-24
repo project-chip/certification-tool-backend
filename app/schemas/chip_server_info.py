@@ -21,11 +21,13 @@ class ChipServerInfo(BaseModel):
 
     node_id: int
     node_id_hex: str
+    manual_pairing_code: str | None = None
 
     class Config:
         schema_extra = {
             "example": {
                 "node_id": 1234567890,
                 "node_id_hex": "0x499602d2",
+                "manual_pairing_code": "34970112332",
             }
         }

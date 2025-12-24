@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -90,6 +91,92 @@ class ChipServer(metaclass=Singleton):
             return self.__reset_node_id()
 
         return self.__node_id
+
+    def generate_manual_pairing_code_with_chip_tool(
+        self,
+        discriminator: str,
+        setup_pin_code: str,
+        version: int = 0,
+        vendor_id: int = 0,
+        product_id: int = 0,
+    ) -> str:
+        """Generate manual pairing code using chip-tool payload command.
+
+        Note: This method requires the SDK container to be running.
+
+        Args:
+            discriminator: 12-bit discriminator value
+            setup_pin_code: Setup PIN code
+            version: Version number (default: 0)
+            vendor_id: Vendor ID (default: 0)
+            product_id: Product ID (default: 0)
+
+        Returns:
+            str: Manual pairing code or empty string if generation fails
+        """
+        # Check if SDK container is up
+        if not self.sdk_container.is_running():
+            self.logger.warning(
+                "SDK container is not running. Cannot generate manual pairing code."
+            )
+            return ""
+
+        try:
+            command = [
+                "payload",
+                "generate-manualcode",
+                "--discriminator",
+                discriminator,
+                "--setup-pin-code",
+                setup_pin_code,
+                "--version",
+                str(version),
+                "--vendor-id",
+                str(vendor_id),
+                "--product-id",
+                str(product_id),
+            ]
+
+            result = self.sdk_container.send_command(
+                command,
+                prefix=CHIP_TOOL_EXE,
+            )
+
+            # Parse the output result to extract the manual pairing code
+            if result.exit_code == 0 and result.output:
+                return self.__extract_manual_code(result.output)
+
+            self.logger.warning(
+                "Failed to generate manual pairing code from chip-tool output"
+            )
+            return ""
+        except Exception as e:
+            self.logger.error(f"Error generating manual pairing code: {e}")
+            return ""
+
+    def __extract_manual_code(self, log_chunk: Generator | bytes | tuple) -> str:
+        # Extracts the manual pairing code from the chip-tool output logs.
+        # Log format: "[timestamp] [pid:tid] [TOO] Manual Code: XXXXXXXXXX"
+        code = ""
+        output_str: str
+
+        # Convert output to string
+        if isinstance(log_chunk, bytes):
+            output_str = log_chunk.decode()
+        else:
+            # Handle Generator or tuple - convert to string
+            output_str = str(log_chunk)
+
+        # Remove ANSI escape sequences
+        output_str = re.sub(r"\x1b\[[0-9;]*m", "", output_str)
+
+        for line in output_str.splitlines():
+            # Look for the line containing "[TOO] Manual Code:"
+            if "[TOO] Manual Code:" in line:
+                # Extract the Manual Code:"
+                code = line.split("Manual Code:")[-1].strip()
+                self.logger.info(f"Generated manual pairing code: {code}")
+        return code
 
     def __reset_node_id(self) -> int:
         """Resets node_id to a random uint64."""

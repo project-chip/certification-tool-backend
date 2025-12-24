@@ -17,7 +17,7 @@ import json
 import os
 from datetime import datetime
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
@@ -55,12 +55,12 @@ router = APIRouter()
 DEFAULT_CLI_PROJECT_NAME = "CLI Project Execution"
 
 
-@router.get("/", response_model=List[schemas.TestRunExecutionWithStats])
+@router.get("/", response_model=list[schemas.TestRunExecutionWithStats])
 def read_test_run_executions(
     db: Session = Depends(get_db),
-    project_id: Optional[int] = None,
+    project_id: int | None = None,
     archived: bool = False,
-    search_query: Optional[str] = None,
+    search_query: str | None = None,
     skip: int = 0,
     limit: int = 100,
     sort_order: str = "asc",
@@ -110,7 +110,7 @@ def create_test_run_execution(
     return test_run_execution
 
 
-def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
+def __convert_pics_dict_to_object(pics: dict) -> schemas.PICS | None:
     """Convert a dictionary to a PICS object.
 
     Args:
@@ -131,8 +131,8 @@ def __convert_pics_dict_to_object(pics: dict) -> Optional[schemas.PICS]:
 
 def __cli_project(
     db: Session,
-    project_id: Optional[int],
-    config: Optional[dict],
+    project_id: int | None,
+    config: dict | None,
     pics_obj: schemas.PICS,
 ) -> Project:
     """Retrieve or create the default CLI project."""
@@ -178,7 +178,7 @@ def create_cli_test_run_execution(
     db: Session = Depends(get_db),
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
-    config: Optional[dict] = None,
+    config: dict | None = None,
     pics: dict = {},
 ) -> TestRunExecution:
     """Creates a new test run execution on CLI request.
@@ -233,7 +233,7 @@ def rename_test_run_execution(
     )
 
 
-@router.post("/abort-testing", response_model=Dict[str, str])
+@router.post("/abort-testing", response_model=dict[str, str])
 def abort_testing(
     *,
     db: Session = Depends(get_db),
@@ -270,16 +270,47 @@ def get_test_runner_status() -> dict[str, Any]:
 
 
 @router.get("/chip-server/info", response_model=schemas.ChipServerInfo)
-def get_chip_server_info() -> schemas.ChipServerInfo:
+def get_chip_server_info(
+    discriminator: str | None = None,
+    setup_pin_code: str | None = None,
+    version: int = 0,
+    vendor_id: int = 0,
+    product_id: int = 0,
+) -> schemas.ChipServerInfo:
     """
-    Retrieve ChipServer node ID information.
+    Retrieve ChipServer node ID information and generate manual pairing code.
+
+    Note: Manual pairing code generation requires the SDK container to be running.
+    If called before the SDK container starts, manual_pairing_code will be None.
+
+    Args:
+        discriminator: Device discriminator (optional)
+        setup_pin_code: Setup PIN code (optional)
+        version: Version number (default: 0)
+        vendor_id: Vendor ID (default: 0)
+        product_id: Product ID (default: 0)
 
     Returns:
-        ChipServerInfo: Contains node_id (int) and node_id_hex (str) values.
+        ChipServerInfo: Contains node_id, node_id_hex, and optional manual_pairing_code.
     """
     chip_server = ChipServer()
     node_id = chip_server.node_id
-    return schemas.ChipServerInfo(node_id=node_id, node_id_hex=hex(node_id))
+
+    manual_pairing_code = None
+    if discriminator and setup_pin_code:
+        manual_pairing_code = chip_server.generate_manual_pairing_code_with_chip_tool(
+            discriminator=discriminator,
+            setup_pin_code=setup_pin_code,
+            version=version,
+            vendor_id=vendor_id,
+            product_id=product_id,
+        )
+
+    return schemas.ChipServerInfo(
+        node_id=node_id,
+        node_id_hex=hex(node_id),
+        manual_pairing_code=manual_pairing_code if manual_pairing_code else None,
+    )
 
 
 @router.get("/{id}", response_model=schemas.TestRunExecutionWithChildren)
@@ -384,7 +415,7 @@ def unarchive(
 
 @router.post("/{id}/repeat", response_model=schemas.TestRunExecutionWithChildren)
 def repeat_test_run_execution(
-    *, db: Session = Depends(get_db), id: int, title: Optional[str] = None
+    *, db: Session = Depends(get_db), id: int, title: str | None = None
 ) -> TestRunExecution:
     """Repeat a test run execution by id.
 
