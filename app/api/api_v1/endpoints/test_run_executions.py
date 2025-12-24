@@ -309,7 +309,7 @@ def get_chip_server_info(
     return schemas.ChipServerInfo(
         node_id=node_id,
         node_id_hex=hex(node_id),
-        manual_pairing_code=manual_pairing_code if manual_pairing_code else None,
+        manual_pairing_code=manual_pairing_code or None,
     )
 
 
