@@ -85,19 +85,11 @@ class CRUDTestRunExecution(
                 )
             )
 
-        if order_by is None:
-            # Default to ordering by id with specified sort order
-            if sort_order == "desc":
-                query = query.order_by(self.model.id.desc())
-            else:
-                query = query.order_by(self.model.id.asc())
+        column = self.model.id if order_by is None else getattr(self.model, order_by)
+        if sort_order == "desc":
+            query = query.order_by(column.desc())
         else:
-            # Apply sort_order to the specified order_by column
-            column = getattr(self.model, order_by)
-            if sort_order == "desc":
-                query = query.order_by(column.desc())
-            else:
-                query = query.order_by(column.asc())
+            query = query.order_by(column.asc())
 
         query = query.offset(skip)
 
