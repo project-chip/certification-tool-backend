@@ -176,6 +176,7 @@ class ChipServer(metaclass=Singleton):
                 # Extract the Manual Code:"
                 code = line.split("Manual Code:")[-1].strip()
                 self.logger.info(f"Generated manual pairing code: {code}")
+                break
         return code
 
     def __reset_node_id(self) -> int:
