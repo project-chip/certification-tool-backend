@@ -34,6 +34,20 @@ from .sdk_python_tests import (
 logger = logging.getLogger(__name__)
 
 
+def _has_custom_tests() -> bool:
+    """Check if custom test folder contains any test files.
+
+    Returns:
+        True if custom folder has test files matching the pattern, False otherwise
+    """
+    if not CUSTOM_PYTHON_SCRIPTS_FOLDER.path.exists():
+        return False
+
+    # Check if any files match the TC* pattern in the custom folder
+    test_files = list(CUSTOM_PYTHON_SCRIPTS_FOLDER.path.glob("TC*.py"))
+    return len(test_files) > 0
+
+
 def _update_module_collections(
     sdk_collection: TestCollectionDeclaration,
     mandatory_collection: TestCollectionDeclaration,
@@ -77,13 +91,19 @@ async def _generate_all_test_files() -> None:
         await generate_python_test_json_file(grouped_commands=True)
         logger.info("Standard SDK tests generated successfully")
 
-        # Generate custom tests using the same container session context
-        await generate_python_test_json_file(
-            test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER,
-            json_output_file=CUSTOM_PYTHON_TESTS_PARSED_FILE,
-            grouped_commands=True,
-        )
-        logger.info("Custom tests generated successfully")
+        # Only generate custom tests if custom folder has test files
+        if _has_custom_tests():
+            await generate_python_test_json_file(
+                test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER,
+                json_output_file=CUSTOM_PYTHON_TESTS_PARSED_FILE,
+                grouped_commands=True,
+            )
+            logger.info("Custom tests generated successfully")
+        else:
+            logger.info("No custom tests found, skipping custom test generation")
+            # Clean custom test JSON file by writing empty structure
+            CUSTOM_PYTHON_TESTS_PARSED_FILE.write_text('{"tests": []}')
+            logger.info(f"Cleaned custom test file: {CUSTOM_PYTHON_TESTS_PARSED_FILE}")
 
     except Exception as e:
         logger.error(f"Failed to generate test files: {e}")
