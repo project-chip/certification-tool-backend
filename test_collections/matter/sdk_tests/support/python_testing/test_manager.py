@@ -44,8 +44,7 @@ def _has_custom_tests() -> bool:
         return False
 
     # Check if any files match the TC* pattern in the custom folder
-    test_files = list(CUSTOM_PYTHON_SCRIPTS_FOLDER.path.glob("TC*.py"))
-    return len(test_files) > 0
+    return any(CUSTOM_PYTHON_SCRIPTS_FOLDER.path.glob("TC*.py"))
 
 
 def _update_module_collections(
