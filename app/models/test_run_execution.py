@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2023-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Enum, ForeignKey, func, select
+from sqlalchemy import JSON, Enum, ForeignKey, func, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.ext.orderinglist import ordering_list
@@ -46,15 +46,20 @@ class TestRunExecution(Base):
     )
     title: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now, nullable=False)
-    started_at: Mapped[Optional[datetime]]
-    completed_at: Mapped[Optional[datetime]]
-    archived_at: Mapped[Optional[datetime]]
-    imported_at: Mapped[Optional[datetime]]
+    started_at: Mapped[datetime | None]
+    completed_at: Mapped[datetime | None]
+    archived_at: Mapped[datetime | None]
+    imported_at: Mapped[datetime | None]
     certification_mode: Mapped[bool] = mapped_column(default=False, nullable=False)
 
-    description: Mapped[Optional[str]] = mapped_column(default=None, nullable=True)
+    description: Mapped[str | None] = mapped_column(default=None, nullable=True)
 
-    test_run_config_id: Mapped[Optional[int]] = mapped_column(
+    # Execution-specific config (temporary, not persisted to project)
+    execution_config: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, nullable=True, default=None
+    )
+
+    test_run_config_id: Mapped[int | None] = mapped_column(
         ForeignKey("testrunconfig.id"), nullable=True
     )
     test_run_config: Mapped["TestRunConfig"] = relationship(
@@ -76,7 +81,7 @@ class TestRunExecution(Base):
         collection_class=ordering_list("execution_index"),
         cascade="all, delete-orphan",
     )
-    operator_id: Mapped[Optional[int]] = mapped_column(
+    operator_id: Mapped[int | None] = mapped_column(
         ForeignKey("operator.id"), nullable=True
     )
     operator: Mapped["Operator"] = relationship(
@@ -92,7 +97,7 @@ class TestRunExecution(Base):
 
     def test_suite_execution_by_public_id(
         self, public_id: str
-    ) -> Optional[TestSuiteExecution]:
+    ) -> TestSuiteExecution | None:
         return self.obj_session().scalar(
             select(TestSuiteExecution)
             .where(with_parent(self, TestSuiteExecution.test_run_execution))

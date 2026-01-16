@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Project CHIP Authors
+# Copyright (c) 2023-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ def __convert_pics_dict_to_object(pics: dict) -> schemas.PICS | None:
         return None
 
 
-def __cli_project(
+def _cli_project(
     db: Session,
     project_id: int | None,
     config: dict | None,
@@ -179,6 +179,7 @@ def create_cli_test_run_execution(
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
     config: dict | None = None,
+    execution_config: dict | None = None,
     pics: dict = {},
 ) -> TestRunExecution:
     """Creates a new test run execution on CLI request.
@@ -186,7 +187,8 @@ def create_cli_test_run_execution(
     Args:
         test_run_execution_in: Test run execution data
         selected_tests: Selected tests to run
-        config: Configuration parameters (optional)
+        config: Configuration parameters that update project (optional, persists)
+        execution_config: Execution-specific config override (optional, temporary)
         pics: PICS configuration (optional)
     """
 
@@ -200,8 +202,14 @@ def create_cli_test_run_execution(
         )
 
     # Retrieve or create the CLI project
-    cli_project = __cli_project(db, test_run_execution_in.project_id, config, pics_obj)
+    # Only update project if config is provided (not execution_config)
+    cli_project = _cli_project(db, test_run_execution_in.project_id, config, pics_obj)
     test_run_execution_in.project_id = cli_project.id
+
+    # Store execution_config if provided (temporary, per-execution)
+    if execution_config is not None:
+        logger.info(f"CLI Execution Config (Temporary): {execution_config}")
+        test_run_execution_in.execution_config = execution_config
 
     test_run_execution_in.certification_mode = False
 

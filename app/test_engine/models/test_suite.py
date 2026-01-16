@@ -58,6 +58,13 @@ class TestSuite(TestObservable):
 
     @property
     def config(self) -> dict:
+        """Get configuration for test suite.
+
+        Returns execution_config if available (temporary override from CLI),
+        otherwise returns project.config (persistent configuration).
+        """
+        if self.test_suite_execution.test_run_execution.execution_config is not None:
+            return self.test_suite_execution.test_run_execution.execution_config
         return self.project.config
 
     @property
