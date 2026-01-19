@@ -183,6 +183,9 @@ def create_cli_test_run_execution(
     pics: dict = {},
 ) -> TestRunExecution:
     """Creates a new test run execution on CLI request.
+       Attention: if both config and execution_config are provided,
+       only config will be persisted, while execution_config will be for
+       this execution only.
 
     Args:
         test_run_execution_in: Test run execution data
