@@ -51,7 +51,7 @@ class ContainerManager(object, metaclass=Singleton):
         container = self.__run_new_container(docker_image_tag, parameters)
         await self.__container_ready(container)
         if settings.ENABLE_CONTAINER_LOGS:
-            logger.info("Container running for " + docker_image_tag)
+            logger.info(f"Container running for {docker_image_tag}")
 
         return container
 
@@ -164,8 +164,6 @@ class ContainerManager(object, metaclass=Singleton):
                     f" Container Name: {str(container.name)}"
                 )
 
-            # Log equivalent shell command
-            if settings.ENABLE_CONTAINER_LOGS:
                 shell_cmd = docker_cp_from_container_command(
                     container.name,
                     container_file_path,
@@ -202,8 +200,6 @@ class ContainerManager(object, metaclass=Singleton):
                     f" Container Name: {str(container.name)}"
                 )
 
-            # Log equivalent shell command
-            if settings.ENABLE_CONTAINER_LOGS:
                 shell_cmd = docker_cp_to_container_command(
                     container.name, host_file_path, destination_container_path
                 )
