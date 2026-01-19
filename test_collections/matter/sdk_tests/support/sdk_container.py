@@ -26,6 +26,7 @@ from app.container_manager.docker_shell_commands import (
     SHELL_CMD_LOG_PREFIX,
     docker_exec_command,
 )
+from app.core.config import settings
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import test_engine_logger as logger
@@ -239,13 +240,14 @@ class SDKContainer(metaclass=Singleton):
         self.logger.info("Sending command to SDK container: " + full_cmd_str)
 
         # Log equivalent shell command
-        shell_cmd = docker_exec_command(
-            self.container_name,
-            full_cmd_str,
-            stdin=True,
-            detach=is_detach,
-        )
-        self.logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
+        if settings.ENABLE_CONTAINER_LOGS:
+            shell_cmd = docker_exec_command(
+                self.container_name,
+                full_cmd_str,
+                stdin=True,
+                detach=is_detach,
+            )
+            self.logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
         result = exec_run_in_container(
             self.__container,
