@@ -73,44 +73,13 @@ class TestScriptManager(object, metaclass=Singleton):
     def __init__(self) -> None:
         """
         Dynamically discover test collections, ignoring internal test collections.
+
+        Note: Python test collections are initialized separately:
+        - In production: via FastAPI startup event (app/main.py)
+        - In tests: via conftest.py initialization
         """
         self._python_tests_initialized = False
-
-        # Initialize Python tests if not already done (important for tests)
-        self._ensure_python_tests_initialized()
-
         self.test_collections = self._discover_test_collections()
-
-    def _ensure_python_tests_initialized(self) -> None:
-        """
-        Ensure Python test collections are initialized for test environments.
-
-        This is called during TestScriptManager construction to handle cases where
-        tests create new instances that bypass the global initialization.
-        """
-        if self._python_tests_initialized:
-            return
-
-        try:
-            from test_collections.matter.sdk_tests.support.python_testing import (
-                initialize_python_tests_sync,
-                sdk_python_collection,
-            )
-
-            if sdk_python_collection is None:
-                # Initialize collections for test environment
-                initialize_python_tests_sync()
-
-            self._python_tests_initialized = True
-
-        except ImportError:
-            # Python testing module not available (e.g., DRY_RUN mode)
-            self._python_tests_initialized = True
-        except Exception as e:
-            # Log warning but don't fail - FastAPI startup will handle initialization
-            logging.warning(
-                f"Failed to ensure Python test collections initialization: {e}"
-            )
 
     async def initialize_python_tests(self) -> None:
         """

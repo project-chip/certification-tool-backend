@@ -473,5 +473,66 @@ async def generate_python_test_json_file(
     )
 
 
+async def process_test_commands_with_container(
+    sdk_container: SDKContainer,
+    commands: list,
+    json_output_file: Path,
+    grouped_commands: bool = False,
+) -> None:
+    """Process test commands using an existing SDK container session.
+
+    This function processes test commands without starting/stopping the container,
+    allowing multiple test generations to share a single container session.
+
+    Args:
+        sdk_container: Already started SDKContainer instance
+        commands: List of test commands to process
+        json_output_file: Path where JSON output should be written
+        grouped_commands: Whether to process commands in grouped mode
+    """
+    test_function_count: int = 0
+    invalid_test_function_count: int = 0
+    complete_json: list[dict] = []
+    errors_found: list[str] = []
+    warnings_found: list[str] = []
+
+    if grouped_commands:
+        (
+            test_function_count,
+            invalid_test_function_count,
+        ) = await __process_grouped_commands(
+            sdk_container,
+            commands,
+            complete_json,
+            errors_found,
+            warnings_found,
+        )
+    else:
+        (
+            test_function_count,
+            invalid_test_function_count,
+        ) = await __process_individual_commands(
+            sdk_container,
+            commands,
+            complete_json,
+            errors_found,
+            warnings_found,
+        )
+
+    # Create a wrapper object with sdk_sha at root level
+    json_output = {"sdk_sha": matter_settings.SDK_SHA, "tests": complete_json}
+
+    with open(json_output_file, "w") as json_file:
+        json.dump(json_output, json_file, indent=4, sort_keys=True)
+
+    __print_report(
+        json_output_file,
+        test_function_count,
+        invalid_test_function_count,
+        warnings_found,
+        errors_found,
+    )
+
+
 if __name__ == "__main__":
     asyncio.run(generate_python_test_json_file(grouped_commands=True))

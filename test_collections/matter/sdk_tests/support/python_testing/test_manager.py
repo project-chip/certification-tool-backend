@@ -19,11 +19,15 @@ import logging
 import sys
 
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
+from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 
 from .list_python_tests_classes import (
     CUSTOM_PYTHON_SCRIPTS_FOLDER,
     CUSTOM_PYTHON_TESTS_PARSED_FILE,
-    generate_python_test_json_file,
+    PYTHON_SCRIPTS_FOLDER,
+    PYTHON_TESTS_PARSED_FILE,
+    get_command_list,
+    process_test_commands_with_container,
 )
 from .sdk_python_tests import (
     _create_custom_python_test_collection,
@@ -85,15 +89,29 @@ async def _generate_all_test_files() -> None:
     """Generate standard and custom test JSON files in a single container session."""
     logger.info("Starting test file generation with shared container session")
 
+    # Create and start a single SDK container for both test generations
+    sdk_container = SDKContainer()
+    await sdk_container.start()
+
     try:
-        # Generate standard SDK tests first
-        await generate_python_test_json_file(grouped_commands=True)
+        # Generate standard SDK tests
+        logger.info("Generating standard SDK tests...")
+        standard_commands = get_command_list(test_folder=PYTHON_SCRIPTS_FOLDER)
+        await process_test_commands_with_container(
+            sdk_container=sdk_container,
+            commands=standard_commands,
+            json_output_file=PYTHON_TESTS_PARSED_FILE,
+            grouped_commands=True,
+        )
         logger.info("Standard SDK tests generated successfully")
 
-        # Only generate custom tests if custom folder has test files
+        # Generate custom tests if custom folder has test files
         if _has_custom_tests():
-            await generate_python_test_json_file(
-                test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER,
+            logger.info("Generating custom tests...")
+            custom_commands = get_command_list(test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER)
+            await process_test_commands_with_container(
+                sdk_container=sdk_container,
+                commands=custom_commands,
                 json_output_file=CUSTOM_PYTHON_TESTS_PARSED_FILE,
                 grouped_commands=True,
             )
@@ -107,6 +125,10 @@ async def _generate_all_test_files() -> None:
     except Exception as e:
         logger.error(f"Failed to generate test files: {e}")
         raise
+    finally:
+        # Destroy the container in finally block to ensure cleanup
+        sdk_container.destroy()
+        logger.info("SDK container destroyed after test file generation")
 
 
 def _create_collections() -> (
