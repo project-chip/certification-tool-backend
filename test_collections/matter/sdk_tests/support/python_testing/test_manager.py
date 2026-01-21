@@ -89,11 +89,11 @@ async def _generate_all_test_files() -> None:
     """Generate standard and custom test JSON files in a single container session."""
     logger.info("Starting test file generation with shared container session")
 
-    # Create and start a single SDK container for both test generations
-    sdk_container = SDKContainer()
-    await sdk_container.start()
-
     try:
+        # Create and start a single SDK container for both test generations
+        sdk_container = SDKContainer()
+        await sdk_container.start()
+
         # Generate standard SDK tests
         logger.info("Generating standard SDK tests...")
         standard_commands = get_command_list(test_folder=PYTHON_SCRIPTS_FOLDER)
