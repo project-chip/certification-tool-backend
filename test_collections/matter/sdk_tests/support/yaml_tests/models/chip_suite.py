@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Project CHIP Authors
+# Copyright (c) 2025-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -135,6 +135,11 @@ class ChipSuite(TestSuite, UserPromptSupport):
             is DutPairingModeEnum.WIFIPAF_WIFI
         ):
             pair_result = await self.__pair_with_dut_wifipaf_wifi()
+        elif (
+            self.config_matter.dut_config.pairing_mode
+            is DutPairingModeEnum.THREAD
+        ):
+            pair_result = await self.__pair_with_dut_thread()
         else:
             raise DUTCommissioningError("Unsupported DUT pairing mode")
 
@@ -208,6 +213,39 @@ class ChipSuite(TestSuite, UserPromptSupport):
             setup_code=self.config_matter.dut_config.setup_code,
             discriminator=self.config_matter.dut_config.discriminator,
         )
+
+    async def __pair_with_dut_thread(self) -> bool:
+        """Commission DUT using thread pairing mode with Border Agent."""
+        if self.config_matter.network.thread is None:
+            raise DUTCommissioningError("Tool config is missing thread config.")
+
+        # Get thread configuration
+        thread_config = self.config_matter.network.thread
+        if isinstance(thread_config, ThreadExternalConfig):
+            hex_dataset = thread_config.operational_dataset_hex
+            ba_host = thread_config.ba_host
+            ba_port = thread_config.ba_port
+        elif isinstance(thread_config, ThreadAutoConfig):
+            border_router = await self.__start_border_router(thread_config)
+            hex_dataset = border_router.active_dataset
+            ba_host = thread_config.ba_host
+            ba_port = thread_config.ba_port
+        else:
+            raise DUTCommissioningError("Invalid thread configuration")
+
+        # Generate manual pairing code from discriminator and setup code
+        payload = self.runner.chip_server.generate_manual_pairing_code_with_chip_tool(
+            discriminator=self.config_matter.dut_config.discriminator,
+            setup_pin_code=self.config_matter.dut_config.setup_code,
+        )
+
+        return await self.runner.pairing_thread(
+            hex_dataset=hex_dataset,
+            payload=payload,
+            ba_host=ba_host,
+            ba_port=ba_port,
+        )
+
 
     async def __start_border_router(
         self, config: ThreadAutoConfig

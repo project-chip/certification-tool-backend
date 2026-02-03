@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Project CHIP Authors
+# Copyright (c) 2024-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,13 +17,19 @@ import pytest
 
 from app.schemas.test_environment_config import TestEnvironmentConfigError
 from test_collections.matter.sdk_tests.support.tests.utils.utils import (
+    default_config_thread_no_ba_host,
+    default_config_thread_no_ba_port,
+    default_config_thread_valid,
     default_config_invalid_dut_added_property,
     default_config_invalid_dut_renamed_property,
     default_config_no_dut,
     default_config_no_network,
     default_matter_config,
 )
-from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
+from test_collections.matter.test_environment_config import (
+    TestEnvironmentConfigMatter,
+    TestEnvironmentConfigMatterError,
+)
 
 
 def test_create_config_matter_with_valid_config_success() -> None:
@@ -70,3 +76,26 @@ def test_create_config_matter_with_no_network_config_fails() -> None:
         assert "The informed configuration has one or more invalid properties." == str(
             e
         )
+
+
+def test_create_config_matter_with_thread_valid_succeeds() -> None:
+    config_matter = TestEnvironmentConfigMatter(**default_config_thread_valid)
+
+    assert config_matter is not None
+    assert config_matter.dut_config.pairing_mode == "thread"
+    assert config_matter.network.thread.ba_host == "127.0.0.1"
+    assert config_matter.network.thread.ba_port == 5684
+
+
+def test_create_config_matter_with_thread_no_ba_host_fails() -> None:
+    with pytest.raises(TestEnvironmentConfigError) as e:
+        TestEnvironmentConfigMatter(**default_config_thread_no_ba_host)
+
+    assert "ba_host and ba_port are mandatory" in str(e.value)
+
+
+def test_create_config_matter_with_thread_no_ba_port_fails() -> None:
+    with pytest.raises(TestEnvironmentConfigError) as e:
+        TestEnvironmentConfigMatter(**default_config_thread_no_ba_port)
+
+    assert "ba_host and ba_port are mandatory" in str(e.value)

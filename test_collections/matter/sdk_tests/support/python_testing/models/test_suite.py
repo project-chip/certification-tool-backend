@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Project CHIP Authors
+# Copyright (c) 2025-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -105,7 +105,11 @@ class PythonTestSuite(TestSuite):
         await self.sdk_container.start()
 
         self.matter_config = TestEnvironmentConfigMatter(**self.config)
-        if self.matter_config.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD:
+        if (
+            self.matter_config.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD
+            or self.matter_config.dut_config.pairing_mode
+            is DutPairingModeEnum.THREAD
+        ):
             # When PCSC reader is used in a Docker container, pollkit should
             #  be disabled
             self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
@@ -130,13 +134,15 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
         await super().setup()
 
-        # If in BLE-Thread or NFC-Thread mode and a Thread Auto-Config was provided by
+        # If in BLE-Thread, NFC-Thread, or THREAD mode and a Thread Auto-Config was provided by
         # the user, start a new OTBR container app with the according Thread topology
         # for all tests in the Python Tests Suite.
         if (
             self.matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
             or self.matter_config.dut_config.pairing_mode
             == DutPairingModeEnum.NFC_THREAD
+            or self.matter_config.dut_config.pairing_mode
+            == DutPairingModeEnum.THREAD
         ) and isinstance(self.matter_config.network.thread, ThreadAutoConfig):
             await self.border_router.start_device(self.matter_config.network.thread)
             await self.border_router.form_thread_topology()

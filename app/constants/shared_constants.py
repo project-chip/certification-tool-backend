@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Project CHIP Authors
+# Copyright (c) 2025-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,3 +63,4 @@ class DutPairingModeEnum(str, Enum):
     BLE_THREAD = "ble-thread"
     WIFIPAF_WIFI = "wifipaf-wifi"
     NFC_THREAD = "nfc-thread"
+    THREAD = "thread"
