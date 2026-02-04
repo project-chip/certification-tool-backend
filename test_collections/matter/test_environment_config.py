@@ -25,6 +25,15 @@ class TestEnvironmentConfigMatterError(Exception):
     """Raised when the validation for the matter config fails"""
 
 
+class DutPairingModeEnum(str, Enum):
+    ON_NETWORK = "onnetwork"
+    BLE_WIFI = "ble-wifi"
+    NFC_WIFI = "nfc-wifi"
+    BLE_THREAD = "ble-thread"
+    WIFIPAF_WIFI = "wifipaf-wifi"
+    NFC_THREAD = "nfc-thread"
+
+
 class WiFiConfig(BaseModel):
     ssid: str
     password: str

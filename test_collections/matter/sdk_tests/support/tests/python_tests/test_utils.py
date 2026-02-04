@@ -131,6 +131,39 @@ async def test_generate_command_arguments_ble_wifi() -> None:
         "--storage_path /root/admin_storage.json",
     ] == arguments
 
+@pytest.mark.asyncio
+async def test_generate_command_arguments_nfc_wifi() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+
+    mock_config.test_parameters = {
+        "paa-trust-store-path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        discriminator="147",
+        setup_code="357",
+        pairing_mode=DutPairingModeEnum.NFC_WIFI,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    arguments = await generate_command_arguments(
+        config=mock_config, omit_commissioning_method=False
+    )
+
+    assert [
+        "--trace-to json:log",
+        "--commissioning-method ble-wifi",
+        "--wifi-ssid testharness",
+        "--wifi-passphrase wifi-password",
+        "--discriminator 147",
+        "--passcode 357",
+        "--paa-trust-store-path /paa-root-certs",
+        "--storage_path /root/admin_storage.json",
+    ] == arguments
+
 
 @pytest.mark.asyncio
 async def test_generate_command_arguments_ble_thread() -> None:
