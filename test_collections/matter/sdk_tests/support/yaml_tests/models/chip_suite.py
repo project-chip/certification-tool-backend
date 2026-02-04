@@ -125,9 +125,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
             pair_result = await self.__pair_with_dut_onnetwork()
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
             pair_result = await self.__pair_with_dut_ble_wifi()
-        elif (
-            self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI
-        ):
+        elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI:
             pair_result = await self.__pair_with_dut_nfc_wifi()
         elif (
             self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
