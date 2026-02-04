@@ -155,7 +155,7 @@ async def test_generate_command_arguments_nfc_wifi() -> None:
 
     assert [
         "--trace-to json:log",
-        "--commissioning-method ble-wifi",
+        "--commissioning-method nfc-wifi",
         "--wifi-ssid testharness",
         "--wifi-passphrase wifi-password",
         "--discriminator 147",
