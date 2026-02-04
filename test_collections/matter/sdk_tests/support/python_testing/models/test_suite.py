@@ -105,9 +105,9 @@ class PythonTestSuite(TestSuite):
         await self.sdk_container.start()
 
         self.matter_config = TestEnvironmentConfigMatter(**self.config)
-        if (
-            self.matter_config.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD
-            or self.matter_config.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI
+        if self.matter_config.dut_config.pairing_mode in (
+            DutPairingModeEnum.NFC_THREAD,
+            DutPairingModeEnum.NFC_WIFI,
         ):
             # When PCSC reader is used in a Docker container, pollkit should
             #  be disabled
