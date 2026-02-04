@@ -85,7 +85,10 @@ async def generate_command_arguments(
     else:
         arguments.append(f"--commissioning-method {pairing_mode}")
 
-    if pairing_mode == DutPairingModeEnum.BLE_WIFI:
+    if (
+        pairing_mode == DutPairingModeEnum.BLE_WIFI
+        or pairing_mode == DutPairingModeEnum.NFC_WIFI
+    ):
         arguments.append(f"--wifi-ssid {config.network.wifi.ssid}")
         arguments.append(f"--wifi-passphrase {config.network.wifi.password}")
     elif (

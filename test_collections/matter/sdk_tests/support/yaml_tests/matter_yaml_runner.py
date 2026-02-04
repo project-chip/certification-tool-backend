@@ -57,6 +57,7 @@ TEST_RUNNER_OPTIONS = TestRunnerOptions(
 PAIRING_CMD = "pairing"
 PAIRING_MODE_ONNETWORK = "onnetwork-long"
 PAIRING_MODE_BLE_WIFI = "ble-wifi"
+PAIRING_MODE_NFC_WIFI = "nfc-wifi"
 PAIRING_MODE_BLE_THREAD = "ble-thread"
 PAIRING_MODE_WIFIPAF_WIFI = "wifipaf-wifi"
 PAIRING_MODE_NFC_THREAD = "nfc-thread"
@@ -282,6 +283,22 @@ class MatterYAMLRunner(metaclass=Singleton):
     ) -> bool:
         return await self.pairing(
             PAIRING_MODE_BLE_WIFI,
+            hex(self.chip_server.node_id),
+            ssid,
+            password,
+            setup_code,
+            discriminator,
+        )
+
+    async def pairing_nfc_wifi(
+        self,
+        ssid: str,
+        password: str,
+        setup_code: str,
+        discriminator: str,
+    ) -> bool:
+        return await self.pairing(
+            PAIRING_MODE_NFC_WIFI,
             hex(self.chip_server.node_id),
             ssid,
             password,

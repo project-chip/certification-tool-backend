@@ -71,7 +71,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
         logger.info("Setting up SDK container")
         await self.sdk_container.start()
 
-        if self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD:
+        if (
+            self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD
+            or self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI
+        ):
             # When PCSC reader is used in a Docker container, pollkit should
             #  be disabled
             self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
@@ -123,6 +126,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
             pair_result = await self.__pair_with_dut_ble_wifi()
         elif (
+            self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI
+        ):
+            pair_result = await self.__pair_with_dut_nfc_wifi()
+        elif (
             self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
         ):
             pair_result = await self.__pair_with_dut_ble_thread()
@@ -152,6 +159,17 @@ class ChipSuite(TestSuite, UserPromptSupport):
             raise DUTCommissioningError("Tool config is missing wifi config.")
 
         return await self.runner.pairing_ble_wifi(
+            ssid=self.config_matter.network.wifi.ssid,
+            password=self.config_matter.network.wifi.password,
+            setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,
+        )
+
+    async def __pair_with_dut_nfc_wifi(self) -> bool:
+        if self.config_matter.network.wifi is None:
+            raise DUTCommissioningError("Tool config is missing wifi config.")
+
+        return await self.runner.pairing_nfc_wifi(
             ssid=self.config_matter.network.wifi.ssid,
             password=self.config_matter.network.wifi.password,
             setup_code=self.config_matter.dut_config.setup_code,
