@@ -131,6 +131,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
         "--storage_path /root/admin_storage.json",
     ] == arguments
 
+
 @pytest.mark.asyncio
 async def test_generate_command_arguments_nfc_wifi() -> None:
     # Mock config
@@ -163,6 +164,7 @@ async def test_generate_command_arguments_nfc_wifi() -> None:
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
+
 
 @pytest.mark.asyncio
 async def test_generate_command_arguments_ble_thread() -> None:
