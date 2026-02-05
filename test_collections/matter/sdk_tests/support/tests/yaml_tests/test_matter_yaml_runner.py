@@ -649,7 +649,8 @@ async def test_pairing_thread_command_params_with_only_ba_port() -> None:
 
 @pytest.mark.asyncio
 async def test_pairing_thread_returns_false_on_no_response() -> None:
-    """Test that pairing_thread returns False when send_websocket_command returns None."""
+    """Test that pairing_thread returns False when send_websocket_command returns
+    None."""
     original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
         matter_settings.CHIP_TOOL_TRACE = False

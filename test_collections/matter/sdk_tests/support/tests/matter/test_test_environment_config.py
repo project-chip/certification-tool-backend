@@ -91,7 +91,8 @@ def test_create_config_matter_with_thread_no_ba_host_fails() -> None:
     with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter(**default_config_thread_no_ba_host)
 
-    # Check for the key parts of the error message (handles both "mandatory" and "mandatories")
+    # Check for the key parts of the error message (handles both "mandatory"
+    # and "mandatories")
     assert "ba_host and ba_port" in str(e.value)
     assert "mandator" in str(e.value)  # Matches both "mandatory" and "mandatories"
 
@@ -100,7 +101,8 @@ def test_create_config_matter_with_thread_no_ba_port_fails() -> None:
     with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter(**default_config_thread_no_ba_port)
 
-    # Check for the key parts of the error message (handles both "mandatory" and "mandatories")
+    # Check for the key parts of the error message (handles both "mandatory"
+    # and "mandatories")
     assert "ba_host and ba_port" in str(e.value)
     assert "mandator" in str(e.value)  # Matches both "mandatory" and "mandatories"
 
@@ -111,9 +113,10 @@ def test_create_config_matter_with_thread_no_ba_params_fails() -> None:
         "network": {
             "fabric_id": "0",
             "thread": {
-                "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-                "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-                "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+                "operational_dataset_hex": "0e080000000000010000000300001335060004001ff"
+                "fe00208fedcba9876543210070800000000000000050800000000000000030d4f70656"
+                "e54687265616444656d6f01021234041011223344556677889900aabbccddeeff000c0"
+                "402a0f7f8",
             },
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
@@ -130,7 +133,8 @@ def test_create_config_matter_with_thread_no_ba_params_fails() -> None:
     with pytest.raises(TestEnvironmentConfigError) as e:
         TestEnvironmentConfigMatter(**config)
 
-    # Check for the key parts of the error message (handles both "mandatory" and "mandatories")
+    # Check for the key parts of the error message (handles both "mandatory"
+    # and "mandatories")
     assert "ba_host and ba_port" in str(e.value)
     assert "mandator" in str(e.value)  # Matches both "mandatory" and "mandatories"
 

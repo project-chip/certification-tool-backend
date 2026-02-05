@@ -23,6 +23,13 @@ import pytest
 from app.models.test_suite_execution import TestSuiteExecution
 from app.user_prompt_support.constants import UserResponseStatusEnum
 from app.user_prompt_support.prompt_response import PromptResponse
+from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
+    ThreadBorderRouter,
+)
+from test_collections.matter.test_environment_config import (
+    TestEnvironmentConfigMatter,
+    ThreadExternalConfig,
+)
 
 from ...yaml_tests.models.chip_suite import (
     ChipSuite,
@@ -158,10 +165,6 @@ async def test_test_suite_commission_dut_allowing_retries_retry_unexpected() -> 
 @pytest.mark.asyncio
 async def test_pair_with_dut_thread_with_external_config_success() -> None:
     """Test pairing with THREAD mode using ThreadExternalConfig."""
-    from test_collections.matter.test_environment_config import (
-        TestEnvironmentConfigMatter,
-        ThreadExternalConfig,
-    )
 
     test_suite = ChipSuite(TestSuiteExecution())
 
@@ -170,9 +173,10 @@ async def test_pair_with_dut_thread_with_external_config_success() -> None:
         "network": {
             "fabric_id": "0",
             "thread": {
-                "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-                "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-                "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+                "operational_dataset_hex": "0e080000000000010000000300001335060004001ff"
+                "fe00208fedcba9876543210070800000000000000050800000000000000030d4f70656"
+                "e54687265616444656d6f01021234041011223344556677889900aabbccddeeff000c0"
+                "402a0f7f8",
                 "ba_host": "127.0.0.1",
                 "ba_port": 5684,
             },
@@ -209,8 +213,8 @@ async def test_pair_with_dut_thread_with_external_config_success() -> None:
     )
     mock_pairing_thread.assert_called_once_with(
         hex_dataset="0e080000000000010000000300001335060004001fffe002"
-        "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-        "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+        "08fedcba9876543210070800000000000000050800000000000000030d4f70656e546872656164"
+        "44656d6f01021234041011223344556677889900aabbccddeeff000c0402a0f7f8",
         payload="MT:ABC123",
         ba_host="127.0.0.1",
         ba_port=5684,
@@ -220,12 +224,6 @@ async def test_pair_with_dut_thread_with_external_config_success() -> None:
 @pytest.mark.asyncio
 async def test_pair_with_dut_thread_with_auto_config_success() -> None:
     """Test pairing with THREAD mode using ThreadAutoConfig."""
-    from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
-        ThreadBorderRouter,
-    )
-    from test_collections.matter.test_environment_config import (
-        TestEnvironmentConfigMatter,
-    )
 
     test_suite = ChipSuite(TestSuiteExecution())
 
@@ -269,7 +267,8 @@ async def test_pair_with_dut_thread_with_auto_config_success() -> None:
     mock_border_router.form_thread_topology = mock.AsyncMock()
 
     with mock.patch(
-        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite.ThreadBorderRouter",
+        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite."
+        "ThreadBorderRouter",
         return_value=mock_border_router,
     ), mock.patch.object(
         target=test_suite.runner.chip_server,
@@ -300,9 +299,6 @@ async def test_pair_with_dut_thread_with_auto_config_success() -> None:
 @pytest.mark.asyncio
 async def test_pair_with_dut_thread_missing_thread_config_fails() -> None:
     """Test that pairing fails when thread config is missing."""
-    from test_collections.matter.test_environment_config import (
-        TestEnvironmentConfigMatter,
-    )
 
     test_suite = ChipSuite(TestSuiteExecution())
 
@@ -311,9 +307,10 @@ async def test_pair_with_dut_thread_missing_thread_config_fails() -> None:
         "network": {
             "fabric_id": "0",
             "thread": {
-                "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-                "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-                "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+                "operational_dataset_hex": "0e080000000000010000000300001335060004001ff"
+                "fe00208fedcba9876543210070800000000000000050800000000000000030d4f70656"
+                "e54687265616444656d6f01021234041011223344556677889900aabbccddeeff000c0"
+                "402a0f7f8",
                 "ba_host": "127.0.0.1",
                 "ba_port": 5684,
             },
@@ -342,9 +339,6 @@ async def test_pair_with_dut_thread_missing_thread_config_fails() -> None:
 @pytest.mark.asyncio
 async def test_pair_with_dut_thread_invalid_thread_config_type_fails() -> None:
     """Test that pairing fails when thread config is invalid type."""
-    from test_collections.matter.test_environment_config import (
-        TestEnvironmentConfigMatter,
-    )
 
     test_suite = ChipSuite(TestSuiteExecution())
 
@@ -353,9 +347,10 @@ async def test_pair_with_dut_thread_invalid_thread_config_type_fails() -> None:
         "network": {
             "fabric_id": "0",
             "thread": {
-                "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-                "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-                "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+                "operational_dataset_hex": "0e080000000000010000000300001335060004001ff"
+                "fe00208fedcba9876543210070800000000000000050800000000000000030d4f70656"
+                "e54687265616444656d6f01021234041011223344556677889900aabbccddeeff000c0"
+                "402a0f7f8",
                 "ba_host": "127.0.0.1",
                 "ba_port": 5684,
             },
@@ -384,9 +379,6 @@ async def test_pair_with_dut_thread_invalid_thread_config_type_fails() -> None:
 @pytest.mark.asyncio
 async def test_pair_with_dut_thread_pairing_fails() -> None:
     """Test that pairing with THREAD mode returns False when pairing fails."""
-    from test_collections.matter.test_environment_config import (
-        TestEnvironmentConfigMatter,
-    )
 
     test_suite = ChipSuite(TestSuiteExecution())
 
@@ -395,9 +387,10 @@ async def test_pair_with_dut_thread_pairing_fails() -> None:
         "network": {
             "fabric_id": "0",
             "thread": {
-                "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-                "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-                "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+                "operational_dataset_hex": "0e080000000000010000000300001335060004001ff"
+                "fe00208fedcba9876543210070800000000000000050800000000000000030d4f70656"
+                "e54687265616444656d6f01021234041011223344556677889900aabbccddeeff000c0"
+                "402a0f7f8",
                 "ba_host": "127.0.0.1",
                 "ba_port": 5684,
             },
