@@ -136,9 +136,9 @@ default_config_thread_valid = {
     "network": {
         "fabric_id": "0",
         "thread": {
-            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-            "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-            "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe00"
+            "208fedcba9876543210070800000000000000050800000000000000030d4f70656e5468726"
+            "5616444656d6f01021234041011223344556677889900aabbccddeeff000c0402a0f7f8",
             "ba_host": "127.0.0.1",
             "ba_port": 5684,
         },
@@ -159,9 +159,9 @@ default_config_thread_no_ba_host = {
     "network": {
         "fabric_id": "0",
         "thread": {
-            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-            "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-            "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe00"
+            "208fedcba9876543210070800000000000000050800000000000000030d4f70656e5468726"
+            "5616444656d6f01021234041011223344556677889900aabbccddeeff000c0402a0f7f8",
             "ba_port": 5684,
         },
         "wifi": {"ssid": "testharness", "password": "wifi-password"},
@@ -181,9 +181,9 @@ default_config_thread_no_ba_port = {
     "network": {
         "fabric_id": "0",
         "thread": {
-            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe002"
-            "08fedcba9876543210070800000000000000050800000000000000030d4f70656e54687265616444656d6f0102"
-            "1234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe00"
+            "208fedcba9876543210070800000000000000050800000000000000030d4f70656e5468726"
+            "5616444656d6f01021234041011223344556677889900aabbccddeeff000c0402a0f7f8",
             "ba_host": "127.0.0.1",
         },
         "wifi": {"ssid": "testharness", "password": "wifi-password"},

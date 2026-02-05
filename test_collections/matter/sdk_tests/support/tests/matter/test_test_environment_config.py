@@ -26,10 +26,7 @@ from test_collections.matter.sdk_tests.support.tests.utils.utils import (
     default_config_thread_valid,
     default_matter_config,
 )
-from test_collections.matter.test_environment_config import (
-    TestEnvironmentConfigMatter,
-    TestEnvironmentConfigMatterError,
-)
+from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 
 def test_create_config_matter_with_valid_config_success() -> None:
@@ -240,8 +237,8 @@ def test_create_config_matter_with_only_qr_code_succeeds() -> None:
     config_matter = TestEnvironmentConfigMatter(**config)
 
     assert config_matter is not None
-    assert config_matter.test_parameters.get("qr-code") == "MT:ABC123"
-    assert "manual-code" not in config_matter.test_parameters
+    assert config_matter.test_parameters.get("qr-code") == "MT:ABC123"  # type: ignore
+    assert "manual-code" not in config_matter.test_parameters  # type: ignore
 
 
 def test_create_config_matter_with_only_manual_code_succeeds() -> None:
@@ -279,8 +276,8 @@ def test_create_config_matter_with_only_manual_code_succeeds() -> None:
     config_matter = TestEnvironmentConfigMatter(**config)
 
     assert config_matter is not None
-    assert config_matter.test_parameters.get("manual-code") == "34970112332"
-    assert "qr-code" not in config_matter.test_parameters
+    assert config_matter.test_parameters.get("manual-code") == "34970112332"  # type: ignore
+    assert "qr-code" not in config_matter.test_parameters  # type: ignore
 
 
 @pytest.mark.parametrize(
