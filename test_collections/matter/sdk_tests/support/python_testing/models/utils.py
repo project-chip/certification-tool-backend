@@ -114,7 +114,6 @@ async def generate_command_arguments(
             if ba_port:
                 arguments.append(f"--thread-ba-port {ba_port}")
 
-
     # Retrieve arguments from test_parameters
     if test_parameters:
         # If manual-code or qr-code and also discriminator and passcode are provided,

@@ -135,10 +135,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
             is DutPairingModeEnum.WIFIPAF_WIFI
         ):
             pair_result = await self.__pair_with_dut_wifipaf_wifi()
-        elif (
-            self.config_matter.dut_config.pairing_mode
-            is DutPairingModeEnum.THREAD
-        ):
+        elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.THREAD:
             pair_result = await self.__pair_with_dut_thread()
         else:
             raise DUTCommissioningError("Unsupported DUT pairing mode")
@@ -245,7 +242,6 @@ class ChipSuite(TestSuite, UserPromptSupport):
             ba_host=ba_host,
             ba_port=ba_port,
         )
-
 
     async def __start_border_router(
         self, config: ThreadAutoConfig

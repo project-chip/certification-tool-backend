@@ -381,7 +381,6 @@ class MatterYAMLRunner(metaclass=Singleton):
             len([lambda x: x.get("error") for x in json_payload.get("results")])
         )
 
-
     def set_pics(self, pics: PICS) -> None:
         """Sends command to create pics file.
 

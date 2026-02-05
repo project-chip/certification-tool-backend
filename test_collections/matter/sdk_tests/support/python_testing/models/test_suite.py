@@ -107,8 +107,7 @@ class PythonTestSuite(TestSuite):
         self.matter_config = TestEnvironmentConfigMatter(**self.config)
         if (
             self.matter_config.dut_config.pairing_mode is DutPairingModeEnum.NFC_THREAD
-            or self.matter_config.dut_config.pairing_mode
-            is DutPairingModeEnum.THREAD
+            or self.matter_config.dut_config.pairing_mode is DutPairingModeEnum.THREAD
         ):
             # When PCSC reader is used in a Docker container, pollkit should
             #  be disabled
@@ -141,8 +140,7 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
             self.matter_config.dut_config.pairing_mode == DutPairingModeEnum.BLE_THREAD
             or self.matter_config.dut_config.pairing_mode
             == DutPairingModeEnum.NFC_THREAD
-            or self.matter_config.dut_config.pairing_mode
-            == DutPairingModeEnum.THREAD
+            or self.matter_config.dut_config.pairing_mode == DutPairingModeEnum.THREAD
         ) and isinstance(self.matter_config.network.thread, ThreadAutoConfig):
             await self.border_router.start_device(self.matter_config.network.thread)
             await self.border_router.form_thread_topology()
