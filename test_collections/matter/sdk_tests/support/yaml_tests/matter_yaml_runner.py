@@ -177,11 +177,8 @@ class MatterYAMLRunner(metaclass=Singleton):
             return False
 
         json_payload = json.loads(response)
-        # TODO: Need to save logs maybe?
-        # logs = MatterLog.decode_logs(json_payload.get('logs'))
-        return not bool(
-            len([lambda x: x.get("error") for x in json_payload.get("results")])
-        )
+        results = json_payload.get("results", [])
+        return not any(r.get("error") for r in results)
 
     async def run_test(
         self,
@@ -377,9 +374,8 @@ class MatterYAMLRunner(metaclass=Singleton):
             return False
 
         json_payload = json.loads(response)
-        return not bool(
-            len([lambda x: x.get("error") for x in json_payload.get("results")])
-        )
+        results = json_payload.get("results", [])
+        return not any(r.get("error") for r in results)
 
     def set_pics(self, pics: PICS) -> None:
         """Sends command to create pics file.
