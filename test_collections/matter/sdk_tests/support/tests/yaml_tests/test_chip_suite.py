@@ -15,6 +15,7 @@
 #
 # type: ignore
 # Ignore mypy type check for this file
+# flake8: noqa
 
 from unittest import mock
 

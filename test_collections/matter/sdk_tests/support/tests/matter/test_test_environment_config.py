@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# type: ignore
+# Ignore mypy type check for this file
+# flake8: noqa
 import pytest
 
 from app.schemas.test_environment_config import TestEnvironmentConfigError
