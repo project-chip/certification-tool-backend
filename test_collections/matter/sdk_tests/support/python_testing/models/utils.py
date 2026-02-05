@@ -99,20 +99,10 @@ async def generate_command_arguments(
         # Add Border Agent parameters for THREAD
         if pairing_mode == DutPairingModeEnum.THREAD:
             thread_config = config.network.thread
-            ba_host = None
-            ba_port = None
-
-            if isinstance(thread_config, ThreadExternalConfig):
-                ba_host = thread_config.ba_host
-                ba_port = thread_config.ba_port
-            elif isinstance(thread_config, ThreadAutoConfig):
-                ba_host = thread_config.ba_host
-                ba_port = thread_config.ba_port
-
-            if ba_host:
-                arguments.append(f"--thread-ba-host {ba_host}")
-            if ba_port:
-                arguments.append(f"--thread-ba-port {ba_port}")
+            if thread_config.ba_host:
+                arguments.append(f"--thread-ba-host {thread_config.ba_host}")
+            if thread_config.ba_port:
+                arguments.append(f"--thread-ba-port {thread_config.ba_port}")
 
     # Retrieve arguments from test_parameters
     if test_parameters:
