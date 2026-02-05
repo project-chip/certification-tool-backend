@@ -218,15 +218,14 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         # Get thread configuration
         thread_config = self.config_matter.network.thread
+        ba_host = thread_config.ba_host
+        ba_port = thread_config.ba_port
+
         if isinstance(thread_config, ThreadExternalConfig):
             hex_dataset = thread_config.operational_dataset_hex
-            ba_host = thread_config.ba_host
-            ba_port = thread_config.ba_port
         elif isinstance(thread_config, ThreadAutoConfig):
             border_router = await self.__start_border_router(thread_config)
             hex_dataset = border_router.active_dataset
-            ba_host = thread_config.ba_host
-            ba_port = thread_config.ba_port
         else:
             raise DUTCommissioningError("Invalid thread configuration")
 
