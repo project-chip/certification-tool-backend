@@ -40,7 +40,7 @@ def test_create_config_matter_with_valid_config_success() -> None:
 
 def test_create_config_matter_with_no_config_fails() -> None:
     with pytest.raises(TestEnvironmentConfigError) as e:
-        TestEnvironmentConfigMatter()  # type: ignore
+        TestEnvironmentConfigMatter()
         assert "The informed configuration has one or more invalid properties." == str(
             e
         )
@@ -240,8 +240,8 @@ def test_create_config_matter_with_only_qr_code_succeeds() -> None:
     config_matter = TestEnvironmentConfigMatter(**config)
 
     assert config_matter is not None
-    assert config_matter.test_parameters.get("qr-code") == "MT:ABC123"  # type: ignore
-    assert "manual-code" not in config_matter.test_parameters  # type: ignore
+    assert config_matter.test_parameters.get("qr-code") == "MT:ABC123"
+    assert "manual-code" not in config_matter.test_parameters
 
 
 def test_create_config_matter_with_only_manual_code_succeeds() -> None:
@@ -279,8 +279,8 @@ def test_create_config_matter_with_only_manual_code_succeeds() -> None:
     config_matter = TestEnvironmentConfigMatter(**config)
 
     assert config_matter is not None
-    assert config_matter.test_parameters.get("manual-code") == "34970112332"  # type: ignore
-    assert "qr-code" not in config_matter.test_parameters  # type: ignore
+    assert config_matter.test_parameters.get("manual-code") == "34970112332"
+    assert "qr-code" not in config_matter.test_parameters
 
 
 @pytest.mark.parametrize(

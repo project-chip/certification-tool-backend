@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# type: ignore
-# Ignore mypy type check for this file
-# flake8: noqa
 from __future__ import annotations
 
 import json
@@ -344,7 +341,8 @@ class MatterYAMLRunner(metaclass=Singleton):
         """Commission device using thread pairing with Border Agent.
 
         Args:
-            hex_dataset: Thread operational dataset in hex format (will be prefixed with "hex:")
+            hex_dataset: Thread operational dataset in hex format (will be prefixed with
+             "hex:")
             payload: Manual pairing code or QR code payload
             ba_host: Border Agent host address (optional)
             ba_port: Border Agent port (optional)
@@ -362,10 +360,10 @@ class MatterYAMLRunner(metaclass=Singleton):
         command_parts = [PAIRING_CMD, PAIRING_MODE_THREAD] + params
 
         if ba_host:
-            command_parts.append(f"--thread-ba-host")
+            command_parts.append("--thread-ba-host")
             command_parts.append(ba_host)
         if ba_port:
-            command_parts.append(f"--thread-ba-port")
+            command_parts.append("--thread-ba-port")
             command_parts.append(str(ba_port))
 
         if matter_settings.CHIP_TOOL_TRACE:
