@@ -139,10 +139,7 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         if self.matter_config.dut_config.pairing_mode in (
             DutPairingModeEnum.BLE_THREAD,
             DutPairingModeEnum.NFC_THREAD,
-        ) and isinstance(
-            self.matter_config.network.thread, 
-            ThreadAutoConfig
-        ):
+        ) and isinstance(self.matter_config.network.thread, ThreadAutoConfig):
             await self.border_router.start_device(self.matter_config.network.thread)
             await self.border_router.form_thread_topology()
 
