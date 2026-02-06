@@ -88,10 +88,7 @@ async def generate_command_arguments(
     if pairing_mode in (DutPairingModeEnum.BLE_WIFI, DutPairingModeEnum.NFC_WIFI):
         arguments.append(f"--wifi-ssid {config.network.wifi.ssid}")
         arguments.append(f"--wifi-passphrase {config.network.wifi.password}")
-    elif (
-        pairing_mode == DutPairingModeEnum.BLE_THREAD
-        or pairing_mode == DutPairingModeEnum.NFC_THREAD
-    ):
+    elif pairing_mode in (DutPairingModeEnum.BLE_THREAD, DutPairingModeEnum.NFC_THREAD):
         dataset_hex = await __thread_dataset_hex(config.network.thread)
         arguments.append(f"--thread-dataset-hex {dataset_hex}")
 
