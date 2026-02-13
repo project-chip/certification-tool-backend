@@ -98,8 +98,6 @@ async def test_generate_command_arguments_on_network() -> None:
     ] == arguments
 
 
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "pairing_mode, commissioning_method",
     [
@@ -107,7 +105,11 @@ async def test_generate_command_arguments_on_network() -> None:
         (DutPairingModeEnum.NFC_WIFI, "nfc-wifi"),
     ],
 )
-async def test_generate_command_arguments_wifi_pairing_mode() -> None:
+@pytest.mark.asyncio
+async def test_generate_command_arguments_wifi_pairing_mode(
+    pairing_mode: DutPairingModeEnum,
+    commissioning_method: str,
+) -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)  # type: ignore
 

@@ -385,7 +385,9 @@ async def test_pairing_on_network_command_params() -> None:
         ("pairing_nfc_wifi", "nfc-wifi"),
     ],
 )
-async def test_pairing_wifi_command_params(pairing_fn_name: str, pairing_cmd: str) -> None:
+async def test_pairing_wifi_command_params(
+    pairing_fn_name: str, pairing_cmd: str
+) -> None:
     original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:
         matter_settings.CHIP_TOOL_TRACE = False

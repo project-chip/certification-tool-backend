@@ -155,7 +155,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
     async def __pair_wifi_dut_wifi_modes(self, mode: str) -> bool:
         if self.config_matter.network.wifi is None:
             raise DUTCommissioningError("Tool config is missing wifi config.")
-        
+
         pairing_function = getattr(self.runner, f"pairing_{mode}_wifi")
         return await pairing_function(
             ssid=self.config_matter.network.wifi.ssid,
