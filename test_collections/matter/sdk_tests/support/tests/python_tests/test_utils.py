@@ -98,8 +98,16 @@ async def test_generate_command_arguments_on_network() -> None:
     ] == arguments
 
 
+
 @pytest.mark.asyncio
-async def test_generate_command_arguments_ble_wifi() -> None:
+@pytest.mark.parametrize(
+    "pairing_mode, commissioning_method",
+    [
+        (DutPairingModeEnum.BLE_WIFI, "ble-wifi"),
+        (DutPairingModeEnum.NFC_WIFI, "nfc-wifi"),
+    ],
+)
+async def test_generate_command_arguments_wifi_pairing_mode() -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)  # type: ignore
 
@@ -111,7 +119,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
     mock_dut_config = DutConfig(
         discriminator="147",
         setup_code="357",
-        pairing_mode=DutPairingModeEnum.BLE_WIFI,
+        pairing_mode=pairing_mode,
     )
 
     mock_config.dut_config = mock_dut_config
@@ -122,41 +130,7 @@ async def test_generate_command_arguments_ble_wifi() -> None:
 
     assert [
         "--trace-to json:log",
-        "--commissioning-method ble-wifi",
-        "--wifi-ssid testharness",
-        "--wifi-passphrase wifi-password",
-        "--discriminator 147",
-        "--passcode 357",
-        "--paa-trust-store-path /paa-root-certs",
-        "--storage_path /root/admin_storage.json",
-    ] == arguments
-
-
-@pytest.mark.asyncio
-async def test_generate_command_arguments_nfc_wifi() -> None:
-    # Mock config
-    mock_config = default_environment_config.copy(deep=True)  # type: ignore
-
-    mock_config.test_parameters = {
-        "paa-trust-store-path": "/paa-root-certs",
-        "storage_path": "/root/admin_storage.json",
-    }
-
-    mock_dut_config = DutConfig(
-        discriminator="147",
-        setup_code="357",
-        pairing_mode=DutPairingModeEnum.NFC_WIFI,
-    )
-
-    mock_config.dut_config = mock_dut_config
-
-    arguments = await generate_command_arguments(
-        config=mock_config, omit_commissioning_method=False
-    )
-
-    assert [
-        "--trace-to json:log",
-        "--commissioning-method nfc-wifi",
+        f"--commissioning-method {commissioning_method}",
         "--wifi-ssid testharness",
         "--wifi-passphrase wifi-password",
         "--discriminator 147",

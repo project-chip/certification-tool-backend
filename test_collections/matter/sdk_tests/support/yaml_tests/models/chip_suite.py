@@ -124,9 +124,9 @@ class ChipSuite(TestSuite, UserPromptSupport):
         if self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.ON_NETWORK:
             pair_result = await self.__pair_with_dut_onnetwork()
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
-            pair_result = await self.__pair_with_dut_ble_wifi()
+            pair_result = await self.__pair_wifi_dut_wifi_modes("ble")
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI:
-            pair_result = await self.__pair_with_dut_nfc_wifi()
+            pair_result = await self.__pair_wifi_dut_wifi_modes("nfc")
         elif (
             self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
         ):
@@ -139,7 +139,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
             self.config_matter.dut_config.pairing_mode
             is DutPairingModeEnum.WIFIPAF_WIFI
         ):
-            pair_result = await self.__pair_with_dut_wifipaf_wifi()
+            pair_result = await self.__pair_wifi_dut_wifi_modes("wifipaf")
         else:
             raise DUTCommissioningError("Unsupported DUT pairing mode")
 
@@ -152,33 +152,12 @@ class ChipSuite(TestSuite, UserPromptSupport):
             discriminator=self.config_matter.dut_config.discriminator,
         )
 
-    async def __pair_with_dut_ble_wifi(self) -> bool:
+    async def __pair_wifi_dut_wifi_modes(self, mode: str) -> bool:
         if self.config_matter.network.wifi is None:
             raise DUTCommissioningError("Tool config is missing wifi config.")
-
-        return await self.runner.pairing_ble_wifi(
-            ssid=self.config_matter.network.wifi.ssid,
-            password=self.config_matter.network.wifi.password,
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
-        )
-
-    async def __pair_with_dut_nfc_wifi(self) -> bool:
-        if self.config_matter.network.wifi is None:
-            raise DUTCommissioningError("Tool config is missing wifi config.")
-
-        return await self.runner.pairing_nfc_wifi(
-            ssid=self.config_matter.network.wifi.ssid,
-            password=self.config_matter.network.wifi.password,
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
-        )
-
-    async def __pair_with_dut_wifipaf_wifi(self) -> bool:
-        if self.config_matter.network.wifi is None:
-            raise DUTCommissioningError("Tool config is missing wifi config.")
-
-        return await self.runner.pairing_wifipaf_wifi(
+        
+        pairing_function = getattr(self.runner, f"pairing_{mode}_wifi")
+        return await pairing_function(
             ssid=self.config_matter.network.wifi.ssid,
             password=self.config_matter.network.wifi.password,
             setup_code=self.config_matter.dut_config.setup_code,
