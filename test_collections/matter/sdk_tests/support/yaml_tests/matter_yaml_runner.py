@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2023-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ PAIRING_MODE_NFC_WIFI = "nfc-wifi"
 PAIRING_MODE_BLE_THREAD = "ble-thread"
 PAIRING_MODE_WIFIPAF_WIFI = "wifipaf-wifi"
 PAIRING_MODE_NFC_THREAD = "nfc-thread"
+PAIRING_MODE_THREAD = "code-thread"
 PAIRING_MODE_UNPAIR = "unpair"
 
 # Websocket runner
@@ -177,11 +178,8 @@ class MatterYAMLRunner(metaclass=Singleton):
             return False
 
         json_payload = json.loads(response)
-        # TODO: Need to save logs maybe?
-        # logs = MatterLog.decode_logs(json_payload.get('logs'))
-        return not bool(
-            len([lambda x: x.get("error") for x in json_payload.get("results")])
-        )
+        results = json_payload.get("results", [])
+        return not any(r.get("error") for r in results)
 
     async def run_test(
         self,
@@ -349,6 +347,53 @@ class MatterYAMLRunner(metaclass=Singleton):
             setup_code,
             discriminator,
         )
+
+    async def pairing_thread(
+        self,
+        hex_dataset: str,
+        payload: str,
+        ba_host: Optional[str] = None,
+        ba_port: Optional[int] = None,
+    ) -> bool:
+        """Commission device using thread pairing with Border Agent.
+
+        Args:
+            hex_dataset: Thread operational dataset in hex format (will be prefixed with
+             "hex:")
+            payload: Manual pairing code or QR code payload
+            ba_host: Border Agent host address (optional)
+            ba_port: Border Agent port (optional)
+
+        Returns:
+            bool: True if pairing succeeded, False otherwise
+        """
+        params = [
+            hex(self.chip_server.node_id),
+            f"hex:{hex_dataset}",
+            payload,
+        ]
+
+        # Build command string with optional BA parameters
+        command_parts = [PAIRING_CMD, PAIRING_MODE_THREAD] + params
+
+        if ba_host:
+            command_parts.append("--thread-ba-host")
+            command_parts.append(ba_host)
+        if ba_port:
+            command_parts.append("--thread-ba-port")
+            command_parts.append(str(ba_port))
+
+        if matter_settings.CHIP_TOOL_TRACE:
+            topic = f"PAIRING_{PAIRING_MODE_THREAD}"
+            command_parts.append(self.chip_server.trace_file_params(topic))
+
+        response = await self.send_websocket_command(" ".join(command_parts))
+        if not response:
+            return False
+
+        json_payload = json.loads(response)
+        results = json_payload.get("results", [])
+        return not any(r.get("error") for r in results)
 
     def set_pics(self, pics: PICS) -> None:
         """Sends command to create pics file.

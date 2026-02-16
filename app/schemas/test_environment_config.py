@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Project CHIP Authors
+# Copyright (c) 2023-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ class ThreadAutoConfig(BaseModel):
     network_interface: str
     dataset: ThreadDataset
     otbr_docker_image: Optional[str]
+    ba_host: Optional[str] = None
+    ba_port: Optional[int] = None
 
 
 class TestEnvironmentConfigError(Exception):

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Project CHIP Authors
+# Copyright (c) 2024-2026 Project CHIP Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -123,6 +123,73 @@ default_config_invalid_dut_added_property = {
 default_config_no_network = {
     "dut_config": {
         "pairing_mode": "onnetwork",
+        "setup_code": "20202021",
+        "discriminator": "3840",
+        "chip_use_paa_certs": False,
+        "trace_log": True,
+    },
+    "test_parameters": None,
+}
+
+# THREAD with ba_host, ba_port, and operational_dataset_hex (valid)
+default_config_thread_valid = {
+    "network": {
+        "fabric_id": "0",
+        "thread": {
+            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe00"
+            "208fedcba9876543210070800000000000000050800000000000000030d4f70656e5468726"
+            "5616444656d6f01021234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+            "ba_host": "127.0.0.1",
+            "ba_port": 5684,
+        },
+        "wifi": {"ssid": "testharness", "password": "wifi-password"},
+    },
+    "dut_config": {
+        "pairing_mode": "thread",
+        "setup_code": "20202021",
+        "discriminator": "3840",
+        "chip_use_paa_certs": False,
+        "trace_log": True,
+    },
+    "test_parameters": None,
+}
+
+# THREAD without ba_host (invalid)
+default_config_thread_no_ba_host = {
+    "network": {
+        "fabric_id": "0",
+        "thread": {
+            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe00"
+            "208fedcba9876543210070800000000000000050800000000000000030d4f70656e5468726"
+            "5616444656d6f01021234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+            "ba_port": 5684,
+        },
+        "wifi": {"ssid": "testharness", "password": "wifi-password"},
+    },
+    "dut_config": {
+        "pairing_mode": "thread",
+        "setup_code": "20202021",
+        "discriminator": "3840",
+        "chip_use_paa_certs": False,
+        "trace_log": True,
+    },
+    "test_parameters": None,
+}
+
+# THREAD without ba_port (invalid)
+default_config_thread_no_ba_port = {
+    "network": {
+        "fabric_id": "0",
+        "thread": {
+            "operational_dataset_hex": "0e080000000000010000000300001335060004001fffe00"
+            "208fedcba9876543210070800000000000000050800000000000000030d4f70656e5468726"
+            "5616444656d6f01021234041011223344556677889900aabbccddeeff000c0402a0f7f8",
+            "ba_host": "127.0.0.1",
+        },
+        "wifi": {"ssid": "testharness", "password": "wifi-password"},
+    },
+    "dut_config": {
+        "pairing_mode": "thread",
         "setup_code": "20202021",
         "discriminator": "3840",
         "chip_use_paa_certs": False,
