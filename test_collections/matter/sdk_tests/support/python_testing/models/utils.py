@@ -52,6 +52,11 @@ TEST_OUTPUT_FILE_PATH = "sdk_checkout/python_testing/test_output.txt"
 
 TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
 
+NFC_PAIRING_MODES = [
+    DutPairingModeEnum.NFC_WIFI.value,
+    DutPairingModeEnum.NFC_THREAD.value,
+]
+
 
 async def generate_command_arguments(
     config: TestEnvironmentConfigMatter, omit_commissioning_method: bool = False
@@ -112,6 +117,7 @@ async def generate_command_arguments(
         if (
             "manual-code" not in test_parameters.keys()
             and "qr-code" not in test_parameters.keys()
+            and pairing_mode not in NFC_PAIRING_MODES
         ):
             # Retrieve arguments from dut_config
             arguments.append(f"--discriminator {dut_config.discriminator}")
@@ -122,8 +128,9 @@ async def generate_command_arguments(
             arguments.append(f"--{name} {arg_value}")
     else:
         # Retrieve arguments from dut_config
-        arguments.append(f"--discriminator {dut_config.discriminator}")
-        arguments.append(f"--passcode {dut_config.setup_code}")
+        if pairing_mode not in NFC_PAIRING_MODES:
+            arguments.append(f"--discriminator {dut_config.discriminator}")
+            arguments.append(f"--passcode {dut_config.setup_code}")
 
     return arguments
 
