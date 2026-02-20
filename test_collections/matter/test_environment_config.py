@@ -115,7 +115,8 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                 thread_config = network.get("thread") if network else None
                 if not thread_config:
                     raise TestEnvironmentConfigMatterError(
-                        "Thread configuration is required for THREAD_MESHCOP pairing mode"
+                        "Thread configuration is required for THREAD_MESHCOP pairing"
+                        " mode"
                     )
 
                 # Check if thread config is a dict or object

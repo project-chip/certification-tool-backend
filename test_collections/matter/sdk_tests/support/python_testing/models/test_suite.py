@@ -134,9 +134,9 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
         await super().setup()
 
-        # If in BLE-Thread, NFC-Thread, or THREAD_MESHCOP mode and a Thread Auto-Config was
-        # provided by the user, start a new OTBR container app with the according Thread
-        #  topology for all tests in the Python Tests Suite.
+        # If in BLE-Thread, NFC-Thread, or THREAD_MESHCOP mode and a Thread Auto-Config
+        # was provided by the user, start a new OTBR container app with the according
+        # Thread topology for all tests in the Python Tests Suite.
         if self.matter_config.dut_config.pairing_mode in (
             DutPairingModeEnum.BLE_THREAD,
             DutPairingModeEnum.NFC_THREAD,
