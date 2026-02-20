@@ -109,13 +109,13 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                         f"The field {field} is required for dut_config configuration"
                     )
 
-            # Validate THREAD mode requires ba_host and ba_port
+            # Validate THREAD_MESHCOP mode requires ba_host and ba_port
             pairing_mode = dut_config.get("pairing_mode")
-            if pairing_mode == DutPairingModeEnum.THREAD:
+            if pairing_mode == DutPairingModeEnum.THREAD_MESHCOP:
                 thread_config = network.get("thread") if network else None
                 if not thread_config:
                     raise TestEnvironmentConfigMatterError(
-                        "Thread configuration is required for THREAD pairing mode"
+                        "Thread configuration is required for THREAD_MESHCOP pairing mode"
                     )
 
                 # Check if thread config is a dict or object
@@ -129,5 +129,5 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                 if not ba_host or not ba_port:
                     raise TestEnvironmentConfigMatterError(
                         "ba_host and ba_port are mandatories in thread configuration "
-                        "when pairing_mode is THREAD"
+                        "when pairing_mode is THREAD_MESHCOP"
                     )

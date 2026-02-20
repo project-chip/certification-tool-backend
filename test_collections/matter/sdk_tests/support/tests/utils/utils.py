@@ -145,7 +145,7 @@ default_config_thread_valid = {
         "wifi": {"ssid": "testharness", "password": "wifi-password"},
     },
     "dut_config": {
-        "pairing_mode": "thread",
+        "pairing_mode": "thread-meshcop",
         "setup_code": "20202021",
         "discriminator": "3840",
         "chip_use_paa_certs": False,
@@ -167,7 +167,7 @@ default_config_thread_no_ba_host = {
         "wifi": {"ssid": "testharness", "password": "wifi-password"},
     },
     "dut_config": {
-        "pairing_mode": "thread",
+        "pairing_mode": "thread-meshcop",
         "setup_code": "20202021",
         "discriminator": "3840",
         "chip_use_paa_certs": False,
@@ -189,7 +189,7 @@ default_config_thread_no_ba_port = {
         "wifi": {"ssid": "testharness", "password": "wifi-password"},
     },
     "dut_config": {
-        "pairing_mode": "thread",
+        "pairing_mode": "thread-meshcop",
         "setup_code": "20202021",
         "discriminator": "3840",
         "chip_use_paa_certs": False,

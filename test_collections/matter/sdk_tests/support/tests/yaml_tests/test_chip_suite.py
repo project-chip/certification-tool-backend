@@ -184,7 +184,7 @@ async def test_pair_with_dut_thread_with_external_config_success() -> None:
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
         "dut_config": {
-            "pairing_mode": "thread",
+            "pairing_mode": "thread-meshcop",
             "setup_code": "20202021",
             "discriminator": "3840",
             "chip_use_paa_certs": False,
@@ -250,7 +250,7 @@ async def test_pair_with_dut_thread_with_auto_config_success() -> None:
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
         "dut_config": {
-            "pairing_mode": "thread",
+            "pairing_mode": "thread-meshcop",
             "setup_code": "20202021",
             "discriminator": "3840",
             "chip_use_paa_certs": False,
@@ -318,7 +318,7 @@ async def test_pair_with_dut_thread_missing_thread_config_fails() -> None:
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
         "dut_config": {
-            "pairing_mode": "thread",
+            "pairing_mode": "thread-meshcop",
             "setup_code": "20202021",
             "discriminator": "3840",
             "chip_use_paa_certs": False,
@@ -358,7 +358,7 @@ async def test_pair_with_dut_thread_invalid_thread_config_type_fails() -> None:
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
         "dut_config": {
-            "pairing_mode": "thread",
+            "pairing_mode": "thread-meshcop",
             "setup_code": "20202021",
             "discriminator": "3840",
             "chip_use_paa_certs": False,
@@ -398,7 +398,7 @@ async def test_pair_with_dut_thread_pairing_fails() -> None:
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
         "dut_config": {
-            "pairing_mode": "thread",
+            "pairing_mode": "thread-meshcop",
             "setup_code": "20202021",
             "discriminator": "3840",
             "chip_use_paa_certs": False,

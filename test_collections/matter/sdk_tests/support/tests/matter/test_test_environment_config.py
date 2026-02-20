@@ -82,7 +82,7 @@ def test_create_config_matter_with_thread_valid_succeeds() -> None:
     config_matter = TestEnvironmentConfigMatter(**default_config_thread_valid)
 
     assert config_matter is not None
-    assert config_matter.dut_config.pairing_mode == "thread"
+    assert config_matter.dut_config.pairing_mode == "thread-meshcop"
     assert config_matter.network.thread.ba_host == "127.0.0.1"
     assert config_matter.network.thread.ba_port == 5684
 
@@ -108,7 +108,7 @@ def test_create_config_matter_with_thread_no_ba_port_fails() -> None:
 
 
 def test_create_config_matter_with_thread_no_ba_params_fails() -> None:
-    """Test that THREAD mode fails when both ba_host and ba_port are missing."""
+    """Test that THREAD_MESHCOP mode fails when both ba_host and ba_port are missing."""
     config = {
         "network": {
             "fabric_id": "0",
@@ -121,7 +121,7 @@ def test_create_config_matter_with_thread_no_ba_params_fails() -> None:
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
         "dut_config": {
-            "pairing_mode": "thread",
+            "pairing_mode": "thread-meshcop",
             "setup_code": "20202021",
             "discriminator": "3840",
             "chip_use_paa_certs": False,
@@ -140,14 +140,14 @@ def test_create_config_matter_with_thread_no_ba_params_fails() -> None:
 
 
 def test_create_config_matter_with_thread_no_thread_config_fails() -> None:
-    """Test that THREAD mode fails when thread config is missing entirely."""
+    """Test that THREAD_MESHCOP mode fails when thread config is missing entirely."""
     config = {
         "network": {
             "fabric_id": "0",
             "wifi": {"ssid": "testharness", "password": "wifi-password"},
         },
         "dut_config": {
-            "pairing_mode": "thread",
+            "pairing_mode": "thread-meshcop",
             "setup_code": "20202021",
             "discriminator": "3840",
             "chip_use_paa_certs": False,

@@ -59,6 +59,7 @@ async def generate_command_arguments(
     dut_config = config.dut_config
     test_parameters = config.test_parameters
 
+    # Map TH pairing modes to SDK commissioning method names
     pairing_mode = (
         "on-network"
         if dut_config.pairing_mode == DutPairingModeEnum.ON_NETWORK
@@ -91,13 +92,13 @@ async def generate_command_arguments(
     elif pairing_mode in (
         DutPairingModeEnum.BLE_THREAD,
         DutPairingModeEnum.NFC_THREAD,
-        DutPairingModeEnum.THREAD,
+        DutPairingModeEnum.THREAD_MESHCOP,
     ):
         dataset_hex = await __thread_dataset_hex(config.network.thread)
         arguments.append(f"--thread-dataset-hex {dataset_hex}")
 
-        # Add Border Agent parameters for THREAD
-        if pairing_mode == DutPairingModeEnum.THREAD:
+        # Add Border Agent parameters for THREAD_MESHCOP
+        if pairing_mode == DutPairingModeEnum.THREAD_MESHCOP:
             thread_config = config.network.thread
             if thread_config.ba_host:
                 arguments.append(f"--thread-ba-host {thread_config.ba_host}")

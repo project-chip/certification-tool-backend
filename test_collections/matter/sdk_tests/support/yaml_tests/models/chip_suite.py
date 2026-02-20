@@ -140,7 +140,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
             is DutPairingModeEnum.WIFIPAF_WIFI
         ):
             pair_result = await self.__pair_wifi_dut_wifi_modes("wifipaf")
-        elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.THREAD:
+        elif (
+            self.config_matter.dut_config.pairing_mode
+            is DutPairingModeEnum.THREAD_MESHCOP
+        ):
             pair_result = await self.__pair_with_dut_thread()
         else:
             raise DUTCommissioningError("Unsupported DUT pairing mode")
