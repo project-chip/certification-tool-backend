@@ -52,10 +52,10 @@ TEST_OUTPUT_FILE_PATH = "sdk_checkout/python_testing/test_output.txt"
 
 TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
 
-NFC_PAIRING_MODES = [
+NFC_PAIRING_MODES = {
     DutPairingModeEnum.NFC_WIFI.value,
     DutPairingModeEnum.NFC_THREAD.value,
-]
+}
 
 
 async def generate_command_arguments(
@@ -110,27 +110,24 @@ async def generate_command_arguments(
             if thread_config.ba_port:
                 arguments.append(f"--thread-ba-port {thread_config.ba_port}")
 
+    # NFC pairing modes don't need discriminator and passcode in the arguments,
+    # since it is provided directly by the NFC tag.
+    # Also, if manual-code or qr-code and also discriminator and passcode are provided,
+    # the test will think that we're trying to commission 2 DUTs and it will fail
+    if (
+        pairing_mode not in NFC_PAIRING_MODES
+        and ("manual-code" not in test_parameters.keys() if test_parameters else True)
+        and ("qr-code" not in test_parameters.keys() if test_parameters else True)
+    ):
+        # Retrieve arguments from dut_config
+        arguments.append(f"--discriminator {dut_config.discriminator}")
+        arguments.append(f"--passcode {dut_config.setup_code}")
+
     # Retrieve arguments from test_parameters
     if test_parameters:
-        # If manual-code or qr-code and also discriminator and passcode are provided,
-        # the test will think that we're trying to commission 2 DUTs and it will fail
-        if (
-            "manual-code" not in test_parameters.keys()
-            and "qr-code" not in test_parameters.keys()
-            and pairing_mode not in NFC_PAIRING_MODES
-        ):
-            # Retrieve arguments from dut_config
-            arguments.append(f"--discriminator {dut_config.discriminator}")
-            arguments.append(f"--passcode {dut_config.setup_code}")
-
         for name, value in test_parameters.items():
             arg_value = str(value) if value is not None else ""
             arguments.append(f"--{name} {arg_value}")
-    else:
-        # Retrieve arguments from dut_config
-        if pairing_mode not in NFC_PAIRING_MODES:
-            arguments.append(f"--discriminator {dut_config.discriminator}")
-            arguments.append(f"--passcode {dut_config.setup_code}")
 
     return arguments
 
