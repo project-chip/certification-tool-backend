@@ -38,8 +38,7 @@ async def generate_command_arguments(
     dut_config = config.dut_config  # type: ignore[attr-defined]
     test_parameters = config.test_parameters
 
-    // TH env uses "onnetwork" whereas SDK uses "on-network"
-    // Same thing for "nfc-onnetwork" and "nfc-on-network"
+    # Map TH pairing modes to SDK commissioning method names
     if dut_config.pairing_mode == DutPairingModeEnum.ON_NETWORK:
         pairing_mode = "on-network"
     elif dut_config.pairing_mode == DutPairingModeEnum.NFC_ON_NETWORK:
