@@ -151,6 +151,8 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
             if node.module and (
                 "support_modules" in node.module
                 or "matter_testing" in node.module
+                or "matter.testing.basic_composition" in node.module
+                or "test_testing" in node.module
                 or node.module.endswith("TestBase")
                 or "TestBase" in node.module
             ):
