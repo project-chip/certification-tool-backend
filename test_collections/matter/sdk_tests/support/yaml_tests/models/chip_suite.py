@@ -74,6 +74,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         if self.config_matter.dut_config.pairing_mode in (
             DutPairingModeEnum.NFC_THREAD,
             DutPairingModeEnum.NFC_WIFI,
+            DutPairingModeEnum.NFC_ON_NETWORK,
         ):
             # When PCSC reader is used in a Docker container, pollkit should
             #  be disabled
@@ -123,6 +124,11 @@ class ChipSuite(TestSuite, UserPromptSupport):
     async def __pair_with_dut(self) -> None:
         if self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.ON_NETWORK:
             pair_result = await self.__pair_with_dut_onnetwork()
+        if (
+            self.config_matter.dut_config.pairing_mode
+            is DutPairingModeEnum.NFC_ON_NETWORK
+        ):
+            pair_result = await self.__pair_with_dut_nfc_onnetwork()
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
             pair_result = await self.__pair_wifi_dut_wifi_modes("ble")
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI:
@@ -153,6 +159,12 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     async def __pair_with_dut_onnetwork(self) -> bool:
         return await self.runner.pairing_on_network(
+            setup_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator,
+        )
+
+    async def __pair_with_dut_nfc_onnetwork(self) -> bool:
+        return await self.runner.pairing_nfc_on_network(
             setup_code=self.config_matter.dut_config.setup_code,
             discriminator=self.config_matter.dut_config.discriminator,
         )

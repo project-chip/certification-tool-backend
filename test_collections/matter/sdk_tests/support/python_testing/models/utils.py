@@ -55,6 +55,7 @@ TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
 NFC_PAIRING_MODES = {
     DutPairingModeEnum.NFC_WIFI.value,
     DutPairingModeEnum.NFC_THREAD.value,
+    DutPairingModeEnum.NFC_ON_NETWORK.value,
 }
 
 
@@ -65,11 +66,12 @@ async def generate_command_arguments(
     test_parameters = config.test_parameters
 
     # Map TH pairing modes to SDK commissioning method names
-    pairing_mode = (
-        "on-network"
-        if dut_config.pairing_mode == DutPairingModeEnum.ON_NETWORK
-        else dut_config.pairing_mode
-    )
+    if dut_config.pairing_mode == DutPairingModeEnum.ON_NETWORK:
+        pairing_mode = "on-network"
+    elif dut_config.pairing_mode == DutPairingModeEnum.NFC_ON_NETWORK:
+        pairing_mode = "nfc-on-network"
+    else:
+        pairing_mode = dut_config.pairing_mode
 
     arguments = []
     # Increase log level by adding trace log

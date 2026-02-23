@@ -108,6 +108,7 @@ class PythonTestSuite(TestSuite):
         if self.matter_config.dut_config.pairing_mode in (
             DutPairingModeEnum.NFC_THREAD,
             DutPairingModeEnum.NFC_WIFI,
+            DutPairingModeEnum.NFC_ON_NETWORK,
             DutPairingModeEnum.THREAD_MESHCOP,
         ):
             # When PCSC reader is used in a Docker container, pollkit should

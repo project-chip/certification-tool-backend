@@ -101,6 +101,41 @@ async def test_generate_command_arguments_on_network() -> None:
 
 
 @pytest.mark.asyncio
+async def test_generate_command_arguments_nfc_on_network() -> None:
+    # Mock config
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+
+    # Using attributes with both - and _ word separators in test_parameters
+    # Both must be considered as python test arguments the way it was configured
+    mock_config.test_parameters = {
+        "paa-trust-store-path": "/paa-root-certs",
+        "storage_path": "/root/admin_storage.json",
+    }
+
+    mock_dut_config = DutConfig(
+        discriminator="123",
+        setup_code="1234",
+        pairing_mode=DutPairingModeEnum.NFC_ON_NETWORK,
+        chip_timeout=None,
+    )
+
+    mock_config.dut_config = mock_dut_config
+
+    arguments = await generate_command_arguments(
+        config=mock_config, omit_commissioning_method=False
+    )
+
+    assert [
+        "--trace-to json:log",
+        "--commissioning-method nfc-on-network",
+        "--discriminator 123",
+        "--passcode 1234",
+        "--paa-trust-store-path /paa-root-certs",
+        "--storage_path /root/admin_storage.json",
+    ] == arguments
+
+
+@pytest.mark.asyncio
 async def test_generate_command_arguments_ble_wifi_pairing_mode() -> None:
     # Mock config
     mock_config = default_environment_config.copy(deep=True)  # type: ignore

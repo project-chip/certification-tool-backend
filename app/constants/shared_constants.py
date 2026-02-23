@@ -59,6 +59,7 @@ class MessageKeysEnum(str, Enum):
 # Enum for DUT Pairing Modes
 class DutPairingModeEnum(str, Enum):
     ON_NETWORK = "onnetwork"
+    NFC_ON_NETWORK = "nfc-onnetwork"
     BLE_WIFI = "ble-wifi"
     NFC_WIFI = "nfc-wifi"
     BLE_THREAD = "ble-thread"
