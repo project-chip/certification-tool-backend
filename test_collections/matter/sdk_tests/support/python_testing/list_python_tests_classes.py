@@ -148,9 +148,8 @@ def base_test_classes(module: ast.Module) -> list[ast.ClassDef]:
         if isinstance(node, ast.ImportFrom):
             # Include imports from support_modules, matter_testing,
             # or any module ending with Base/Test
-            if (
-                node.module
-                and any(
+            if node.module and (
+                any(
                     s in node.module
                     for s in [
                         "support_modules",
