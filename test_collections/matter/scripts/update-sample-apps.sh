@@ -59,8 +59,11 @@ if [[ -z "$DOCKER_IMAGE_FOUND" ]]; then
         echo ""
         echo "You have the following options:"
         echo ""
-        echo "  1) Build the image locally (this will compile the Matter SDK from source"
-        echo "     for your platform and may take 2-3+ hours)"
+        echo "  1) Build essential apps locally (chip-tool, chip-shell, chip-cert,"
+        echo "     all-clusters, all-clusters-nlfaultinject, all-clusters-minimal)."
+        echo "     This will compile the Matter SDK from source and may take 1-2+ hours."
+        echo "     Parallelism is limited to avoid running out of memory."
+        echo "     Remaining apps can be built manually later."
         echo ""
         echo "  2) Skip sample apps for now, you can manually build individual apps for your"
         echo "     architecture later from the Matter SDK source, then copy the binaries to"
@@ -117,7 +120,6 @@ RUN set -x \\
     --target ${ARCH_PREFIX}-chip-tool-ipv6only-platform-mdns-nfc-commission \\
     --target ${ARCH_PREFIX}-shell-ipv6only-platform-mdns \\
     --target ${ARCH_PREFIX}-chip-cert-ipv6only-platform-mdns \\
-    --target ${ARCH_PREFIX}-air-purifier-ipv6only \\
     --target ${ARCH_PREFIX}-all-clusters-ipv6only \\
     --target ${ARCH_PREFIX}-all-clusters-ipv6only-nlfaultinject \\
     --target ${ARCH_PREFIX}-all-clusters-minimal-ipv6only \\
@@ -125,7 +127,6 @@ RUN set -x \\
     && mv out/${ARCH_PREFIX}-chip-tool-ipv6only-platform-mdns-nfc-commission/chip-tool out/chip-tool \\
     && mv out/${ARCH_PREFIX}-shell-ipv6only-platform-mdns/chip-shell out/chip-shell \\
     && mv out/${ARCH_PREFIX}-chip-cert-ipv6only-platform-mdns/chip-cert out/chip-cert \\
-    && mv out/${ARCH_PREFIX}-air-purifier-ipv6only/chip-air-purifier-app out/chip-air-purifier-app \\
     && mv out/${ARCH_PREFIX}-all-clusters-ipv6only/chip-all-clusters-app out/chip-all-clusters-app \\
     && mv out/${ARCH_PREFIX}-all-clusters-ipv6only-nlfaultinject/chip-all-clusters-app out/chip-all-clusters-app-nlfaultinject \\
     && mv out/${ARCH_PREFIX}-all-clusters-minimal-ipv6only/chip-all-clusters-minimal-app out/chip-all-clusters-minimal-app
@@ -138,7 +139,6 @@ COPY --from=chip-build-cert-bins /root/.sdk-sha-version /root/.sdk-sha-version
 COPY --from=chip-build-cert-bins /root/connectedhomeip/out/chip-tool apps/chip-tool
 COPY --from=chip-build-cert-bins /root/connectedhomeip/out/chip-shell apps/chip-shell
 COPY --from=chip-build-cert-bins /root/connectedhomeip/out/chip-cert apps/chip-cert
-COPY --from=chip-build-cert-bins /root/connectedhomeip/out/chip-air-purifier-app apps/chip-air-purifier-app
 COPY --from=chip-build-cert-bins /root/connectedhomeip/out/chip-all-clusters-app apps/chip-all-clusters-app
 COPY --from=chip-build-cert-bins /root/connectedhomeip/out/chip-all-clusters-app-nlfaultinject apps/chip-all-clusters-app-nlfaultinject
 COPY --from=chip-build-cert-bins /root/connectedhomeip/out/chip-all-clusters-minimal-app apps/chip-all-clusters-minimal-app
@@ -146,7 +146,7 @@ COPY --from=chip-build-cert-bins /root/connectedhomeip/credentials credentials
 DOCKERFILE_EOF
 
                     echo ""
-                    echo "Building essential apps only (7 of 30+) with limited parallelism (-j4)."
+                    echo "Building essential apps only (6 of 30+) with limited parallelism (-j4)."
                     echo "This avoids running out of memory on systems with less than 16GB RAM."
                     echo ""
                     echo "Building image (this may take 1-2 hours)..."
@@ -160,10 +160,11 @@ DOCKERFILE_EOF
                     echo ""
                     echo "Local build complete!"
                     echo ""
-                    echo "NOTE: Only essential apps were built. To build additional apps later:"
-                    echo "  1. Start the image:  docker run -it $SDK_DOCKER_IMAGE bash"
-                    echo "  2. Build more apps:  source scripts/activate.sh && scripts/build/build_examples.py --target <target-name> build"
-                    echo "  3. Copy binaries out: docker cp <container>:/root/connectedhomeip/out/<target>/app ~/apps/"
+                    echo "NOTE: Only essential apps were built: chip-tool, chip-shell, chip-cert,"
+                    echo "      all-clusters, all-clusters-nlfaultinject, and all-clusters-minimal."
+                    echo "      To build additional apps, use existing SDK app compile commands"
+                    echo "      and copy the resulting binaries to ~/apps/"
+                    echo "      Example: cp ~/connectedhomeip/out/<target>/<app-binary> ~/apps/"
                     echo ""
                     break
                     ;;
