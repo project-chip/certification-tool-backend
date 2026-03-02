@@ -20,6 +20,7 @@ These tests verify:
 1. Phase 1: TestScriptManager constructor doesn't initialize Python tests
 2. Phase 2: Python test generation uses single container session
 """
+from typing import Generator
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -28,14 +29,14 @@ from app.test_engine.test_script_manager import TestScriptManager
 from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (
     generate_python_test_json_file,
     process_test_commands_with_container,
-)  # noqa
+)
 from test_collections.matter.sdk_tests.support.python_testing.test_manager import (
     _generate_all_test_files,
 )
 
 
 @pytest.fixture(autouse=True)
-def restore_singleton_state() -> None:
+def restore_singleton_state() -> Generator:
     """Save and restore TestScriptManager singleton state around each test.
 
     TestScriptManager is a singleton shared across the test session.

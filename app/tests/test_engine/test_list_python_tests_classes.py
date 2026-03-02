@@ -46,7 +46,7 @@ def _parse(source: str) -> ast.Module:
     return ast.parse(textwrap.dedent(source))
 
 
-def _make_sdk_folder(tmp_path: Path, files: dict[str, str]) -> None:
+def _make_sdk_folder(tmp_path: Path, files: dict[str, str]) -> MagicMock:
     """Write *files* into *tmp_path* and return a mock SDKTestFolder."""
     for name, content in files.items():
         (tmp_path / name).write_text(textwrap.dedent(content))
