@@ -20,12 +20,12 @@ These tests verify:
 1. Phase 1: TestScriptManager constructor doesn't initialize Python tests
 2. Phase 2: Python test generation uses single container session
 """
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
 from app.test_engine.test_script_manager import TestScriptManager
-from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (
+from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa
     generate_python_test_json_file,
     process_test_commands_with_container,
 )
@@ -110,7 +110,8 @@ class TestPhase1AsyncInitialization:
             mock_discover.return_value = {}
 
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.initialize_python_tests",
+                "test_collections.matter.sdk_tests.support.python_testing."
+                "initialize_python_tests",
                 new_callable=AsyncMock,
             ) as mock_init:
                 # Setup mock to return test collections
@@ -123,7 +124,8 @@ class TestPhase1AsyncInitialization:
                 try:
                     await manager.initialize_python_tests()
                 except Exception:
-                    # May fail due to import issues in test environment, but we verify the attempt
+                    # May fail due to import issues in test environment,
+                    # but we verify the attempt
                     pass
 
                 # The flag should be set to True after initialization attempt
@@ -141,7 +143,8 @@ class TestPhase1AsyncInitialization:
             mock_discover.return_value = expected_collections
 
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.initialize_python_tests",
+                "test_collections.matter.sdk_tests.support.python_testing."
+                "initialize_python_tests",
                 new_callable=AsyncMock,
             ) as mock_init:
                 mock_init.return_value = (MagicMock(), MagicMock(), None)
@@ -167,21 +170,25 @@ class TestPhase2SingleContainerSession:
         mock_container.destroy = MagicMock()
 
         with patch(
-            "test_collections.matter.sdk_tests.support.python_testing.test_manager.SDKContainer"
+            "test_collections.matter.sdk_tests.support.python_testing.test_manager."
+            "SDKContainer"
         ) as mock_container_class:
             mock_container_class.return_value = mock_container
 
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.test_manager.get_command_list"
+                "test_collections.matter.sdk_tests.support.python_testing.test_manager."
+                "get_command_list"
             ) as mock_get_commands:
                 mock_get_commands.return_value = []
 
                 with patch(
-                    "test_collections.matter.sdk_tests.support.python_testing.test_manager.process_test_commands_with_container",
+                    "test_collections.matter.sdk_tests.support.python_testing."
+                    "test_manager.process_test_commands_with_container",
                     new_callable=AsyncMock,
                 ) as mock_process:
                     with patch(
-                        "test_collections.matter.sdk_tests.support.python_testing.test_manager._has_custom_tests"
+                        "test_collections.matter.sdk_tests.support.python_testing."
+                        "test_manager._has_custom_tests"
                     ) as mock_has_custom:
                         mock_has_custom.return_value = True
 
@@ -217,12 +224,14 @@ class TestPhase2SingleContainerSession:
         mock_container.destroy = MagicMock()
 
         with patch(
-            "test_collections.matter.sdk_tests.support.python_testing.test_manager.SDKContainer"
+            "test_collections.matter.sdk_tests.support.python_testing.test_manager."
+            "SDKContainer"
         ) as mock_container_class:
             mock_container_class.return_value = mock_container
 
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.test_manager.get_command_list"
+                "test_collections.matter.sdk_tests.support.python_testing.test_manager."
+                "get_command_list"
             ) as mock_get_commands:
                 # Simulate an error during command list generation
                 mock_get_commands.side_effect = Exception("Test error")
@@ -244,26 +253,31 @@ class TestPhase2SingleContainerSession:
         mock_container.destroy = MagicMock()
 
         with patch(
-            "test_collections.matter.sdk_tests.support.python_testing.test_manager.SDKContainer"
+            "test_collections.matter.sdk_tests.support.python_testing.test_manager."
+            "SDKContainer"
         ) as mock_container_class:
             mock_container_class.return_value = mock_container
 
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.test_manager.get_command_list"
+                "test_collections.matter.sdk_tests.support.python_testing.test_manager."
+                "get_command_list"
             ) as mock_get_commands:
                 mock_get_commands.return_value = []
 
                 with patch(
-                    "test_collections.matter.sdk_tests.support.python_testing.test_manager.process_test_commands_with_container",
+                    "test_collections.matter.sdk_tests.support.python_testing."
+                    "test_manager.process_test_commands_with_container",
                     new_callable=AsyncMock,
                 ) as mock_process:
                     with patch(
-                        "test_collections.matter.sdk_tests.support.python_testing.test_manager._has_custom_tests"
+                        "test_collections.matter.sdk_tests.support.python_testing."
+                        "test_manager._has_custom_tests"
                     ) as mock_has_custom:
                         mock_has_custom.return_value = False
 
                         with patch(
-                            "test_collections.matter.sdk_tests.support.python_testing.test_manager.CUSTOM_PYTHON_TESTS_PARSED_FILE"
+                            "test_collections.matter.sdk_tests.support.python_testing."
+                            "test_manager.CUSTOM_PYTHON_TESTS_PARSED_FILE"
                         ) as mock_file:
                             mock_file.write_text = MagicMock()
 
@@ -292,13 +306,15 @@ class TestPhase2ProcessTestCommandsWithContainer:
         mock_container.destroy = MagicMock()
 
         with patch(
-            "test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes.__process_grouped_commands",
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.__process_grouped_commands",
             new_callable=AsyncMock,
         ) as mock_process:
             mock_process.return_value = (0, 0)  # test_count, invalid_count
 
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes.Path"
+                "test_collections.matter.sdk_tests.support.python_testing."
+                "list_python_tests_classes.Path"
             ):
                 with patch("builtins.open", MagicMock()):
                     # Execute the function
@@ -323,13 +339,15 @@ class TestPhase2ProcessTestCommandsWithContainer:
         mock_container = MagicMock()
 
         with patch(
-            "test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes.__process_grouped_commands",
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.__process_grouped_commands",
             new_callable=AsyncMock,
         ) as mock_process:
             mock_process.return_value = (0, 0)
 
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes.Path"
+                "test_collections.matter.sdk_tests.support.python_testing."
+                "list_python_tests_classes.Path"
             ):
                 with patch("builtins.open", MagicMock()):
                     await process_test_commands_with_container(
@@ -352,7 +370,8 @@ class TestBackwardCompatibility:
 
     @pytest.mark.asyncio
     async def test_generate_python_test_json_file_still_works(self) -> None:
-        """Verify generate_python_test_json_file still works for backward compatibility."""
+        """Verify generate_python_test_json_file still works for backward
+        compatibility."""
         # This function should still exist and be callable
         assert callable(
             generate_python_test_json_file

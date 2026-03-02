@@ -27,9 +27,7 @@ import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (
+from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa
     MATTER_BASE_TEST_CLASS_NAME,
     _is_matter_base_test_class,
     base_test_classes,
