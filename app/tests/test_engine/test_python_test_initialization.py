@@ -26,7 +26,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 from app.test_engine.test_script_manager import TestScriptManager
-from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (
+from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa: E501
     generate_python_test_json_file,
     process_test_commands_with_container,
 )
