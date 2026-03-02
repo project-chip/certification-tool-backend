@@ -25,17 +25,17 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 from app.test_engine.test_script_manager import TestScriptManager
-from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa
+from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (
     generate_python_test_json_file,
     process_test_commands_with_container,
-)
+)  # noqa
 from test_collections.matter.sdk_tests.support.python_testing.test_manager import (
     _generate_all_test_files,
 )
 
 
 @pytest.fixture(autouse=True)
-def restore_singleton_state():
+def restore_singleton_state() -> None:
     """Save and restore TestScriptManager singleton state around each test.
 
     TestScriptManager is a singleton shared across the test session.
@@ -379,11 +379,13 @@ class TestBackwardCompatibility:
 
         # Verify it calls the old process_commands_sdk_container function
         with patch(
-            "test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes.process_commands_sdk_container",
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.process_commands_sdk_container",
             new_callable=AsyncMock,
         ) as mock_process:
             with patch(
-                "test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes.get_command_list"
+                "test_collections.matter.sdk_tests.support.python_testing."
+                "list_python_tests_classes.get_command_list"
             ) as mock_get_commands:
                 mock_get_commands.return_value = []
 
@@ -392,4 +394,5 @@ class TestBackwardCompatibility:
                 # Verify the old function was called
                 assert (
                     mock_process.called
-                ), "Should call process_commands_sdk_container for backward compatibility"
+                ), "Should call process_commands_sdk_container for backward "
+                "compatibility"
