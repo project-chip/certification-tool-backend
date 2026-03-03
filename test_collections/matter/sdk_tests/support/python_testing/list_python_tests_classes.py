@@ -136,7 +136,7 @@ def _is_matter_base_test_class(
     class_name: str,
     module: ast.Module,
     search_dir: Optional[Path],
-    _visiting: Optional[set] = None,
+_visiting: Optional[set[tuple[int, str]]] = None,
 ) -> bool:
     """Recursively check if a class name in a parsed module ultimately inherits
     from MatterBaseTest, following local file imports as needed.
