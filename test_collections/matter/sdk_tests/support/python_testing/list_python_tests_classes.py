@@ -219,7 +219,7 @@ _visiting: Optional[set[tuple[int, str]]] = None,
                             return True
                         continue
 
-                    except SyntaxError:
+                        logger.warning(f"Warning: Skipping {candidate} due to syntax error")
                         pass
 
             # Fallback for installed packages whose source is not available as a
