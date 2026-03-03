@@ -127,7 +127,8 @@ class TestPhase1AsyncInitialization:
                 # Verify the flag is set to True after successful initialization
                 assert (
                     manager._python_tests_initialized is True
-                ), "initialize_python_tests should set _python_tests_initialized to True"
+                ), "initialize_python_tests should set _python_tests_initialized "
+                "to True"
 
     @pytest.mark.asyncio
     async def test_initialize_python_tests_updates_collections(self) -> None:
