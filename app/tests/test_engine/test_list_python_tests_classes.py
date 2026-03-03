@@ -95,7 +95,6 @@ class TestLoadFileList:
         ):
             result = load_ignore_list()
         assert result == {"TC_FOO.py"}
-        assert "# this is a comment" not in result
 
     def test_skips_blank_lines(self, tmp_path: Path) -> None:
         f = tmp_path / "ignore.txt"

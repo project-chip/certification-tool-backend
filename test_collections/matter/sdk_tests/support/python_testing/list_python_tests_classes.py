@@ -136,7 +136,8 @@ def _is_matter_base_test_class(
     class_name: str,
     module: ast.Module,
     search_dir: Optional[Path],
-_visiting: Optional[set[tuple[int, str]]] = None,
+    _visiting: Optional[set[tuple[int, str]]] = None,
+    _module_cache: Optional[dict] = None,
 ) -> bool:
     """Recursively check if a class name in a parsed module ultimately inherits
     from MatterBaseTest, following local file imports as needed.
@@ -145,13 +146,20 @@ _visiting: Optional[set[tuple[int, str]]] = None,
         class_name: Name of the class to check.
         module: Parsed AST of the file where class_name is defined.
         search_dir: Directory to search for locally-imported modules.
-        _visiting: Set of (file, class) pairs already being resolved (cycle guard).
+        _visiting: Set of `(id(module), class_name)` or `(abs_path, class_name)`
+            tuples already being resolved (cycle guard). Same-module checks use
+            the object id; cross-file checks use the absolute file path so that
+            separately parsed copies of the same file are correctly identified.
+        _module_cache: Cache of already-parsed AST modules keyed by absolute
+            file path, to avoid redundant disk reads.
 
     Returns:
         bool: True if the class transitively inherits from MatterBaseTest.
     """
     if _visiting is None:
         _visiting = set()
+    if _module_cache is None:
+        _module_cache = {}
 
     # Find the class definition in this module
     class_def = next(
@@ -168,7 +176,7 @@ _visiting: Optional[set[tuple[int, str]]] = None,
     key = (id(module), class_name)
     if key in _visiting:
         return False
-    _visiting = _visiting | {key}
+    _visiting.add(key)
 
     for base in class_def.bases:
         if not isinstance(base, ast.Name):
@@ -180,7 +188,9 @@ _visiting: Optional[set[tuple[int, str]]] = None,
             return True
 
         # Check if base_name is defined in the same module (local parent class)
-        if _is_matter_base_test_class(base_name, module, search_dir, _visiting):
+        if _is_matter_base_test_class(
+            base_name, module, search_dir, _visiting, _module_cache
+        ):
             return True
 
         # Try to resolve base_name via imports in this module
@@ -201,8 +211,21 @@ _visiting: Optional[set[tuple[int, str]]] = None,
                 candidate = search_dir / f"{node.module.replace('.', '/')}.py"
                 if candidate.exists():
                     try:
-                        with open(candidate, "r") as f:
-                            imported_module = ast.parse(f.read())
+                        abs_path = str(candidate.resolve())
+                        if abs_path not in _module_cache:
+                            with open(candidate, "r") as f:
+                                _module_cache[abs_path] = ast.parse(f.read())
+                        imported_module = _module_cache[abs_path]
+
+                        # Use the absolute path as the cycle-guard key so that
+                        # re-parsed copies of the same file are treated as
+                        # identical, preventing infinite recursion on cross-file
+                        # circular imports.
+                        file_key = (abs_path, class_name)
+                        if file_key in _visiting:
+                            continue
+                        _visiting.add(file_key)
+
                         # The actual class name in the imported file may differ
                         # (e.g. `from TC_TLSCERT_Base import TC_TLSCERT_Base`)
                         actual_name = next(
@@ -214,13 +237,17 @@ _visiting: Optional[set[tuple[int, str]]] = None,
                             base_name,
                         )
                         if _is_matter_base_test_class(
-                            actual_name, imported_module, search_dir, _visiting
+                            actual_name,
+                            imported_module,
+                            search_dir,
+                            _visiting,
+                            _module_cache,
                         ):
                             return True
                         continue
 
-                        logger.warning(f"Warning: Skipping {candidate} due to syntax error")
-                        pass
+                    except SyntaxError:
+                        logger.warning(f"Skipping {candidate} due to syntax error")
 
             # Fallback for installed packages whose source is not available as a
             # local file (e.g. matter.testing.* installed as a wheel).
@@ -249,11 +276,14 @@ def base_test_classes(
         list[ast.ClassDef]: Classes in the module that ultimately inherit from
         MatterBaseTest.
     """
+    module_cache: dict = {}
     return [
         c
         for c in module.body
         if isinstance(c, ast.ClassDef)
-        and _is_matter_base_test_class(c.name, module, search_dir)
+        and _is_matter_base_test_class(
+            c.name, module, search_dir, _module_cache=module_cache
+        )
     ]
 
 

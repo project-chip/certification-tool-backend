@@ -122,15 +122,12 @@ class TestPhase1AsyncInitialization:
                     None,  # custom_collection
                 )
 
-                try:
-                    await manager.initialize_python_tests()
-                except Exception:
-                    # May fail due to import issues in test environment,
-                    # but we verify the attempt
-                    pass
+                await manager.initialize_python_tests()
 
-                # The flag should be set to True after initialization attempt
-                # Note: In test environment this may not complete due to mocking
+                # Verify the flag is set to True after successful initialization
+                assert (
+                    manager._python_tests_initialized is True
+                ), "initialize_python_tests should set _python_tests_initialized to True"
 
     @pytest.mark.asyncio
     async def test_initialize_python_tests_updates_collections(self) -> None:
@@ -150,14 +147,10 @@ class TestPhase1AsyncInitialization:
             ) as mock_init:
                 mock_init.return_value = (MagicMock(), MagicMock(), None)
 
-                try:
-                    await manager.initialize_python_tests()
+                await manager.initialize_python_tests()
 
-                    # Verify discover was called after initialization
-                    assert mock_discover.called, "Should call discover_test_collections"
-                except Exception:
-                    # May fail in test environment, but we verify the pattern
-                    pass
+                # Verify discover was called after initialization
+                assert mock_discover.called, "Should call discover_test_collections"
 
 
 class TestPhase2SingleContainerSession:
