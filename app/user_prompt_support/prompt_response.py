@@ -35,4 +35,6 @@ class PromptResponse(BaseModel):
         super().__init__(**kwargs)
         # Preserve the original response
         if "response" in kwargs:
-            self.response_str = kwargs["response"]
+            self.response_str = (
+                str(kwargs["response"]) if kwargs["response"] is not None else None
+            )
