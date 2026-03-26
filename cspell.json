@@ -115,7 +115,9 @@
         "CNET",
         "AVSM",
         "PAVST",
-        "WEBRTCR"
+        "WEBRTCR",
+        "ZONEMGMT",
+        "APPDEVTYPEID"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [

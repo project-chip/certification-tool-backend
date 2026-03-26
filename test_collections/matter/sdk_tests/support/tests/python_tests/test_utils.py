@@ -36,6 +36,20 @@ from ...python_testing.models.utils import (
 from ...sdk_container import SDKContainer
 
 
+def _on_network_config(test_parameters: dict):
+    """Return a deep-copied default config with ON_NETWORK pairing and the
+    given test_parameters dict."""
+    cfg = default_environment_config.copy(deep=True)  # type: ignore
+    cfg.dut_config = DutConfig(
+        discriminator="3840",
+        setup_code="20202021",
+        pairing_mode=DutPairingModeEnum.ON_NETWORK,
+        chip_timeout=None,
+    )
+    cfg.test_parameters = test_parameters
+    return cfg
+
+
 @pytest.mark.asyncio
 async def test_generate_command_arguments_with_null_value_attribute() -> None:
     # Mock config
@@ -542,3 +556,132 @@ async def test_commission_device_failure() -> None:
         expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
     )
     mock_handle_logs.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Tests for the new typed-arg / json-arg handling in generate_command_arguments
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_json_arg_string_value() -> None:
+    """json-arg with a plain JSON string value is emitted as two separate list
+    entries: '--json-arg' and the single-quoted NAME:JSON pair."""
+    json_value = 'PIXIT.ZONEMGMT.Zone1:{"vertices":[{"x":0,"y":0},{"x":100,"y":100}]}'
+    cfg = _on_network_config({"json-arg": json_value})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--json-arg" in arguments
+    idx = arguments.index("--json-arg")
+    assert arguments[idx + 1] == f"'{json_value}'"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_json_arg_dict_value() -> None:
+    """json-arg with a dict value (Pydantic parsed it as a nested object) is
+    serialized to compact JSON and single-quoted."""
+    cfg = _on_network_config({"json-arg": "PIXIT.X:1"})
+    # Override with a dict value to exercise the json.dumps path
+    cfg.test_parameters = {
+        "json-arg": {"vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 100}]}
+    }
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--json-arg" in arguments
+    idx = arguments.index("--json-arg")
+    # dict serialized to compact JSON and single-quoted because it contains {
+    assert arguments[idx + 1] == '\'{"vertices":[{"x":0,"y":0},{"x":100,"y":100}]}\''
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_int_arg_single_pair() -> None:
+    """int-arg with a single NAME:VALUE pair (no special chars) is NOT
+    single-quoted."""
+    cfg = _on_network_config({"int-arg": "PIXIT.ACE.APPENDPOINT:1"})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--int-arg" in arguments
+    idx = arguments.index("--int-arg")
+    assert arguments[idx + 1] == "PIXIT.ACE.APPENDPOINT:1"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_int_arg_multiple_pairs() -> None:
+    """int-arg with multiple space-separated NAME:VALUE pairs produces one
+    '--int-arg' flag followed by each pair as a separate list entry."""
+    cfg = _on_network_config(
+        {"int-arg": "PIXIT.ACE.APPENDPOINT:1 PIXIT.ACE.APPDEVTYPEID:256"}
+    )
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--int-arg" in arguments
+    idx = arguments.index("--int-arg")
+    assert arguments[idx + 1] == "PIXIT.ACE.APPENDPOINT:1"
+    assert arguments[idx + 2] == "PIXIT.ACE.APPDEVTYPEID:256"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_string_arg_multiple_pairs() -> None:
+    """string-arg with multiple space-separated NAME:VALUE pairs is split into
+    individual list entries, none of which are quoted (no special chars)."""
+    cfg = _on_network_config(
+        {"string-arg": "PIXIT.ACE.APPCLUSTER:OnOff PIXIT.ACE.APPATTRIBUTE:OnOff"}
+    )
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--string-arg" in arguments
+    idx = arguments.index("--string-arg")
+    assert arguments[idx + 1] == "PIXIT.ACE.APPCLUSTER:OnOff"
+    assert arguments[idx + 2] == "PIXIT.ACE.APPATTRIBUTE:OnOff"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_json_arg_and_int_arg_together() -> None:
+    """json-arg and int-arg can coexist; each is handled independently."""
+    cfg = _on_network_config(
+        {
+            "json-arg": 'PIXIT.ZONE:{"vertices":[{"x":0,"y":0}]}',
+            "int-arg": "PIXIT.ACE.APPENDPOINT:1",
+        }
+    )
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--json-arg" in arguments
+    assert "--int-arg" in arguments
+
+    json_idx = arguments.index("--json-arg")
+    assert arguments[json_idx + 1] == '\'PIXIT.ZONE:{"vertices":[{"x":0,"y":0}]}\''
+
+    int_idx = arguments.index("--int-arg")
+    assert arguments[int_idx + 1] == "PIXIT.ACE.APPENDPOINT:1"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_non_split_arg_unchanged() -> None:
+    """Args not in _SPLIT_ARGS (e.g. paa-trust-store-path) are still emitted
+    as a single '--flag value' string, unchanged by the new logic."""
+    cfg = _on_network_config({"paa-trust-store-path": "/paa-root-certs"})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--paa-trust-store-path /paa-root-certs" in arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_json_arg_null_value() -> None:
+    """json-arg with a None value emits '--json-arg' with no following value
+    (empty string is skipped by the pair loop)."""
+    cfg = _on_network_config({"json-arg": None})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--json-arg" in arguments
+    idx = arguments.index("--json-arg")
+    # Nothing follows --json-arg when the value is None/empty
+    assert idx == len(arguments) - 1
