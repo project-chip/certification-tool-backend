@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import json
-import shlex
 from pathlib import Path
 from typing import Generator, cast
 
@@ -137,10 +136,12 @@ async def generate_command_arguments(
     # characters such as braces and quotes that the container shell would
     # mangle if embedded in a single string token.
     # Emit the flag and each NAME:VALUE pair as separate list entries.
-    # Use shlex.split() so that quoted substrings within a value (e.g. a
-    # JSON string containing spaces) are kept intact as single tokens.
     # Single-quote pairs that contain shell-special characters so the
     # container shell does not perform brace expansion or word splitting.
+    # json-arg is always a single NAME:JSON token — never split on spaces,
+    # as the JSON value itself may contain spaces.
+    # Other typed args (int-arg, string-arg, etc.) use plain NAME:VALUE pairs
+    # with no spaces, so splitting on spaces is safe for them.
     if test_parameters:
         for name, value in test_parameters.items():
             if isinstance(value, (dict, list)):
@@ -151,7 +152,8 @@ async def generate_command_arguments(
                 arg_value = ""
             if name in _SPLIT_ARGS:
                 arguments.append(f"--{name}")
-                for pair in shlex.split(arg_value):
+                pairs = [arg_value] if name == "json-arg" else arg_value.split(" ")
+                for pair in pairs:
                     if pair:
                         if any(c in pair for c in _SHELL_SPECIAL):
                             arguments.append(f"'{pair}'")
