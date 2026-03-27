@@ -704,3 +704,89 @@ async def test_generate_command_arguments_json_arg_null_value() -> None:
     idx = arguments.index("--json-arg")
     # Nothing follows --json-arg when the value is None/empty
     assert idx == len(arguments) - 1
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_float_arg_single_pair() -> None:
+    """float-arg with a single NAME:VALUE pair (no special chars) is NOT
+    single-quoted."""
+    cfg = _on_network_config({"float-arg": "PIXIT.SENSOR.TOLERANCE:0.5"})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--float-arg" in arguments
+    idx = arguments.index("--float-arg")
+    assert arguments[idx + 1] == "PIXIT.SENSOR.TOLERANCE:0.5"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_float_arg_multiple_pairs() -> None:
+    """float-arg with multiple space-separated NAME:VALUE pairs produces one
+    '--float-arg' flag followed by each pair as a separate list entry."""
+    cfg = _on_network_config(
+        {"float-arg": "PIXIT.SENSOR.MIN:0.0 PIXIT.SENSOR.MAX:100.0"}
+    )
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--float-arg" in arguments
+    idx = arguments.index("--float-arg")
+    assert arguments[idx + 1] == "PIXIT.SENSOR.MIN:0.0"
+    assert arguments[idx + 2] == "PIXIT.SENSOR.MAX:100.0"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_bool_arg_single_pair() -> None:
+    """bool-arg with a single NAME:VALUE pair is NOT single-quoted."""
+    cfg = _on_network_config({"bool-arg": "PIXIT.TEST.ENABLED:True"})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--bool-arg" in arguments
+    idx = arguments.index("--bool-arg")
+    assert arguments[idx + 1] == "PIXIT.TEST.ENABLED:True"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_bool_arg_multiple_pairs() -> None:
+    """bool-arg with multiple space-separated NAME:VALUE pairs produces one
+    '--bool-arg' flag followed by each pair as a separate list entry."""
+    cfg = _on_network_config(
+        {"bool-arg": "PIXIT.TEST.FEATURE_A:True PIXIT.TEST.FEATURE_B:False"}
+    )
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--bool-arg" in arguments
+    idx = arguments.index("--bool-arg")
+    assert arguments[idx + 1] == "PIXIT.TEST.FEATURE_A:True"
+    assert arguments[idx + 2] == "PIXIT.TEST.FEATURE_B:False"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_hex_arg_single_pair() -> None:
+    """hex-arg with a single NAME:VALUE pair (no special chars) is NOT
+    single-quoted."""
+    cfg = _on_network_config({"hex-arg": "PIXIT.COMMISSIONING.DATASET:DEADBEEF"})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--hex-arg" in arguments
+    idx = arguments.index("--hex-arg")
+    assert arguments[idx + 1] == "PIXIT.COMMISSIONING.DATASET:DEADBEEF"
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_hex_arg_multiple_pairs() -> None:
+    """hex-arg with multiple space-separated NAME:VALUE pairs produces one
+    '--hex-arg' flag followed by each pair as a separate list entry."""
+    cfg = _on_network_config(
+        {"hex-arg": "PIXIT.DATASET.ACTIVE:AABBCCDD PIXIT.DATASET.PENDING:11223344"}
+    )
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--hex-arg" in arguments
+    idx = arguments.index("--hex-arg")
+    assert arguments[idx + 1] == "PIXIT.DATASET.ACTIVE:AABBCCDD"
+    assert arguments[idx + 2] == "PIXIT.DATASET.PENDING:11223344"
