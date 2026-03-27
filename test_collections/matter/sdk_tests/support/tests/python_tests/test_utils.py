@@ -26,6 +26,16 @@ from test_collections.matter.test_environment_config import (
     ThreadExternalConfig,
 )
 
+from ...exec_run_in_container import ExecResultExtended
+from ...python_testing.models.utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
+    DUTCommissioningError,
+    commission_device,
+    generate_command_arguments,
+)
+from ...sdk_container import SDKContainer
+
 # ---------------------------------------------------------------------------
 # Helpers shared by the new json-arg / typed-arg tests
 # ---------------------------------------------------------------------------
@@ -43,17 +53,6 @@ def _on_network_config(test_parameters: dict) -> TestEnvironmentConfigMatter:
     )
     cfg.test_parameters = test_parameters
     return cfg
-
-
-from ...exec_run_in_container import ExecResultExtended
-from ...python_testing.models.utils import (
-    EXECUTABLE,
-    RUNNER_CLASS_PATH,
-    DUTCommissioningError,
-    commission_device,
-    generate_command_arguments,
-)
-from ...sdk_container import SDKContainer
 
 
 @pytest.mark.asyncio
