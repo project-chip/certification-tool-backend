@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 from pathlib import Path
 from typing import Generator, cast
 
@@ -57,6 +58,13 @@ NFC_PAIRING_MODES = {
     DutPairingModeEnum.NFC_WIFI.value,
     DutPairingModeEnum.NFC_THREAD.value,
 }
+
+# Typed SDK argument flags that accept NAME:VALUE pairs and require special
+# handling to survive the container shell without mangling.
+_SPLIT_ARGS = {"json-arg", "string-arg", "int-arg", "float-arg", "bool-arg", "hex-arg"}
+
+# Characters that trigger shell brace expansion or word splitting.
+_SHELL_SPECIAL = set("{[}\"'")
 
 
 async def generate_command_arguments(
@@ -126,21 +134,13 @@ async def generate_command_arguments(
 
     # Retrieve arguments from test_parameters.
     # Typed SDK args (--json-arg, --string-arg, etc.) may contain special
-    # characters such as braces and quotes that shlex.split (used internally
-    # by docker-py) would mangle if embedded in a single string token.
-    # Emit flag and value as separate list entries for those keys so that
-    # docker-py receives them as distinct argv elements and skips shlex parsing.
-    # When the value is a dict/list (parsed from JSON by the TH API), serialize
-    # it back to a JSON string so the SDK's json_named_arg parser receives
-    # valid JSON with all quotes intact.
-    _SPLIT_ARGS = {
-        "json-arg",
-        "string-arg",
-        "int-arg",
-        "float-arg",
-        "bool-arg",
-        "hex-arg",
-    }
+    # characters such as braces and quotes that the container shell would
+    # mangle if embedded in a single string token.
+    # Emit the flag and each NAME:VALUE pair as separate list entries.
+    # Use shlex.split() so that quoted substrings within a value (e.g. a
+    # JSON string containing spaces) are kept intact as single tokens.
+    # Single-quote pairs that contain shell-special characters so the
+    # container shell does not perform brace expansion or word splitting.
     if test_parameters:
         for name, value in test_parameters.items():
             if isinstance(value, (dict, list)):
@@ -151,12 +151,7 @@ async def generate_command_arguments(
                 arg_value = ""
             if name in _SPLIT_ARGS:
                 arguments.append(f"--{name}")
-                # Each NAME:VALUE pair must be a separate argv element.
-                # Single-quote pairs that contain shell-special characters
-                # (braces, brackets, quotes) so the container shell does not
-                # perform brace expansion or word splitting on JSON payloads.
-                _SHELL_SPECIAL = set("{[}\"'")
-                for pair in arg_value.split(" "):
+                for pair in shlex.split(arg_value):
                     if pair:
                         if any(c in pair for c in _SHELL_SPECIAL):
                             arguments.append(f"'{pair}'")

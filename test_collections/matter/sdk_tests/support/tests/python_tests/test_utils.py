@@ -22,21 +22,16 @@ from app.default_environment_config import default_environment_config
 from app.test_engine.logger import test_engine_logger
 from test_collections.matter.test_environment_config import (
     DutConfig,
+    TestEnvironmentConfigMatter,
     ThreadExternalConfig,
 )
 
-from ...exec_run_in_container import ExecResultExtended
-from ...python_testing.models.utils import (
-    EXECUTABLE,
-    RUNNER_CLASS_PATH,
-    DUTCommissioningError,
-    commission_device,
-    generate_command_arguments,
-)
-from ...sdk_container import SDKContainer
+# ---------------------------------------------------------------------------
+# Helpers shared by the new json-arg / typed-arg tests
+# ---------------------------------------------------------------------------
 
 
-def _on_network_config(test_parameters: dict):
+def _on_network_config(test_parameters: dict) -> TestEnvironmentConfigMatter:
     """Return a deep-copied default config with ON_NETWORK pairing and the
     given test_parameters dict."""
     cfg = default_environment_config.copy(deep=True)  # type: ignore
@@ -48,6 +43,17 @@ def _on_network_config(test_parameters: dict):
     )
     cfg.test_parameters = test_parameters
     return cfg
+
+
+from ...exec_run_in_container import ExecResultExtended
+from ...python_testing.models.utils import (
+    EXECUTABLE,
+    RUNNER_CLASS_PATH,
+    DUTCommissioningError,
+    commission_device,
+    generate_command_arguments,
+)
+from ...sdk_container import SDKContainer
 
 
 @pytest.mark.asyncio
@@ -671,6 +677,20 @@ async def test_generate_command_arguments_non_split_arg_unchanged() -> None:
     arguments = await generate_command_arguments(cfg)
 
     assert "--paa-trust-store-path /paa-root-certs" in arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_json_arg_value_with_spaces() -> None:
+    """json-arg where the JSON value contains spaces is kept as a single token.
+    This validates that shlex.split() is used instead of a naive split(' ')."""
+    json_value = 'PIXIT.Key:{"name":"some name with spaces"}'
+    cfg = _on_network_config({"json-arg": json_value})
+
+    arguments = await generate_command_arguments(cfg)
+
+    assert "--json-arg" in arguments
+    idx = arguments.index("--json-arg")
+    assert arguments[idx + 1] == f"'{json_value}'"
 
 
 @pytest.mark.asyncio
