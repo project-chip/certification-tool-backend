@@ -19,7 +19,7 @@
 import asyncio
 from asyncio import sleep
 from http import HTTPStatus
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from faker import Faker
