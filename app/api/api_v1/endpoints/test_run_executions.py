@@ -151,18 +151,14 @@ def create_cli_test_run_execution(
     execution_pics: dict | None = None,
 ) -> TestRunExecution:
     """Creates a new test run execution on CLI request.
-       Attention: if both config and execution_config are provided,
-       only config will be persisted, while execution_config will be for
-       this execution only. Similarly, if both pics and execution_pics are provided,
-       only pics will be persisted, while execution_pics will be for execution only.
 
     Args:
         test_run_execution_in: Test run execution data
         selected_tests: Selected tests to run
-        config: Configuration parameters that update project (optional, persists)
         execution_config: Execution-specific config override (optional, temporary)
-        pics: PICS configuration that updates project (optional, persists)
         execution_pics: Execution-specific PICS override (optional, temporary)
+    Returns:
+        The created TestRunExecution.
     """
 
     # Retrieve or create the CLI project
