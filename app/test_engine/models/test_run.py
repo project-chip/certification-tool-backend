@@ -16,6 +16,7 @@
 from asyncio import CancelledError, Task, create_task
 
 from app.models import Project, TestRunExecution, TestStateEnum
+from app.schemas.pics import PICS
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.test_observable import TestObservable
@@ -61,6 +62,17 @@ class TestRun(TestObservable, UserPromptSupport):
         if self.test_run_execution.execution_config is not None:
             return self.test_run_execution.execution_config
         return self.project.config
+
+    @property
+    def pics(self) -> PICS:
+        """Get PICS for test suite.
+
+        Returns execution_pics if available (temporary, per-execution PICS),
+        otherwise returns project.pics (persistent PICS).
+        """
+        if self.test_run_execution.execution_pics is not None:
+            return PICS.parse_obj(self.test_run_execution.execution_pics)
+        return PICS.parse_obj(self.project.pics)
 
     @property
     def state(self) -> TestStateEnum:

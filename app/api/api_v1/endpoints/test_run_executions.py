@@ -110,30 +110,9 @@ def create_test_run_execution(
     return test_run_execution
 
 
-def __convert_pics_dict_to_object(pics: dict) -> schemas.PICS | None:
-    """Convert a dictionary to a PICS object.
-
-    Args:
-        pics (dict): Dictionary containing PICS data
-
-    Returns:
-        schemas.PICS: PICS object if conversion successful.
-    """
-    if not pics:
-        return schemas.PICS(clusters={})
-
-    try:
-        return schemas.PICS(**pics)
-    except Exception as e:
-        logger.error(f"Invalid PICS data: {e}")
-        return None
-
-
 def _cli_project(
     db: Session,
     project_id: int | None,
-    config: dict | None,
-    pics_obj: schemas.PICS,
 ) -> Project:
     """Retrieve or create the default CLI project."""
 
@@ -145,11 +124,10 @@ def _cli_project(
                 db=db, name=DEFAULT_CLI_PROJECT_NAME
             )
         ):
-            new_config = (
-                default_environment_config.__dict__ if config is None else config
-            )
             project_create = schemas.ProjectCreate(
-                name=DEFAULT_CLI_PROJECT_NAME, config=new_config, pics=pics_obj
+                name=DEFAULT_CLI_PROJECT_NAME,
+                config=default_environment_config.__dict__,
+                pics=schemas.PICS(clusters={}),
             )
             return crud.project.create(db=db, obj_in=project_create)
     else:
@@ -160,15 +138,6 @@ def _cli_project(
                 detail=f"Project with ID {project_id} not found.",
             )
 
-    if config is not None:
-        logger.info(f"CLI Config Arguments: {config}")
-        project_update = schemas.ProjectUpdate(
-            name=cli_project.name, config=config, pics=pics_obj
-        )
-        cli_project = crud.project.update(
-            db=db, db_obj=cli_project, obj_in=project_update
-        )
-
     return cli_project
 
 
@@ -178,41 +147,37 @@ def create_cli_test_run_execution(
     db: Session = Depends(get_db),
     test_run_execution_in: schemas.TestRunExecutionCreate,
     selected_tests: schemas.TestSelection,
-    config: dict | None = None,
     execution_config: dict | None = None,
-    pics: dict = {},
+    execution_pics: dict | None = None,
 ) -> TestRunExecution:
     """Creates a new test run execution on CLI request.
        Attention: if both config and execution_config are provided,
        only config will be persisted, while execution_config will be for
-       this execution only.
+       this execution only. Similarly, if both pics and execution_pics are provided,
+       only pics will be persisted, while execution_pics will be for execution only.
 
     Args:
         test_run_execution_in: Test run execution data
         selected_tests: Selected tests to run
         config: Configuration parameters that update project (optional, persists)
         execution_config: Execution-specific config override (optional, temporary)
-        pics: PICS configuration (optional)
+        pics: PICS configuration that updates project (optional, persists)
+        execution_pics: Execution-specific PICS override (optional, temporary)
     """
 
-    # Convert pics dict to PICS object if provided
-    logger.info(f"CLI PICS Arguments: {pics}")
-    pics_obj = __convert_pics_dict_to_object(pics)
-    if pics_obj is None:
-        raise HTTPException(
-            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-            detail="Invalid PICS data provided. Please check the format.",
-        )
-
     # Retrieve or create the CLI project
-    # Only update project if config is provided (not execution_config)
-    cli_project = _cli_project(db, test_run_execution_in.project_id, config, pics_obj)
+    cli_project = _cli_project(db, test_run_execution_in.project_id)
     test_run_execution_in.project_id = cli_project.id
 
     # Store execution_config if provided (temporary, per-execution)
     if execution_config is not None:
         logger.info(f"CLI Execution Config (Temporary): {execution_config}")
         test_run_execution_in.execution_config = execution_config
+
+    # Store execution_pics if provided (temporary, per-execution)
+    if execution_pics is not None:
+        logger.info(f"CLI Execution PICS (Temporary): {execution_pics}")
+        test_run_execution_in.execution_pics = execution_pics
 
     test_run_execution_in.certification_mode = False
 

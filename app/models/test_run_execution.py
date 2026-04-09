@@ -59,6 +59,11 @@ class TestRunExecution(Base):
         JSON, nullable=True, default=None
     )
 
+    # Execution-specific PICS (temporary, not persisted to project)
+    execution_pics: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, nullable=True, default=None
+    )
+
     test_run_config_id: Mapped[int | None] = mapped_column(
         ForeignKey("testrunconfig.id"), nullable=True
     )

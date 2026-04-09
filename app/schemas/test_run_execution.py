@@ -39,6 +39,7 @@ class TestRunExecutionBase(BaseModel):
     title: str
     description: str | None
     execution_config: dict | None = None
+    execution_pics: dict | None = None
     certification_mode: bool = False
 
 
