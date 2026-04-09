@@ -72,7 +72,7 @@ class TestRun(TestObservable, UserPromptSupport):
         """
         if self.test_run_execution.execution_pics is not None:
             return PICS.parse_obj(self.test_run_execution.execution_pics)
-        return PICS.parse_obj(self.project.pics)
+        return self.project.pics
 
     @property
     def state(self) -> TestStateEnum:
