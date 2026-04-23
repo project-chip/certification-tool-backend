@@ -557,3 +557,297 @@ class TestGetCommandList:
         result = get_command_list(folder)
         class_names = [cmd[1] for cmd in result]
         assert class_names == ["TC_A_1_1", "TC_B_1_1"]
+
+
+# ---------------------------------------------------------------------------
+# _is_matter_base_test_class — extra_search_dirs
+# ---------------------------------------------------------------------------
+
+
+class TestIsMatterBaseTestClassExtraSearchDirs:
+    def test_finds_base_in_extra_search_dir_when_absent_from_search_dir(
+        self, tmp_path: Path
+    ) -> None:
+        sdk_dir = tmp_path / "sdk"
+        sdk_dir.mkdir()
+        custom_dir = tmp_path / "custom"
+        custom_dir.mkdir()
+
+        (sdk_dir / "support_modules").mkdir()
+        (sdk_dir / "support_modules" / "cadmin_support.py").write_text(
+            textwrap.dedent(
+                f"""
+            class CADMINBaseTest({MATTER_BASE_TEST_CLASS_NAME}):
+                pass
+        """
+            )
+        )
+
+        module = _parse(
+            """
+            from support_modules.cadmin_support import CADMINBaseTest
+
+            class TC_JFADMIN_2_2(CADMINBaseTest):
+                pass
+        """
+        )
+
+        # Without extra_search_dirs (custom_dir only) — should NOT find it
+        assert (
+            _is_matter_base_test_class("TC_JFADMIN_2_2", module, search_dir=custom_dir)
+            is False
+        )
+
+        # With sdk_dir as extra — should resolve via extra dir
+        assert (
+            _is_matter_base_test_class(
+                "TC_JFADMIN_2_2",
+                module,
+                search_dir=custom_dir,
+                _extra_search_dirs=[sdk_dir],
+            )
+            is True
+        )
+
+    def test_search_dir_takes_precedence_over_extra_dir(self, tmp_path: Path) -> None:
+        primary_dir = tmp_path / "primary"
+        primary_dir.mkdir()
+        extra_dir = tmp_path / "extra"
+        extra_dir.mkdir()
+
+        # primary_dir has a base that does NOT inherit MatterBaseTest
+        (primary_dir / "MyBase.py").write_text(
+            textwrap.dedent(
+                """
+            class MyBase:
+                pass
+        """
+            )
+        )
+        # extra_dir has a base that DOES inherit MatterBaseTest
+        (extra_dir / "MyBase.py").write_text(
+            textwrap.dedent(
+                f"""
+            class MyBase({MATTER_BASE_TEST_CLASS_NAME}):
+                pass
+        """
+            )
+        )
+
+        module = _parse(
+            """
+            from MyBase import MyBase
+
+            class MyTest(MyBase):
+                pass
+        """
+        )
+
+        # search_dir version (no inheritance) should win
+        assert (
+            _is_matter_base_test_class(
+                "MyTest",
+                module,
+                search_dir=primary_dir,
+                _extra_search_dirs=[extra_dir],
+            )
+            is False
+        )
+
+    def test_extra_search_dir_not_needed_for_sibling_in_search_dir(
+        self, tmp_path: Path
+    ) -> None:
+        sdk_dir = tmp_path / "sdk"
+        sdk_dir.mkdir()
+        (sdk_dir / "support_modules").mkdir()
+        (sdk_dir / "support_modules" / "idm_support.py").write_text(
+            textwrap.dedent(
+                f"""
+            class IDMBaseTest({MATTER_BASE_TEST_CLASS_NAME}):
+                pass
+        """
+            )
+        )
+
+        module = _parse(
+            """
+            from support_modules.idm_support import IDMBaseTest
+
+            class TC_IDM_1_2(IDMBaseTest):
+                pass
+        """
+        )
+
+        # sdk_dir is the search_dir itself; no extra dirs needed
+        assert (
+            _is_matter_base_test_class("TC_IDM_1_2", module, search_dir=sdk_dir) is True
+        )
+
+    def test_returns_false_when_module_absent_from_all_dirs(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir = tmp_path / "custom"
+        custom_dir.mkdir()
+        extra_dir = tmp_path / "extra"
+        extra_dir.mkdir()
+
+        module = _parse(
+            """
+            from support_modules.cadmin_support import CADMINBaseTest
+
+            class TC_X_1_1(CADMINBaseTest):
+                pass
+        """
+        )
+
+        assert (
+            _is_matter_base_test_class(
+                "TC_X_1_1",
+                module,
+                search_dir=custom_dir,
+                _extra_search_dirs=[extra_dir],
+            )
+            is False
+        )
+
+
+# ---------------------------------------------------------------------------
+# base_test_classes — extra_search_dirs
+# ---------------------------------------------------------------------------
+
+
+class TestBaseTestClassesExtraSearchDirs:
+    def test_resolves_base_via_extra_search_dir(self, tmp_path: Path) -> None:
+        sdk_dir = tmp_path / "sdk"
+        sdk_dir.mkdir()
+        custom_dir = tmp_path / "custom"
+        custom_dir.mkdir()
+
+        (sdk_dir / "support_modules").mkdir()
+        (sdk_dir / "support_modules" / "cadmin_support.py").write_text(
+            textwrap.dedent(
+                f"""
+            class CADMINBaseTest({MATTER_BASE_TEST_CLASS_NAME}):
+                pass
+        """
+            )
+        )
+
+        module = _parse(
+            """
+            from support_modules.cadmin_support import CADMINBaseTest
+
+            class TC_JFADMIN_2_2(CADMINBaseTest):
+                pass
+        """
+        )
+
+        result = base_test_classes(
+            module, search_dir=custom_dir, extra_search_dirs=[sdk_dir]
+        )
+        assert len(result) == 1
+        assert result[0].name == "TC_JFADMIN_2_2"
+
+    def test_returns_empty_without_extra_dir_when_base_not_local(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir = tmp_path / "custom"
+        custom_dir.mkdir()
+
+        module = _parse(
+            """
+            from support_modules.cadmin_support import CADMINBaseTest
+
+            class TC_JFADMIN_2_2(CADMINBaseTest):
+                pass
+        """
+        )
+
+        result = base_test_classes(module, search_dir=custom_dir)
+        assert result == []
+
+
+# ---------------------------------------------------------------------------
+# get_command_list — custom vs sdk folder extra_search_dirs behaviour
+# ---------------------------------------------------------------------------
+
+
+class TestGetCommandListCustomFolder:
+    def test_custom_folder_resolves_support_module_from_sdk_dir(
+        self, tmp_path: Path
+    ) -> None:
+        sdk_dir = tmp_path / "sdk"
+        sdk_dir.mkdir()
+        custom_dir = tmp_path / "custom"
+        custom_dir.mkdir()
+
+        (sdk_dir / "support_modules").mkdir()
+        (sdk_dir / "support_modules" / "cadmin_support.py").write_text(
+            textwrap.dedent(
+                f"""
+            class CADMINBaseTest({MATTER_BASE_TEST_CLASS_NAME}):
+                pass
+        """
+            )
+        )
+
+        test_file = custom_dir / "TC_JFADMIN_2_2.py"
+        test_file.write_text(
+            textwrap.dedent(
+                """
+            from support_modules.cadmin_support import CADMINBaseTest
+
+            class TC_JFADMIN_2_2(CADMINBaseTest):
+                pass
+        """
+            )
+        )
+
+        folder = MagicMock()
+        folder.path = custom_dir
+        folder.file_paths.return_value = [test_file]
+
+        with patch(
+            "test_collections.matter.sdk_tests.support.python_testing"
+            ".list_python_tests_classes.CUSTOM_PYTHON_SCRIPTS_PATH",
+            custom_dir,
+        ):
+            with patch(
+                "test_collections.matter.sdk_tests.support.python_testing"
+                ".list_python_tests_classes.PYTHON_SCRIPTS_PATH",
+                sdk_dir,
+            ):
+                result = get_command_list(folder)
+
+        assert len(result) == 1
+        assert result[0][1] == "TC_JFADMIN_2_2"
+
+    def test_sdk_folder_does_not_use_extra_search_dirs(self, tmp_path: Path) -> None:
+        sdk_dir = tmp_path / "sdk"
+        sdk_dir.mkdir()
+        custom_dir = tmp_path / "custom"
+        custom_dir.mkdir()
+
+        test_file = sdk_dir / "TC_FOO_1_1.py"
+        test_file.write_text(
+            textwrap.dedent(
+                f"""
+            class TC_FOO_1_1({MATTER_BASE_TEST_CLASS_NAME}):
+                pass
+        """
+            )
+        )
+
+        folder = MagicMock()
+        folder.path = sdk_dir
+        folder.file_paths.return_value = [test_file]
+
+        with patch(
+            "test_collections.matter.sdk_tests.support.python_testing"
+            ".list_python_tests_classes.CUSTOM_PYTHON_SCRIPTS_PATH",
+            custom_dir,
+        ):
+            result = get_command_list(folder)
+
+        assert len(result) == 1
+        assert result[0][1] == "TC_FOO_1_1"

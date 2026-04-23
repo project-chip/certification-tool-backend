@@ -138,6 +138,7 @@ def _is_matter_base_test_class(
     search_dir: Optional[Path],
     _visiting: Optional[set[tuple]] = None,
     _module_cache: Optional[dict] = None,
+    _extra_search_dirs: Optional[list[Path]] = None,
 ) -> bool:
     """Recursively check if a class name in a parsed module ultimately inherits
     from MatterBaseTest, following local file imports as needed.
@@ -152,6 +153,9 @@ def _is_matter_base_test_class(
             separately parsed copies of the same file are correctly identified.
         _module_cache: Cache of already-parsed AST modules keyed by absolute
             file path, to avoid redundant disk reads.
+        _extra_search_dirs: Additional directories to search when the module
+            file is not found relative to search_dir (e.g. sdk/ siblings when
+            resolving imports from the custom/ folder).
 
     Returns:
         bool: True if the class transitively inherits from MatterBaseTest.
@@ -160,6 +164,8 @@ def _is_matter_base_test_class(
         _visiting = set()
     if _module_cache is None:
         _module_cache = {}
+    if _extra_search_dirs is None:
+        _extra_search_dirs = []
 
     # Find the class definition in this module
     class_def = next(
@@ -189,7 +195,7 @@ def _is_matter_base_test_class(
 
         # Check if base_name is defined in the same module (local parent class)
         if _is_matter_base_test_class(
-            base_name, module, search_dir, _visiting, _module_cache
+            base_name, module, search_dir, _visiting, _module_cache, _extra_search_dirs
         ):
             return True
 
@@ -207,47 +213,58 @@ def _is_matter_base_test_class(
             # Try to load a local file. Module dots are converted to path separators
             # so both flat imports (TC_TLSCERT_Base) and package imports
             # (support_modules.idm_support) resolve to the correct sibling file.
-            if search_dir:
-                candidate = search_dir / f"{node.module.replace('.', '/')}.py"
-                if candidate.exists():
-                    try:
-                        abs_path = str(candidate.resolve())
-                        if abs_path not in _module_cache:
-                            with open(candidate, "r") as f:
-                                _module_cache[abs_path] = ast.parse(f.read())
-                        imported_module = _module_cache[abs_path]
+            # Also search _extra_search_dirs for modules that live outside search_dir
+            # (e.g. support_modules/ under sdk/ when resolving imports from custom/).
+            module_rel_path = f"{node.module.replace('.', '/')}.py"
+            all_search_dirs = ([search_dir] if search_dir else []) + _extra_search_dirs
+            candidate = next(
+                (
+                    d / module_rel_path
+                    for d in all_search_dirs
+                    if (d / module_rel_path).exists()
+                ),
+                None,
+            )
+            if candidate is not None:
+                try:
+                    abs_path = str(candidate.resolve())
+                    if abs_path not in _module_cache:
+                        with open(candidate, "r") as f:
+                            _module_cache[abs_path] = ast.parse(f.read())
+                    imported_module = _module_cache[abs_path]
 
-                        # Use the absolute path as the cycle-guard key so that
-                        # re-parsed copies of the same file are treated as
-                        # identical, preventing infinite recursion on cross-file
-                        # circular imports.
-                        file_key = (abs_path, class_name)
-                        if file_key in _visiting:
-                            continue
-                        _visiting.add(file_key)
-
-                        # The actual class name in the imported file may differ
-                        # (e.g. `from TC_TLSCERT_Base import TC_TLSCERT_Base`)
-                        actual_name = next(
-                            (
-                                alias.name
-                                for alias in node.names
-                                if (alias.asname or alias.name) == base_name
-                            ),
-                            base_name,
-                        )
-                        if _is_matter_base_test_class(
-                            actual_name,
-                            imported_module,
-                            search_dir,
-                            _visiting,
-                            _module_cache,
-                        ):
-                            return True
+                    # Use the absolute path as the cycle-guard key so that
+                    # re-parsed copies of the same file are treated as
+                    # identical, preventing infinite recursion on cross-file
+                    # circular imports.
+                    file_key = (abs_path, class_name)
+                    if file_key in _visiting:
                         continue
+                    _visiting.add(file_key)
 
-                    except SyntaxError:
-                        logger.warning(f"Skipping {candidate} due to syntax error")
+                    # The actual class name in the imported file may differ
+                    # (e.g. `from TC_TLSCERT_Base import TC_TLSCERT_Base`)
+                    actual_name = next(
+                        (
+                            alias.name
+                            for alias in node.names
+                            if (alias.asname or alias.name) == base_name
+                        ),
+                        base_name,
+                    )
+                    if _is_matter_base_test_class(
+                        actual_name,
+                        imported_module,
+                        candidate.parent,
+                        _visiting,
+                        _module_cache,
+                        _extra_search_dirs,
+                    ):
+                        return True
+                    continue
+
+                except SyntaxError:
+                    logger.warning(f"Skipping {candidate} due to syntax error")
 
             # Fallback for installed packages whose source is not available as a
             # local file (e.g. matter.testing.* installed as a wheel).
@@ -260,7 +277,9 @@ def _is_matter_base_test_class(
 
 
 def base_test_classes(
-    module: ast.Module, search_dir: Optional[Path] = None
+    module: ast.Module,
+    search_dir: Optional[Path] = None,
+    extra_search_dirs: Optional[list[Path]] = None,
 ) -> list[ast.ClassDef]:
     """Find classes that inherit from MatterBaseTest, following local imports
     transitively so that intermediate base classes (e.g. TC_TLSCERT_Base) are
@@ -271,6 +290,9 @@ def base_test_classes(
         search_dir (Optional[Path]): Directory containing the file's siblings,
             used to resolve local imports.  When None only same-file inheritance
             and the legacy pattern-based fallback are used.
+        extra_search_dirs (Optional[list[Path]]): Additional directories to
+            search when a module is not found relative to search_dir (e.g.
+            sdk/ siblings when resolving imports from the custom/ folder).
 
     Returns:
         list[ast.ClassDef]: Classes in the module that ultimately inherit from
@@ -282,7 +304,11 @@ def base_test_classes(
         for c in module.body
         if isinstance(c, ast.ClassDef)
         and _is_matter_base_test_class(
-            c.name, module, search_dir, _module_cache=module_cache
+            c.name,
+            module,
+            search_dir,
+            _module_cache=module_cache,
+            _extra_search_dirs=extra_search_dirs or [],
         )
     ]
 
@@ -298,6 +324,9 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
     # Load ignore and include lists
     ignore_list = load_ignore_list()
     include_list = load_include_list()
+
+    is_custom = test_folder.path.is_relative_to(CUSTOM_PYTHON_SCRIPTS_PATH)
+    extra_search_dirs = [PYTHON_SCRIPTS_PATH] if is_custom else []
 
     for python_test_file in python_test_files:
         # Check if file is in include list (bypass regex check)
@@ -324,7 +353,9 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
             continue
 
         test_classes = base_test_classes(
-            parsed_python_file, search_dir=python_test_file.parent
+            parsed_python_file,
+            search_dir=python_test_file.parent,
+            extra_search_dirs=extra_search_dirs,
         )
         for test_class in test_classes:
             # Add file path and class name
