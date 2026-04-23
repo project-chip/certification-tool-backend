@@ -218,11 +218,7 @@ def _is_matter_base_test_class(
             module_rel_path = f"{node.module.replace('.', '/')}.py"
             all_search_dirs = ([search_dir] if search_dir else []) + _extra_search_dirs
             candidate = next(
-                (
-                    p
-                    for d in all_search_dirs
-                    if (p := d / module_rel_path).exists()
-                ),
+                (p for d in all_search_dirs if (p := d / module_rel_path).exists()),
                 None,
             )
             if candidate is not None:
