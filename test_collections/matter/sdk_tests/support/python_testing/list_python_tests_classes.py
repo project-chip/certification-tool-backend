@@ -219,9 +219,9 @@ def _is_matter_base_test_class(
             all_search_dirs = ([search_dir] if search_dir else []) + _extra_search_dirs
             candidate = next(
                 (
-                    d / module_rel_path
+                    p
                     for d in all_search_dirs
-                    if (d / module_rel_path).exists()
+                    if (p := d / module_rel_path).exists()
                 ),
                 None,
             )
@@ -255,7 +255,7 @@ def _is_matter_base_test_class(
                     if _is_matter_base_test_class(
                         actual_name,
                         imported_module,
-                        candidate.parent,
+                        search_dir,
                         _visiting,
                         _module_cache,
                         _extra_search_dirs,
