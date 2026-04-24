@@ -280,9 +280,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
     async def _show_prompt_request(self, request: PromptRequest) -> None:
         user_response = await self.send_prompt_request(request)
 
-        if self.test_socket and user_response.response_str:
-            response = f"{user_response.response_str}\n".encode()
-            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+        if self.test_socket:
+            # Always send something to unblock the SDK's input() call.
+            # On timeout/cancel response_str is None, so fall back to default_value
+            # or an empty line — otherwise the SDK process hangs waiting on stdin.
+            reply = user_response.response_str or getattr(request, "default_value", None) or ""
+            self.test_socket._sock.sendall(  # type: ignore[attr-defined]
+                f"{reply}\n".encode()
+            )
+
+        self.__evaluate_user_response_for_errors(user_response)
 
     async def show_prompt(
         self,
