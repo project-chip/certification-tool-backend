@@ -526,7 +526,7 @@ async def test_no_commissioning_python_test_case_does_not_prompt_commissioning_m
         python_test_type=PythonTestType.NO_COMMISSIONING,
     )
 
-    test_case = NoCommissioningPythonTestCase.class_factory(
+    test_case = NoCommissioningPythonTestCase.class_factory(  # type: ignore
         test=test,
         python_test_version="version",
         mandatory=False,
