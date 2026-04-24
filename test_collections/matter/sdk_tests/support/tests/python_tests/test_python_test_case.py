@@ -30,7 +30,10 @@ from app.test_engine.logger import test_engine_logger
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...python_testing.models import PythonTestCase
 from ...python_testing.models.python_test_models import PythonTest, PythonTestType
-from ...python_testing.models.test_case import LegacyPythonTestCase
+from ...python_testing.models.test_case import (
+    LegacyPythonTestCase,
+    NoCommissioningPythonTestCase,
+)
 from ...python_testing.models.utils import DUTCommissioningError
 from ...utils import PromptOption
 
@@ -507,3 +510,31 @@ async def test_legacy_python_test_case_new_commissioning() -> None:
 
         mock_prompt_commissioning.assert_called_once()
         mock_commission_device.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_no_commissioning_python_test_case_does_not_prompt_commissioning_mode() -> None:
+    """Test that NoCommissioningPythonTestCase.setup() does not prompt the user to put
+    the DUT in commissioning mode.
+
+    Regression test for: TC_DD_1_5 showing spurious commissioning prompt when run via CLI.
+    """
+    test_case_execution = TestCaseExecution()
+    test = python_test_instance(
+        name="TC-DD-1.5",
+        path=Path("path"),
+        python_test_type=PythonTestType.NO_COMMISSIONING,
+    )
+
+    test_case = NoCommissioningPythonTestCase.class_factory(
+        test=test,
+        python_test_version="version",
+        mandatory=False,
+    )(test_case_execution)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".prompt_for_commissioning_mode"
+    ) as mock_prompt_commissioning:
+        await test_case.setup()
+        mock_prompt_commissioning.assert_not_called()

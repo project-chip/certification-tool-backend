@@ -663,13 +663,6 @@ class PythonTestCase(TestCase, UserPromptSupport):
 class NoCommissioningPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
-        user_response = await prompt_for_commissioning_mode(
-            self, logger, None, self.cancel
-        )
-        if user_response == PromptOption.FAIL:
-            raise DUTCommissioningError(
-                "User chose prompt option FAILED for DUT is in Commissioning Mode"
-            )
 
 
 class LegacyPythonTestCase(PythonTestCase):
