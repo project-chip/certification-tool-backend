@@ -664,10 +664,14 @@ class NoCommissioningPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
 
+        logger.info("Setup -  No Commissioning Python Test Case")
+
 
 class LegacyPythonTestCase(PythonTestCase):
     async def setup(self) -> None:
         await super().setup()
+
+        logger.info("Setup -  Legacy Python Test Case")
 
         await self.prompt_about_commissioning()
 
