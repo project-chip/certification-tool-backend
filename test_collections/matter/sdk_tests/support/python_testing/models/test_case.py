@@ -284,7 +284,11 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # Always send something to unblock the SDK's input() call.
             # On timeout/cancel response_str is None, so fall back to default_value
             # or an empty line — otherwise the SDK process hangs waiting on stdin.
-            reply = (user_response.response_str if user_response else None) or getattr(request, "default_value", None) or ""
+            reply = (
+                user_response.response_str
+                or getattr(request, "default_value", None)
+                or ""
+            )
             self.test_socket._sock.sendall(  # type: ignore[attr-defined]
                 f"{reply}\n".encode()
             )
@@ -325,13 +329,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             timeout=USER_PROMPT_TIMEOUT,
             image_hex_str=img_hex_str,
         )
-
-        user_response = await self.send_prompt_request(prompt_request)
-        self.__evaluate_user_response_for_errors(user_response)
-
-        if self.test_socket and user_response.response_str:
-            response = f"{user_response.response_str}\n".encode()
-            self.test_socket._sock.sendall(response)  # type: ignore[attr-defined]
+        await self._show_prompt_request(prompt_request)
 
     async def show_push_av_stream_prompt(self, msg: str) -> None:
         options = {
