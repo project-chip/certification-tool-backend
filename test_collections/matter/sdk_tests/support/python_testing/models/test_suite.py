@@ -105,14 +105,8 @@ class PythonTestSuite(TestSuite):
         await self.sdk_container.start()
 
         self.matter_config = TestEnvironmentConfigMatter(**self.config)
-        if self.matter_config.dut_config.pairing_mode in (
-            DutPairingModeEnum.NFC_THREAD,
-            DutPairingModeEnum.NFC_WIFI,
-            DutPairingModeEnum.THREAD_MESHCOP,
-        ):
-            # When PCSC reader is used in a Docker container, pollkit should
-            #  be disabled
-            self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
+        # pcscd is required for NFC reader access regardless of pairing mode
+        self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
 
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")

@@ -71,13 +71,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
         logger.info("Setting up SDK container")
         await self.sdk_container.start()
 
-        if self.config_matter.dut_config.pairing_mode in (
-            DutPairingModeEnum.NFC_THREAD,
-            DutPairingModeEnum.NFC_WIFI,
-        ):
-            # When PCSC reader is used in a Docker container, pollkit should
-            #  be disabled
-            self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
+        # pcscd is required for NFC reader access regardless of pairing mode
+        self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
 
         logger.info("Setting up test runner")
         await self.runner.setup(
