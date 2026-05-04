@@ -470,7 +470,8 @@ async def test_nfc_logs_warning_when_discriminator_or_setup_code_set(
 async def test_nfc_no_warning_when_discriminator_and_setup_code_not_set(
     pairing_mode: DutPairingModeEnum,
 ) -> None:
-    """No warning is logged for NFC modes when discriminator and setup_code are absent."""
+    """No warning is logged for NFC modes when discriminator and setup_code are
+    absent."""
     with mock.patch.object(test_engine_logger, "warning") as mock_warn:
         await _nfc_arguments(pairing_mode)
         mock_warn.assert_not_called()

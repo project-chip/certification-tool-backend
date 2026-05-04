@@ -120,8 +120,8 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                 for field in ("discriminator", "setup_code"):
                     if not dut_config.get(field):
                         raise TestEnvironmentConfigMatterError(
-                            f"The field {field} is required for dut_config configuration"
-                            f" when pairing_mode is {pairing_mode}"
+                            f"The field {field} is required for dut_config "
+                            "configuration when pairing_mode is {pairing_mode}"
                         )
 
             # Validate THREAD_MESHCOP mode requires ba_host and ba_port
