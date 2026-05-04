@@ -165,8 +165,6 @@ async def test_generate_command_arguments_nfc_wifi_pairing_mode() -> None:
     }
 
     mock_dut_config = DutConfig(
-        discriminator="147",
-        setup_code="357",
         pairing_mode=DutPairingModeEnum.NFC_WIFI,
         chip_timeout=None,
     )
@@ -294,9 +292,7 @@ async def test_generate_command_arguments_nfc_thread() -> None:
     }
 
     mock_dut_config = DutConfig(
-        setup_code="8765",
         pairing_mode=DutPairingModeEnum.NFC_THREAD,
-        discriminator="456",
         chip_timeout=None,
     )
 
@@ -329,8 +325,8 @@ async def test_generate_command_arguments_nfc_thread() -> None:
             "--paa-trust-store-path /paa-root-certs",
             "--storage_path /root/admin_storage.json",
         ] == arguments
-        assert mock_dut_config.discriminator not in arguments
-        assert mock_dut_config.setup_code not in arguments
+        assert "--discriminator" not in " ".join(arguments)
+        assert "--passcode" not in " ".join(arguments)
 
 
 @pytest.mark.asyncio
@@ -344,9 +340,7 @@ async def test_generate_command_arguments_nfc_thread_for_external_network() -> N
     }
 
     mock_dut_config = DutConfig(
-        setup_code="8765",
         pairing_mode=DutPairingModeEnum.NFC_THREAD,
-        discriminator="783",
         chip_timeout=None,
     )
 
@@ -375,8 +369,99 @@ async def test_generate_command_arguments_nfc_thread_for_external_network() -> N
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
     ] == arguments
-    assert mock_dut_config.discriminator not in arguments
-    assert mock_dut_config.setup_code not in arguments
+    assert "--discriminator" not in " ".join(arguments)
+    assert "--passcode" not in " ".join(arguments)
+
+
+NFC_PAIRING_MODES_PARAMS = [
+    pytest.param(DutPairingModeEnum.NFC_THREAD, id="nfc-thread"),
+    pytest.param(DutPairingModeEnum.NFC_WIFI, id="nfc-wifi"),
+]
+
+MOCK_THREAD_DATASET = (
+    "0e08000000000001000035060004001fffe00708fd47156040435d2b041069c13cc038488"
+    "0328b9d2d7a6ee891150c0402a0f7f8000300000f01021234020811111111222222220510"
+    "00112233445566778899aabbccddeeff030444454d4f"
+)
+
+THREAD_DATASET_PATCH = mock.patch(
+    "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+    ".__thread_dataset_hex",
+    return_value=MOCK_THREAD_DATASET,
+)
+
+
+async def _nfc_arguments(pairing_mode: DutPairingModeEnum, **dut_kwargs) -> list:
+    """Helper: build command arguments for a given NFC pairing mode and DutConfig kwargs."""
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+    mock_config.test_parameters = None
+    mock_config.dut_config = DutConfig(
+        pairing_mode=pairing_mode, chip_timeout=None, **dut_kwargs
+    )
+    with THREAD_DATASET_PATCH:
+        return await generate_command_arguments(
+            config=mock_config, omit_commissioning_method=False
+        )
+
+
+def _assert_no_discriminator_or_passcode(arguments: list) -> None:
+    joined = " ".join(arguments)
+    assert "--discriminator" not in joined
+    assert "--passcode" not in joined
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_with_discriminator_and_setup_code_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 1: both discriminator and setup_code set — neither passed to SDK."""
+    arguments = await _nfc_arguments(
+        pairing_mode, discriminator="3840", setup_code="20202021"
+    )
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_with_only_discriminator_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 2: only discriminator set — not passed to SDK."""
+    arguments = await _nfc_arguments(pairing_mode, discriminator="3840")
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_with_only_setup_code_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 3: only setup_code set — not passed to SDK."""
+    arguments = await _nfc_arguments(pairing_mode, setup_code="20202021")
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_without_discriminator_and_setup_code_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 4: neither discriminator nor setup_code set — not passed to SDK."""
+    arguments = await _nfc_arguments(pairing_mode)
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_always_logs_warning(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Warning is always logged for NFC modes regardless of discriminator/setup_code."""
+    with mock.patch.object(test_engine_logger, "warning") as mock_warn:
+        await _nfc_arguments(pairing_mode)
+        mock_warn.assert_called_once()
+        assert "ignored" in mock_warn.call_args[0][0]
 
 
 @pytest.mark.asyncio

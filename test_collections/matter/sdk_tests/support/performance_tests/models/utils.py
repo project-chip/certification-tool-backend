@@ -22,6 +22,7 @@ import loguru
 
 from app.constants.shared_constants import DutPairingModeEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig
+from app.test_engine.logger import test_engine_logger as logger
 
 from ...python_testing.models.utils import (
     EXECUTABLE,
@@ -48,9 +49,15 @@ async def generate_command_arguments(
     # Increase log level by adding trace log
     if dut_config.trace_log:
         arguments.append("--trace-to json:log")
-    # Retrieve arguments from dut_config
-    arguments.append(f"--discriminator {dut_config.discriminator}")
-    arguments.append(f"--passcode {dut_config.setup_code}")
+    # NFC modes don't use discriminator/passcode — onboarding data comes from the tag
+    if pairing_mode in (DutPairingModeEnum.NFC_WIFI, DutPairingModeEnum.NFC_THREAD):
+        logger.warning(
+            f"pairing_mode is {pairing_mode}: discriminator and setup_code from"
+            " project config are ignored. Onboarding data is read from the NFC tag."
+        )
+    else:
+        arguments.append(f"--discriminator {dut_config.discriminator}")
+        arguments.append(f"--passcode {dut_config.setup_code}")
     if not omit_commissioning_method:
         arguments.append(f"--commissioning-method {pairing_mode}")
 

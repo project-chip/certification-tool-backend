@@ -65,3 +65,9 @@ class DutPairingModeEnum(str, Enum):
     WIFIPAF_WIFI = "wifipaf-wifi"
     NFC_THREAD = "nfc-thread"
     THREAD_MESHCOP = "thread-meshcop"
+
+
+NFC_PAIRING_MODES = {
+    DutPairingModeEnum.NFC_WIFI.value,
+    DutPairingModeEnum.NFC_THREAD.value,
+}

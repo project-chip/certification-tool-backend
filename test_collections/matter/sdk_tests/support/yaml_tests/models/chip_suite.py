@@ -121,7 +121,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
             pair_result = await self.__pair_wifi_dut_wifi_modes("ble")
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI:
-            pair_result = await self.__pair_wifi_dut_wifi_modes("nfc")
+            pair_result = await self.__pair_with_dut_nfc_wifi()
         elif (
             self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
         ):
@@ -164,6 +164,19 @@ class ChipSuite(TestSuite, UserPromptSupport):
             discriminator=self.config_matter.dut_config.discriminator,
         )
 
+    async def __pair_with_dut_nfc_wifi(self) -> bool:
+        if self.config_matter.network.wifi is None:
+            raise DUTCommissioningError("Tool config is missing wifi config.")
+
+        logger.warning(
+            "pairing_mode is nfc-wifi: discriminator and setup_code from"
+            " project config are ignored. Onboarding data is read from the NFC tag."
+        )
+        return await self.runner.pairing_nfc_wifi(
+            ssid=self.config_matter.network.wifi.ssid,
+            password=self.config_matter.network.wifi.password,
+        )
+
     async def __pair_with_dut_ble_thread(self) -> bool:
         if self.config_matter.network.thread is None:
             raise DUTCommissioningError("Tool config is missing thread config.")
@@ -198,10 +211,12 @@ class ChipSuite(TestSuite, UserPromptSupport):
         else:
             raise DUTCommissioningError("Invalid thread configuration")
 
+        logger.warning(
+            "pairing_mode is nfc-thread: discriminator and setup_code from"
+            " project config are ignored. Onboarding data is read from the NFC tag."
+        )
         return await self.runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
         )
 
     async def __pair_with_dut_thread(self) -> bool:
