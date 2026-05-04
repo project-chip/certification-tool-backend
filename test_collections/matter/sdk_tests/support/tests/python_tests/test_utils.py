@@ -455,14 +455,25 @@ async def test_nfc_without_discriminator_and_setup_code_not_passed_to_sdk(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
-async def test_nfc_always_logs_warning(
+async def test_nfc_logs_warning_when_discriminator_or_setup_code_set(
     pairing_mode: DutPairingModeEnum,
 ) -> None:
-    """Warning is always logged for NFC modes regardless of discriminator/setup_code."""
+    """Warning is logged for NFC modes when discriminator or setup_code are provided."""
     with mock.patch.object(test_engine_logger, "warning") as mock_warn:
-        await _nfc_arguments(pairing_mode)
+        await _nfc_arguments(pairing_mode, discriminator="3840", setup_code="20202021")
         mock_warn.assert_called_once()
         assert "ignored" in mock_warn.call_args[0][0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_no_warning_when_discriminator_and_setup_code_not_set(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """No warning is logged for NFC modes when discriminator and setup_code are absent."""
+    with mock.patch.object(test_engine_logger, "warning") as mock_warn:
+        await _nfc_arguments(pairing_mode)
+        mock_warn.assert_not_called()
 
 
 @pytest.mark.asyncio

@@ -370,10 +370,10 @@ def test_create_config_matter_nfc_without_discriminator_and_setup_code_succeeds(
 
 
 @pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
-def test_create_config_matter_nfc_with_discriminator_fails(
+def test_create_config_matter_nfc_with_discriminator_succeeds(
     pairing_mode: str,
 ) -> None:
-    """Test that NFC pairing modes fail when discriminator is provided."""
+    """Test that NFC pairing modes accept discriminator (it is ignored at runtime)."""
     config = {
         "network": {
             "fabric_id": "0",
@@ -401,18 +401,15 @@ def test_create_config_matter_nfc_with_discriminator_fails(
         "test_parameters": None,
     }
 
-    with pytest.raises(TestEnvironmentConfigError) as e:
-        TestEnvironmentConfigMatter(**config)
-
-    assert "discriminator" in str(e.value)
-    assert "must not be set" in str(e.value)
+    config_matter = TestEnvironmentConfigMatter(**config)
+    assert config_matter.dut_config.discriminator == "3840"
 
 
 @pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
-def test_create_config_matter_nfc_with_setup_code_fails(
+def test_create_config_matter_nfc_with_setup_code_succeeds(
     pairing_mode: str,
 ) -> None:
-    """Test that NFC pairing modes fail when setup_code is provided."""
+    """Test that NFC pairing modes accept setup_code (it is ignored at runtime)."""
     config = {
         "network": {
             "fabric_id": "0",
@@ -440,11 +437,8 @@ def test_create_config_matter_nfc_with_setup_code_fails(
         "test_parameters": None,
     }
 
-    with pytest.raises(TestEnvironmentConfigError) as e:
-        TestEnvironmentConfigMatter(**config)
-
-    assert "setup_code" in str(e.value)
-    assert "must not be set" in str(e.value)
+    config_matter = TestEnvironmentConfigMatter(**config)
+    assert config_matter.dut_config.setup_code == "20202021"
 
 
 def test_create_config_matter_without_discriminator_fails() -> None:
