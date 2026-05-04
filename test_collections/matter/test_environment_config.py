@@ -113,16 +113,10 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
             pairing_mode = dut_config.get("pairing_mode")
             is_nfc_mode = pairing_mode in NFC_PAIRING_MODES
 
-            # discriminator and setup_code are required for non-NFC modes
-            # and must be omitted for NFC modes (onboarding data comes from the tag)
-            if is_nfc_mode:
-                for field in ("discriminator", "setup_code"):
-                    if dut_config.get(field) is not None:
-                        raise TestEnvironmentConfigMatterError(
-                            f"The field {field} must not be set when pairing_mode is"
-                            f" {pairing_mode}. Onboarding data is read from the NFC tag."
-                        )
-            else:
+            # discriminator and setup_code are required for non-NFC modes.
+            # For NFC modes they are optional and ignored if present —
+            # onboarding data is read directly from the NFC tag.
+            if not is_nfc_mode:
                 for field in ("discriminator", "setup_code"):
                     if not dut_config.get(field):
                         raise TestEnvironmentConfigMatterError(

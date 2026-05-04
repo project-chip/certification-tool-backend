@@ -391,8 +391,9 @@ THREAD_DATASET_PATCH = mock.patch(
 )
 
 
-async def _nfc_arguments(pairing_mode: DutPairingModeEnum, **dut_kwargs) -> list:
-    """Helper: build command arguments for a given NFC pairing mode and DutConfig kwargs."""
+async def _nfc_arguments(pairing_mode: DutPairingModeEnum, **dut_kwargs: str) -> list:
+    """Helper: build command arguments for a given NFC pairing mode and DutConfig
+    kwargs."""
     mock_config = default_environment_config.copy(deep=True)  # type: ignore
     mock_config.test_parameters = None
     mock_config.dut_config = DutConfig(

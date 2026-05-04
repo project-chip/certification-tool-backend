@@ -148,8 +148,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     async def __pair_with_dut_onnetwork(self) -> bool:
         return await self.runner.pairing_on_network(
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            setup_code=self.config_matter.dut_config.setup_code or "",
+            discriminator=self.config_matter.dut_config.discriminator or "",
         )
 
     async def __pair_wifi_dut_wifi_modes(self, mode: str) -> bool:
@@ -168,10 +168,14 @@ class ChipSuite(TestSuite, UserPromptSupport):
         if self.config_matter.network.wifi is None:
             raise DUTCommissioningError("Tool config is missing wifi config.")
 
-        logger.warning(
-            "pairing_mode is nfc-wifi: discriminator and setup_code from"
-            " project config are ignored. Onboarding data is read from the NFC tag."
-        )
+        if (
+            self.config_matter.dut_config.discriminator is not None
+            or self.config_matter.dut_config.setup_code is not None
+        ):
+            logger.warning(
+                "pairing_mode is nfc-wifi: discriminator and setup_code from"
+                " project config are ignored. Onboarding data is read from the NFC tag."
+            )
         return await self.runner.pairing_nfc_wifi(
             ssid=self.config_matter.network.wifi.ssid,
             password=self.config_matter.network.wifi.password,
@@ -193,8 +197,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         return await self.runner.pairing_ble_thread(
             hex_dataset=hex_dataset,
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            setup_code=self.config_matter.dut_config.setup_code or "",
+            discriminator=self.config_matter.dut_config.discriminator or "",
         )
 
     async def __pair_with_dut_nfc_thread(self) -> bool:
@@ -211,10 +215,14 @@ class ChipSuite(TestSuite, UserPromptSupport):
         else:
             raise DUTCommissioningError("Invalid thread configuration")
 
-        logger.warning(
-            "pairing_mode is nfc-thread: discriminator and setup_code from"
-            " project config are ignored. Onboarding data is read from the NFC tag."
-        )
+        if (
+            self.config_matter.dut_config.discriminator is not None
+            or self.config_matter.dut_config.setup_code is not None
+        ):
+            logger.warning(
+                "pairing_mode is nfc-thread: discriminator and setup_code from"
+                " project config are ignored. Onboarding data is read from the NFC tag."
+            )
         return await self.runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
         )
@@ -240,8 +248,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         # Generate manual pairing code from discriminator and setup code
         payload = self.runner.chip_server.generate_manual_pairing_code_with_chip_tool(
-            discriminator=self.config_matter.dut_config.discriminator,
-            setup_pin_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator or "",
+            setup_pin_code=self.config_matter.dut_config.setup_code or "",
         )
 
         return await self.runner.pairing_thread(

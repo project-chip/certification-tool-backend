@@ -20,7 +20,7 @@ from typing import Generator, cast
 
 import loguru
 
-from app.constants.shared_constants import DutPairingModeEnum
+from app.constants.shared_constants import NFC_PAIRING_MODES, DutPairingModeEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig
 from app.test_engine.logger import test_engine_logger as logger
 
@@ -50,7 +50,7 @@ async def generate_command_arguments(
     if dut_config.trace_log:
         arguments.append("--trace-to json:log")
     # NFC modes don't use discriminator/passcode — onboarding data comes from the tag
-    if pairing_mode in (DutPairingModeEnum.NFC_WIFI, DutPairingModeEnum.NFC_THREAD):
+    if pairing_mode in NFC_PAIRING_MODES:
         logger.warning(
             f"pairing_mode is {pairing_mode}: discriminator and setup_code from"
             " project config are ignored. Onboarding data is read from the NFC tag."

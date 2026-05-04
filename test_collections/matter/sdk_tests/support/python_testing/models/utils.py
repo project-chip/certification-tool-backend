@@ -119,10 +119,11 @@ async def generate_command_arguments(
     # Also, if manual-code or qr-code and also discriminator and passcode are provided,
     # the test will think that we're trying to commission 2 DUTs and it will fail
     if pairing_mode in NFC_PAIRING_MODES:
-        logger.warning(
-            f"pairing_mode is {pairing_mode}: discriminator and setup_code from"
-            " project config are ignored. Onboarding data is read from the NFC tag."
-        )
+        if dut_config.discriminator is not None or dut_config.setup_code is not None:
+            logger.warning(
+                f"pairing_mode is {pairing_mode}: discriminator and setup_code from"
+                " project config are ignored. Onboarding data is read from the NFC tag."
+            )
     elif (
         "manual-code" not in test_parameters.keys() if test_parameters else True
     ) and ("qr-code" not in test_parameters.keys() if test_parameters else True):
