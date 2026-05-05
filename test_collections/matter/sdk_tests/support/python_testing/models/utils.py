@@ -124,6 +124,19 @@ async def generate_command_arguments(
                 f"pairing_mode is {pairing_mode}: discriminator and setup_code from"
                 " project config are ignored. Onboarding data is read from the NFC tag."
             )
+        # Ensure NFC_Reader_index is always passed to the SDK runner.
+        # If not already present in int-arg, prepend NFC_Reader_index:0 so it
+        # goes through the existing _SPLIT_ARGS loop as a single --int-arg block.
+        int_arg = test_parameters.get("int-arg", "") if test_parameters else ""
+        if "NFC_Reader_index" not in int_arg:
+            if test_parameters is None:
+                test_parameters = {}
+            existing = test_parameters.get("int-arg", "")
+            test_parameters["int-arg"] = (
+                f"NFC_Reader_index:0 {existing}".strip()
+                if existing
+                else "NFC_Reader_index:0"
+            )
     elif (
         "manual-code" not in test_parameters.keys() if test_parameters else True
     ) and ("qr-code" not in test_parameters.keys() if test_parameters else True):
