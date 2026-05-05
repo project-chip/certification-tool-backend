@@ -55,6 +55,14 @@ async def generate_command_arguments(
             f"pairing_mode is {pairing_mode}: discriminator and setup_code from"
             " project config are ignored. Onboarding data is read from the NFC tag."
         )
+        int_arg = (test_parameters.get("int-arg") or "") if test_parameters else ""
+        if "NFC_Reader_index" not in int_arg:
+            nfc_reader_default = (
+                f"NFC_Reader_index:0 {int_arg}".strip()
+                if int_arg
+                else "NFC_Reader_index:0"
+            )
+            arguments.append(f"--int-arg {nfc_reader_default}")
     else:
         arguments.append(f"--discriminator {dut_config.discriminator}")
         arguments.append(f"--passcode {dut_config.setup_code}")
