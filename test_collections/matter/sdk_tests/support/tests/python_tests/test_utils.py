@@ -973,7 +973,7 @@ async def test_nfc_reader_index_not_duplicated_when_already_in_int_arg(
 @pytest.mark.asyncio
 async def test_nfc_reader_index_not_injected_for_non_nfc_modes() -> None:
     """--int-arg NFC_Reader_index is never injected for non-NFC pairing modes."""
-    cfg = _on_network_config(test_parameters=None)
+    cfg = _on_network_config(test_parameters={})
     arguments = await generate_command_arguments(cfg)
     joined = " ".join(arguments)
     assert "NFC_Reader_index" not in joined
