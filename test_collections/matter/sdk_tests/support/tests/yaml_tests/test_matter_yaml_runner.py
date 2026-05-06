@@ -451,7 +451,9 @@ async def test_pairing_nfc_wifi_command_params() -> None:
             discriminator=discriminator,
         )
 
-    expected_params = f"{hex(chip_server.node_id)} {ssid} {password} {setup_code} {discriminator}"
+    expected_params = (
+        f"{hex(chip_server.node_id)} {ssid} {password} {setup_code} {discriminator}"
+    )
     expected_command = f"pairing nfc-wifi {expected_params}"
 
     assert result is True
