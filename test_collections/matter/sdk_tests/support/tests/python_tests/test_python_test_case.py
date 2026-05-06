@@ -16,7 +16,7 @@
 # flake8: noqa
 # Ignore flake8 check for this file
 from pathlib import Path
-from typing import Any, Optional, Type
+from typing import Any, List, Optional, Type
 from unittest import mock
 
 import pytest
@@ -628,9 +628,11 @@ async def test_execute_commissioning_nfc_drops_qr_code() -> None:
         NFC_PROJECT_CONFIG, PythonTestType.COMMISSIONING
     )
 
-    captured_configs: list = []
+    captured_configs: List[Any] = []
 
-    async def _capture_config(config, omit_commissioning_method=False):
+    async def _capture_config(
+        config: Any, omit_commissioning_method: bool = False
+    ) -> List[str]:
         captured_configs.append(config)
         return []
 
@@ -678,9 +680,11 @@ async def test_execute_no_commissioning_nfc_preserves_qr_code() -> None:
         NFC_PROJECT_CONFIG, PythonTestType.NO_COMMISSIONING
     )
 
-    captured_configs: list = []
+    captured_configs: List[Any] = []
 
-    async def _capture_config(config, omit_commissioning_method=False):
+    async def _capture_config(
+        config: Any, omit_commissioning_method: bool = False
+    ) -> List[str]:
         captured_configs.append(config)
         return []
 
@@ -723,9 +727,11 @@ async def test_execute_commissioning_non_nfc_preserves_qr_code() -> None:
         ON_NETWORK_PROJECT_CONFIG, PythonTestType.COMMISSIONING
     )
 
-    captured_configs: list = []
+    captured_configs: List[Any] = []
 
-    async def _capture_config(config, omit_commissioning_method=False):
+    async def _capture_config(
+        config: Any, omit_commissioning_method: bool = False
+    ) -> List[str]:
         captured_configs.append(config)
         return []
 
