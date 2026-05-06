@@ -21,6 +21,7 @@ from pathlib import Path
 from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
+from app.constants.shared_constants import NFC_PAIRING_MODES
 from app.core.config import settings
 from app.models import TestCaseExecution
 from app.test_engine.logger import PYTHON_TEST_LEVEL
@@ -567,8 +568,36 @@ class PythonTestCase(TestCase, UserPromptSupport):
             # Generate the command argument by getting the test_parameters from
             # project configuration
             # comissioning method is omitted because it's handled by the test suite
+            config = TestEnvironmentConfigMatter(**self.config)
+
+            # For COMMISSIONING tests running under CommissioningPythonTestSuite with
+            # an NFC pairing mode, qr-code in test_parameters must be dropped —
+            # the onboarding data comes from the NFC tag. For NO_COMMISSIONING tests
+            # like TC_DD_1_5, qr-code is a legitimate input and must be preserved.
+            pairing_mode = config.dut_config.pairing_mode
+            if (
+                self.python_test.python_test_type == PythonTestType.COMMISSIONING
+                and pairing_mode in NFC_PAIRING_MODES
+                and config.test_parameters
+                and "qr-code" in config.test_parameters
+            ):
+                logger.warning(
+                    f"pairing_mode is {pairing_mode}: qr-code in test_parameters is"
+                    " ignored for Python Testing Suite - Auto commissioning."
+                    "Onboarding data is read from the NFC tag."
+                )
+                config = config.copy(
+                    update={
+                        "test_parameters": {
+                            k: v
+                            for k, v in config.test_parameters.items()
+                            if k != "qr-code"
+                        }
+                    }
+                )
+
             command_arguments = await generate_command_arguments(
-                config=TestEnvironmentConfigMatter(**self.config),
+                config=config,
                 omit_commissioning_method=True,
             )
             command.extend(command_arguments)
