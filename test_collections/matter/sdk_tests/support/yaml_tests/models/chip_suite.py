@@ -168,17 +168,11 @@ class ChipSuite(TestSuite, UserPromptSupport):
         if self.config_matter.network.wifi is None:
             raise DUTCommissioningError("Tool config is missing wifi config.")
 
-        if (
-            self.config_matter.dut_config.discriminator is not None
-            or self.config_matter.dut_config.setup_code is not None
-        ):
-            logger.warning(
-                "pairing_mode is nfc-wifi: discriminator and setup_code from"
-                " project config are ignored. Onboarding data is read from the NFC tag."
-            )
         return await self.runner.pairing_nfc_wifi(
             ssid=self.config_matter.network.wifi.ssid,
             password=self.config_matter.network.wifi.password,
+            setup_code=self.config_matter.dut_config.setup_code or "",
+            discriminator=self.config_matter.dut_config.discriminator or "",
         )
 
     async def __pair_with_dut_ble_thread(self) -> bool:
@@ -215,16 +209,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
         else:
             raise DUTCommissioningError("Invalid thread configuration")
 
-        if (
-            self.config_matter.dut_config.discriminator is not None
-            or self.config_matter.dut_config.setup_code is not None
-        ):
-            logger.warning(
-                "pairing_mode is nfc-thread: discriminator and setup_code from"
-                " project config are ignored. Onboarding data is read from the NFC tag."
-            )
         return await self.runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
+            setup_code=self.config_matter.dut_config.setup_code or "",
+            discriminator=self.config_matter.dut_config.discriminator or "",
         )
 
     async def __pair_with_dut_thread(self) -> bool:
