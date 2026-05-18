@@ -17,114 +17,44 @@ depends_on = None
 
 
 def upgrade():
-    # Rename "Python Testing Suite" -> "Python Testing Suite - Auto commissioning"
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite - Auto commissioning' "
-        "where public_id='Python Testing Suite'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite - Auto commissioning', "
-        "title='Python Testing Suite - Auto commissioning', "
-        "description='Python Testing Suite - Auto commissioning' "
-        "where public_id='Python Testing Suite'"
-    )
+    renames = {
+        "Python Testing Suite": "Python Testing Suite - Auto commissioning",
+        "Python Testing Suite - No commissioning": "Python Testing Suite - No auto commissioning",
+        "Python Testing Suite-custom": "Python Testing Suite - Auto commissioning-custom",
+        "Python Testing Suite - No commissioning-custom": "Python Testing Suite - No auto commissioning-custom",
+    }
 
-    # Rename "Python Testing Suite - No commissioning"
-    #     -> "Python Testing Suite - No auto commissioning"
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite - No auto commissioning' "
-        "where public_id='Python Testing Suite - No commissioning'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite - No auto commissioning', "
-        "title='Python Testing Suite - No auto commissioning', "
-        "description='Python Testing Suite - No auto commissioning' "
-        "where public_id='Python Testing Suite - No commissioning'"
-    )
-
-    # Handle custom variants (with "-custom" suffix)
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite - Auto commissioning-custom' "
-        "where public_id='Python Testing Suite-custom'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite - Auto commissioning-custom', "
-        "title='Python Testing Suite - Auto commissioning-custom', "
-        "description='Python Testing Suite - Auto commissioning-custom' "
-        "where public_id='Python Testing Suite-custom'"
-    )
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite - No auto commissioning-custom' "
-        "where public_id='Python Testing Suite - No commissioning-custom'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite - No auto commissioning-custom', "
-        "title='Python Testing Suite - No auto commissioning-custom', "
-        "description='Python Testing Suite - No auto commissioning-custom' "
-        "where public_id='Python Testing Suite - No commissioning-custom'"
-    )
+    for old_id, new_id in renames.items():
+        # Update metadata first to satisfy potential foreign key constraints
+        op.execute(
+            f"UPDATE testsuitemetadata "
+            f"SET public_id='{new_id}', title='{new_id}', description='{new_id}' "
+            f"WHERE public_id='{old_id}'"
+        )
+        op.execute(
+            f"UPDATE testsuiteexecution "
+            f"SET public_id='{new_id}' "
+            f"WHERE public_id='{old_id}'"
+        )
 
 
 def downgrade():
-    # Revert "Python Testing Suite - Auto commissioning" -> "Python Testing Suite"
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite' "
-        "where public_id='Python Testing Suite - Auto commissioning'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite', "
-        "title='Python Testing Suite', "
-        "description='Python Testing Suite' "
-        "where public_id='Python Testing Suite - Auto commissioning'"
-    )
+    renames = {
+        "Python Testing Suite - Auto commissioning": "Python Testing Suite",
+        "Python Testing Suite - No auto commissioning": "Python Testing Suite - No commissioning",
+        "Python Testing Suite - Auto commissioning-custom": "Python Testing Suite-custom",
+        "Python Testing Suite - No auto commissioning-custom": "Python Testing Suite - No commissioning-custom",
+    }
 
-    # Revert "Python Testing Suite - No auto commissioning"
-    #     -> "Python Testing Suite - No commissioning"
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite - No commissioning' "
-        "where public_id='Python Testing Suite - No auto commissioning'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite - No commissioning', "
-        "title='Python Testing Suite - No commissioning', "
-        "description='Python Testing Suite - No commissioning' "
-        "where public_id='Python Testing Suite - No auto commissioning'"
-    )
-
-    # Revert custom variants
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite-custom' "
-        "where public_id='Python Testing Suite - Auto commissioning-custom'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite-custom', "
-        "title='Python Testing Suite-custom', "
-        "description='Python Testing Suite-custom' "
-        "where public_id='Python Testing Suite - Auto commissioning-custom'"
-    )
-    op.execute(
-        "Update testsuiteexecution "
-        "set public_id='Python Testing Suite - No commissioning-custom' "
-        "where public_id='Python Testing Suite - No auto commissioning-custom'"
-    )
-    op.execute(
-        "Update testsuitemetadata "
-        "set public_id='Python Testing Suite - No commissioning-custom', "
-        "title='Python Testing Suite - No commissioning-custom', "
-        "description='Python Testing Suite - No commissioning-custom' "
-        "where public_id='Python Testing Suite - No auto commissioning-custom'"
-    )
+    for old_id, new_id in renames.items():
+        # Update metadata first to satisfy potential foreign key constraints
+        op.execute(
+            f"UPDATE testsuitemetadata "
+            f"SET public_id='{new_id}', title='{new_id}', description='{new_id}' "
+            f"WHERE public_id='{old_id}'"
+        )
+        op.execute(
+            f"UPDATE testsuiteexecution "
+            f"SET public_id='{new_id}' "
+            f"WHERE public_id='{old_id}'"
+        )
