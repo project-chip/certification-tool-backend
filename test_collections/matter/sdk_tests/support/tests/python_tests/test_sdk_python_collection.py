@@ -54,8 +54,13 @@ def test_automated_suite(python_test_collection: PythonCollectionDeclaration) ->
     expected_automated_test_cases = 2
 
     # Assert automated tests cases
-    assert "Python Testing Suite" in python_test_collection.test_suites.keys()
-    automated_suite = python_test_collection.test_suites["Python Testing Suite"]
+    assert (
+        "Python Testing Suite - Auto commissioning"
+        in python_test_collection.test_suites.keys()
+    )
+    automated_suite = python_test_collection.test_suites[
+        "Python Testing Suite - Auto commissioning"
+    ]
     assert len(automated_suite.test_cases) == expected_automated_test_cases
 
     type_count = dict.fromkeys(MatterTestType, 0)
