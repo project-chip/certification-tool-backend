@@ -16,11 +16,12 @@
 # flake8: noqa
 # Ignore flake8 check for this file
 from pathlib import Path
-from typing import Any, Optional, Type
+from typing import Any, List, Optional, Type
 from unittest import mock
 
 import pytest
 
+from app.constants.shared_constants import DutPairingModeEnum
 from app.models.project import Project
 from app.models.test_case_execution import TestCaseExecution
 from app.models.test_run_execution import TestRunExecution
@@ -538,3 +539,228 @@ async def test_no_commissioning_python_test_case_does_not_prompt_commissioning_m
     ) as mock_prompt_commissioning:
         await test_case.setup()
         mock_prompt_commissioning.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Helpers for qr-code / NFC execute() tests
+# ---------------------------------------------------------------------------
+
+NFC_PROJECT_CONFIG = {
+    "network": {
+        "wifi": {"ssid": "test_ssid", "password": "test_password"},
+        "thread": {
+            "operational_dataset_hex": "0e080000000000010000000300001235",
+        },
+    },
+    "dut_config": {
+        "pairing_mode": DutPairingModeEnum.NFC_WIFI.value,
+        "chip_use_paa_certs": False,
+        "trace_log": True,
+    },
+    "test_parameters": {
+        "qr-code": "MT:Y.K90SO527JA0648G00",
+        "paa-trust-store-path": "/paa-root-certs",
+    },
+}
+
+ON_NETWORK_PROJECT_CONFIG = {
+    "network": {
+        "wifi": {"ssid": "test_ssid", "password": "test_password"},
+        "thread": {
+            "operational_dataset_hex": "0e080000000000010000000300001235",
+        },
+    },
+    "dut_config": {
+        "discriminator": "3840",
+        "setup_code": "20202021",
+        "pairing_mode": DutPairingModeEnum.ON_NETWORK.value,
+        "chip_use_paa_certs": False,
+        "trace_log": True,
+    },
+    "test_parameters": {
+        "qr-code": "MT:Y.K90SO527JA0648G00",
+        "paa-trust-store-path": "/paa-root-certs",
+    },
+}
+
+
+def _make_test_case_with_config(
+    project_config: dict,
+    python_test_type: PythonTestType,
+) -> PythonTestCase:
+    project = Project(name="test_project")
+    project.config = project_config
+
+    test_run_execution = TestRunExecution()
+    test_run_execution.project = project
+
+    test_suite_execution = TestSuiteExecution()
+    test_suite_execution.test_run_execution = test_run_execution
+
+    test_case_execution = TestCaseExecution()
+    test_case_execution.test_suite_execution = test_suite_execution
+
+    test = python_test_instance(
+        name="TC-Test-1.1",
+        path=Path("sdk/TC_Test_1_1.py"),
+        class_name="TC_Test_1_1",
+        python_test_type=python_test_type,
+    )
+
+    case_class = (
+        NoCommissioningPythonTestCase
+        if python_test_type == PythonTestType.NO_COMMISSIONING
+        else PythonTestCase
+    )
+
+    return case_class.class_factory(  # type: ignore
+        test=test,
+        python_test_version="version",
+        mandatory=False,
+    )(test_case_execution)
+
+
+@pytest.mark.asyncio
+async def test_execute_commissioning_nfc_drops_qr_code() -> None:
+    """COMMISSIONING test with NFC pairing: qr-code must be stripped from
+    test_parameters before being forwarded to generate_command_arguments."""
+    test_case = _make_test_case_with_config(
+        NFC_PROJECT_CONFIG, PythonTestType.COMMISSIONING
+    )
+
+    captured_configs: List[Any] = []
+
+    async def _capture_config(
+        config: Any, omit_commissioning_method: bool = False
+    ) -> List[str]:
+        captured_configs.append(config)
+        return []
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".generate_command_arguments",
+        side_effect=_capture_config,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".SDKContainer"
+    ) as mock_sdk_container_cls, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".BaseManager"
+    ):
+        mock_sdk_container = mock.MagicMock()
+        mock_sdk_container_cls.return_value = mock_sdk_container
+        mock_exec_result = mock.MagicMock()
+        mock_exec_result.socket = mock.MagicMock()
+        mock_sdk_container.send_command.return_value = mock_exec_result
+        mock_sdk_container.pics_file_created = False
+
+        mock_hooks = mock.MagicMock()
+        mock_hooks.update_test.return_value = None
+        mock_hooks.is_finished.return_value = True
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+            ".SDKPythonTestRunnerHooks",
+        ):
+            try:
+                await test_case.execute()
+            except Exception:
+                pass
+
+    assert len(captured_configs) == 1
+    assert "qr-code" not in (captured_configs[0].test_parameters or {})
+    assert "paa-trust-store-path" in (captured_configs[0].test_parameters or {})
+
+
+@pytest.mark.asyncio
+async def test_execute_no_commissioning_nfc_preserves_qr_code() -> None:
+    """NO_COMMISSIONING test (e.g. TC_DD_1_5) with NFC pairing: qr-code must be
+    preserved in test_parameters because the test uses it as a direct input."""
+    test_case = _make_test_case_with_config(
+        NFC_PROJECT_CONFIG, PythonTestType.NO_COMMISSIONING
+    )
+
+    captured_configs: List[Any] = []
+
+    async def _capture_config(
+        config: Any, omit_commissioning_method: bool = False
+    ) -> List[str]:
+        captured_configs.append(config)
+        return []
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".generate_command_arguments",
+        side_effect=_capture_config,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".SDKContainer"
+    ) as mock_sdk_container_cls, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".BaseManager"
+    ):
+        mock_sdk_container = mock.MagicMock()
+        mock_sdk_container_cls.return_value = mock_sdk_container
+        mock_exec_result = mock.MagicMock()
+        mock_exec_result.socket = mock.MagicMock()
+        mock_sdk_container.send_command.return_value = mock_exec_result
+        mock_sdk_container.pics_file_created = False
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+            ".SDKPythonTestRunnerHooks",
+        ):
+            try:
+                await test_case.execute()
+            except Exception:
+                pass
+
+    assert len(captured_configs) == 1
+    assert "qr-code" in (captured_configs[0].test_parameters or {})
+
+
+@pytest.mark.asyncio
+async def test_execute_commissioning_non_nfc_preserves_qr_code() -> None:
+    """COMMISSIONING test with non-NFC pairing: qr-code must not be dropped
+    since it is not an NFC commissioning flow."""
+    test_case = _make_test_case_with_config(
+        ON_NETWORK_PROJECT_CONFIG, PythonTestType.COMMISSIONING
+    )
+
+    captured_configs: List[Any] = []
+
+    async def _capture_config(
+        config: Any, omit_commissioning_method: bool = False
+    ) -> List[str]:
+        captured_configs.append(config)
+        return []
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".generate_command_arguments",
+        side_effect=_capture_config,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".SDKContainer"
+    ) as mock_sdk_container_cls, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".BaseManager"
+    ):
+        mock_sdk_container = mock.MagicMock()
+        mock_sdk_container_cls.return_value = mock_sdk_container
+        mock_exec_result = mock.MagicMock()
+        mock_exec_result.socket = mock.MagicMock()
+        mock_sdk_container.send_command.return_value = mock_exec_result
+        mock_sdk_container.pics_file_created = False
+
+        with mock.patch(
+            "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+            ".SDKPythonTestRunnerHooks",
+        ):
+            try:
+                await test_case.execute()
+            except Exception:
+                pass
+
+    assert len(captured_configs) == 1
+    assert "qr-code" in (captured_configs[0].test_parameters or {})

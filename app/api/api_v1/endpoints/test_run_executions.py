@@ -495,7 +495,25 @@ def download_log(
     )
 
 
-@router.get("/{id}/grouped-log", response_class=StreamingResponse)
+@router.get(
+    "/{id}/grouped-log",
+    response_class=StreamingResponse,
+    responses={
+        "200": {
+            "description": "Successful Response",
+            "content": {
+                "application/zip": {"schema": {"type": "string", "format": "binary"}}
+            },
+            "headers": {
+                "Content-Disposition": {
+                    "description": "Suggests a filename for the downloaded ZIP file",
+                    "schema": {"type": "string"},
+                    "example": 'attachment; filename="archive.zip"',
+                }
+            },
+        }
+    },
+)
 def download_grouped_log(
     *,
     db: Session = Depends(get_db),
