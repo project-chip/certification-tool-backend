@@ -5,6 +5,8 @@ Revises: a16c8c20cd36
 Create Date: 2026-05-18 00:00:00.000000
 
 """
+# flake8: noqa
+# Ignore flake8 check for this file
 
 from alembic import op
 
