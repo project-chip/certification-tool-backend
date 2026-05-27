@@ -274,15 +274,18 @@ async def __thread_dataset_hex(
     if isinstance(thread_config, ThreadExternalConfig):
         hex_dataset = thread_config.operational_dataset_hex
     elif isinstance(thread_config, ThreadAutoConfig):
-        border_router: ThreadBorderRouter = ThreadBorderRouter()
+        if thread_config.operational_dataset_hex:
+            hex_dataset = thread_config.operational_dataset_hex
+        else:
+            border_router: ThreadBorderRouter = ThreadBorderRouter()
 
-        # Expecting false as the OTBR is started in the suite's setup.
-        # Either way, if true, we try to start and configure the container in case
-        # there's no OTBR application running.
-        if await border_router.start_device(thread_config):
-            await border_router.form_thread_topology()
+            # Expecting false as the OTBR is started in the suite's setup.
+            # Either way, if true, we try to start and configure the container in case
+            # there's no OTBR application running.
+            if await border_router.start_device(thread_config):
+                await border_router.form_thread_topology()
 
-        hex_dataset = border_router.active_dataset
+            hex_dataset = border_router.active_dataset
 
     return hex_dataset
 
