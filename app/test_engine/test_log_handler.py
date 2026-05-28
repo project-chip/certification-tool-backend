@@ -26,7 +26,7 @@ from loguru import logger
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite
 
-LOG_PROCESSING_INTERVAL = 0.5
+LOG_PROCESSING_INTERVAL = 2.0
 
 
 class TestLogHandler:
