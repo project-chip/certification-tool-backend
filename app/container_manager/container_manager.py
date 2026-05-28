@@ -208,7 +208,7 @@ class ContainerManager(object, metaclass=Singleton):
             raise e
 
     async def __container_started(self, container: Container) -> None:
-        sleep_interval = 0.2
+        sleep_interval = 1.0
 
         while True:
             # Check if the container is running, then sleep for 0.1 sec

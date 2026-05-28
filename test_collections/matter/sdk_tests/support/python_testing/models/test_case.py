@@ -730,14 +730,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 logger.error(f"Failed to initialize test output path: {e}")
                 self.file_output_path = None
 
-            while ((update := test_runner_hooks.update_test()) is not None) or (
-                not test_runner_hooks.is_finished()
-            ):
-                if not update:
-                    await sleep(0.0001)
-                    continue
-
-                await self.__handle_update(update)
+            while True:
+                update, finished = test_runner_hooks.get_update()
+                if update:
+                    await self.__handle_update(update)
+                elif finished:
+                    break
+                else:
+                    await sleep(0.2)
 
             # Step: Show test logs
             if self.current_test_step_index < len(self.test_steps) - 1:

@@ -194,7 +194,7 @@ class SocketConnectionManager(object, metaclass=Singleton):
                         try:
                             # WebSocketDisconnect is not raised unless we poll
                             # https://github.com/tiangolo/fastapi/issues/3008
-                            await asyncio.wait_for(websocket.receive_text(), 0.1)
+                            await asyncio.wait_for(websocket.receive_text(), 1.0)
                         except asyncio.TimeoutError:
                             pass
             # Starlette raises websockets.exceptions.ConnectionClosedOK
