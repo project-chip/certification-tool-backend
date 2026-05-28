@@ -247,9 +247,9 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     def show_push_av_stream_prompt(self, msg: str) -> None:
         self.results.put(SDKPythonTestResultShowPushAVStreamPrompt(msg=msg))
 
-    def get_update(self) -> tuple[dict | None, bool]:
-      """Returns (update_or_None, is_finished) in a single IPC call."""
-      try:
-          return self.results.get(block=False), False
-      except Empty:
-          return None, SDKPythonTestRunnerHooks.finished
+    def get_update(self) -> tuple[SDKPythonTestResultBase | None, bool]:
+        """Returns (update_or_None, is_finished) in a single IPC call."""
+        try:
+            return self.results.get(block=False), False
+        except Empty:
+            return None, SDKPythonTestRunnerHooks.finished
