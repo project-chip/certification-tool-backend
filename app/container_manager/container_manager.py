@@ -211,7 +211,7 @@ class ContainerManager(object, metaclass=Singleton):
         sleep_interval = 1.0
 
         while True:
-            # Check if the container is running, then sleep for 0.1 sec
+            # Check if the container is running, then sleep
             if self.is_running(container):
                 return
 
