@@ -25,10 +25,6 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
 )
 from app.test_engine.test_script_manager import test_script_manager
-from test_collections.matter.sdk_tests.support.performance_tests.utils import (
-    STRESS_TEST_COLLECTION,
-)
-
 PICS_PLAT_CERT = "PLAT.CERT"
 PICS_PLAT_CERT_DERIVED = "PLAT.CERT.TESTS.DONE"
 
@@ -167,9 +163,6 @@ def __applicable_test_cases(
         Set of applicable test case IDs
     """
     applicable_tests: set = set()
-
-    # The 'Performance Tests' Collection should not be considered for the PICS tests.
-    test_collections.pop(STRESS_TEST_COLLECTION, None)
 
     for test_collection in test_collections.values():
         # If mandatory is None, consider both mandatory and non-mandatory tests
