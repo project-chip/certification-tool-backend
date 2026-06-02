@@ -85,7 +85,11 @@ class CRUDTestRunExecution(
                 )
             )
 
-        column = self.model.id if order_by is None else getattr(self.model, order_by)
+        column = (
+            getattr(self.model, order_by, self.model.id)
+            if order_by
+            else self.model.id
+        )
         if sort_order == "desc":
             query = query.order_by(column.desc())
         else:
