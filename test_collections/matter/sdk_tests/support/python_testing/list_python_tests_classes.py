@@ -225,7 +225,7 @@ def _is_matter_base_test_class(
                 try:
                     abs_path = str(candidate.resolve())
                     if abs_path not in _module_cache:
-                        with open(candidate, "r") as f:
+                        with open(candidate, "r", encoding="utf-8") as f:
                             _module_cache[abs_path] = ast.parse(f.read())
                     imported_module = _module_cache[abs_path]
 
