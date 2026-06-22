@@ -16,17 +16,19 @@
 import json
 import traceback
 from http import HTTPStatus
+from io import BytesIO
 from typing import List, Sequence, Union
+from zipfile import ZipFile
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 from pydantic import ValidationError, parse_obj_as
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from app import crud, models, schemas
+from app import crud, log_utils, models, schemas
 from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
@@ -460,3 +462,82 @@ def importproject_config(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
+
+
+@router.get(
+    "/{id}/logs",
+    response_class=StreamingResponse,
+    responses={
+        "200": {
+            "description": "Successful Response",
+            "content": {
+                "application/zip": {"schema": {"type": "string", "format": "binary"}}
+            },
+            "headers": {
+                "Content-Disposition": {
+                    "description": "Suggests a filename for the downloaded ZIP file",
+                    "schema": {"type": "string"},
+                    "example": 'attachment; filename="my-project-logs.zip"',
+                }
+            },
+        }
+    },
+)
+def download_project_logs(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    grouped: bool = False,
+) -> StreamingResponse:
+    """Download all logs for a project.
+
+    Args:
+        id (int): Project ID
+        grouped (bool): When True, each execution's logs are grouped by test case
+            state (one inner zip per execution). When False, each execution's logs
+            are returned as a single flat .log text file.
+
+    Raises:
+        HTTPException: If no project exists for the given ID
+
+    Returns:
+        StreamingResponse: A zip archive containing one file per test run execution.
+    """
+    project = __project(db=db, id=id)
+
+    executions = crud.test_run_execution.get_multi(
+        db=db, project_id=id, limit=0
+    )
+
+    outer_zip_buffer = BytesIO()
+
+    with ZipFile(file=outer_zip_buffer, mode="w") as outer_zip:
+        for execution in executions:
+            if grouped:
+                grouped_logs = log_utils.group_test_run_execution_logs(
+                    test_run_execution=execution
+                )
+                inner_zip_buffer = log_utils.create_grouped_log_zip_file(
+                    grouped_logs=grouped_logs
+                )
+                entry_name = f"{execution.id}-{execution.title}.zip"
+                outer_zip.writestr(entry_name, inner_zip_buffer.read())
+            else:
+                log_lines = log_utils.convert_execution_log_to_list(
+                    log=execution.log, json_entries=False
+                )
+                entry_name = f"{execution.id}-{execution.title}.log"
+                outer_zip.writestr(entry_name, "\n".join(log_lines))
+
+    outer_zip_buffer.seek(0)
+
+    safe_name = "".join(
+        c if c.isalnum() or c in "-_" else "_" for c in (project.name or f"project-{id}")
+    )
+    file_name = f"{safe_name}-logs.zip"
+
+    return StreamingResponse(
+        outer_zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
+    )
