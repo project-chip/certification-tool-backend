@@ -64,6 +64,7 @@ LOCAL_RPC_PYTHON_TESTING_PATH = Path(
 )
 DOCKER_RPC_PYTHON_TESTING_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
 
+
 class SDKContainerNotRunning(Exception):
     """Raised when we attempt to use the docker container, but it is not running"""
 

@@ -211,8 +211,8 @@ class TestScriptManager(object, metaclass=Singleton):
             test_cases = []
 
             test_cases = self.__pending_test_cases_for_iterations(
-                    test_case=test_case_declaration, iterations=iterations
-                )
+                test_case=test_case_declaration, iterations=iterations
+            )
             suite_test_cases.extend(test_cases)
 
         return suite_test_cases
@@ -323,17 +323,15 @@ class TestScriptManager(object, metaclass=Singleton):
         test_suite.test_cases = []
 
         for test_case_execution in test_case_executions:
-                # TODO: request correct TestCase from TestScriptManager
-                test_case_declaration = self.__test_case_declaration(
-                    test_case_execution.public_id,
-                    test_suite_declaration=test_suite_declaration,
-                )
-                TestCaseClass = test_case_declaration.class_ref
-                test_case = TestCaseClass(test_case_execution=test_case_execution)
-                self.create_pending_teststeps_execution(
-                    db, test_case, test_case_execution
-                )
-                test_suite.test_cases.append(test_case)
+            # TODO: request correct TestCase from TestScriptManager
+            test_case_declaration = self.__test_case_declaration(
+                test_case_execution.public_id,
+                test_suite_declaration=test_suite_declaration,
+            )
+            TestCaseClass = test_case_declaration.class_ref
+            test_case = TestCaseClass(test_case_execution=test_case_execution)
+            self.create_pending_teststeps_execution(db, test_case, test_case_execution)
+            test_suite.test_cases.append(test_case)
 
     def create_pending_teststeps_execution(
         self,

@@ -14,12 +14,9 @@
 # limitations under the License.
 #
 import json
-import os
-from datetime import datetime
 from http import HTTPStatus
 from typing import Any
 
-import requests
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -45,7 +42,6 @@ from app.utils import (
 )
 from app.version import version_information
 from test_collections.matter.sdk_tests.support.chip.chip_server import ChipServer
-from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 router = APIRouter()
 
@@ -652,4 +648,3 @@ def import_test_run_execution(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(error),
         )
-
