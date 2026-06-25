@@ -328,8 +328,8 @@ class TestScriptManager(object, metaclass=Singleton):
                 test_case_execution.public_id,
                 test_suite_declaration=test_suite_declaration,
             )
-            TestCaseClass = test_case_declaration.class_ref
-            test_case = TestCaseClass(test_case_execution=test_case_execution)
+            test_case_class = test_case_declaration.class_ref
+            test_case = test_case_class(test_case_execution=test_case_execution)
             self.create_pending_teststeps_execution(db, test_case, test_case_execution)
             test_suite.test_cases.append(test_case)
 
