@@ -114,8 +114,9 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
             is_nfc_mode = pairing_mode in NFC_PAIRING_MODES
 
             # discriminator and setup_code are required for non-NFC modes.
-            # For NFC modes they are optional and ignored if present —
-            # onboarding data is read directly from the NFC tag.
+            # For NFC modes they are optional but recommended — chip-tool
+            # requires them as positional arguments even when the onboarding
+            # payload is read from the NFC tag.
             if not is_nfc_mode:
                 for field in ("discriminator", "setup_code"):
                     if not dut_config.get(field):

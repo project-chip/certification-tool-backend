@@ -506,6 +506,8 @@ async def test_pairing_nfc_thread_command_params() -> None:
     runner: MatterYAMLRunner = MatterYAMLRunner()
     chip_server: ChipServer = ChipServer()
     hex_dataset = "c0ffee"
+    setup_code = "12345678"
+    discriminator = "3840"
 
     with mock.patch.object(
         target=runner,
@@ -514,9 +516,13 @@ async def test_pairing_nfc_thread_command_params() -> None:
     ) as mock_send_websocket_command:
         result = await runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
+            setup_code=setup_code,
+            discriminator=discriminator,
         )
 
-    expected_params = f"{hex(chip_server.node_id)} hex:{hex_dataset}"
+    expected_params = (
+        f"{hex(chip_server.node_id)} hex:{hex_dataset} {setup_code} {discriminator}"
+    )
     expected_command = f"pairing nfc-thread {expected_params}"
 
     assert result is True

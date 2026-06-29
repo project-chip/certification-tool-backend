@@ -215,16 +215,14 @@ class ChipSuite(TestSuite, UserPromptSupport):
         else:
             raise DUTCommissioningError("Invalid thread configuration")
 
-        if (
-            self.config_matter.dut_config.discriminator is not None
-            or self.config_matter.dut_config.setup_code is not None
-        ):
-            logger.warning(
-                "pairing_mode is nfc-thread: discriminator and setup_code from"
-                " project config are ignored. Onboarding data is read from the NFC tag."
-            )
         return await self.runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
+            # chip-tool requires setup-pin-code and discriminator as positional
+            # arguments even in NFC mode (the real values are read from the tag).
+            # Fall back to "0" so the parser never sees an empty token, which
+            # would shift subsequent flags (e.g. --trace_file) into the wrong slot.
+            setup_code=str(self.config_matter.dut_config.setup_code or "0"),
+            discriminator=str(self.config_matter.dut_config.discriminator or "0"),
         )
 
     async def __pair_with_dut_thread(self) -> bool:

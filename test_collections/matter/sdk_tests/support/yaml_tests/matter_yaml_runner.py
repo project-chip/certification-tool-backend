@@ -333,11 +333,15 @@ class MatterYAMLRunner(metaclass=Singleton):
     async def pairing_nfc_thread(
         self,
         hex_dataset: str,
+        setup_code: str,
+        discriminator: str,
     ) -> bool:
         return await self.pairing(
             PAIRING_MODE_NFC_THREAD,
             hex(self.chip_server.node_id),
             f"hex:{hex_dataset}",
+            setup_code,
+            discriminator,
         )
 
     async def pairing_thread(
