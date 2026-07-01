@@ -374,6 +374,18 @@ def __project(db: Session, id: int) -> Project:
     return project
 
 
+def __safe_filename_component(value: Union[str, None], fallback: str) -> str:
+    """Sanitize a value for safe use as part of a file or zip entry name.
+
+    Keeps only alphanumeric characters, hyphens and underscores, replacing
+    everything else (including path separators like "/" or "\\") with "_".
+    This avoids path traversal / Zip Slip issues when the value originates
+    from user-controlled data (e.g. project name or execution title).
+    """
+    source = value or fallback
+    return "".join(c if c.isalnum() or c in "-_" else "_" for c in source)
+
+
 def __persist_update_not_mutable(db: Session, project: Project, field: str) -> Project:
     """Update Project JSON fields in DB.
 
@@ -513,6 +525,9 @@ def download_project_logs(
 
     with ZipFile(file=outer_zip_buffer, mode="w") as outer_zip:
         for execution in executions:
+            safe_title = __safe_filename_component(
+                execution.title, fallback="execution"
+            )
             if grouped:
                 grouped_logs = log_utils.group_test_run_execution_logs(
                     test_run_execution=execution
@@ -520,20 +535,18 @@ def download_project_logs(
                 inner_zip_buffer = log_utils.create_grouped_log_zip_file(
                     grouped_logs=grouped_logs
                 )
-                entry_name = f"{execution.id}-{execution.title}.zip"
+                entry_name = f"{execution.id}-{safe_title}.zip"
                 outer_zip.writestr(entry_name, inner_zip_buffer.read())
             else:
                 log_lines = log_utils.convert_execution_log_to_list(
                     log=execution.log, json_entries=False
                 )
-                entry_name = f"{execution.id}-{execution.title}.log"
+                entry_name = f"{execution.id}-{safe_title}.log"
                 outer_zip.writestr(entry_name, "\n".join(log_lines))
 
     outer_zip_buffer.seek(0)
 
-    safe_name = "".join(
-        c if c.isalnum() or c in "-_" else "_" for c in (project.name or f"project-{id}")
-    )
+    safe_name = __safe_filename_component(project.name, fallback=f"project-{id}")
     file_name = f"{safe_name}-logs.zip"
 
     return StreamingResponse(

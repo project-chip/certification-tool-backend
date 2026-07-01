@@ -18,7 +18,6 @@ from http import HTTPStatus
 from io import BytesIO
 from zipfile import ZipFile
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -110,30 +109,53 @@ def test_download_project_logs_not_found(client: TestClient) -> None:
 def test_download_project_logs_flat_entry_names(
     client: TestClient, db: Session
 ) -> None:
-    """Each flat log entry in the zip is named <id>-<title>.log."""
+    """Each flat log entry in the zip is named <id>-<sanitized-title>.log."""
     project = create_random_project(db, config={})
-    execution = create_random_test_run_execution(db, project_id=project.id)
+    execution = create_random_test_run_execution(
+        db, project_id=project.id, title="My Execution Title!"
+    )
 
     url = f"{BASE_URL}/{project.id}/logs"
     response = client.get(url)
 
     assert response.status_code == HTTPStatus.OK
     with ZipFile(BytesIO(response.content)) as zf:
-        expected_entry = f"{execution.id}-{execution.title}.log"
+        expected_entry = f"{execution.id}-My_Execution_Title_.log"
         assert expected_entry in zf.namelist()
 
 
 def test_download_project_logs_grouped_entry_names(
     client: TestClient, db: Session
 ) -> None:
-    """Each grouped log entry in the zip is named <id>-<title>.zip."""
+    """Each grouped log entry in the zip is named <id>-<sanitized-title>.zip."""
     project = create_random_project(db, config={})
-    execution = create_random_test_run_execution(db, project_id=project.id)
+    execution = create_random_test_run_execution(
+        db, project_id=project.id, title="My Execution Title!"
+    )
 
     url = f"{BASE_URL}/{project.id}/logs?grouped=true"
     response = client.get(url)
 
     assert response.status_code == HTTPStatus.OK
     with ZipFile(BytesIO(response.content)) as zf:
-        expected_entry = f"{execution.id}-{execution.title}.zip"
+        expected_entry = f"{execution.id}-My_Execution_Title_.zip"
         assert expected_entry in zf.namelist()
+
+
+def test_download_project_logs_sanitizes_execution_title(
+    client: TestClient, db: Session
+) -> None:
+    """Path separators and traversal sequences in the title are sanitized."""
+    project = create_random_project(db, config={})
+    execution = create_random_test_run_execution(
+        db, project_id=project.id, title="../../etc/passwd"
+    )
+
+    url = f"{BASE_URL}/{project.id}/logs"
+    response = client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+    with ZipFile(BytesIO(response.content)) as zf:
+        names = zf.namelist()
+        assert not any("/" in name or ".." in name for name in names)
+        assert f"{execution.id}-______etc_passwd.log" in names
