@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import json
+import re
 import traceback
 from http import HTTPStatus
 from io import BytesIO
@@ -374,7 +375,9 @@ def __project(db: Session, id: int) -> Project:
     return project
 
 
-def __safe_filename_component(value: Union[str, None], fallback: str) -> str:
+def __safe_filename_component(
+    value: Union[str, None], fallback: str = "default"
+) -> str:
     """Sanitize a value for safe use as part of a file or zip entry name.
 
     Keeps only alphanumeric characters, hyphens and underscores, replacing
@@ -383,7 +386,7 @@ def __safe_filename_component(value: Union[str, None], fallback: str) -> str:
     from user-controlled data (e.g. project name or execution title).
     """
     source = value or fallback
-    return "".join(c if c.isalnum() or c in "-_" else "_" for c in source)
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", source)
 
 
 def __persist_update_not_mutable(db: Session, project: Project, field: str) -> Project:
