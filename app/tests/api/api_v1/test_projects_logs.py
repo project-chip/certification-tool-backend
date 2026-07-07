@@ -70,18 +70,16 @@ def test_download_project_logs_grouped_returns_zip_of_zips(
         assert any(str(exec1.id) in name for name in names)
 
 
-def test_download_project_logs_empty_project_returns_empty_zip(
+def test_download_project_logs_empty_project_returns_not_found(
     client: TestClient, db: Session
 ) -> None:
-    """A project with no executions returns a valid but empty zip."""
+    """A project with no executions returns 404 instead of an empty zip."""
     project = create_random_project(db, config={})
 
     url = f"{BASE_URL}/{project.id}/logs"
     response = client.get(url)
 
-    assert response.status_code == HTTPStatus.OK
-    with ZipFile(BytesIO(response.content)) as zf:
-        assert zf.namelist() == []
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_download_project_logs_filename_derived_from_project_name(
@@ -89,6 +87,7 @@ def test_download_project_logs_filename_derived_from_project_name(
 ) -> None:
     """The Content-Disposition filename is derived from the project name."""
     project = create_random_project(db, config={})
+    create_random_test_run_execution(db, project_id=project.id)
 
     url = f"{BASE_URL}/{project.id}/logs"
     response = client.get(url)

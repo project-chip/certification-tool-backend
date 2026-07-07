@@ -513,7 +513,8 @@ def download_project_logs(
             are returned as a single flat .log text file.
 
     Raises:
-        HTTPException: If no project exists for the given ID
+        HTTPException: If no project exists for the given ID, or if the project
+            has no test run executions to download logs for
 
     Returns:
         StreamingResponse: A zip archive containing one file per test run execution.
@@ -521,6 +522,12 @@ def download_project_logs(
     project = __project(db=db, id=id)
 
     executions = crud.test_run_execution.get_multi(db=db, project_id=id, limit=0)
+
+    if not executions:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f"Project {id} has no test run executions to download logs for",
+        )
 
     outer_zip_buffer = BytesIO()
 
