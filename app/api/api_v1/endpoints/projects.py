@@ -520,9 +520,7 @@ def download_project_logs(
     """
     project = __project(db=db, id=id)
 
-    executions = crud.test_run_execution.get_multi(
-        db=db, project_id=id, limit=0
-    )
+    executions = crud.test_run_execution.get_multi(db=db, project_id=id, limit=0)
 
     outer_zip_buffer = BytesIO()
 

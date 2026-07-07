@@ -42,7 +42,7 @@ def test_download_project_logs_flat_returns_zip(
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/zip"
     assert "attachment" in response.headers["content-disposition"]
-    assert response.headers["content-disposition"].endswith("-logs.zip\"")
+    assert response.headers["content-disposition"].endswith('-logs.zip"')
 
     with ZipFile(BytesIO(response.content)) as zf:
         names = zf.namelist()
