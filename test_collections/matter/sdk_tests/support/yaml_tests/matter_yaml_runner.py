@@ -61,7 +61,7 @@ PAIRING_MODE_NFC_WIFI = "nfc-wifi"
 PAIRING_MODE_BLE_THREAD = "ble-thread"
 PAIRING_MODE_WIFIPAF_WIFI = "wifipaf-wifi"
 PAIRING_MODE_NFC_THREAD = "nfc-thread"
-PAIRING_MODE_THREAD = "code-thread"
+PAIRING_MODE_THREAD = "thread-meshcop"
 PAIRING_MODE_UNPAIR = "unpair"
 
 # Websocket runner

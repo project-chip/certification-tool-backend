@@ -564,7 +564,7 @@ async def test_pairing_thread_command_params_with_ba_params() -> None:
         f"{hex(chip_server.node_id)} hex:{hex_dataset} {payload} "
         f"--thread-ba-host {ba_host} --thread-ba-port {ba_port}"
     )
-    expected_command = f"pairing code-thread {expected_params}"
+    expected_command = f"pairing thread-meshcop {expected_params}"
 
     assert result is True
     mock_send_websocket_command.assert_awaited_once_with(expected_command)
@@ -598,7 +598,7 @@ async def test_pairing_thread_command_params_without_ba_params() -> None:
         )
 
     expected_params = f"{hex(chip_server.node_id)} hex:{hex_dataset} {payload}"
-    expected_command = f"pairing code-thread {expected_params}"
+    expected_command = f"pairing thread-meshcop {expected_params}"
 
     assert result is True
     mock_send_websocket_command.assert_awaited_once_with(expected_command)
@@ -638,7 +638,7 @@ async def test_pairing_thread_command_params_with_only_ba_host() -> None:
         f"{hex(chip_server.node_id)} hex:{hex_dataset} {payload} "
         f"--thread-ba-host {ba_host}"
     )
-    expected_command = f"pairing code-thread {expected_params}"
+    expected_command = f"pairing thread-meshcop {expected_params}"
 
     assert result is True
     mock_send_websocket_command.assert_awaited_once_with(expected_command)
@@ -678,7 +678,7 @@ async def test_pairing_thread_command_params_with_only_ba_port() -> None:
         f"{hex(chip_server.node_id)} hex:{hex_dataset} {payload} "
         f"--thread-ba-port {ba_port}"
     )
-    expected_command = f"pairing code-thread {expected_params}"
+    expected_command = f"pairing thread-meshcop {expected_params}"
 
     assert result is True
     mock_send_websocket_command.assert_awaited_once_with(expected_command)
