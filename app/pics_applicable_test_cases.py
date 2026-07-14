@@ -25,6 +25,7 @@ from app.test_engine.models.test_declarations import (
     TestCollectionDeclaration,
 )
 from app.test_engine.test_script_manager import test_script_manager
+
 PICS_PLAT_CERT = "PLAT.CERT"
 PICS_PLAT_CERT_DERIVED = "PLAT.CERT.TESTS.DONE"
 
