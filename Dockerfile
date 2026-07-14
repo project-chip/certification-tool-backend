@@ -61,12 +61,6 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 # Install Docker
 RUN curl -sSL https://get.docker.com/ | sh
 
-# Install nodejs, npm and spell checker
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
-RUN apt-get install -y nodejs
-RUN npm install -g npm@latest
-RUN npm install -g cspell@latest
-
 # Allow installing dev dependencies to run tests
 # Copy poetry dependecy files and install dependencies
 # We copy install dependencies before copying all app source to reuse the dependency install step in docker.
