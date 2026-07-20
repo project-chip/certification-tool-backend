@@ -221,6 +221,7 @@ class ThreadBorderRouter(metaclass=Singleton):
         self._send_command("thread start")
         self._send_command(f"prefix add {self.__on_mesh_prefix} pasor")
         self._send_command("netdata register")
+        self._send_command("srp server enable")
 
         # Allow OTBR extra time to form the network, before attempting to use.
         await asyncio.sleep(OTBR_READINESS_EXTRA_TIME)

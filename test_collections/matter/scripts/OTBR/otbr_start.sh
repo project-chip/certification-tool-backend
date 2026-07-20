@@ -87,6 +87,7 @@ BR_PARAMS=(
 "ifconfig up"
 "thread start"
 "netdata register"
+"srp server enable"
 "dataset active -x"
 )
 
