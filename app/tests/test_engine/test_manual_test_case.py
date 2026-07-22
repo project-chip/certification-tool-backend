@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from io import BytesIO
-from typing import Optional
+from typing import BinaryIO, Optional
 from unittest import mock
 
 from app.test_engine.models.manual_test_case import (
@@ -27,7 +27,7 @@ class FakeUploadFile:
     """Minimal stand-in for FastAPI's UploadFile used by handle_uploaded_file."""
 
     def __init__(self, content: bytes, content_type: str = "text/plain") -> None:
-        self.file = BytesIO(content)
+        self.file: BinaryIO = BytesIO(content)
         self.filename: Optional[str] = "manual_log.txt"
         self.content_type = content_type
 
