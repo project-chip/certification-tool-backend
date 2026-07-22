@@ -61,7 +61,7 @@ PAIRING_MODE_NFC_WIFI = "nfc-wifi"
 PAIRING_MODE_BLE_THREAD = "ble-thread"
 PAIRING_MODE_WIFIPAF_WIFI = "wifipaf-wifi"
 PAIRING_MODE_NFC_THREAD = "nfc-thread"
-PAIRING_MODE_THREAD = "code-thread"
+PAIRING_MODE_THREAD = "thread-meshcop"
 PAIRING_MODE_UNPAIR = "unpair"
 
 # Websocket runner
@@ -292,16 +292,12 @@ class MatterYAMLRunner(metaclass=Singleton):
         self,
         ssid: str,
         password: str,
-        setup_code: str,
-        discriminator: str,
     ) -> bool:
         return await self.pairing(
             PAIRING_MODE_NFC_WIFI,
             hex(self.chip_server.node_id),
             ssid,
             password,
-            setup_code,
-            discriminator,
         )
 
     async def pairing_wifipaf_wifi(

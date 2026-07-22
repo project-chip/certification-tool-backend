@@ -290,7 +290,6 @@ def test_create_config_matter_with_only_manual_code_succeeds() -> None:
         "ble-wifi",
         "ble-thread",
         "wifipaf-wifi",
-        "nfc-thread",
     ],
 )
 def test_create_config_matter_with_non_thread_modes_no_ba_params_succeeds(
@@ -329,6 +328,117 @@ def test_create_config_matter_with_non_thread_modes_no_ba_params_succeeds(
 
     assert config_matter is not None
     assert config_matter.dut_config.pairing_mode == pairing_mode
+
+
+@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
+def test_create_config_matter_nfc_without_discriminator_and_setup_code_succeeds(
+    pairing_mode: str,
+) -> None:
+    """Test that NFC pairing modes succeed without discriminator and setup_code."""
+    config = {
+        "network": {
+            "fabric_id": "0",
+            "thread": {
+                "dataset": {
+                    "channel": "15",
+                    "panid": "0x1234",
+                    "extpanid": "1111111122222222",
+                    "networkkey": "00112233445566778899aabbccddeeff",
+                    "networkname": "DEMO",
+                },
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::/64",
+                "network_interface": "eth0",
+            },
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+        },
+        "dut_config": {
+            "pairing_mode": pairing_mode,
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+        "test_parameters": None,
+    }
+
+    config_matter = TestEnvironmentConfigMatter(**config)
+
+    assert config_matter is not None
+    assert config_matter.dut_config.pairing_mode == pairing_mode
+    assert config_matter.dut_config.discriminator is None
+    assert config_matter.dut_config.setup_code is None
+
+
+@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
+def test_create_config_matter_nfc_with_discriminator_succeeds(
+    pairing_mode: str,
+) -> None:
+    """Test that NFC pairing modes accept discriminator (it is ignored at runtime)."""
+    config = {
+        "network": {
+            "fabric_id": "0",
+            "thread": {
+                "dataset": {
+                    "channel": "15",
+                    "panid": "0x1234",
+                    "extpanid": "1111111122222222",
+                    "networkkey": "00112233445566778899aabbccddeeff",
+                    "networkname": "DEMO",
+                },
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::/64",
+                "network_interface": "eth0",
+            },
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+        },
+        "dut_config": {
+            "pairing_mode": pairing_mode,
+            "discriminator": "3840",
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+        "test_parameters": None,
+    }
+
+    config_matter = TestEnvironmentConfigMatter(**config)
+    assert config_matter.dut_config.discriminator == "3840"
+
+
+@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
+def test_create_config_matter_nfc_with_setup_code_succeeds(
+    pairing_mode: str,
+) -> None:
+    """Test that NFC pairing modes accept setup_code (it is ignored at runtime)."""
+    config = {
+        "network": {
+            "fabric_id": "0",
+            "thread": {
+                "dataset": {
+                    "channel": "15",
+                    "panid": "0x1234",
+                    "extpanid": "1111111122222222",
+                    "networkkey": "00112233445566778899aabbccddeeff",
+                    "networkname": "DEMO",
+                },
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::/64",
+                "network_interface": "eth0",
+            },
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+        },
+        "dut_config": {
+            "pairing_mode": pairing_mode,
+            "setup_code": "20202021",
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+        "test_parameters": None,
+    }
+
+    config_matter = TestEnvironmentConfigMatter(**config)
+    assert config_matter.dut_config.setup_code == "20202021"
 
 
 def test_create_config_matter_without_discriminator_fails() -> None:

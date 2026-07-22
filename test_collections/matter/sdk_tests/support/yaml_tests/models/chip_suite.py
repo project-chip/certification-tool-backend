@@ -121,7 +121,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_WIFI:
             pair_result = await self.__pair_wifi_dut_wifi_modes("ble")
         elif self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.NFC_WIFI:
-            pair_result = await self.__pair_wifi_dut_wifi_modes("nfc")
+            pair_result = await self.__pair_with_dut_nfc_wifi()
         elif (
             self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.BLE_THREAD
         ):
@@ -148,8 +148,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
     async def __pair_with_dut_onnetwork(self) -> bool:
         return await self.runner.pairing_on_network(
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            setup_code=self.config_matter.dut_config.setup_code or "",
+            discriminator=self.config_matter.dut_config.discriminator or "",
         )
 
     async def __pair_wifi_dut_wifi_modes(self, mode: str) -> bool:
@@ -162,6 +162,23 @@ class ChipSuite(TestSuite, UserPromptSupport):
             password=self.config_matter.network.wifi.password,
             setup_code=self.config_matter.dut_config.setup_code,
             discriminator=self.config_matter.dut_config.discriminator,
+        )
+
+    async def __pair_with_dut_nfc_wifi(self) -> bool:
+        if self.config_matter.network.wifi is None:
+            raise DUTCommissioningError("Tool config is missing wifi config.")
+
+        if (
+            self.config_matter.dut_config.discriminator is not None
+            or self.config_matter.dut_config.setup_code is not None
+        ):
+            logger.warning(
+                "pairing_mode is nfc-wifi: discriminator and setup_code from"
+                " project config are ignored. Onboarding data is read from the NFC tag."
+            )
+        return await self.runner.pairing_nfc_wifi(
+            ssid=self.config_matter.network.wifi.ssid,
+            password=self.config_matter.network.wifi.password,
         )
 
     async def __pair_with_dut_ble_thread(self) -> bool:
@@ -180,8 +197,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         return await self.runner.pairing_ble_thread(
             hex_dataset=hex_dataset,
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            setup_code=self.config_matter.dut_config.setup_code or "",
+            discriminator=self.config_matter.dut_config.discriminator or "",
         )
 
     async def __pair_with_dut_nfc_thread(self) -> bool:
@@ -200,8 +217,12 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         return await self.runner.pairing_nfc_thread(
             hex_dataset=hex_dataset,
-            setup_code=self.config_matter.dut_config.setup_code,
-            discriminator=self.config_matter.dut_config.discriminator,
+            # chip-tool requires setup-pin-code and discriminator as positional
+            # arguments even in NFC mode (the real values are read from the tag).
+            # Fall back to "0" so the parser never sees an empty token, which
+            # would shift subsequent flags (e.g. --trace_file) into the wrong slot.
+            setup_code=str(self.config_matter.dut_config.setup_code or "0"),
+            discriminator=str(self.config_matter.dut_config.discriminator or "0"),
         )
 
     async def __pair_with_dut_thread(self) -> bool:
@@ -225,8 +246,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         # Generate manual pairing code from discriminator and setup code
         payload = self.runner.chip_server.generate_manual_pairing_code_with_chip_tool(
-            discriminator=self.config_matter.dut_config.discriminator,
-            setup_pin_code=self.config_matter.dut_config.setup_code,
+            discriminator=self.config_matter.dut_config.discriminator or "",
+            setup_pin_code=self.config_matter.dut_config.setup_code or "",
         )
 
         return await self.runner.pairing_thread(

@@ -14,19 +14,22 @@
 # limitations under the License.
 #
 import json
+import re
 import traceback
 from http import HTTPStatus
+from io import BytesIO
 from typing import List, Sequence, Union
+from zipfile import ZipFile
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 from pydantic import ValidationError, parse_obj_as
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from app import crud, models, schemas
+from app import crud, log_utils, models, schemas
 from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
@@ -372,6 +375,20 @@ def __project(db: Session, id: int) -> Project:
     return project
 
 
+def __safe_filename_component(
+    value: Union[str, None], fallback: str = "default"
+) -> str:
+    """Sanitize a value for safe use as part of a file or zip entry name.
+
+    Keeps only alphanumeric characters, hyphens and underscores, replacing
+    everything else (including path separators like "/" or "\\") with "_".
+    This avoids path traversal / Zip Slip issues when the value originates
+    from user-controlled data (e.g. project name or execution title).
+    """
+    source = value or fallback
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", source)
+
+
 def __persist_update_not_mutable(db: Session, project: Project, field: str) -> Project:
     """Update Project JSON fields in DB.
 
@@ -460,3 +477,88 @@ def importproject_config(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
+
+
+@router.get(
+    "/{id}/logs",
+    response_class=StreamingResponse,
+    responses={
+        "200": {
+            "description": "Successful Response",
+            "content": {
+                "application/zip": {"schema": {"type": "string", "format": "binary"}}
+            },
+            "headers": {
+                "Content-Disposition": {
+                    "description": "Suggests a filename for the downloaded ZIP file",
+                    "schema": {"type": "string"},
+                    "example": 'attachment; filename="my-project-logs.zip"',
+                }
+            },
+        }
+    },
+)
+def download_project_logs(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+    grouped: bool = False,
+) -> StreamingResponse:
+    """Download all logs for a project.
+
+    Args:
+        id (int): Project ID
+        grouped (bool): When True, each execution's logs are grouped by test case
+            state (one inner zip per execution). When False, each execution's logs
+            are returned as a single flat .log text file.
+
+    Raises:
+        HTTPException: If no project exists for the given ID, or if the project
+            has no test run executions to download logs for
+
+    Returns:
+        StreamingResponse: A zip archive containing one file per test run execution.
+    """
+    project = __project(db=db, id=id)
+
+    executions = crud.test_run_execution.get_multi(db=db, project_id=id, limit=0)
+
+    if not executions:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f"Project {id} has no test run executions to download logs for",
+        )
+
+    outer_zip_buffer = BytesIO()
+
+    with ZipFile(file=outer_zip_buffer, mode="w") as outer_zip:
+        for execution in executions:
+            safe_title = __safe_filename_component(
+                execution.title, fallback="execution"
+            )
+            if grouped:
+                grouped_logs = log_utils.group_test_run_execution_logs(
+                    test_run_execution=execution
+                )
+                inner_zip_buffer = log_utils.create_grouped_log_zip_file(
+                    grouped_logs=grouped_logs
+                )
+                entry_name = f"{execution.id}-{safe_title}.zip"
+                outer_zip.writestr(entry_name, inner_zip_buffer.read())
+            else:
+                log_lines = log_utils.convert_execution_log_to_list(
+                    log=execution.log, json_entries=False
+                )
+                entry_name = f"{execution.id}-{safe_title}.log"
+                outer_zip.writestr(entry_name, "\n".join(log_lines))
+
+    outer_zip_buffer.seek(0)
+
+    safe_name = __safe_filename_component(project.name, fallback=f"project-{id}")
+    file_name = f"{safe_name}-logs.zip"
+
+    return StreamingResponse(
+        outer_zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
+    )

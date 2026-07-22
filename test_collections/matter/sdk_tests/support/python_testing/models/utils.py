@@ -22,9 +22,10 @@ from typing import Generator, cast
 
 import loguru
 
-from app.constants.shared_constants import DutPairingModeEnum
+from app.constants.shared_constants import NFC_PAIRING_MODES, DutPairingModeEnum
 from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
+from app.test_engine.logger import test_engine_logger as logger
 from app.user_prompt_support import UserPromptSupport
 from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
     ThreadBorderRouter,
@@ -52,11 +53,6 @@ EXECUTABLE = "python3"
 TEST_OUTPUT_FILE_PATH = "sdk_checkout/python_testing/test_output.txt"
 
 TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
-
-NFC_PAIRING_MODES = {
-    DutPairingModeEnum.NFC_WIFI.value,
-    DutPairingModeEnum.NFC_THREAD.value,
-}
 
 # Typed SDK argument flags that accept NAME:VALUE pairs and require special
 # handling to survive the container shell without mangling.
@@ -122,11 +118,27 @@ async def generate_command_arguments(
     # since it is provided directly by the NFC tag.
     # Also, if manual-code or qr-code and also discriminator and passcode are provided,
     # the test will think that we're trying to commission 2 DUTs and it will fail
-    if (
-        pairing_mode not in NFC_PAIRING_MODES
-        and ("manual-code" not in test_parameters.keys() if test_parameters else True)
-        and ("qr-code" not in test_parameters.keys() if test_parameters else True)
-    ):
+    if pairing_mode in NFC_PAIRING_MODES:
+        if dut_config.discriminator is not None or dut_config.setup_code is not None:
+            logger.warning(
+                f"pairing_mode is {pairing_mode}: discriminator and setup_code from"
+                " project config are ignored. Onboarding data is read from the NFC tag."
+            )
+        # Ensure NFC_Reader_index is always passed to the SDK runner.
+        # If not already present in int-arg, prepend NFC_Reader_index:0 so it
+        # goes through the existing _SPLIT_ARGS loop as a single --int-arg block.
+        int_arg = (test_parameters.get("int-arg") or "") if test_parameters else ""
+        if "NFC_Reader_index" not in int_arg:
+            # Use a local copy to avoid side effects on the config object
+            test_parameters = test_parameters.copy() if test_parameters else {}
+            test_parameters["int-arg"] = (
+                f"NFC_Reader_index:0 {int_arg}".strip()
+                if int_arg
+                else "NFC_Reader_index:0"
+            )
+    elif (
+        "manual-code" not in test_parameters.keys() if test_parameters else True
+    ) and ("qr-code" not in test_parameters.keys() if test_parameters else True):
         # Retrieve arguments from dut_config
         arguments.append(f"--discriminator {dut_config.discriminator}")
         arguments.append(f"--passcode {dut_config.setup_code}")
@@ -274,15 +286,18 @@ async def __thread_dataset_hex(
     if isinstance(thread_config, ThreadExternalConfig):
         hex_dataset = thread_config.operational_dataset_hex
     elif isinstance(thread_config, ThreadAutoConfig):
-        border_router: ThreadBorderRouter = ThreadBorderRouter()
+        if thread_config.operational_dataset_hex:
+            hex_dataset = thread_config.operational_dataset_hex
+        else:
+            border_router: ThreadBorderRouter = ThreadBorderRouter()
 
-        # Expecting false as the OTBR is started in the suite's setup.
-        # Either way, if true, we try to start and configure the container in case
-        # there's no OTBR application running.
-        if await border_router.start_device(thread_config):
-            await border_router.form_thread_topology()
+            # Expecting false as the OTBR is started in the suite's setup.
+            # Either way, if true, we try to start and configure the container in case
+            # there's no OTBR application running.
+            if await border_router.start_device(thread_config):
+                await border_router.form_thread_topology()
 
-        hex_dataset = border_router.active_dataset
+            hex_dataset = border_router.active_dataset
 
     return hex_dataset
 

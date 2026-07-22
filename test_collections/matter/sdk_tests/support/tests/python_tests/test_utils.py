@@ -165,8 +165,6 @@ async def test_generate_command_arguments_nfc_wifi_pairing_mode() -> None:
     }
 
     mock_dut_config = DutConfig(
-        discriminator="147",
-        setup_code="357",
         pairing_mode=DutPairingModeEnum.NFC_WIFI,
         chip_timeout=None,
     )
@@ -184,6 +182,8 @@ async def test_generate_command_arguments_nfc_wifi_pairing_mode() -> None:
         "--wifi-passphrase wifi-password",
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
+        "--int-arg",
+        "NFC_Reader_index:0",
     ] == arguments
 
 
@@ -294,9 +294,7 @@ async def test_generate_command_arguments_nfc_thread() -> None:
     }
 
     mock_dut_config = DutConfig(
-        setup_code="8765",
         pairing_mode=DutPairingModeEnum.NFC_THREAD,
-        discriminator="456",
         chip_timeout=None,
     )
 
@@ -328,9 +326,11 @@ async def test_generate_command_arguments_nfc_thread() -> None:
             ),
             "--paa-trust-store-path /paa-root-certs",
             "--storage_path /root/admin_storage.json",
+            "--int-arg",
+            "NFC_Reader_index:0",
         ] == arguments
-        assert mock_dut_config.discriminator not in arguments
-        assert mock_dut_config.setup_code not in arguments
+        assert "--discriminator" not in " ".join(arguments)
+        assert "--passcode" not in " ".join(arguments)
 
 
 @pytest.mark.asyncio
@@ -344,9 +344,7 @@ async def test_generate_command_arguments_nfc_thread_for_external_network() -> N
     }
 
     mock_dut_config = DutConfig(
-        setup_code="8765",
         pairing_mode=DutPairingModeEnum.NFC_THREAD,
-        discriminator="783",
         chip_timeout=None,
     )
 
@@ -374,9 +372,115 @@ async def test_generate_command_arguments_nfc_thread_for_external_network() -> N
         ),
         "--paa-trust-store-path /paa-root-certs",
         "--storage_path /root/admin_storage.json",
+        "--int-arg",
+        "NFC_Reader_index:0",
     ] == arguments
-    assert mock_dut_config.discriminator not in arguments
-    assert mock_dut_config.setup_code not in arguments
+    assert "--discriminator" not in " ".join(arguments)
+    assert "--passcode" not in " ".join(arguments)
+
+
+NFC_PAIRING_MODES_PARAMS = [
+    pytest.param(DutPairingModeEnum.NFC_THREAD, id="nfc-thread"),
+    pytest.param(DutPairingModeEnum.NFC_WIFI, id="nfc-wifi"),
+]
+
+MOCK_THREAD_DATASET = (
+    "0e08000000000001000035060004001fffe00708fd47156040435d2b041069c13cc038488"
+    "0328b9d2d7a6ee891150c0402a0f7f8000300000f01021234020811111111222222220510"
+    "00112233445566778899aabbccddeeff030444454d4f"
+)
+
+THREAD_DATASET_PATCH = mock.patch(
+    "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+    ".__thread_dataset_hex",
+    return_value=MOCK_THREAD_DATASET,
+)
+
+
+async def _nfc_arguments(pairing_mode: DutPairingModeEnum, **dut_kwargs: str) -> list:
+    """Helper: build command arguments for a given NFC pairing mode and DutConfig
+    kwargs."""
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+    mock_config.test_parameters = None
+    mock_config.dut_config = DutConfig(
+        pairing_mode=pairing_mode, chip_timeout=None, **dut_kwargs
+    )
+    with THREAD_DATASET_PATCH:
+        return await generate_command_arguments(
+            config=mock_config, omit_commissioning_method=False
+        )
+
+
+def _assert_no_discriminator_or_passcode(arguments: list) -> None:
+    joined = " ".join(arguments)
+    assert "--discriminator" not in joined
+    assert "--passcode" not in joined
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_with_discriminator_and_setup_code_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 1: both discriminator and setup_code set — neither passed to SDK."""
+    arguments = await _nfc_arguments(
+        pairing_mode, discriminator="3840", setup_code="20202021"
+    )
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_with_only_discriminator_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 2: only discriminator set — not passed to SDK."""
+    arguments = await _nfc_arguments(pairing_mode, discriminator="3840")
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_with_only_setup_code_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 3: only setup_code set — not passed to SDK."""
+    arguments = await _nfc_arguments(pairing_mode, setup_code="20202021")
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_without_discriminator_and_setup_code_not_passed_to_sdk(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Scenario 4: neither discriminator nor setup_code set — not passed to SDK."""
+    arguments = await _nfc_arguments(pairing_mode)
+    _assert_no_discriminator_or_passcode(arguments)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_logs_warning_when_discriminator_or_setup_code_set(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """Warning is logged for NFC modes when discriminator or setup_code are provided."""
+    with mock.patch.object(test_engine_logger, "warning") as mock_warn:
+        await _nfc_arguments(pairing_mode, discriminator="3840", setup_code="20202021")
+        mock_warn.assert_called_once()
+        assert "ignored" in mock_warn.call_args[0][0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_no_warning_when_discriminator_and_setup_code_not_set(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """No warning is logged for NFC modes when discriminator and setup_code are
+    absent."""
+    with mock.patch.object(test_engine_logger, "warning") as mock_warn:
+        await _nfc_arguments(pairing_mode)
+        mock_warn.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -790,3 +894,86 @@ async def test_generate_command_arguments_hex_arg_multiple_pairs() -> None:
     idx = arguments.index("--hex-arg")
     assert arguments[idx + 1] == "PIXIT.DATASET.ACTIVE:AABBCCDD"
     assert arguments[idx + 2] == "PIXIT.DATASET.PENDING:11223344"
+
+
+# ---------------------------------------------------------------------------
+# Tests for NFC_Reader_index default / explicit value injection
+# ---------------------------------------------------------------------------
+
+
+async def _nfc_arguments_with_params(
+    pairing_mode: DutPairingModeEnum, test_parameters: dict | None
+) -> list:
+    """Helper: build command arguments for a given NFC pairing mode and
+    test_parameters dict."""
+    mock_config = default_environment_config.copy(deep=True)  # type: ignore
+    mock_config.test_parameters = test_parameters
+    mock_config.dut_config = DutConfig(pairing_mode=pairing_mode, chip_timeout=None)
+    with THREAD_DATASET_PATCH:
+        return await generate_command_arguments(
+            config=mock_config, omit_commissioning_method=False
+        )
+
+
+def _assert_nfc_reader_index(arguments: list, expected_index: int) -> None:
+    assert "--int-arg" in arguments
+    idx = arguments.index("--int-arg")
+    assert arguments[idx + 1] == f"NFC_Reader_index:{expected_index}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_reader_index_defaults_to_zero_when_not_provided(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """NFC_Reader_index:0 is injected into int-arg when test_parameters is None."""
+    arguments = await _nfc_arguments_with_params(pairing_mode, test_parameters=None)
+    _assert_nfc_reader_index(arguments, 0)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_reader_index_defaults_to_zero_when_params_present_but_key_absent(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """NFC_Reader_index:0 is injected when test_parameters exists but int-arg does
+    not contain NFC_Reader_index."""
+    arguments = await _nfc_arguments_with_params(
+        pairing_mode, test_parameters={"paa-trust-store-path": "/paa-root-certs"}
+    )
+    _assert_nfc_reader_index(arguments, 0)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_reader_index_uses_provided_value(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """NFC_Reader_index uses the value already in int-arg when explicitly set."""
+    arguments = await _nfc_arguments_with_params(
+        pairing_mode, test_parameters={"int-arg": "NFC_Reader_index:2"}
+    )
+    _assert_nfc_reader_index(arguments, 2)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_mode", NFC_PAIRING_MODES_PARAMS)
+async def test_nfc_reader_index_not_duplicated_when_already_in_int_arg(
+    pairing_mode: DutPairingModeEnum,
+) -> None:
+    """NFC_Reader_index is not injected a second time when already present in
+    int-arg."""
+    arguments = await _nfc_arguments_with_params(
+        pairing_mode, test_parameters={"int-arg": "NFC_Reader_index:1"}
+    )
+    joined = " ".join(arguments)
+    assert joined.count("NFC_Reader_index") == 1
+
+
+@pytest.mark.asyncio
+async def test_nfc_reader_index_not_injected_for_non_nfc_modes() -> None:
+    """--int-arg NFC_Reader_index is never injected for non-NFC pairing modes."""
+    cfg = _on_network_config(test_parameters={})
+    arguments = await generate_command_arguments(cfg)
+    joined = " ".join(arguments)
+    assert "NFC_Reader_index" not in joined

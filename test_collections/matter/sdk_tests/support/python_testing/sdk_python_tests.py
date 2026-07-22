@@ -66,12 +66,12 @@ def _init_test_suites(
             mandatory=True,
         ),
         SuiteType.COMMISSIONING: PythonSuiteDeclaration(
-            name="Python Testing Suite" + version,
+            name="Python Testing Suite - Auto commissioning" + version,
             suite_type=SuiteType.COMMISSIONING,
             version=python_test_version,
         ),
         SuiteType.NO_COMMISSIONING: PythonSuiteDeclaration(
-            name="Python Testing Suite - No commissioning" + version,
+            name="Python Testing Suite - No auto commissioning" + version,
             suite_type=SuiteType.NO_COMMISSIONING,
             version=python_test_version,
         ),

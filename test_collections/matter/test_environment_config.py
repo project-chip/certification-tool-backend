@@ -17,7 +17,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from app.constants.shared_constants import DutPairingModeEnum
+from app.constants.shared_constants import NFC_PAIRING_MODES, DutPairingModeEnum
 from app.schemas.test_environment_config import TestEnvironmentConfig, ThreadAutoConfig
 
 
@@ -47,10 +47,10 @@ class EnhancedSetupFlowConfig(BaseModel):
 
 
 class DutConfig(BaseModel):
-    discriminator: str
-    setup_code: str
+    discriminator: Optional[str] = None
+    setup_code: Optional[str] = None
     pairing_mode: DutPairingModeEnum
-    chip_timeout: Optional[str]
+    chip_timeout: Optional[str] = None
     chip_use_paa_certs: bool = False
     trace_log: bool = True
     enhanced_setup_flow: Optional[EnhancedSetupFlowConfig] = None
@@ -97,20 +97,35 @@ class TestEnvironmentConfigMatter(TestEnvironmentConfig):
                         f" {valid_properties}"
                     )
 
-            # All DutConfig fields but chip_timeout and enhanced_setup_flow are
-            # mandatory
-            mandatory_fields = valid_properties.copy()
-            mandatory_fields.remove("chip_timeout")
-            mandatory_fields.remove("enhanced_setup_flow")
+            # pairing_mode is always mandatory
+            if "pairing_mode" not in dut_config:
+                raise TestEnvironmentConfigMatterError(
+                    "The field pairing_mode is required for dut_config configuration"
+                )
 
-            for field in mandatory_fields:
+            # chip_use_paa_certs and trace_log are always mandatory
+            for field in ("chip_use_paa_certs", "trace_log"):
                 if field not in dut_config:
                     raise TestEnvironmentConfigMatterError(
                         f"The field {field} is required for dut_config configuration"
                     )
 
-            # Validate THREAD_MESHCOP mode requires ba_host and ba_port
             pairing_mode = dut_config.get("pairing_mode")
+            is_nfc_mode = pairing_mode in NFC_PAIRING_MODES
+
+            # discriminator and setup_code are required for non-NFC modes.
+            # For NFC modes they are optional but recommended — chip-tool
+            # requires them as positional arguments even when the onboarding
+            # payload is read from the NFC tag.
+            if not is_nfc_mode:
+                for field in ("discriminator", "setup_code"):
+                    if not dut_config.get(field):
+                        raise TestEnvironmentConfigMatterError(
+                            f"The field {field} is required for dut_config "
+                            f"configuration when pairing_mode is {pairing_mode}"
+                        )
+
+            # Validate THREAD_MESHCOP mode requires ba_host and ba_port
             if pairing_mode == DutPairingModeEnum.THREAD_MESHCOP:
                 thread_config = network.get("thread") if network else None
                 if not thread_config:
