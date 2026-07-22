@@ -96,3 +96,26 @@ def test_handle_uploaded_file_replaces_invalid_utf8_and_warns_once(
     info_calls = [call.args[0] for call in mock_logger.info.call_args_list]
     body = "\n".join(info_calls[2:-1])
     assert "�" in body
+
+
+@mock.patch("app.test_engine.models.manual_test_case.logger")
+def test_handle_uploaded_file_strips_windows_line_endings(
+    mock_logger: mock.Mock,
+) -> None:
+    """Windows-style CRLF line endings must not leave a stray \\r in each line.
+
+    Regression test: an earlier version of this fix used .rstrip("\\n"), which
+    left a trailing \\r on every line of a CRLF-terminated file, corrupting the
+    joined chunk with embedded carriage returns.
+    """
+    content = b"line one\r\nline two\r\nline three\r\n"
+
+    step = ManualLogUploadStep("Prompt Manual Log Upload")
+    step.append_failure = mock.Mock()  # type: ignore[method-assign]
+
+    step.handle_uploaded_file(FakeUploadFile(content))
+
+    info_calls = [call.args[0] for call in mock_logger.info.call_args_list]
+    body = "\n".join(info_calls[2:-1])
+    assert "\r" not in body
+    assert body.splitlines() == ["line one", "line two", "line three"]

@@ -209,10 +209,10 @@ class ManualLogUploadStep(TestStep, UserPromptSupport):
             chunk: list[str] = []
             for line in f:
                 try:
-                    chunk.append(line.decode("utf-8").rstrip("\n"))
+                    chunk.append(line.decode("utf-8").rstrip("\r\n"))
                 except UnicodeDecodeError:
                     had_invalid_utf8 = True
-                    chunk.append(line.decode("utf-8", errors="replace").rstrip("\n"))
+                    chunk.append(line.decode("utf-8", errors="replace").rstrip("\r\n"))
 
                 if len(chunk) >= MANUAL_LOG_CHUNK_LINES:
                     logger.info("\n".join(chunk))
