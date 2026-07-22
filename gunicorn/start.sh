@@ -40,7 +40,10 @@ else
     DEFAULT_GUNICORN_CONF=/gunicorn_conf.py
 fi
 export GUNICORN_CONF=${GUNICORN_CONF:-$DEFAULT_GUNICORN_CONF}
-export WORKER_CLASS=${WORKER_CLASS:-"uvicorn.workers.UvicornWorker"}
+# ExtendedTimeoutUvicornWorker raises ws_ping_timeout (default UvicornWorker: 20s).
+# Uploading a large manual test log can keep the event loop busy long enough for
+# the default timeout to drop the websocket mid-upload (issue #1062).
+export WORKER_CLASS=${WORKER_CLASS:-"app.uvicorn_worker.ExtendedTimeoutUvicornWorker"}
 
 # If there's a prestart.sh script in the /app directory or other path specified, run it before starting
 DEFAULT_PRE_START_PATH="/app/prestart.sh"
