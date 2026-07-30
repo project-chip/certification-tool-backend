@@ -31,6 +31,7 @@ from ...python_testing.models.utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
     DUTCommissioningError,
+    capture_admin_storage_file,
     commission_device,
     generate_command_arguments,
 )
@@ -665,6 +666,37 @@ async def test_commission_device_failure() -> None:
         expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
     )
     mock_handle_logs.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Tests for capture_admin_storage_file (re-snapshot at suite cleanup, issue #1070)
+# ---------------------------------------------------------------------------
+
+
+def test_capture_admin_storage_file_copies_from_container() -> None:
+    sdk_container: SDKContainer = SDKContainer()
+
+    with mock.patch.object(
+        target=sdk_container, attribute="copy_file_from_container"
+    ) as mock_copy:
+        capture_admin_storage_file(
+            default_environment_config, test_engine_logger  # type: ignore
+        )
+
+    mock_copy.assert_called_once()
+
+
+def test_capture_admin_storage_file_propagates_exceptions() -> None:
+    sdk_container: SDKContainer = SDKContainer()
+
+    with mock.patch.object(
+        target=sdk_container,
+        attribute="copy_file_from_container",
+        side_effect=RuntimeError("boom"),
+    ), pytest.raises(RuntimeError):
+        capture_admin_storage_file(
+            default_environment_config, test_engine_logger  # type: ignore
+        )
 
 
 # ---------------------------------------------------------------------------
