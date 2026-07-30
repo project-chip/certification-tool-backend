@@ -30,6 +30,7 @@ from ...sdk_container import SDKContainer
 from ...utils import PromptOption, prompt_for_commissioning_mode
 from .utils import (
     DUTCommissioningError,
+    capture_admin_storage_file,
     commission_device,
     should_perform_new_commissioning,
 )
@@ -116,6 +117,16 @@ class PythonTestSuite(TestSuite):
 
     async def cleanup(self) -> None:
         logger.info("Suite Cleanup")
+
+        matter_config = getattr(self, "matter_config", None)
+        if matter_config is not None and self.sdk_container.is_running():
+            try:
+                logger.info(
+                    "Capturing latest admin_storage.json snapshot from container"
+                )
+                capture_admin_storage_file(matter_config, logger)
+            except Exception as e:
+                logger.warning(f"Could not capture admin_storage.json snapshot: {e}")
 
         logger.info("Stopping SDK container")
         self.sdk_container.destroy()
