@@ -67,6 +67,9 @@ USER_PROMPT_TIMEOUT = 120
 LOG_BATCH_SIZE = 50  # Number of log lines to send per batch
 LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
 
+# Marker prefix printed by the SDK before each test step's output
+STEP_MARKER_PREFIX = "***** Test Step "
+
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
 
@@ -96,7 +99,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.test_stop_called = False
         self.test_socket = None
         self.file_output_path: Optional[Path] = None
-        self.current_python_step_number = 0
+        self.current_python_step_name: Optional[str] = None
         self._cached_file_content: str = ""
         self._last_file_size: int = 0
         self._last_logged_position: int = 0  # Track last logged position
@@ -137,7 +140,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             self.current_test_step.mark_as_not_applicable(skiped_msg)
 
     def step_start(self, name: str) -> None:
-        self.current_python_step_number += 1
+        self.current_python_step_name = name
         self.step_over()
 
     async def step_success(
@@ -158,13 +161,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
             logger.debug(f"Test output file does not exist: {self.file_output_path}")
             return
 
+        if not self.current_python_step_name:
+            return
+
         try:
             # Read file content with incremental caching for performance
             content = self._read_file_incrementally()
 
             # Extract logs for the current step (returns tuple of logs and end position)
             step_logs, end_pos = self._extract_logs_for_step(
-                content, self.current_python_step_number
+                content, self.current_python_step_name
             )
 
             if step_logs:
@@ -207,13 +213,17 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             # File has grown, read only new content
             if current_size > self._last_file_size and self._cached_file_content:
-                with open(self.file_output_path, "r", encoding="utf-8") as f:
+                with open(
+                    self.file_output_path, "r", encoding="utf-8", errors="replace"
+                ) as f:
                     f.seek(self._last_file_size)
                     new_content = f.read()
                     self._cached_file_content += new_content
             else:
                 # First read or file was truncated
-                with open(self.file_output_path, "r", encoding="utf-8") as f:
+                with open(
+                    self.file_output_path, "r", encoding="utf-8", errors="replace"
+                ) as f:
                     self._cached_file_content = f.read()
 
             self._last_file_size = current_size
@@ -223,29 +233,35 @@ class PythonTestCase(TestCase, UserPromptSupport):
             return self._cached_file_content
 
     def _extract_logs_for_step(
-        self, content: str, step_number: int
+        self, content: str, step_name: str
     ) -> tuple[list[str], int]:
         """Extract logs for a specific test step from the full log content.
 
         Args:
             content: Full content of the test output file
-            step_number: The step number to extract logs for
+            step_name: The step name (as passed to step_start) to extract logs for
 
         Returns:
             Tuple of:
             - list of log lines for the specified step.
             - End position of step content
         """
-        current_step_marker = f"***** Test Step {step_number} :"
-        next_step_marker = f"***** Test Step {step_number + 1} :"
+        current_step_marker = f"{STEP_MARKER_PREFIX}{step_name}"
 
-        # Find the start position of current step
-        start_idx = content.find(current_step_marker)
+        # Search starting at the last logged position rather than from the
+        # beginning of the file, so repeated/similar step labels across loop
+        # iterations resolve to the correct occurrence and the whole
+        # (growing) file isn't rescanned on every step.
+        start_idx = content.find(current_step_marker, self._last_logged_position)
         if start_idx == -1:
-            return ([], 0)
+            # No match yet (e.g. the SDK hasn't written this step's marker to
+            # disk yet) — don't regress the cursor, just report nothing new.
+            return ([], self._last_logged_position)
 
-        # Find the start position of next step
-        next_idx = content.find(next_step_marker, start_idx)
+        # Find the start position of the next step's marker
+        next_idx = content.find(
+            STEP_MARKER_PREFIX, start_idx + len(current_step_marker)
+        )
 
         # Extract the section between current and next step
         if next_idx != -1:
@@ -485,8 +501,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
             return
 
         try:
-            # Read the full file content
-            content = self._read_file_incrementally()
+            # Read the file fresh (not via the incremental cache) so this
+            # catch-all reliably recovers everything regardless of whether
+            # the incremental/per-step read path hit an error earlier.
+            with open(
+                self.file_output_path, "r", encoding="utf-8", errors="replace"
+            ) as f:
+                content = f.read()
 
             # Check if there's content after the last logged position
             if self._last_logged_position < len(content):
@@ -529,7 +550,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         try:
             logger.info("---- Start of Python test logs ----")
-            with open(self.file_output_path, "r", encoding="utf-8") as f:
+            with open(
+                self.file_output_path, "r", encoding="utf-8", errors="replace"
+            ) as f:
                 for line in f:
                     logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
             logger.info("---- End of Python test logs ----")

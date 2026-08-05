@@ -25,7 +25,7 @@ from app.models.project import Project
 from app.models.test_case_execution import TestCaseExecution
 from app.models.test_run_execution import TestRunExecution
 from app.models.test_suite_execution import TestSuiteExecution
-from app.test_engine.logger import test_engine_logger
+from app.test_engine.logger import PYTHON_TEST_LEVEL, test_engine_logger
 
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...python_testing.models import PythonTestCase
@@ -538,3 +538,156 @@ async def test_no_commissioning_python_test_case_does_not_prompt_commissioning_m
     ) as mock_prompt_commissioning:
         await test_case.setup()
         mock_prompt_commissioning.assert_not_called()
+
+
+def test_extract_logs_for_step_matches_composite_label() -> None:
+    """Regression test for issue #1072: composite/alphanumeric step labels
+    (e.g. from privilege-level loops such as TC-ACE-2.4) must be matched
+    correctly, instead of never matching (as a synthetic integer counter
+    would)."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    content = (
+        "***** Test Step 3a_kView : desc\n"
+        "lineA\n"
+        "***** Test Step 3b_kView : desc\n"
+        "lineB\n"
+    )
+
+    step_logs, end_pos = instance._extract_logs_for_step(content, "3a_kView : desc")
+
+    assert "lineA" in step_logs
+    assert not any("lineB" in line for line in step_logs)
+    assert end_pos == content.index("***** Test Step 3b_kView : desc")
+
+
+def test_extract_logs_for_step_matches_plain_integer_label() -> None:
+    """Backward-compatibility guard: plain integer-style step labels (the
+    common case for tests without loops) must keep matching correctly."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    content = (
+        "***** Test Step 1 : first description\n"
+        "line1\n"
+        "***** Test Step 2 : second description\n"
+        "line2\n"
+    )
+
+    step_logs, end_pos = instance._extract_logs_for_step(
+        content, "1 : first description"
+    )
+
+    assert "line1" in step_logs
+    assert not any("line2" in line for line in step_logs)
+    assert end_pos == content.index("***** Test Step 2 : second description")
+
+
+def test_extract_logs_for_step_uses_cursor_not_first_occurrence() -> None:
+    """Regression test: extraction must search from the last logged
+    position, not always from the start of the file, so a marker that
+    appears more than once (e.g. a reused label across loop iterations)
+    resolves to the correct, later occurrence."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    marker = "***** Test Step 3a_kView : desc"
+    content = f"{marker}\nfirst pass\n{marker}\nsecond pass\n"
+
+    first_logs, first_end = instance._extract_logs_for_step(
+        content, "3a_kView : desc"
+    )
+    assert "first pass" in first_logs
+
+    instance._last_logged_position = first_end
+    second_logs, second_end = instance._extract_logs_for_step(
+        content, "3a_kView : desc"
+    )
+
+    assert "second pass" in second_logs
+    assert not any("first pass" in line for line in second_logs)
+    assert second_end == len(content)
+
+
+def test_step_start_stores_step_name() -> None:
+    """step_start must keep the actual SDK step label (used for marker
+    matching), not a synthetic incrementing counter."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    instance.step_start("3a_kView : some description")
+
+    assert instance.current_python_step_name == "3a_kView : some description"
+
+
+@pytest.mark.asyncio
+async def test_log_remaining_content_recovers_everything_missed(tmp_path: Path) -> None:
+    """_log_remaining_content must recover all content after the last logged
+    position via an independent, fresh file read - not the incremental
+    cache - so it acts as a reliable safety net regardless of why the
+    per-step path may have missed content."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    prefix = "already displayed content"
+    remaining = "\nremaining line 1\nremaining line 2\n"
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text(prefix + remaining)
+
+    instance.file_output_path = output_file
+    instance._last_logged_position = len(prefix)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".logger"
+    ) as mock_logger:
+        await instance._log_remaining_content()
+
+    mock_logger.info.assert_any_call("---- Remaining logs not captured by steps ----")
+    mock_logger.log.assert_any_call(PYTHON_TEST_LEVEL, remaining)
+    mock_logger.info.assert_any_call("---- End of remaining logs ----")
+    assert instance._remaining_content_logged is True
+
+
+@pytest.mark.asyncio
+async def test_log_remaining_content_is_idempotent(tmp_path: Path) -> None:
+    """_log_remaining_content must only log the remaining content once, even
+    if called multiple times (e.g. from both execute() and cleanup())."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    prefix = "already displayed content"
+    remaining = "\nremaining line\n"
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text(prefix + remaining)
+
+    instance.file_output_path = output_file
+    instance._last_logged_position = len(prefix)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".logger"
+    ) as mock_logger:
+        await instance._log_remaining_content()
+        await instance._log_remaining_content()
+
+    assert mock_logger.log.call_count == 1
