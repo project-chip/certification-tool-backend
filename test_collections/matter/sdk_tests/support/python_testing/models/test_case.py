@@ -481,7 +481,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             await self._log_remaining_content()
         else:
             # Use batch logging when real-time logging is disabled
-            self.display_batch_logs()
+            await self.display_batch_logs()
 
     async def _log_remaining_content(self) -> None:
         """Log any content from the test output file that wasn't logged yet."""
@@ -515,8 +515,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
                 if remaining_content.strip():
                     logger.info("---- Remaining logs not captured by steps ----")
-                    # Just log all remaining content directly
-                    logger.log(PYTHON_TEST_LEVEL, remaining_content)
+                    # Log in batches (like _display_step_logs) instead of one
+                    # unbroken call, so a large backlog doesn't monopolize the
+                    # event loop for an extended stretch in one go.
+                    remaining_lines = remaining_content.split("\n")
+                    for i in range(0, len(remaining_lines), LOG_BATCH_SIZE):
+                        batch = remaining_lines[i : i + LOG_BATCH_SIZE]
+                        for line in batch:
+                            logger.log(PYTHON_TEST_LEVEL, line)
+                        if i + LOG_BATCH_SIZE < len(remaining_lines):
+                            await sleep(LOG_BATCH_DELAY)
                     logger.info("---- End of remaining logs ----")
 
             # Mark as logged to prevent duplicate calls
@@ -529,7 +537,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 f"Unexpected error while logging remaining content: {e}", exc_info=True
             )
 
-    def display_batch_logs(self) -> None:
+    async def display_batch_logs(self) -> None:
         """Batch logging method for when real-time logging is disabled.
 
         This method logs all test output at once after test execution completes,
@@ -553,8 +561,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
             with open(
                 self.file_output_path, "r", encoding="utf-8", errors="replace"
             ) as f:
-                for line in f:
+                lines = f.readlines()
+            # Log in batches, yielding to the event loop between batches, so a
+            # large file doesn't monopolize the event loop for an extended
+            # stretch in one go.
+            for i in range(0, len(lines), LOG_BATCH_SIZE):
+                batch = lines[i : i + LOG_BATCH_SIZE]
+                for line in batch:
                     logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
+                if i + LOG_BATCH_SIZE < len(lines):
+                    await sleep(LOG_BATCH_DELAY)
             logger.info("---- End of Python test logs ----")
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")
@@ -642,7 +658,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 await self._log_remaining_content()
             else:
                 # Use batch logging when real-time logging is disabled
-                self.display_batch_logs()
+                await self.display_batch_logs()
 
             self.current_test_step.mark_as_completed()
         finally:
