@@ -38,6 +38,16 @@ class TestUpdateTypeEnum(str, Enum):
     TEST_CASE = "Test Case"
 
 
+# Maximum number of log entries broadcast in a single websocket message. A
+# dense burst of log lines (e.g. a large conformance report) can otherwise
+# accumulate thousands of entries into one flush, producing a single
+# multi-MB message whose synchronous JSON serialization (see
+# SocketConnectionManager.broadcast) has no yield point. Splitting into
+# multiple smaller, independently-scheduled broadcast tasks lets the event
+# loop interleave other work (e.g. websocket keepalives) between chunks.
+LOG_RECORDS_BROADCAST_CHUNK_SIZE = 200
+
+
 class TestUIObserver(Observer):
     __test__ = False
     __async_updates: list[Task] = []
@@ -81,7 +91,9 @@ class TestUIObserver(Observer):
         log_len = len(test_run.log)
         if log_len > self.__last_seen_run_log_len:
             new_entries = test_run.log[self.__last_seen_run_log_len :]
-            self.__send_log_records_message(new_entries)
+            for i in range(0, len(new_entries), LOG_RECORDS_BROADCAST_CHUNK_SIZE):
+                chunk = new_entries[i : i + LOG_RECORDS_BROADCAST_CHUNK_SIZE]
+                self.__send_log_records_message(chunk)
             self.__last_seen_run_log_len = log_len
 
     def __onTestSuiteUpdate(self, observable: TestSuite) -> None:
