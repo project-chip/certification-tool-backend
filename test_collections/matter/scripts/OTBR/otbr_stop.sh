@@ -24,6 +24,10 @@ print_start_of_script
 print_script_step "Stoping OTBR service"
 sudo docker exec -t otbr-chip ot-ctl srp server disable
 sleep 2
-sudo docker kill otbr-chip
+# Use a graceful stop (SIGTERM, falling back to SIGKILL after the timeout) rather
+# than 'docker kill' so otbr-agent has a chance to release the RCP serial device
+# cleanly. A hard kill can leave the RCP in a state that otbr_start.sh's next
+# run fails to attach to (see #1071).
+sudo docker stop otbr-chip
 
 print_end_of_script
