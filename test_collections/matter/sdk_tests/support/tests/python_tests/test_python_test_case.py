@@ -604,9 +604,7 @@ def test_extract_logs_for_step_uses_cursor_not_first_occurrence() -> None:
     marker = "***** Test Step 3a_kView : desc"
     content = f"{marker}\nfirst pass\n{marker}\nsecond pass\n"
 
-    first_logs, first_end = instance._extract_logs_for_step(
-        content, "3a_kView : desc"
-    )
+    first_logs, first_end = instance._extract_logs_for_step(content, "3a_kView : desc")
     assert "first pass" in first_logs
 
     instance._last_logged_position = first_end
