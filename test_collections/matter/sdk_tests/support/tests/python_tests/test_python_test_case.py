@@ -660,7 +660,12 @@ async def test_log_remaining_content_recovers_everything_missed(tmp_path: Path) 
         await instance._log_remaining_content()
 
     mock_logger.info.assert_any_call("---- Remaining logs not captured by steps ----")
-    mock_logger.log.assert_any_call(PYTHON_TEST_LEVEL, remaining)
+    # _log_remaining_content logs one line at a time (batched/paced), not the
+    # whole remaining string in a single call - assert every line was logged.
+    remaining_lines = remaining.split("\n")
+    for line in remaining_lines:
+        mock_logger.log.assert_any_call(PYTHON_TEST_LEVEL, line)
+    assert mock_logger.log.call_count == len(remaining_lines)
     mock_logger.info.assert_any_call("---- End of remaining logs ----")
     assert instance._remaining_content_logged is True
 
@@ -690,4 +695,57 @@ async def test_log_remaining_content_is_idempotent(tmp_path: Path) -> None:
         await instance._log_remaining_content()
         await instance._log_remaining_content()
 
-    assert mock_logger.log.call_count == 1
+    # One log.log call per line on the first (non-idempotent) invocation;
+    # the second call must not log anything more.
+    assert mock_logger.log.call_count == len(remaining.split("\n"))
+
+
+@pytest.mark.asyncio
+async def test_display_batch_logs_logs_every_line(tmp_path: Path) -> None:
+    """display_batch_logs must log every line of the test output file,
+    wrapped in start/end banners."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text("line one\nline two\n")
+    instance.file_output_path = output_file
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".logger"
+    ) as mock_logger:
+        await instance.display_batch_logs()
+
+    mock_logger.info.assert_any_call("---- Start of Python test logs ----")
+    mock_logger.log.assert_any_call(PYTHON_TEST_LEVEL, "line one")
+    mock_logger.log.assert_any_call(PYTHON_TEST_LEVEL, "line two")
+    mock_logger.info.assert_any_call("---- End of Python test logs ----")
+    assert mock_logger.log.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_display_batch_logs_is_idempotent(tmp_path: Path) -> None:
+    """display_batch_logs must only log the file's content once, even if
+    called multiple times."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text("line one\nline two\n")
+    instance.file_output_path = output_file
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".logger"
+    ) as mock_logger:
+        await instance.display_batch_logs()
+        await instance.display_batch_logs()
+
+    assert mock_logger.log.call_count == 2

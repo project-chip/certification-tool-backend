@@ -28,7 +28,11 @@ from app.constants.shared_constants import (
 from app.models.test_run_execution import TestRunExecution
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.models import TestRun
-from app.test_engine.test_ui_observer import TestUIObserver, TestUpdateTypeEnum
+from app.test_engine.test_ui_observer import (
+    LOG_RECORDS_BROADCAST_CHUNK_SIZE,
+    TestUIObserver,
+    TestUpdateTypeEnum,
+)
 
 
 @pytest.mark.asyncio
@@ -64,6 +68,38 @@ async def test_test_ui_observer_test_run_log(db: Session) -> None:
         assert len(run.log) == 4
         run.notify()
         send_log_mock.assert_called_once_with(additional_log_entries)
+
+        # cleanup
+        await ui_observer.complete_tasks()
+
+
+@pytest.mark.asyncio
+async def test_test_ui_observer_test_run_log_chunks_large_batches(db: Session) -> None:
+    """A single flush containing more entries than the broadcast chunk size
+    must be split into multiple smaller messages instead of one large one
+    (regression test for issue #1072's unbounded-broadcast-batch bug, where
+    a dense burst of log lines could become a single multi-MB websocket
+    message with no yield point during serialization)."""
+    ui_observer = TestUIObserver()
+    with mock.patch.object(
+        ui_observer, "_TestUIObserver__send_log_records_message"
+    ) as send_log_mock:
+        run = TestRun(test_run_execution=TestRunExecution())
+        run.subscribe([ui_observer])
+
+        extra = 50
+        log_entries = [
+            TestRunLogEntry(level="info", timestamp=float(i), message=f"Message{i}")
+            for i in range(LOG_RECORDS_BROADCAST_CHUNK_SIZE + extra)
+        ]
+        run.log = log_entries
+        run.notify()
+
+        assert send_log_mock.call_count == 2
+        first_chunk = send_log_mock.call_args_list[0][0][0]
+        second_chunk = send_log_mock.call_args_list[1][0][0]
+        assert first_chunk == log_entries[:LOG_RECORDS_BROADCAST_CHUNK_SIZE]
+        assert second_chunk == log_entries[LOG_RECORDS_BROADCAST_CHUNK_SIZE:]
 
         # cleanup
         await ui_observer.complete_tasks()
