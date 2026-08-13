@@ -144,7 +144,17 @@ class SocketConnectionManager(object, metaclass=Singleton):
                 # keep being retried for the rest of the process's life.
                 except (ConnectionClosedOK, ConnectionClosedError):
                     if websocket.application_state != WebSocketState.DISCONNECTED:
-                        await websocket.close()
+                        try:
+                            await websocket.close()
+                        except Exception as close_error:
+                            # The transport can already be gone by this point
+                            # (that's the whole reason we're here) - closing
+                            # an already-dead socket failing is expected and
+                            # uninteresting, but must not prevent the
+                            # cleanup below from running.
+                            logger.debug(
+                                f"Error closing already-dead websocket: {close_error}"
+                            )
                     self.disconnect(connection)
                     logger.warning(
                         f'Failed to send message: "{message}"'
