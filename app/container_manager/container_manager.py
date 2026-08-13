@@ -76,6 +76,22 @@ class ContainerManager(object, metaclass=Singleton):
             logger.info(f"Did not find container by id or name: {id_or_name}.")
             return None
 
+    def remove_containers_for_image(self, docker_image_tag: str) -> None:
+        """Force-remove any (running or stopped) container created from the given
+        image. Used to clear out containers that a previous, no-longer-tracked
+        instance of this process left behind (e.g. after a crash or a failed
+        start_device() call), which would otherwise hold onto host resources
+        (like an RCP serial device) and block a new container from starting."""
+        stale_containers = self.__client.containers.list(
+            all=True, filters={"ancestor": docker_image_tag}
+        )
+        for container in stale_containers:
+            logger.warning(
+                f"Removing leftover container '{container.name}' "
+                f"({container.short_id}) for image {docker_image_tag}."
+            )
+            container.remove(force=True)
+
     def is_running(self, container: Container) -> bool:
         # NOTE: we need to get a new container reference to get updated status.
         if c := self.get_container(container.id):

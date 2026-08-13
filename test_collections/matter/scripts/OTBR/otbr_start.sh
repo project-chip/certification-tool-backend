@@ -52,6 +52,15 @@ print_script_step "Removing 'otbr-chip' container"
 docker stop otbr-chip > /dev/null 2>&1
 docker rm otbr-chip > /dev/null 2>&1
 
+# Also remove any other leftover container from the OTBR image (e.g. one started by
+# the Test Harness itself via otbr_manager.py, which doesn't use the 'otbr-chip' name).
+# A stale container like this can still be holding the RCP serial device, which makes
+# otbr-agent fail to attach in the container we're about to start (see #1071).
+STALE_OTBR_CONTAINERS=$(docker ps -aq --filter ancestor=$BR_IMAGE)
+if [ -n "$STALE_OTBR_CONTAINERS" ]; then
+	echo "$STALE_OTBR_CONTAINERS" | xargs -r docker rm -f > /dev/null 2>&1
+fi
+
 if docker images | grep $BR_IMAGE_BASE | grep $BR_IMAGE_TAG;
 then
 	echo "otbr image "$BR_IMAGE" already installed"
