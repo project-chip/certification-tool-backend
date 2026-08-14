@@ -52,6 +52,16 @@ print_script_step "Removing 'otbr-chip' container"
 docker stop otbr-chip > /dev/null 2>&1
 docker rm otbr-chip > /dev/null 2>&1
 
+# Also remove any other leftover container from the OTBR image (e.g. one started by
+# the Test Harness itself via otbr_manager.py, which doesn't use the 'otbr-chip' name).
+# A stale container like this can still be holding the RCP serial device, which makes
+# otbr-agent fail to attach in the container we're about to start (see #1071).
+STALE_OTBR_CONTAINERS=$(sudo docker ps -aq --filter "ancestor=$BR_IMAGE")
+if [ -n "$STALE_OTBR_CONTAINERS" ]; then
+	echo "$STALE_OTBR_CONTAINERS" | xargs -r sudo docker stop > /dev/null 2>&1
+	echo "$STALE_OTBR_CONTAINERS" | xargs -r sudo docker rm -f > /dev/null 2>&1
+fi
+
 if docker images | grep $BR_IMAGE_BASE | grep $BR_IMAGE_TAG;
 then
 	echo "otbr image "$BR_IMAGE" already installed"
@@ -60,13 +70,36 @@ else
 	docker pull $BR_IMAGE || exit 1
 fi
 
+print_script_step "Checking Thread RCP device"
+RCP_DEVICE="/dev/ttyACM0"
+if [ ! -e "$RCP_DEVICE" ]; then
+	echo "ERROR: $RCP_DEVICE not found. Is the Thread RCP dongle plugged in?" >&2
+	echo "If it was just plugged in/out, wait a few seconds for it to enumerate and try again." >&2
+	exit 1
+fi
+
 print_script_step "Starting 'otbr-chip' container"
 AVAHI_PATH=$ROOT_DIR/backend/app/otbr_manager/avahi
 sudo modprobe ip6table_filter || exit 1
-sudo docker run --privileged -d --network host --name otbr-chip -e NAT64=1 -e DNS64=0 -e WEB_GUI=0 -v $AVAHI_PATH:/etc/avahi -v /dev/ttyACM0:/dev/radio $BR_IMAGE --radio-url spinel+hdlc+uart:///dev/radio?uart-baudrate=115200 -B $BR_INTERFACE || exit 1
+sudo docker run --privileged -d --network host --name otbr-chip -e NAT64=1 -e DNS64=0 -e WEB_GUI=0 -v $AVAHI_PATH:/etc/avahi -v $RCP_DEVICE:/dev/radio $BR_IMAGE --radio-url spinel+hdlc+uart:///dev/radio?uart-baudrate=115200 -B $BR_INTERFACE || exit 1
 
-print_script_step "Waiting 10 seconds to give the the docker container enough time to start up..."
-sleep 10
+print_script_step "Waiting for the OTBR agent to become ready..."
+OTBR_READY_TIMEOUT=30
+OTBR_READY=0
+for ((i = 0; i < OTBR_READY_TIMEOUT; i++)); do
+	if sudo docker exec otbr-chip ot-ctl state > /dev/null 2>&1; then
+		OTBR_READY=1
+		break
+	fi
+	sleep 1
+done
+
+if [ $OTBR_READY -eq 0 ]; then
+	echo "ERROR: otbr-agent did not become ready within ${OTBR_READY_TIMEOUT}s." >&2
+	echo "Dumping 'otbr-chip' container logs for diagnosis:" >&2
+	sudo docker logs otbr-chip
+	exit 1
+fi
 
 BR_CHANNEL_HEX=$(printf '%02x' $BR_CHANNEL)
 BR_PANID="5b${BR_VARIANT}" # The 2-byte Personal Area Network ID is a unique Thread identifier
@@ -96,7 +129,11 @@ print_script_step "Setting up Thread Network"
 for i in "${BR_PARAMS[@]}"
 do
         printf "Param: '$i'"
-        sudo docker exec -t otbr-chip ot-ctl $i || exit 1
+        if ! sudo docker exec -t otbr-chip ot-ctl $i; then
+                echo "ERROR: 'ot-ctl $i' failed. Dumping 'otbr-chip' container logs for diagnosis:" >&2
+                sudo docker logs otbr-chip
+                exit 1
+        fi
 done
 
 BR_SIMPLE_DATASET="00030000"${BR_CHANNEL_HEX}"0208"${BR_EXTPANID}"0510"${BR_NETWORKKEY}"0102"${BR_PANID}

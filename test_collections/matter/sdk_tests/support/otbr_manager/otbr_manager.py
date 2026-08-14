@@ -132,6 +132,12 @@ class ThreadBorderRouter(metaclass=Singleton):
         self.__load_config(config)
         logger.info(f"Starting OTBR via docker image: {self.__docker_image}")
 
+        # Remove any leftover OTBR container not tracked by this instance (e.g. left
+        # behind by a previous failed start_device() call, or a backend restart that
+        # dropped the in-memory reference). Otherwise it can still be holding the RCP
+        # serial device, causing the new container's otbr-agent to fail to attach.
+        container_manager.remove_containers_for_image(self.__docker_image)
+
         # Async return when the container is running
         self.__otbr_docker = await container_manager.create_container(
             self.__docker_image, self.run_parameters
@@ -235,5 +241,9 @@ class ThreadBorderRouter(metaclass=Singleton):
         if self.is_running():
             self._send_command("service otbr-firewall stop", prefix="")
 
-        container_manager.destroy(self.__otbr_docker)
+        # Graceful stop (rather than a hard kill) so otbr-agent has a chance to
+        # release the RCP serial device cleanly before the container is removed.
+        # A hard kill can leave the RCP in a state that the next start_device()
+        # call fails to attach to (see #1071).
+        container_manager.destroy(self.__otbr_docker, graceful=True)
         self.__otbr_docker = None
