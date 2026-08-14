@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 from typing import Any, Dict
 from unittest import mock
 
@@ -38,9 +39,10 @@ from app.test_engine.test_ui_observer import (
 @pytest.mark.asyncio
 async def test_test_ui_observer_test_run_log(db: Session) -> None:
     ui_observer = TestUIObserver()
-    with mock.patch.object(
-        ui_observer, "_TestUIObserver__send_log_records_message"
-    ) as send_log_mock:
+    with mock.patch(
+        "app.test_engine.test_ui_observer.socket_connection_manager.broadcast",
+        new_callable=mock.AsyncMock,
+    ) as broadcast_mock:
         run = TestRun(test_run_execution=TestRunExecution())
         run.subscribe([ui_observer])
 
@@ -51,13 +53,18 @@ async def test_test_ui_observer_test_run_log(db: Session) -> None:
         ]
         run.log = log_entries
         run.notify()
-        send_log_mock.assert_called_once_with(log_entries)
-        send_log_mock.reset_mock()
+        await ui_observer.complete_tasks()
+        assert broadcast_mock.call_count == 1
+        assert (
+            broadcast_mock.call_args_list[0][0][0][MessageKeysEnum.PAYLOAD]
+            == log_entries
+        )
+        broadcast_mock.reset_mock()
 
         # Assert send_log is not called when no new logs are added
         run.notify()
-        send_log_mock.assert_not_called()
-        send_log_mock.reset_mock()
+        await ui_observer.complete_tasks()
+        broadcast_mock.assert_not_called()
 
         # Assert only new log events are in call
         additional_log_entries = [
@@ -67,10 +74,12 @@ async def test_test_ui_observer_test_run_log(db: Session) -> None:
         run.log.extend(additional_log_entries)
         assert len(run.log) == 4
         run.notify()
-        send_log_mock.assert_called_once_with(additional_log_entries)
-
-        # cleanup
         await ui_observer.complete_tasks()
+        assert broadcast_mock.call_count == 1
+        assert (
+            broadcast_mock.call_args_list[0][0][0][MessageKeysEnum.PAYLOAD]
+            == additional_log_entries
+        )
 
 
 @pytest.mark.asyncio
@@ -81,9 +90,10 @@ async def test_test_ui_observer_test_run_log_chunks_large_batches(db: Session) -
     a dense burst of log lines could become a single multi-MB websocket
     message with no yield point during serialization)."""
     ui_observer = TestUIObserver()
-    with mock.patch.object(
-        ui_observer, "_TestUIObserver__send_log_records_message"
-    ) as send_log_mock:
+    with mock.patch(
+        "app.test_engine.test_ui_observer.socket_connection_manager.broadcast",
+        new_callable=mock.AsyncMock,
+    ) as broadcast_mock:
         run = TestRun(test_run_execution=TestRunExecution())
         run.subscribe([ui_observer])
 
@@ -94,15 +104,53 @@ async def test_test_ui_observer_test_run_log_chunks_large_batches(db: Session) -
         ]
         run.log = log_entries
         run.notify()
+        await ui_observer.complete_tasks()
 
-        assert send_log_mock.call_count == 2
-        first_chunk = send_log_mock.call_args_list[0][0][0]
-        second_chunk = send_log_mock.call_args_list[1][0][0]
+        assert broadcast_mock.call_count == 2
+        first_chunk = broadcast_mock.call_args_list[0][0][0][MessageKeysEnum.PAYLOAD]
+        second_chunk = broadcast_mock.call_args_list[1][0][0][MessageKeysEnum.PAYLOAD]
         assert first_chunk == log_entries[:LOG_RECORDS_BROADCAST_CHUNK_SIZE]
         assert second_chunk == log_entries[LOG_RECORDS_BROADCAST_CHUNK_SIZE:]
 
-        # cleanup
+
+@pytest.mark.asyncio
+async def test_test_ui_observer_test_run_log_chunks_delivered_in_order(
+    db: Session,
+) -> None:
+    """Chunks of one flush must be broadcast in order, even though the
+    actual sends happen inside an awaited task rather than synchronously
+    (regression test: chunks used to be scheduled as independently-created
+    tasks, which don't guarantee delivery order relative to each other if
+    websocket.send_text() ever actually yields, e.g. under backpressure)."""
+    ui_observer = TestUIObserver()
+    send_order: list[int] = []
+
+    async def _recording_broadcast(message: dict) -> None:
+        # Simulate send_text() genuinely yielding control (e.g. under
+        # backpressure) - if chunks were sent via independent tasks, this
+        # would let a later chunk's task finish first.
+        payload = message[MessageKeysEnum.PAYLOAD]
+        first_entry_index = int(payload[0].message.removeprefix("Message"))
+        await asyncio.sleep(0)
+        send_order.append(first_entry_index)
+
+    with mock.patch(
+        "app.test_engine.test_ui_observer.socket_connection_manager.broadcast",
+        side_effect=_recording_broadcast,
+    ):
+        run = TestRun(test_run_execution=TestRunExecution())
+        run.subscribe([ui_observer])
+
+        extra = 50
+        log_entries = [
+            TestRunLogEntry(level="info", timestamp=float(i), message=f"Message{i}")
+            for i in range(LOG_RECORDS_BROADCAST_CHUNK_SIZE + extra)
+        ]
+        run.log = log_entries
+        run.notify()
         await ui_observer.complete_tasks()
+
+    assert send_order == [0, LOG_RECORDS_BROADCAST_CHUNK_SIZE]
 
 
 def __expected_test_run_log_dict() -> Dict[str, Any]:

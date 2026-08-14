@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import codecs
 import re
 from asyncio import sleep
 from inspect import iscoroutinefunction
@@ -104,6 +105,15 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self._last_file_size: int = 0
         self._last_logged_position: int = 0  # Track last logged position
         self._remaining_content_logged: bool = False
+        # Incremental UTF-8 decoder for _read_file_incrementally(). A plain
+        # `open(..., encoding="utf-8")` decodes each call's bytes in
+        # isolation - if a multi-byte character's bytes are split across two
+        # incremental reads (very possible while the file is still growing),
+        # errors="replace" doesn't defer it, it corrupts it into U+FFFD
+        # immediately with no way to recover. An incremental decoder holds
+        # back any incomplete trailing bytes and completes the character
+        # once the rest arrives on the next call.
+        self._utf8_decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -197,6 +207,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def _read_file_incrementally(self) -> str:
         """Read file incrementally, caching content to avoid re-reading entire file.
 
+        Reads in binary mode and feeds bytes through a persistent
+        incremental UTF-8 decoder, rather than independently decoding each
+        call's bytes in text mode. Binary-mode seeks are always byte-safe
+        (unlike seeking a text-mode handle to an arbitrary byte offset), and
+        the incremental decoder correctly withholds any incomplete trailing
+        multi-byte character across calls instead of corrupting it.
+
         Returns:
             Full content of the file up to current position
         """
@@ -213,18 +230,18 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             # File has grown, read only new content
             if current_size > self._last_file_size and self._cached_file_content:
-                with open(
-                    self.file_output_path, "r", encoding="utf-8", errors="replace"
-                ) as f:
+                with open(self.file_output_path, "rb") as f:
                     f.seek(self._last_file_size)
-                    new_content = f.read()
-                    self._cached_file_content += new_content
+                    new_bytes = f.read()
+                self._cached_file_content += self._utf8_decoder.decode(new_bytes)
             else:
-                # First read or file was truncated
-                with open(
-                    self.file_output_path, "r", encoding="utf-8", errors="replace"
-                ) as f:
-                    self._cached_file_content = f.read()
+                # First read or file was truncated - reset decoder state too,
+                # so any bytes withheld from a previous (now-stale) read
+                # don't get prepended to unrelated new content.
+                self._utf8_decoder.reset()
+                with open(self.file_output_path, "rb") as f:
+                    new_bytes = f.read()
+                self._cached_file_content = self._utf8_decoder.decode(new_bytes)
 
             self._last_file_size = current_size
             return self._cached_file_content
@@ -501,13 +518,17 @@ class PythonTestCase(TestCase, UserPromptSupport):
             return
 
         try:
-            # Read the file fresh (not via the incremental cache) so this
-            # catch-all reliably recovers everything regardless of whether
-            # the incremental/per-step read path hit an error earlier.
-            with open(
-                self.file_output_path, "r", encoding="utf-8", errors="replace"
-            ) as f:
-                content = f.read()
+            # Reuse the incremental reader (rather than a second, independent
+            # full read) to pick up anything appended since the last call and
+            # fold it into the cache. This used to deliberately bypass the
+            # cache "so this catch-all reliably recovers everything
+            # regardless of whether the incremental/per-step read path hit
+            # an error earlier" - that hedge existed because
+            # _read_file_incrementally() used to be able to silently corrupt
+            # content at chunk boundaries. Now that it decodes incrementally
+            # and byte-safely, there's no need to duplicate the whole file
+            # in memory a second time here.
+            content = self._read_file_incrementally()
 
             # Check if there's content after the last logged position
             if self._last_logged_position < len(content):
@@ -561,16 +582,21 @@ class PythonTestCase(TestCase, UserPromptSupport):
             with open(
                 self.file_output_path, "r", encoding="utf-8", errors="replace"
             ) as f:
-                lines = f.readlines()
-            # Log in batches, yielding to the event loop between batches, so a
-            # large file doesn't monopolize the event loop for an extended
-            # stretch in one go.
-            for i in range(0, len(lines), LOG_BATCH_SIZE):
-                batch = lines[i : i + LOG_BATCH_SIZE]
-                for line in batch:
+                # Iterate the file object directly instead of readlines():
+                # file iteration is already lazily buffered by Python, so
+                # this never materializes the whole (potentially 100MB+)
+                # file as one in-memory list before logging/pacing even
+                # starts.
+                batch_count = 0
+                for line in f:
                     logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
-                if i + LOG_BATCH_SIZE < len(lines):
-                    await sleep(LOG_BATCH_DELAY)
+                    batch_count += 1
+                    if batch_count >= LOG_BATCH_SIZE:
+                        batch_count = 0
+                        # Yield to the event loop between batches, so a
+                        # large file doesn't monopolize it for an extended
+                        # stretch in one go.
+                        await sleep(LOG_BATCH_DELAY)
             logger.info("---- End of Python test logs ----")
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")

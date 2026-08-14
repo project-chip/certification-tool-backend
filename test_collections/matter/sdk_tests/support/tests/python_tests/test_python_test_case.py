@@ -634,9 +634,9 @@ def test_step_start_stores_step_name() -> None:
 @pytest.mark.asyncio
 async def test_log_remaining_content_recovers_everything_missed(tmp_path: Path) -> None:
     """_log_remaining_content must recover all content after the last logged
-    position via an independent, fresh file read - not the incremental
-    cache - so it acts as a reliable safety net regardless of why the
-    per-step path may have missed content."""
+    position (via the incremental reader, which picks up anything appended
+    since the last call) so it acts as a reliable safety net regardless of
+    why the per-step path may have missed content."""
     test = python_test_instance()
     case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
         test=test, python_test_version="version", mandatory=False
@@ -747,3 +747,36 @@ async def test_display_batch_logs_is_idempotent(tmp_path: Path) -> None:
         await instance.display_batch_logs()
 
     assert mock_logger.log.call_count == 2
+
+
+def test_read_file_incrementally_handles_split_utf8_character(tmp_path: Path) -> None:
+    """A multi-byte UTF-8 character whose bytes arrive split across two
+    incremental reads (very possible while the file is still growing) must
+    be correctly assembled once complete, not corrupted into a replacement
+    character in the meantime (regression test for issue #1072 follow-up:
+    _read_file_incrementally() used to decode each call's bytes in
+    isolation, with no memory of a previous call's incomplete trailing
+    bytes)."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    full_text = "hello café world"  # "é" is a 2-byte UTF-8 character
+    full_bytes = full_text.encode("utf-8")
+    # Split right after the first byte of "é", so it's incomplete on disk.
+    split_point = full_bytes.index("é".encode("utf-8")) + 1
+
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_bytes(full_bytes[:split_point])
+    instance.file_output_path = output_file
+
+    first_read = instance._read_file_incrementally()
+    assert "�" not in first_read
+    assert first_read == "hello caf"
+
+    # The rest of the character (and the rest of the file) now arrives.
+    output_file.write_bytes(full_bytes)
+    second_read = instance._read_file_incrementally()
+    assert second_read == full_text
