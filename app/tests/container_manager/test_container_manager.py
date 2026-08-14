@@ -20,7 +20,7 @@ import pytest
 from docker.errors import NotFound
 
 from app.container_manager.container_manager import container_manager
-from app.tests.utils.docker import Container, make_fake_container
+from app.tests.utils.docker import FAKE_ID, Container, make_fake_container
 
 DEFAULT_MOUNT_SRC = "/test/path/chip-cert-tool/backend"
 DEFAULT_MOUNT_WORKING_DIR = "/app"
@@ -83,7 +83,7 @@ def test_container_is_not_running() -> None:
 
 
 def test_destroy_kills_by_default() -> None:
-    container = make_fake_container({"State": {"Status": "running"}})
+    container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
     with mock.patch.object(container, "kill") as kill, mock.patch.object(
         container, "stop"
     ) as stop, mock.patch.object(container, "remove") as remove, mock.patch(
@@ -97,7 +97,7 @@ def test_destroy_kills_by_default() -> None:
 
 
 def test_destroy_graceful_stops_instead_of_kill() -> None:
-    container = make_fake_container({"State": {"Status": "running"}})
+    container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
     with mock.patch.object(container, "kill") as kill, mock.patch.object(
         container, "stop"
     ) as stop, mock.patch.object(container, "remove") as remove, mock.patch(
@@ -113,7 +113,7 @@ def test_destroy_graceful_stops_instead_of_kill() -> None:
 def test_destroy_graceful_falls_back_to_kill_on_stop_failure() -> None:
     from docker.errors import APIError
 
-    container = make_fake_container({"State": {"Status": "running"}})
+    container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
     with mock.patch.object(
         container, "stop", side_effect=APIError("stop failed")
     ), mock.patch.object(container, "kill") as kill, mock.patch.object(
@@ -128,10 +128,12 @@ def test_destroy_graceful_falls_back_to_kill_on_stop_failure() -> None:
 
 
 def test_remove_containers_for_image_removes_stale_containers() -> None:
-    stale_container = make_fake_container({"State": {"Status": "running"}})
-    with mock.patch.object(
-        stale_container, "stop"
-    ) as stop, mock.patch.object(stale_container, "remove") as remove, mock.patch(
+    stale_container = make_fake_container(
+        {"Id": FAKE_ID, "State": {"Status": "running"}}
+    )
+    with mock.patch.object(stale_container, "stop") as stop, mock.patch.object(
+        stale_container, "remove"
+    ) as remove, mock.patch(
         "docker.models.containers.ContainerCollection.list",
         return_value=[stale_container],
     ), mock.patch(
