@@ -105,8 +105,18 @@ BR_CHANNEL_HEX=$(printf '%02x' $BR_CHANNEL)
 BR_PANID="5b${BR_VARIANT}" # The 2-byte Personal Area Network ID is a unique Thread identifier
 BR_EXTPANID="5b${BR_VARIANT}dead5b${BR_VARIANT}beef" # The 8-byte Extended Personal Area Network ID is a unique Thread identifier
 BR_NETWORKNAME="5b${BR_VARIANT}" # The human-readable Network Name is a unique Thread identifier
-BR_IPV6PREFIX="fd11:${BR_VARIANT}::/64" # The Mesh-Local prefix used to reach interfaces in the same network
+BR_IPV6PREFIX="fd11:${BR_VARIANT}::/64" # The off-mesh-routable (OMR) prefix advertised for this network
 BR_NETWORKKEY="00112233445566778899aabbccddeeff" # The Thread authentication key value
+
+# 'dataset init new' randomizes the Thread mesh-local prefix (ML-Prefix) on every
+# call, since it's never set afterwards. That leaves each freshly (re)started OTBR
+# container on a different mesh-local prefix, which changes the DUT's expected
+# operational IPv6 address out from under it. If a client reuses a previous
+# commissioning instead of recommissioning, operational discovery of the DUT then
+# times out, since the DUT is still using its old (no longer valid) address.
+# Derive a fixed prefix from BR_EXTPANID (already a fixed, per-network identifier)
+# so it stays stable across otbr_start.sh runs for the same BR_VARIANT.
+BR_MESHLOCALPREFIX="fd${BR_EXTPANID:2:2}:${BR_EXTPANID:4:4}:${BR_EXTPANID:8:4}:${BR_EXTPANID:12:4}::"
 
 BR_PARAMS=(
 "dataset init new"
@@ -115,6 +125,7 @@ BR_PARAMS=(
 "dataset extpanid ${BR_EXTPANID}"
 "dataset networkname ${BR_NETWORKNAME}"
 "dataset networkkey ${BR_NETWORKKEY}"
+"dataset meshlocalprefix ${BR_MESHLOCALPREFIX}"
 "dataset commit active"
 "prefix add ${BR_IPV6PREFIX} pasor"
 "ifconfig up"

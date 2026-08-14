@@ -215,13 +215,48 @@ class ThreadBorderRouter(metaclass=Singleton):
     def active_dataset(self) -> str:
         return self._send_command("dataset active -x").decode()
 
+    @staticmethod
+    def __mesh_local_prefix_from_extpanid(extpanid: str) -> str:
+        """Derive a stable Thread mesh-local prefix (ML-Prefix) from extpanid.
+
+        `dataset init new` randomizes the mesh-local prefix on every call, since
+        it's never explicitly set afterwards. That's fine for a single run, but
+        each new OTBR container (e.g. one created for a later test run) gets a
+        *different* mesh-local prefix, changing the DUT's expected operational
+        IPv6 address out from under it. If a client chooses to reuse a previous
+        commissioning rather than recommissioning, subsequent operational
+        discovery of the DUT then times out, because the DUT is still using its
+        old (no longer valid) address.
+
+        Deriving the prefix deterministically from extpanid (which is already
+        expected to be a fixed, per-network identifier) keeps the mesh-local
+        prefix stable across OTBR container restarts for the same network
+        config, without requiring a separate config field.
+        """
+        normalized = extpanid.strip().lower()
+        is_hex = all(c in "0123456789abcdef" for c in normalized)
+        if len(normalized) != 16 or not is_hex:
+            raise ThreadBorderRouterError(
+                f"Cannot derive mesh-local prefix: extpanid '{extpanid}' is not "
+                "16 hex characters (8 bytes)."
+            )
+        # ULA prefixes must start with 0xfd; use that fixed byte plus 7 bytes
+        # derived from extpanid for the remaining 56 bits of the /64 prefix.
+        raw = "fd" + normalized[2:]
+        groups = [raw[i : i + 4] for i in range(0, 16, 4)]
+        return ":".join(groups) + "::"
+
     async def form_thread_topology(self) -> None:
+        mesh_local_prefix = self.__mesh_local_prefix_from_extpanid(
+            self.__dataset.extpanid
+        )
         self._send_command("dataset init new")
         self._send_command(f"dataset channel {self.__dataset.channel}")
         self._send_command(f"dataset panid {self.__dataset.panid}")
         self._send_command(f"dataset extpanid {self.__dataset.extpanid}")
         self._send_command(f"dataset networkkey {self.__dataset.networkkey}")
         self._send_command(f"dataset networkname {self.__dataset.networkname}")
+        self._send_command(f"dataset meshlocalprefix {mesh_local_prefix}")
         self._send_command("dataset commit active")
         self._send_command("ifconfig up")
         self._send_command("thread start")
