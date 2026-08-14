@@ -36,6 +36,18 @@ from app.test_engine.test_ui_observer import (
 )
 
 
+def _log_record_payloads(broadcast_mock: mock.AsyncMock) -> list[list[TestRunLogEntry]]:
+    """Extract only the TEST_LOG_RECORDS payloads from a mocked broadcast()'s
+    calls, ignoring the TEST_UPDATE state-change message that notify() also
+    fires on the first call (when state differs from the observer's
+    initial/None last-seen state)."""
+    return [
+        call.args[0][MessageKeysEnum.PAYLOAD]
+        for call in broadcast_mock.call_args_list
+        if call.args[0][MessageKeysEnum.TYPE] == MessageTypeEnum.TEST_LOG_RECORDS
+    ]
+
+
 @pytest.mark.asyncio
 async def test_test_ui_observer_test_run_log(db: Session) -> None:
     ui_observer = TestUIObserver()
@@ -54,17 +66,14 @@ async def test_test_ui_observer_test_run_log(db: Session) -> None:
         run.log = log_entries
         run.notify()
         await ui_observer.complete_tasks()
-        assert broadcast_mock.call_count == 1
-        assert (
-            broadcast_mock.call_args_list[0][0][0][MessageKeysEnum.PAYLOAD]
-            == log_entries
-        )
+        assert _log_record_payloads(broadcast_mock) == [log_entries]
         broadcast_mock.reset_mock()
 
         # Assert send_log is not called when no new logs are added
         run.notify()
         await ui_observer.complete_tasks()
-        broadcast_mock.assert_not_called()
+        assert _log_record_payloads(broadcast_mock) == []
+        broadcast_mock.reset_mock()
 
         # Assert only new log events are in call
         additional_log_entries = [
@@ -75,11 +84,7 @@ async def test_test_ui_observer_test_run_log(db: Session) -> None:
         assert len(run.log) == 4
         run.notify()
         await ui_observer.complete_tasks()
-        assert broadcast_mock.call_count == 1
-        assert (
-            broadcast_mock.call_args_list[0][0][0][MessageKeysEnum.PAYLOAD]
-            == additional_log_entries
-        )
+        assert _log_record_payloads(broadcast_mock) == [additional_log_entries]
 
 
 @pytest.mark.asyncio
@@ -106,11 +111,10 @@ async def test_test_ui_observer_test_run_log_chunks_large_batches(db: Session) -
         run.notify()
         await ui_observer.complete_tasks()
 
-        assert broadcast_mock.call_count == 2
-        first_chunk = broadcast_mock.call_args_list[0][0][0][MessageKeysEnum.PAYLOAD]
-        second_chunk = broadcast_mock.call_args_list[1][0][0][MessageKeysEnum.PAYLOAD]
-        assert first_chunk == log_entries[:LOG_RECORDS_BROADCAST_CHUNK_SIZE]
-        assert second_chunk == log_entries[LOG_RECORDS_BROADCAST_CHUNK_SIZE:]
+        chunks = _log_record_payloads(broadcast_mock)
+        assert len(chunks) == 2
+        assert chunks[0] == log_entries[:LOG_RECORDS_BROADCAST_CHUNK_SIZE]
+        assert chunks[1] == log_entries[LOG_RECORDS_BROADCAST_CHUNK_SIZE:]
 
 
 @pytest.mark.asyncio
@@ -126,6 +130,10 @@ async def test_test_ui_observer_test_run_log_chunks_delivered_in_order(
     send_order: list[int] = []
 
     async def _recording_broadcast(message: dict) -> None:
+        # Ignore the TEST_UPDATE state-change message notify() also fires -
+        # only TEST_LOG_RECORDS chunks are relevant to ordering here.
+        if message[MessageKeysEnum.TYPE] != MessageTypeEnum.TEST_LOG_RECORDS:
+            return
         # Simulate send_text() genuinely yielding control (e.g. under
         # backpressure) - if chunks were sent via independent tasks, this
         # would let a later chunk's task finish first.
