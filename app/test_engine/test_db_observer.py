@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 from datetime import datetime
-from queue import Empty, Queue
 from typing import Callable, Generator, Union
 
 from loguru import logger
@@ -30,6 +30,10 @@ from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite
 from app.test_engine.test_observer import Observer
 
+ExecutionObj = Union[
+    TestCaseExecution, TestStepExecution, TestSuiteExecution, TestRunExecution
+]
+
 
 class TestDBObserver(Observer):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
@@ -38,15 +42,19 @@ class TestDBObserver(Observer):
         self, db_generator: Callable[[], Generator[Session, None, None]] = get_db
     ) -> None:
         self.__db_generator = db_generator
-        self.data_queue: Queue = Queue()
+        # Keyed by id(execution_obj) instead of a plain queue: dispatch() can
+        # re-notify the SAME object many times (e.g. once per 0.5s log-flush
+        # tick for the whole run) before apply_updates() ever drains this -
+        # a dict collapses those into a single pending save per distinct
+        # object instead of committing the same (increasingly large) object
+        # redundantly once per notification.
+        self.__pending: dict[int, ExecutionObj] = {}
 
-    def apply_updates(self) -> None:
-        while not self.data_queue.empty():
-            try:
-                data = self.data_queue.get(timeout=0.1)
-                self.__save(data)
-            except Empty:
-                pass
+    async def apply_updates(self) -> None:
+        pending = self.__pending
+        self.__pending = {}
+        for data in pending.values():
+            await self.__save(data)
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -62,6 +70,9 @@ class TestDBObserver(Observer):
             elif isinstance(observable, TestStep):
                 self.__onTestStepUpdate(observable)
 
+    def __enqueue(self, execution_obj: ExecutionObj) -> None:
+        self.__pending[id(execution_obj)] = execution_obj
+
     def __onTestRunUpdate(self, observable: "TestRun") -> None:
         logger.debug("Test Run Observer received", observable)
         test_run_execution = observable.test_run_execution
@@ -74,7 +85,7 @@ class TestDBObserver(Observer):
         if self.isCompleted(observable.state):
             test_run_execution.completed_at = datetime.now()
 
-        self.data_queue.put(test_run_execution)
+        self.__enqueue(test_run_execution)
 
     def __onTestSuiteUpdate(self, observable: "TestSuite") -> None:
         logger.debug("Test Suite Observer received", observable)
@@ -89,7 +100,7 @@ class TestDBObserver(Observer):
             if self.isCompleted(observable.state):
                 observable.test_suite_execution.completed_at = datetime.now()
 
-            self.data_queue.put(observable.test_suite_execution)
+            self.__enqueue(observable.test_suite_execution)
 
     def __onTestCaseUpdate(self, observable: "TestCase") -> None:
         logger.debug("Test Case Observer received", observable)
@@ -104,7 +115,7 @@ class TestDBObserver(Observer):
             if self.isCompleted(observable.state):
                 observable.test_case_execution.completed_at = datetime.now()
 
-            self.data_queue.put(observable.test_case_execution)
+            self.__enqueue(observable.test_case_execution)
 
     def __onTestStepUpdate(self, observable: "TestStep") -> None:
         logger.debug("Test Step Observer received", observable)
@@ -121,14 +132,9 @@ class TestDBObserver(Observer):
             if self.isCompleted(observable.state):
                 observable.test_step_execution.completed_at = datetime.now()
 
-            self.data_queue.put(observable.test_step_execution)
+            self.__enqueue(observable.test_step_execution)
 
-    def __save(
-        self,
-        execution_obj: Union[
-            TestCaseExecution, TestStepExecution, TestSuiteExecution, TestRunExecution
-        ],
-    ) -> None:
+    async def __save(self, execution_obj: ExecutionObj) -> None:
         # We get the session from the model it self to avoid overriding values when
         # using a different session
         insp = inspect(execution_obj)
@@ -139,7 +145,11 @@ class TestDBObserver(Observer):
             session = next(self.__db_generator())
             session.add(execution_obj)
         session.expire_on_commit = False
-        session.commit()
+        # session.commit() is a blocking, synchronous SQLAlchemy call. It can
+        # be a large write (e.g. a run's full log), so keep it off the event
+        # loop rather than stalling every other coroutine (websocket pings,
+        # other requests) for however long it takes.
+        await asyncio.to_thread(session.commit)
         logger.debug(
             f"Saved {execution_obj.__class__} {execution_obj.id}"
             f" with state {execution_obj.state}"

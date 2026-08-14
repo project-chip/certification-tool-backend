@@ -191,7 +191,13 @@ def main() -> None:
         # TODO: find a better solution.
         # This is a temporary workaround since Python Tests
         # are generating a big amount of log
-        with open(EXECUTION_LOG_OUTPUT, "w") as f:
+        # buffering=1 (line buffering) ensures each line reaches disk as it's
+        # printed, instead of sitting in a block buffer until the file closes
+        # at the very end of the test run. encoding is explicit since every
+        # downstream reader of this file assumes UTF-8 - the process locale
+        # default (which varies by environment, e.g. ASCII in a minimal
+        # container) is not a safe assumption to share with them implicitly.
+        with open(EXECUTION_LOG_OUTPUT, "w", buffering=1, encoding="utf-8") as f:
             with redirect_stdout(f):
                 # Check if 'commission' was passed
                 if th_args[TH_COMMISSION_ARGUMENT]:
