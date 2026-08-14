@@ -206,6 +206,19 @@ def docker_kill_command(container_name: str) -> str:
     return f"docker kill {escape_shell_arg(container_name)}"
 
 
+def docker_stop_command(container_name: str) -> str:
+    """
+    Generate docker stop command.
+
+    Args:
+        container_name: Name or ID of the container
+
+    Returns:
+        String representation of equivalent shell command
+    """
+    return f"docker stop {escape_shell_arg(container_name)}"
+
+
 def docker_rm_command(container_name: str, force: bool = False) -> str:
     """
     Generate docker rm command.
