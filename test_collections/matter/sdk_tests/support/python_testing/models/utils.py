@@ -234,7 +234,7 @@ def log_test_output_file(logger: loguru.Logger) -> None:
         file_output_path = sdk_tests_path / TEST_OUTPUT_FILE_PATH
 
         if file_output_path.exists():
-            with open(file_output_path, "r") as f:
+            with open(file_output_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 if content.strip():  # Only log if there's actual content
                     logger.log(PYTHON_TEST_LEVEL, content)

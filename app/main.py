@@ -20,6 +20,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.api_v1.api import api_router
 from app.core.config import settings
 from app.test_engine.test_script_manager import test_script_manager
+from app.uvicorn_worker import WS_PING_TIMEOUT_S
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
@@ -51,4 +52,9 @@ async def startup_event() -> None:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80, log_config=None)
+    # ws_ping_timeout raised from uvicorn's 20s default: a large log flush can
+    # keep the event loop busy long enough to miss the keepalive pong and get
+    # the websocket dropped mid-broadcast (see app.uvicorn_worker).
+    uvicorn.run(
+        app, host="0.0.0.0", port=80, log_config=None, ws_ping_timeout=WS_PING_TIMEOUT_S
+    )

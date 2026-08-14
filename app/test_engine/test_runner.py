@@ -181,7 +181,7 @@ class TestRunner(object, metaclass=Singleton):
             self.test_run.unsubscribe([ui_observer, db_observer])
 
             # Flush all pending DB updates
-            db_observer.apply_updates()
+            await db_observer.apply_updates()
 
             # Ensure all state updates are sent to the frontend
             await ui_observer.complete_tasks()

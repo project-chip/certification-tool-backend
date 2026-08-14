@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import asyncio
+from unittest import mock
 
 import pytest
 from sqlalchemy.orm import Session
@@ -281,3 +282,28 @@ def test_test_db_observer_update(db: Session) -> None:
     db.close()
     test_db_observer.dispatch(test_step)
     assert TestStateEnum.EXECUTING == test_step.test_step_execution.state
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_dedups_repeated_run_updates(db: Session) -> None:
+    """Repeated dispatch() calls for the same TestRunExecution before
+    apply_updates() runs must collapse into a single commit, instead of one
+    redundant commit per dispatch (regression test for issue #1072's
+    DB-write storm, where ~1,400 redundant commits of the same growing log
+    blocked the event loop for the whole duration of a large test run)."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+
+    with mock.patch.object(Session, "commit") as mock_commit:
+        # Simulate several rapid dispatch() calls for the same object, as
+        # happens once per ~0.5s log-flush tick during a run.
+        for _ in range(5):
+            test_db_observer.dispatch(test_run)
+
+        await test_db_observer.apply_updates()
+
+    assert mock_commit.call_count == 1

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import codecs
 import re
 from asyncio import sleep
 from inspect import iscoroutinefunction
@@ -68,6 +69,9 @@ USER_PROMPT_TIMEOUT = 120
 LOG_BATCH_SIZE = 50  # Number of log lines to send per batch
 LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
 
+# Marker prefix printed by the SDK before each test step's output
+STEP_MARKER_PREFIX = "***** Test Step "
+
 # Custom type variable used to annotate the factory method in PythonTestCase.
 T = TypeVar("T", bound="PythonTestCase")
 
@@ -97,11 +101,20 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self.test_stop_called = False
         self.test_socket = None
         self.file_output_path: Optional[Path] = None
-        self.current_python_step_number = 0
+        self.current_python_step_name: Optional[str] = None
         self._cached_file_content: str = ""
         self._last_file_size: int = 0
         self._last_logged_position: int = 0  # Track last logged position
         self._remaining_content_logged: bool = False
+        # Incremental UTF-8 decoder for _read_file_incrementally(). A plain
+        # `open(..., encoding="utf-8")` decodes each call's bytes in
+        # isolation - if a multi-byte character's bytes are split across two
+        # incremental reads (very possible while the file is still growing),
+        # errors="replace" doesn't defer it, it corrupts it into U+FFFD
+        # immediately with no way to recover. An incremental decoder holds
+        # back any incomplete trailing bytes and completes the character
+        # once the rest arrives on the next call.
+        self._utf8_decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
 
     # Move to the next step if the test case has additional steps apart from the 2
     # deafult ones
@@ -138,7 +151,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             self.current_test_step.mark_as_not_applicable(skiped_msg)
 
     def step_start(self, name: str) -> None:
-        self.current_python_step_number += 1
+        self.current_python_step_name = name
         self.step_over()
 
     async def step_success(
@@ -171,13 +184,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
             logger.debug(f"Test output file does not exist: {self.file_output_path}")
             return
 
+        if not self.current_python_step_name:
+            return
+
         try:
             # Read file content with incremental caching for performance
             content = self._read_file_incrementally()
 
             # Extract logs for the current step (returns tuple of logs and end position)
             step_logs, end_pos = self._extract_logs_for_step(
-                content, self.current_python_step_number
+                content, self.current_python_step_name
             )
 
             if step_logs:
@@ -204,6 +220,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def _read_file_incrementally(self) -> str:
         """Read file incrementally, caching content to avoid re-reading entire file.
 
+        Reads in binary mode and feeds bytes through a persistent
+        incremental UTF-8 decoder, rather than independently decoding each
+        call's bytes in text mode. Binary-mode seeks are always byte-safe
+        (unlike seeking a text-mode handle to an arbitrary byte offset), and
+        the incremental decoder correctly withholds any incomplete trailing
+        multi-byte character across calls instead of corrupting it.
+
         Returns:
             Full content of the file up to current position
         """
@@ -220,14 +243,18 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             # File has grown, read only new content
             if current_size > self._last_file_size and self._cached_file_content:
-                with open(self.file_output_path, "r", encoding="utf-8") as f:
+                with open(self.file_output_path, "rb") as f:
                     f.seek(self._last_file_size)
-                    new_content = f.read()
-                    self._cached_file_content += new_content
+                    new_bytes = f.read()
+                self._cached_file_content += self._utf8_decoder.decode(new_bytes)
             else:
-                # First read or file was truncated
-                with open(self.file_output_path, "r", encoding="utf-8") as f:
-                    self._cached_file_content = f.read()
+                # First read or file was truncated - reset decoder state too,
+                # so any bytes withheld from a previous (now-stale) read
+                # don't get prepended to unrelated new content.
+                self._utf8_decoder.reset()
+                with open(self.file_output_path, "rb") as f:
+                    new_bytes = f.read()
+                self._cached_file_content = self._utf8_decoder.decode(new_bytes)
 
             self._last_file_size = current_size
             return self._cached_file_content
@@ -236,29 +263,35 @@ class PythonTestCase(TestCase, UserPromptSupport):
             return self._cached_file_content
 
     def _extract_logs_for_step(
-        self, content: str, step_number: int
+        self, content: str, step_name: str
     ) -> tuple[list[str], int]:
         """Extract logs for a specific test step from the full log content.
 
         Args:
             content: Full content of the test output file
-            step_number: The step number to extract logs for
+            step_name: The step name (as passed to step_start) to extract logs for
 
         Returns:
             Tuple of:
             - list of log lines for the specified step.
             - End position of step content
         """
-        current_step_marker = f"***** Test Step {step_number} :"
-        next_step_marker = f"***** Test Step {step_number + 1} :"
+        current_step_marker = f"{STEP_MARKER_PREFIX}{step_name}"
 
-        # Find the start position of current step
-        start_idx = content.find(current_step_marker)
+        # Search starting at the last logged position rather than from the
+        # beginning of the file, so repeated/similar step labels across loop
+        # iterations resolve to the correct occurrence and the whole
+        # (growing) file isn't rescanned on every step.
+        start_idx = content.find(current_step_marker, self._last_logged_position)
         if start_idx == -1:
-            return ([], 0)
+            # No match yet (e.g. the SDK hasn't written this step's marker to
+            # disk yet) — don't regress the cursor, just report nothing new.
+            return ([], self._last_logged_position)
 
-        # Find the start position of next step
-        next_idx = content.find(next_step_marker, start_idx)
+        # Find the start position of the next step's marker
+        next_idx = content.find(
+            STEP_MARKER_PREFIX, start_idx + len(current_step_marker)
+        )
 
         # Extract the section between current and next step
         if next_idx != -1:
@@ -478,7 +511,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
             await self._log_remaining_content()
         else:
             # Use batch logging when real-time logging is disabled
-            self.display_batch_logs()
+            await self.display_batch_logs()
 
     async def _log_remaining_content(self) -> None:
         """Log any content from the test output file that wasn't logged yet."""
@@ -498,7 +531,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
             return
 
         try:
-            # Read the full file content
+            # Reuse the incremental reader (rather than a second, independent
+            # full read) to pick up anything appended since the last call and
+            # fold it into the cache. This used to deliberately bypass the
+            # cache "so this catch-all reliably recovers everything
+            # regardless of whether the incremental/per-step read path hit
+            # an error earlier" - that hedge existed because
+            # _read_file_incrementally() used to be able to silently corrupt
+            # content at chunk boundaries. Now that it decodes incrementally
+            # and byte-safely, there's no need to duplicate the whole file
+            # in memory a second time here.
             content = self._read_file_incrementally()
 
             # Check if there's content after the last logged position
@@ -507,8 +549,16 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
                 if remaining_content.strip():
                     logger.info("---- Remaining logs not captured by steps ----")
-                    # Just log all remaining content directly
-                    logger.log(PYTHON_TEST_LEVEL, remaining_content)
+                    # Log in batches (like _display_step_logs) instead of one
+                    # unbroken call, so a large backlog doesn't monopolize the
+                    # event loop for an extended stretch in one go.
+                    remaining_lines = remaining_content.split("\n")
+                    for i in range(0, len(remaining_lines), LOG_BATCH_SIZE):
+                        batch = remaining_lines[i : i + LOG_BATCH_SIZE]
+                        for line in batch:
+                            logger.log(PYTHON_TEST_LEVEL, line)
+                        if i + LOG_BATCH_SIZE < len(remaining_lines):
+                            await sleep(LOG_BATCH_DELAY)
                     logger.info("---- End of remaining logs ----")
 
             # Mark as logged to prevent duplicate calls
@@ -521,7 +571,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 f"Unexpected error while logging remaining content: {e}", exc_info=True
             )
 
-    def display_batch_logs(self) -> None:
+    async def display_batch_logs(self) -> None:
         """Batch logging method for when real-time logging is disabled.
 
         This method logs all test output at once after test execution completes,
@@ -542,9 +592,24 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
         try:
             logger.info("---- Start of Python test logs ----")
-            with open(self.file_output_path, "r", encoding="utf-8") as f:
+            with open(
+                self.file_output_path, "r", encoding="utf-8", errors="replace"
+            ) as f:
+                # Iterate the file object directly instead of readlines():
+                # file iteration is already lazily buffered by Python, so
+                # this never materializes the whole (potentially 100MB+)
+                # file as one in-memory list before logging/pacing even
+                # starts.
+                batch_count = 0
                 for line in f:
                     logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
+                    batch_count += 1
+                    if batch_count >= LOG_BATCH_SIZE:
+                        batch_count = 0
+                        # Yield to the event loop between batches, so a
+                        # large file doesn't monopolize it for an extended
+                        # stretch in one go.
+                        await sleep(LOG_BATCH_DELAY)
             logger.info("---- End of Python test logs ----")
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")
@@ -660,7 +725,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 await self._log_remaining_content()
             else:
                 # Use batch logging when real-time logging is disabled
-                self.display_batch_logs()
+                await self.display_batch_logs()
 
             self.current_test_step.mark_as_completed()
         finally:

@@ -24,7 +24,7 @@ from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from loguru import logger
 from starlette.websockets import WebSocketState
-from websockets.exceptions import ConnectionClosedOK
+from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
 from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
 from app.constants.websockets_constants import (
@@ -129,7 +129,8 @@ class SocketConnectionManager(object, metaclass=Singleton):
         # Convert dictionaries and lists to string using json
         if isinstance(message, dict) or isinstance(message, list):
             message = json.dumps(message, default=pydantic.json.pydantic_encoder)
-        for connection in self.active_connections:
+        # Iterate over a copy: disconnect() below mutates active_connections.
+        for connection in list(self.active_connections):
             if connection.type == WebSocketTypeEnum.MAIN:
                 websocket = connection.websocket
                 try:
@@ -137,9 +138,24 @@ class SocketConnectionManager(object, metaclass=Singleton):
                 # Starlette raises websockets.exceptions.ConnectionClosedOK
                 # when trying to send to a closed websocket.
                 # https://github.com/encode/starlette/issues/759
-                except ConnectionClosedOK:
+                # ConnectionClosedError is raised on an abrupt drop (e.g. a
+                # missed websocket keepalive pong) rather than a graceful
+                # close - treat it the same way so a dead connection doesn't
+                # keep being retried for the rest of the process's life.
+                except (ConnectionClosedOK, ConnectionClosedError):
                     if websocket.application_state != WebSocketState.DISCONNECTED:
-                        await websocket.close()
+                        try:
+                            await websocket.close()
+                        except Exception as close_error:
+                            # The transport can already be gone by this point
+                            # (that's the whole reason we're here) - closing
+                            # an already-dead socket failing is expected and
+                            # uninteresting, but must not prevent the
+                            # cleanup below from running.
+                            logger.debug(
+                                f"Error closing already-dead websocket: {close_error}"
+                            )
+                    self.disconnect(connection)
                     logger.warning(
                         f'Failed to send message: "{message}"'
                         f' to websocket: "{websocket}", connection closed."'
