@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from enum import Enum
-from typing import Type, TypeVar
+from typing import Optional, Type, TypeVar
 
 from app.constants.shared_constants import DutPairingModeEnum
 from app.schemas.test_environment_config import ThreadAutoConfig
@@ -30,6 +30,7 @@ from ...sdk_container import SDKContainer
 from ...utils import PromptOption, prompt_for_commissioning_mode
 from .utils import (
     DUTCommissioningError,
+    capture_admin_storage_file,
     commission_device,
     should_perform_new_commissioning,
 )
@@ -57,6 +58,7 @@ class PythonTestSuite(TestSuite):
     suite_name: str
     sdk_container: SDKContainer = SDKContainer(logger)
     border_router: ThreadBorderRouter = ThreadBorderRouter()
+    matter_config: Optional[TestEnvironmentConfigMatter] = None
 
     @classmethod
     def class_factory(
@@ -117,6 +119,18 @@ class PythonTestSuite(TestSuite):
     async def cleanup(self) -> None:
         logger.info("Suite Cleanup")
 
+        if self.matter_config is not None and self.sdk_container.is_running():
+            try:
+                logger.info(
+                    "Capturing latest admin_storage.json snapshot from container"
+                )
+                capture_admin_storage_file(self.matter_config, logger)
+            except Exception as e:
+                # Deliberately broad Exception.
+                # The ideia is to never block container/border-router teardown below,
+                # so don't narrow this to specific exception types.
+                logger.warning(f"Could not capture admin_storage.json snapshot: {e}")
+
         logger.info("Stopping SDK container")
         self.sdk_container.destroy()
 
@@ -127,6 +141,7 @@ class PythonTestSuite(TestSuite):
 class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
     async def setup(self) -> None:
         await super().setup()
+        assert self.matter_config is not None
 
         # If in BLE-Thread, NFC-Thread, or THREAD_MESHCOP mode and a Thread Auto-Config
         # was provided by the user, start a new OTBR container app with the according

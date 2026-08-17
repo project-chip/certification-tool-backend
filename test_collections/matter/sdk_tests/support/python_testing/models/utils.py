@@ -207,6 +207,17 @@ def __copy_admin_storage_file(
     )
 
 
+def capture_admin_storage_file(
+    config: TestEnvironmentConfigMatter,
+    logger: loguru.Logger,
+) -> None:
+    """Re-capture admin_storage.json from the still-running container to the host
+    snapshot, so the snapshot reflects the message counters as they stood at the end
+    of this run rather than only as they stood right after the last commissioning.
+    """
+    __copy_admin_storage_file(config, logger)
+
+
 def log_test_output_file(logger: loguru.Logger) -> None:
     """Log the entire content of test_output.txt file.
 
@@ -262,7 +273,10 @@ async def commission_device(
     logger.info("---- End of commissioning test output ----")
 
     # Copy admin_storage.json file from container, in case the user wants to
-    # reuse this information in the next execution
+    # reuse this information in the next execution. This duplicates the capture
+    # PythonTestSuite.cleanup() does unconditionally at the end of the suite run,
+    # but is kept intentionally: if the container is torn down abnormally before
+    # cleanup() runs, this is the only snapshot that survives.
     __copy_admin_storage_file(config, logger)
 
 
