@@ -18,7 +18,7 @@ Utility functions to generate shell command equivalents for Docker API operation
 Useful for debugging and understanding what Docker operations are being performed.
 """
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 # Log message constants
 SHELL_CMD_LOG_PREFIX = "Docker API call equivalent shell command:\n"
@@ -42,7 +42,7 @@ SHELL_SPECIAL_CHARS = [
 ]
 
 
-def escape_shell_arg(arg: str) -> str:
+def escape_shell_arg(arg: Optional[str]) -> str:
     """
     Escape shell argument if it contains spaces or special characters.
 
@@ -50,10 +50,17 @@ def escape_shell_arg(arg: str) -> str:
     are escaped using the pattern: ' becomes '\''
     (close quote, escaped quote, open quote).
 
+    Args:
+        arg: The argument to escape. Docker container/image names can be None
+            (e.g. a Container whose attrs have no "Name" key), so this is
+            tolerated and rendered as an empty string rather than raising.
+
     Returns:
         The argument wrapped in single quotes if it contains special characters,
         otherwise returns the argument unchanged.
     """
+    if arg is None:
+        return ""
     if any(c in arg for c in SHELL_SPECIAL_CHARS):
         # Escape any single quotes: ' becomes '\''
         escaped_arg = arg.replace("'", "'\\''")
@@ -193,7 +200,7 @@ def docker_exec_command(
     return " ".join(cmd_parts)
 
 
-def docker_kill_command(container_name: str) -> str:
+def docker_kill_command(container_name: Optional[str]) -> str:
     """
     Generate docker kill command.
 
@@ -206,7 +213,7 @@ def docker_kill_command(container_name: str) -> str:
     return f"docker kill {escape_shell_arg(container_name)}"
 
 
-def docker_stop_command(container_name: str) -> str:
+def docker_stop_command(container_name: Optional[str]) -> str:
     """
     Generate docker stop command.
 
@@ -219,7 +226,7 @@ def docker_stop_command(container_name: str) -> str:
     return f"docker stop {escape_shell_arg(container_name)}"
 
 
-def docker_rm_command(container_name: str, force: bool = False) -> str:
+def docker_rm_command(container_name: Optional[str], force: bool = False) -> str:
     """
     Generate docker rm command.
 
