@@ -478,6 +478,37 @@ async def test_cleanup_captures_admin_storage_before_destroy() -> None:
 
 
 @pytest.mark.asyncio
+async def test_cleanup_skips_capture_when_container_not_running() -> None:
+    """If the container already died mid-suite, cleanup should skip the capture
+    attempt (nothing to copy from) rather than attempting it against a dead
+    container, but should still tear down the container and border router."""
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    suite_instance.matter_config = mock.Mock()
+
+    with mock.patch.object(
+        target=suite_instance.sdk_container, attribute="is_running", return_value=False
+    ), mock.patch.object(
+        target=suite_instance.sdk_container, attribute="destroy"
+    ) as mock_destroy, mock.patch.object(
+        target=suite_instance.border_router, attribute="destroy_device"
+    ) as mock_destroy_device, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_admin_storage_file"
+    ) as mock_capture:
+        await suite_instance.cleanup()
+
+    mock_capture.assert_not_called()
+    mock_destroy.assert_called_once()
+    mock_destroy_device.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_cleanup_skips_capture_when_matter_config_not_set() -> None:
     """If setup failed before matter_config was assigned, cleanup should skip the
     capture attempt (no config to resolve a storage path from) but still tear down

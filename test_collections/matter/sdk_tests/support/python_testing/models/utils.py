@@ -285,7 +285,10 @@ async def commission_device(
     logger.info("---- End of commissioning test output ----")
 
     # Copy admin_storage.json file from container, in case the user wants to
-    # reuse this information in the next execution
+    # reuse this information in the next execution. This duplicates the capture
+    # PythonTestSuite.cleanup() does unconditionally at the end of the suite run,
+    # but is kept intentionally: if the container is torn down abnormally before
+    # cleanup() runs, this is the only snapshot that survives.
     __copy_admin_storage_file(config, logger)
 
 
