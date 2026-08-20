@@ -14,10 +14,20 @@
 # limitations under the License.
 #
 from http import HTTPStatus
+from unittest.mock import AsyncMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.test_engine import TEST_ENGINE_BUSY_MESSAGE
+from app.test_engine.test_runner import TestRunner
+from app.test_engine.test_script_manager import test_script_manager
+from app.tests.utils.test_run_execution import (
+    create_test_run_execution_with_some_test_cases,
+)
 
 
 def test_read_available_test_collections(client: TestClient) -> None:
@@ -36,3 +46,62 @@ def test_read_available_test_collections(client: TestClient) -> None:
     assert "TestSuiteExpected" in test_suites
     test_suite_expected = test_suites["TestSuiteExpected"]
     assert "metadata" in test_suite_expected
+
+
+def test_rescan_test_collections(client: TestClient) -> None:
+    with patch.object(
+        test_script_manager, "rescan", new_callable=AsyncMock
+    ) as mock_rescan:
+        response = client.post(
+            f"{settings.API_V1_STR}/test_collections/rescan",
+        )
+
+    mock_rescan.assert_awaited_once()
+    assert response.status_code == HTTPStatus.OK
+
+    content = response.json()
+    assert "test_collections" in content
+    assert "tool_unit_tests" in content["test_collections"]
+
+
+@pytest.mark.asyncio
+async def test_rescan_test_collections_busy(
+    async_client: AsyncClient, db: Session
+) -> None:
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+
+    # Load a test run so the Test Engine (singleton) is no longer IDLE.
+    test_runner = TestRunner()
+    test_runner.load_test_run(test_run_execution.id)
+    try:
+        response = await async_client.post(
+            f"{settings.API_V1_STR}/test_collections/rescan",
+        )
+
+        assert response.status_code == HTTPStatus.CONFLICT
+        content = response.json()
+        assert content["detail"] == TEST_ENGINE_BUSY_MESSAGE
+    finally:
+        test_runner.abort_testing()
+
+
+def test_rescan_test_collections_failure_keeps_previous_collections(
+    client: TestClient,
+) -> None:
+    previous_collections = dict(test_script_manager.test_collections)
+
+    with patch.object(
+        test_script_manager,
+        "rescan",
+        new_callable=AsyncMock,
+        side_effect=RuntimeError("boom"),
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/test_collections/rescan",
+        )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    content = response.json()
+    assert "Failed to rescan test collections" in content["detail"]
+    # Previously loaded test collections remain available.
+    assert test_script_manager.test_collections == previous_collections

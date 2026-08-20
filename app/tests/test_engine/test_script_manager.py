@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from typing import Generator
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from app.test_engine.test_script_manager import (
@@ -21,6 +24,18 @@ from app.test_engine.test_script_manager import (
     TestSuiteNotFound,
     test_script_manager,
 )
+
+
+@pytest.fixture
+def restore_test_collections() -> Generator:
+    """Save and restore test_script_manager.test_collections around a test.
+
+    test_script_manager is a singleton shared across the test session, so
+    tests that call rescan() must not leak mutated state to other tests.
+    """
+    saved_collections = test_script_manager.test_collections
+    yield
+    test_script_manager.test_collections = saved_collections
 
 
 @pytest.mark.asyncio
@@ -108,3 +123,68 @@ async def test_validate_test_selection_invalid_test_case() -> None:
     }
     with pytest.raises(TestCaseNotFound):
         test_script_manager.validate_test_selection(selected_tests)
+
+
+@pytest.mark.asyncio
+async def test_rescan_refreshes_test_collections(
+    restore_test_collections: None,
+) -> None:
+    expected_collections = {"tool_unit_tests": MagicMock()}
+
+    with patch(
+        "test_collections.matter.sdk_tests.support.python_testing."
+        "initialize_python_tests",
+        new_callable=AsyncMock,
+    ) as mock_init, patch.object(
+        test_script_manager,
+        "_discover_test_collections",
+        return_value=expected_collections,
+    ):
+        await test_script_manager.rescan()
+
+    mock_init.assert_awaited_once()
+    assert test_script_manager.test_collections == expected_collections
+    assert test_script_manager._python_tests_initialized is True
+
+
+@pytest.mark.asyncio
+async def test_rescan_keeps_previous_collections_on_failure(
+    restore_test_collections: None,
+) -> None:
+    previous_collections = {"tool_unit_tests": MagicMock()}
+
+    with patch.object(
+        test_script_manager, "test_collections", previous_collections
+    ), patch(
+        "test_collections.matter.sdk_tests.support.python_testing."
+        "initialize_python_tests",
+        new_callable=AsyncMock,
+        side_effect=RuntimeError("side-loaded script is invalid"),
+    ):
+        with pytest.raises(RuntimeError, match="side-loaded script is invalid"):
+            await test_script_manager.rescan()
+
+        # Previously loaded test collections must remain available so the
+        # backend keeps working without needing a restart.
+        assert test_script_manager.test_collections == previous_collections
+
+
+@pytest.mark.asyncio
+async def test_rescan_handles_missing_python_testing_module(
+    restore_test_collections: None,
+) -> None:
+    expected_collections = {"tool_unit_tests": MagicMock()}
+
+    with patch(
+        "test_collections.matter.sdk_tests.support.python_testing."
+        "initialize_python_tests",
+        side_effect=ImportError("python_testing not available"),
+    ), patch.object(
+        test_script_manager,
+        "_discover_test_collections",
+        return_value=expected_collections,
+    ):
+        # Should not raise, non-Python collections are still discovered.
+        await test_script_manager.rescan()
+
+    assert test_script_manager.test_collections == expected_collections

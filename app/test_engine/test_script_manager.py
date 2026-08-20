@@ -112,6 +112,40 @@ class TestScriptManager(object, metaclass=Singleton):
             logging.error(f"Failed to initialize Python tests: {e}")
             raise
 
+    async def rescan(self) -> None:
+        """
+        Re-run test collection discovery/registration in-process.
+
+        This re-generates the Python test JSON files (picking up side-loaded
+        additions/edits to custom test scripts) and re-discovers all test
+        collections, without requiring a backend restart.
+
+        If rescanning fails, the previously loaded test collections are kept
+        so the backend remains usable, and the error is re-raised for the
+        caller to report.
+        """
+        previous_test_collections = self.test_collections
+
+        try:
+            from test_collections.matter.sdk_tests.support.python_testing import (
+                initialize_python_tests,
+            )
+
+            await initialize_python_tests()
+            self.test_collections = self._discover_test_collections()
+            self._python_tests_initialized = True
+
+        except ImportError as e:
+            # Handle case where python_testing module is not available
+            # (e.g., DRY_RUN mode). Non-Python test collections can still be
+            # rediscovered.
+            logging.warning(f"Python testing module not available: {e}")
+            self.test_collections = self._discover_test_collections()
+        except Exception as e:
+            logging.error(f"Failed to rescan test collections: {e}")
+            self.test_collections = previous_test_collections
+            raise
+
     def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:
         if "pytest" in sys.modules:
             # In test environment, discover all collections (same as conftest.py)
