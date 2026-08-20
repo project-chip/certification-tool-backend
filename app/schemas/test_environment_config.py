@@ -48,11 +48,21 @@ class TestEnvironmentConfigError(Exception):
     """
 
 
+class THConfig(BaseModel):
+    """Test-Harness-specific settings, independent of any particular DUT/program."""
+
+    prompt_timeout_seconds: int = 60
+    # None means "not set at project level", deferring to the
+    # ENABLE_REALTIME_PYTHON_TEST_LOGS environment variable.
+    enable_realtime_python_test_logs: Optional[bool] = None
+
+
 class TestEnvironmentConfig(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
 
     # TODO(#490): Need to be refactored to support real PIXIT format
     test_parameters: Optional[dict[str, Any]]
+    th_config: Optional[THConfig] = None
 
     def __init__(self, **kwargs: Any):
         try:

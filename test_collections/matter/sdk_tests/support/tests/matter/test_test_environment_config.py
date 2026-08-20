@@ -28,6 +28,7 @@ from test_collections.matter.sdk_tests.support.tests.utils.utils import (
     default_config_thread_no_ba_port,
     default_config_thread_valid,
     default_matter_config,
+    default_matter_config_with_th_config,
 )
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
@@ -36,6 +37,30 @@ def test_create_config_matter_with_valid_config_success() -> None:
     config_matter = TestEnvironmentConfigMatter(**default_matter_config)
 
     assert config_matter is not None
+
+
+def test_create_config_matter_with_no_th_config_defaults_to_none() -> None:
+    config_matter = TestEnvironmentConfigMatter(**default_matter_config)
+
+    assert config_matter.th_config is None
+
+
+def test_create_config_matter_with_th_config_round_trips() -> None:
+    config_matter = TestEnvironmentConfigMatter(**default_matter_config_with_th_config)
+
+    assert config_matter.th_config is not None
+    assert config_matter.th_config.prompt_timeout_seconds == 120
+    assert config_matter.th_config.enable_realtime_python_test_logs is True
+
+
+def test_create_config_matter_with_invalid_th_config_type_fails() -> None:
+    config = {
+        **default_matter_config,
+        "th_config": {"prompt_timeout_seconds": "not-a-number"},
+    }
+
+    with pytest.raises(TestEnvironmentConfigError):
+        TestEnvironmentConfigMatter(**config)
 
 
 def test_create_config_matter_with_no_config_fails() -> None:

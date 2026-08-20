@@ -21,9 +21,32 @@ import pytest
 
 from app.user_prompt_support import user_prompt_manager
 from app.user_prompt_support.constants import UserResponseStatusEnum
-from app.user_prompt_support.prompt_request import PromptRequest
+from app.user_prompt_support.prompt_request import PromptRequest, default_timeout_s
 from app.user_prompt_support.prompt_response import PromptResponse
 from app.user_prompt_support.user_prompt_manager import PromptExchange
+
+
+def test_prompt_request_default_timeout_is_unresolved() -> None:
+    """
+    PromptRequest.timeout defaults to None (unresolved), not a concrete value.
+
+    UserPromptSupport.send_prompt_request() is responsible for resolving it from
+    th_config before dispatch; PromptExchange applies a defensive fallback to
+    default_timeout_s if a request ever reaches it unresolved (see below).
+    """
+    assert PromptRequest(prompt="Test string").timeout is None
+
+
+def test_prompt_exchange_resolves_unset_timeout_to_default() -> None:
+    """
+    PromptExchange defensively resolves an unset (None) timeout to
+    default_timeout_s, so a request bypassing UserPromptSupport's funnel never
+    reaches wait_for() with an unresolved timeout.
+    """
+    request: PromptRequest = PromptRequest(prompt="Test string")
+    exchange: PromptExchange = PromptExchange(prompt=request, message_id=0)
+
+    assert exchange.prompt.timeout == default_timeout_s
 
 
 def test_prompt_exchange_handle_empty_response() -> None:

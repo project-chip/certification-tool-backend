@@ -30,7 +30,7 @@ from app.user_prompt_support.constants import (
     UserResponseStatusEnum,
 )
 
-from .prompt_request import PromptRequest
+from .prompt_request import PromptRequest, default_timeout_s
 from .prompt_response import PromptResponse
 
 
@@ -40,6 +40,11 @@ from .prompt_response import PromptResponse
 class PromptExchange(object):
     def __init__(self, prompt: PromptRequest, message_id: int) -> None:
         self.message_id = message_id
+        # Callers are expected to resolve a concrete timeout before dispatch (see
+        # UserPromptSupport.send_prompt_request); this is a defensive fallback so an
+        # unresolved timeout never reaches wait_for() or gets sent to the frontend.
+        if prompt.timeout is None:
+            prompt = prompt.copy(update={"timeout": default_timeout_s})
         self.prompt = prompt
         self.message_event = Event()
         self.received_response: Optional[PromptResponse]

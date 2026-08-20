@@ -353,9 +353,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
                 Example:
                     <Controller> pairing code <nodeid> <pairing code>
                 """
-        prompt_request = OptionsSelectPromptRequest(
-            prompt=prompt, options=options, timeout=60
-        )
+        prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
         prompt_response = await self.send_prompt_request(prompt_request)
 
         match prompt_response.response:
@@ -383,9 +381,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
                 Example:
                     <Controller> pairing unpair <nodeid>
                 """
-        prompt_request = OptionsSelectPromptRequest(
-            prompt=prompt, options=options, timeout=60
-        )
+        prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
         prompt_response = await self.send_prompt_request(prompt_request)
 
         match prompt_response.response:

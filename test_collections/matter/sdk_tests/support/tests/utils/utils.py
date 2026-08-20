@@ -42,6 +42,14 @@ default_matter_config = {
     "test_parameters": None,
 }
 
+default_matter_config_with_th_config = {
+    **default_matter_config,
+    "th_config": {
+        "prompt_timeout_seconds": 120,
+        "enable_realtime_python_test_logs": True,
+    },
+}
+
 default_config_no_dut = {
     "network": {
         "fabric_id": "0",

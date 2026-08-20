@@ -41,7 +41,6 @@ from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
 from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
 
-CHIP_TOOL_DEFAULT_PROMPT_TIMEOUT_S = 60  # seconds
 OUTCOME_TIMEOUT_S = 60 * 10  # Seconds
 EXTENDED_PROMPT_TIMEOUT_S = 300
 
@@ -305,7 +304,7 @@ class ChipTest(TestCase, UserPromptSupport, TestRunnerHooks, TestParserHooks):
         """
 
         prompt = f"Please do the following action on the Controller: {action}"
-        prompt_request = MessagePromptRequest(prompt=prompt, timeout=60)
+        prompt_request = MessagePromptRequest(prompt=prompt)
         await self.send_prompt_request(prompt_request)
 
     def __handle_logs(self, logs: Any) -> None:

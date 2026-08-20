@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from .constants import UserResponseStatusEnum
-from .prompt_request import PromptRequest
+from .prompt_request import PromptRequest, default_timeout_s
 from .prompt_response import PromptResponse
 from .user_prompt_manager import user_prompt_manager
 
@@ -31,11 +31,31 @@ class UserPromptSupport(object):
     async def send_prompt_request(
         self, prompt_request: PromptRequest
     ) -> PromptResponse:
+        if prompt_request.timeout is None:
+            prompt_request = prompt_request.copy(
+                update={"timeout": self.__resolve_prompt_timeout()}
+            )
+
         response = await user_prompt_manager.send_prompt_request(prompt_request)
 
         if response is None:
             raise UserPromptError("No prompt response returned")
         return response
+
+    def __resolve_prompt_timeout(self) -> int:
+        """Resolve the default prompt timeout from the project's th_config.
+
+        Falls back to default_timeout_s when no config is available (e.g. this
+        mixin is used from a class with no `.config` property) or the configured
+        value is missing/invalid.
+        """
+        config = getattr(self, "config", None)
+        if config:
+            th_config = config.get("th_config") or {}
+            value = th_config.get("prompt_timeout_seconds")
+            if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+                return value
+        return default_timeout_s
 
     async def invoke_prompt_and_get_str_response(
         self, prompt_request: PromptRequest

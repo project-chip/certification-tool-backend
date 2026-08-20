@@ -764,3 +764,59 @@ async def test_execute_commissioning_non_nfc_preserves_qr_code() -> None:
 
     assert len(captured_configs) == 1
     assert "qr-code" in (captured_configs[0].test_parameters or {})
+
+
+def _instance_with_project_config(project_config: dict) -> PythonTestCase:
+    """Build a PythonTestCase instance whose `.config` resolves to project_config."""
+    project = Project(name="test_project")
+    project.config = project_config
+
+    test_run_execution = TestRunExecution()
+    test_run_execution.project = project
+
+    test_suite_execution = TestSuiteExecution()
+    test_suite_execution.test_run_execution = test_run_execution
+
+    test_case_execution = TestCaseExecution()
+    test_case_execution.test_suite_execution = test_suite_execution
+
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    return case_class(test_case_execution)
+
+
+@pytest.mark.parametrize(
+    "th_config_value, env_value, expected",
+    [
+        (True, False, True),  # config override True beats env False
+        (False, True, False),  # config override False beats env True
+        (None, True, True),  # unset config defers to env True
+        (None, False, False),  # unset config defers to env False
+    ],
+)
+def test_realtime_logs_enabled_matrix(
+    th_config_value: Optional[bool], env_value: bool, expected: bool
+) -> None:
+    instance = _instance_with_project_config(
+        {"th_config": {"enable_realtime_python_test_logs": th_config_value}}
+    )
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_REALTIME_PYTHON_TEST_LOGS = env_value
+        assert instance._realtime_logs_enabled() is expected
+
+
+def test_realtime_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+    instance = _instance_with_project_config({})
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_REALTIME_PYTHON_TEST_LOGS = True
+        assert instance._realtime_logs_enabled() is True

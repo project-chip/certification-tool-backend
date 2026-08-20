@@ -145,8 +145,20 @@ class PythonTestCase(TestCase, UserPromptSupport):
         self, logger: Any, logs: str, duration: int, request: Any
     ) -> None:
         # Display logs captured during this step only if real-time logging is enabled
-        if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+        if self._realtime_logs_enabled():
             await self._display_step_logs()
+
+    def _realtime_logs_enabled(self) -> bool:
+        """Whether Python test logs should be displayed incrementally per step.
+
+        The project's th_config.enable_realtime_python_test_logs, when explicitly
+        set, overrides the instance-wide ENABLE_REALTIME_PYTHON_TEST_LOGS env var.
+        """
+        th_config = (self.config or {}).get("th_config") or {}
+        override = th_config.get("enable_realtime_python_test_logs")
+        if override is not None:
+            return bool(override)
+        return settings.ENABLE_REALTIME_PYTHON_TEST_LOGS
 
     async def _display_step_logs(self) -> None:
         """Display logs that were captured during the current step."""
@@ -265,7 +277,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
     ) -> None:
         # Display logs captured during this step before marking as failure
         # only if real-time logging is enabled
-        if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+        if self._realtime_logs_enabled():
             await self._display_step_logs()
 
         failure_msg = "Python test step failure"
@@ -462,7 +474,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
         logger.info("Test Cleanup")
         # Log any remaining content that wasn't captured by steps
         # only if real-time logging is enabled
-        if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+        if self._realtime_logs_enabled():
             await self._log_remaining_content()
         else:
             # Use batch logging when real-time logging is disabled
@@ -644,7 +656,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             # Check for any remaining logs that weren't captured by steps
             # or show all logs if real-time logging is disabled
-            if settings.ENABLE_REALTIME_PYTHON_TEST_LOGS:
+            if self._realtime_logs_enabled():
                 await self._log_remaining_content()
             else:
                 # Use batch logging when real-time logging is disabled
