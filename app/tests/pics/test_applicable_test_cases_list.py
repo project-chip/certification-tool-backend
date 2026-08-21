@@ -330,6 +330,127 @@ def test_applicable_test_cases_set_with_mandatory_tests(mock_manager) -> None:
 
 
 @patch("app.pics_applicable_test_cases.test_script_manager")
+def test_applicable_test_cases_set_includes_mandatory_tests_without_pics(
+    mock_manager,
+) -> None:
+    # Create PICS without any PICs relevant to the test case
+    pics = create_random_pics()
+
+    # Create a mock mandatory test collection with a test case without PICS
+    mock_collection = MagicMock()
+    mock_collection.mandatory = True
+
+    # Create a mock test suite
+    mock_suite = MagicMock()
+
+    # Create a mock test case without declared PICS
+    mock_test_case = MagicMock()
+    mock_test_case.pics = set()
+    mock_test_case.metadata = {"title": "Mandatory-TC-No-PICS"}
+
+    # Set up the mock objects
+    mock_suite.test_cases = {"Mandatory-TC-No-PICS": mock_test_case}
+    mock_collection.test_suites = {"TestSuite": mock_suite}
+    mock_manager.test_collections = {"TestCollection": mock_collection}
+
+    applicable_test_cases = applicable_test_cases_set(pics, [])
+
+    # Mandatory test cases without declared PICS must always run
+    assert "Mandatory-TC-No-PICS" in applicable_test_cases.test_cases
+
+
+@patch("app.pics_applicable_test_cases.test_script_manager")
+def test_applicable_test_cases_set_excludes_non_mandatory_tests_without_pics(
+    mock_manager,
+) -> None:
+    # Create PICS without any PICs relevant to the test case
+    pics = create_random_pics()
+
+    # Create a mock non-mandatory test collection with a test case without PICS
+    mock_collection = MagicMock()
+    mock_collection.mandatory = False
+
+    # Create a mock test suite
+    mock_suite = MagicMock()
+
+    # Create a mock test case without declared PICS
+    mock_test_case = MagicMock()
+    mock_test_case.pics = set()
+    mock_test_case.metadata = {"title": "TC-No-PICS"}
+
+    # Set up the mock objects
+    mock_suite.test_cases = {"TC-No-PICS": mock_test_case}
+    mock_collection.test_suites = {"TestSuite": mock_suite}
+    mock_manager.test_collections = {"TestCollection": mock_collection}
+
+    applicable_test_cases = applicable_test_cases_set(pics, [])
+
+    # A non-mandatory test case without declared PICS cannot be matched
+    # against the project PICS, so it must not be pre-selected
+    assert "TC-No-PICS" not in applicable_test_cases.test_cases
+
+
+@patch("app.pics_applicable_test_cases.test_script_manager")
+def test_applicable_test_cases_set_selects_only_uploaded_cluster_tests(
+    mock_manager,
+) -> None:
+    # PICS uploaded for a single cluster (FAN.S enabled), nothing else
+    pics = PICS()
+    cluster = PICSCluster(name="Fan Control")
+    cluster.items["FAN.S"] = PICSItem(number="FAN.S", enabled=True)
+    pics.clusters["Fan Control"] = cluster
+
+    # Non-mandatory collection with three test cases:
+    # - test for the uploaded cluster
+    fan_test_case = MagicMock()
+    fan_test_case.pics = {"FAN.S"}
+    fan_test_case.metadata = {"title": "TC-Fan"}
+
+    # - test for a cluster absent from the uploaded PICS
+    tstat_test_case = MagicMock()
+    tstat_test_case.pics = {"TSTAT.S"}
+    tstat_test_case.metadata = {"title": "TC-Thermostat"}
+
+    # - test without declared PICS
+    no_pics_test_case = MagicMock()
+    no_pics_test_case.pics = set()
+    no_pics_test_case.metadata = {"title": "TC-Switch"}
+
+    non_mandatory_suite = MagicMock()
+    non_mandatory_suite.test_cases = {
+        "TC-Fan": fan_test_case,
+        "TC-Thermostat": tstat_test_case,
+        "TC-Switch": no_pics_test_case,
+    }
+    non_mandatory_collection = MagicMock()
+    non_mandatory_collection.mandatory = False
+    non_mandatory_collection.test_suites = {"TestSuite": non_mandatory_suite}
+
+    # Mandatory collection with a protocol test without declared PICS
+    mandatory_test_case = MagicMock()
+    mandatory_test_case.pics = set()
+    mandatory_test_case.metadata = {"title": "TC-IDM"}
+
+    mandatory_suite = MagicMock()
+    mandatory_suite.test_cases = {"TC-IDM": mandatory_test_case}
+    mandatory_collection = MagicMock()
+    mandatory_collection.mandatory = True
+    mandatory_collection.test_suites = {"TestSuite": mandatory_suite}
+
+    mock_manager.test_collections = {
+        "NonMandatoryCollection": non_mandatory_collection,
+        "MandatoryCollection": mandatory_collection,
+    }
+
+    applicable_test_cases = applicable_test_cases_set(pics, [])
+
+    # Only the uploaded cluster's test and the mandatory test are applicable:
+    # the absent cluster's test fails the PICS match and the test without
+    # declared PICS in a non-mandatory collection is not pre-selected
+    assert set(applicable_test_cases.test_cases) == {"TC-Fan", "TC-IDM"}
+
+
+@patch("app.pics_applicable_test_cases.test_script_manager")
 def test_applicable_test_cases_set_with_dmp_cert_test_removed(mock_manager) -> None:
     # Create PICS with mandatory test PICs
     pics = create_random_pics()

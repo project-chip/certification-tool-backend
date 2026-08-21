@@ -184,8 +184,10 @@ def __applicable_test_cases(
                         continue
 
                     if not test_case.pics:
-                        # Test cases without PICS are always applicable
-                        applicable_tests.add(test_case.metadata["title"])
+                        # Test cases without PICS are only applicable if
+                        # mandatory or explicitly listed in tests_to_consider
+                        if test_collection.mandatory or tests_to_consider:
+                            applicable_tests.add(test_case.metadata["title"])
                     else:
                         test_enabled_pics, test_disabled_pics = __retrieve_pics(
                             test_case
