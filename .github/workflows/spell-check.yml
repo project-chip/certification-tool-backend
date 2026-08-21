@@ -1,6 +1,9 @@
 name: "Check spelling"
 on: # rebuild any PRs and main branch changes
-  pull_request_target:
+  # pull_request (not pull_request_target) so the job checks out and scans the
+  # PR content; with pull_request_target the default checkout is the base
+  # branch, so PR runs were scanning main instead of the PR
+  pull_request:
     types: [opened, synchronize, reopened]
   push:
     branches:
