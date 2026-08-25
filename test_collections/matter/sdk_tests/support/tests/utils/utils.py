@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from typing import Any
 
 default_matter_config = {
     "network": {
@@ -42,7 +43,7 @@ default_matter_config = {
     "test_parameters": None,
 }
 
-default_matter_config_with_th_config = {
+default_matter_config_with_th_config: dict[str, Any] = {
     **default_matter_config,
     "th_config": {
         "prompt_timeout_seconds": 120,

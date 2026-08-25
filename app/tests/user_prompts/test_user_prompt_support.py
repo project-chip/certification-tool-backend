@@ -44,6 +44,14 @@ async def test_send_prompt_request_no_response() -> None:
             send_prompt_request.assert_called_once()
 
 
+class _ConfigurablePromptSupport(UserPromptSupport):
+    """Test-only mixin host exposing a settable `.config`, mirroring how
+    TestCase/TestSuite provide it to UserPromptSupport in production."""
+
+    def __init__(self, config: dict) -> None:
+        self.config: dict = config
+
+
 async def _send_and_capture_timeout(
     prompt_support: UserPromptSupport, prompt_request: PromptRequest
 ) -> int:
@@ -67,8 +75,9 @@ async def _send_and_capture_timeout(
 @pytest.mark.asyncio
 async def test_send_prompt_request_resolves_timeout_from_config() -> None:
     """An unspecified timeout is resolved from th_config.prompt_timeout_seconds."""
-    prompt_support = UserPromptSupport()
-    prompt_support.config = {"th_config": {"prompt_timeout_seconds": 300}}
+    prompt_support = _ConfigurablePromptSupport(
+        {"th_config": {"prompt_timeout_seconds": 300}}
+    )
 
     timeout = await _send_and_capture_timeout(
         prompt_support, PromptRequest(prompt="hi")
@@ -92,8 +101,7 @@ async def test_send_prompt_request_falls_back_without_config_attribute() -> None
 @pytest.mark.asyncio
 async def test_send_prompt_request_falls_back_with_empty_config() -> None:
     """An empty/absent th_config key falls back to the default timeout."""
-    prompt_support = UserPromptSupport()
-    prompt_support.config = {}
+    prompt_support = _ConfigurablePromptSupport({})
 
     timeout = await _send_and_capture_timeout(
         prompt_support, PromptRequest(prompt="hi")
@@ -105,8 +113,7 @@ async def test_send_prompt_request_falls_back_with_empty_config() -> None:
 @pytest.mark.asyncio
 async def test_send_prompt_request_falls_back_with_null_th_config() -> None:
     """A hand-edited "th_config": null must not raise AttributeError."""
-    prompt_support = UserPromptSupport()
-    prompt_support.config = {"th_config": None}
+    prompt_support = _ConfigurablePromptSupport({"th_config": None})
 
     timeout = await _send_and_capture_timeout(
         prompt_support, PromptRequest(prompt="hi")
@@ -124,10 +131,9 @@ async def test_send_prompt_request_falls_back_with_malformed_value(
     prompt_timeout_seconds: object,
 ) -> None:
     """A malformed/invalid configured value falls back safely instead of crashing."""
-    prompt_support = UserPromptSupport()
-    prompt_support.config = {
-        "th_config": {"prompt_timeout_seconds": prompt_timeout_seconds}
-    }
+    prompt_support = _ConfigurablePromptSupport(
+        {"th_config": {"prompt_timeout_seconds": prompt_timeout_seconds}}
+    )
 
     timeout = await _send_and_capture_timeout(
         prompt_support, PromptRequest(prompt="hi")
@@ -139,8 +145,9 @@ async def test_send_prompt_request_falls_back_with_malformed_value(
 @pytest.mark.asyncio
 async def test_send_prompt_request_explicit_timeout_wins_over_config() -> None:
     """A caller-supplied timeout is never overridden by th_config."""
-    prompt_support = UserPromptSupport()
-    prompt_support.config = {"th_config": {"prompt_timeout_seconds": 300}}
+    prompt_support = _ConfigurablePromptSupport(
+        {"th_config": {"prompt_timeout_seconds": 300}}
+    )
 
     timeout = await _send_and_capture_timeout(
         prompt_support, PromptRequest(prompt="hi", timeout=5)

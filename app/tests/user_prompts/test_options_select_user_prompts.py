@@ -193,6 +193,7 @@ async def test_options_select_user_prompt_manager_prompt(db: Session) -> None:
         # Assert broadcast was first called twice with:
         # 1. prompt_dict
         # 2. timeout_notification
+        assert prompt.timeout is not None
         expected_broadcast_calls = [
             call(__expected_prompt_dict(timeout=prompt.timeout)),
             call(__expected_timeout_notification_dict()),

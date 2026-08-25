@@ -24,9 +24,9 @@ default_timeout_s = 60  # Seconds
 
 class PromptRequest(BaseModel):
     prompt: Optional[str]
-    # None means "caller did not specify a timeout"; UserPromptSupport.send_prompt_request
-    # resolves it (from the project's th_config, falling back to default_timeout_s) before
-    # the request is dispatched.
+    # None means "caller did not specify a timeout";
+    # UserPromptSupport.send_prompt_request resolves it (from the project's th_config,
+    # falling back to default_timeout_s) before the request is dispatched.
     timeout: Optional[int] = None
 
     @property
