@@ -131,7 +131,10 @@ def __parse_python_tests(
             and collection_type != CollectionType.MANDATORY
         ):
             suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
-        elif collection_type != CollectionType.MANDATORY:
+        elif (
+            python_test_type != PythonTestType.MANDATORY
+            and collection_type != CollectionType.MANDATORY
+        ):
             suites[SuiteType.LEGACY].add_test_case(test_case)
 
     return [s for s in list(suites.values()) if len(s.test_cases) != 0]
