@@ -171,20 +171,47 @@ async def test_rescan_keeps_previous_collections_on_failure(
 
 @pytest.mark.asyncio
 async def test_rescan_handles_missing_python_testing_module(
-    restore_test_collections: None,
+    restore_test_collections: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """If the python_testing package doesn't expose initialize_python_tests
+    (e.g. DRY_RUN mode), rescan() should not raise: non-Python collections
+    are still discovered."""
     expected_collections = {"tool_unit_tests": MagicMock()}
 
-    with patch(
-        "test_collections.matter.sdk_tests.support.python_testing."
-        "initialize_python_tests",
-        side_effect=ImportError("python_testing not available"),
-    ), patch.object(
+    import test_collections.matter.sdk_tests.support.python_testing as python_testing
+
+    monkeypatch.delattr(python_testing, "initialize_python_tests")
+
+    with patch.object(
         test_script_manager,
         "_discover_test_collections",
         return_value=expected_collections,
     ):
-        # Should not raise, non-Python collections are still discovered.
         await test_script_manager.rescan()
 
     assert test_script_manager.test_collections == expected_collections
+
+
+@pytest.mark.asyncio
+async def test_rescan_keeps_previous_collections_on_import_error(
+    restore_test_collections: None,
+) -> None:
+    """An ImportError raised while *running* initialize_python_tests() (e.g.
+    a bad import inside a side-loaded script) must be treated as a rescan
+    failure, not mistaken for the python_testing-module-not-available case:
+    the previous test collections must be restored and the error re-raised.
+    """
+    previous_collections = {"tool_unit_tests": MagicMock()}
+
+    with patch.object(
+        test_script_manager, "test_collections", previous_collections
+    ), patch(
+        "test_collections.matter.sdk_tests.support.python_testing."
+        "initialize_python_tests",
+        new_callable=AsyncMock,
+        side_effect=ImportError("bad import in side-loaded script"),
+    ):
+        with pytest.raises(ImportError, match="bad import in side-loaded script"):
+            await test_script_manager.rescan()
+
+        assert test_script_manager.test_collections == previous_collections

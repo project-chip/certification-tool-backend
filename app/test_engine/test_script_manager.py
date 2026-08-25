@@ -127,20 +127,27 @@ class TestScriptManager(object, metaclass=Singleton):
         previous_test_collections = self.test_collections
 
         try:
+            # This import only fails with ImportError when the python_testing
+            # package itself doesn't expose initialize_python_tests (e.g.
+            # DRY_RUN mode, where .test_manager is never imported). It must
+            # stay isolated from the call below: an ImportError raised while
+            # *running* initialize_python_tests() (e.g. a bad import in a
+            # side-loaded script) means initialization genuinely failed and
+            # must trigger the rollback in the except block further down,
+            # not be mistaken for "module not available".
             from test_collections.matter.sdk_tests.support.python_testing import (
                 initialize_python_tests,
             )
+        except ImportError as e:
+            logging.warning(f"Python testing module not available: {e}")
+            self.test_collections = self._discover_test_collections()
+            return
 
+        try:
             await initialize_python_tests()
             self.test_collections = self._discover_test_collections()
             self._python_tests_initialized = True
 
-        except ImportError as e:
-            # Handle case where python_testing module is not available
-            # (e.g., DRY_RUN mode). Non-Python test collections can still be
-            # rediscovered.
-            logging.warning(f"Python testing module not available: {e}")
-            self.test_collections = self._discover_test_collections()
         except Exception as e:
             logging.error(f"Failed to rescan test collections: {e}")
             self.test_collections = previous_test_collections
