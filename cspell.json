@@ -117,7 +117,12 @@
         "PAVST",
         "WEBRTCR",
         "ZONEMGMT",
-        "APPDEVTYPEID"
+        "APPDEVTYPEID",
+        "astext",
+        "asname",
+        "TLSCERT",
+        "JFADMIN",
+        "AABBCCDD"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
