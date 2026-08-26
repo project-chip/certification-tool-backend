@@ -52,11 +52,26 @@ if ! command -v docker > /dev/null; then
     exit 1
 fi
 
+# Map the host architecture to the docker platform architecture
+case "$(uname -m)" in
+    x86_64)  HOST_DOCKER_ARCH="amd64" ;;
+    aarch64) HOST_DOCKER_ARCH="arm64" ;;
+    armv7l)  HOST_DOCKER_ARCH="arm" ;;
+    *)       HOST_DOCKER_ARCH="$(uname -m)" ;;
+esac
+
 if [[ -n $(sudo docker images -q $SDK_DOCKER_IMAGE) ]]; then
-    print_script_step "Nothing to do"
-    echo "The SDK image already exists locally: $SDK_DOCKER_IMAGE"
-    print_end_of_script
-    exit 0
+    IMAGE_ARCH=$(sudo docker image inspect --format '{{.Architecture}}' $SDK_DOCKER_IMAGE)
+    if [[ "$IMAGE_ARCH" == "$HOST_DOCKER_ARCH" ]]; then
+        print_script_step "Nothing to do"
+        echo "The SDK image already exists locally for this architecture ($IMAGE_ARCH):"
+        echo "$SDK_DOCKER_IMAGE"
+        print_end_of_script
+        exit 0
+    fi
+    print_script_step "Existing image has the wrong architecture"
+    echo "The SDK image exists locally but is $IMAGE_ARCH while the host needs"
+    echo "$HOST_DOCKER_ARCH. Rebuilding it for the host architecture."
 fi
 
 BUILD_DIR=$(mktemp -d)
