@@ -64,7 +64,10 @@ RUN curl -sSL https://get.docker.com/ | sh
 # Install nodejs, npm and spell checker
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y nodejs
-RUN npm install -g npm@latest
+# npm@latest is a moving target: npm 12 dropped support for the node 20
+# installed above (requires node >=22), making any fresh build of this image
+# fail with EBADENGINE. Pin the newest npm major that still supports node 20.
+RUN npm install -g npm@11
 RUN npm install -g cspell@latest
 
 # Allow installing dev dependencies to run tests
