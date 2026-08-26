@@ -1,0 +1,35 @@
+{
+    "sdk_sha": "aabbccddeeff11223344556677889900",
+    "tests": [
+        {
+            "class_name": "TC_SameClass",
+            "desc": "TC TC_SameClass description 1",
+            "function": "test_TC_SC_1_1",
+            "path": "sdk/TC_SameClass",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Step 1",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_DeviceConformance",
+            "desc": "TC_IDM_10_2 description",
+            "function": "test_TC_IDM_10_2",
+            "path": "sdk/TC_DeviceConformance",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Run entire test",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        }
+    ]
+}
