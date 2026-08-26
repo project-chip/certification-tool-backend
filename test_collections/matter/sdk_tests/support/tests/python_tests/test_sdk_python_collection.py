@@ -26,7 +26,10 @@ from ...python_testing.models.test_declarations import (
     PythonCaseDeclaration,
     PythonCollectionDeclaration,
 )
-from ...python_testing.sdk_python_tests import sdk_python_test_collection
+from ...python_testing.sdk_python_tests import (
+    sdk_mandatory_python_test_collection,
+    sdk_python_test_collection,
+)
 
 
 @pytest.fixture
@@ -40,6 +43,23 @@ def python_test_collection() -> PythonCollectionDeclaration:
     ):
         folder = SDKTestFolder(path=test_sdk_python_path, filename_pattern="TC_*")
         return sdk_python_test_collection(folder, tests_file_path=test_sdk_python_path)
+
+
+def _load_collections_from(
+    tests_file_path: Path,
+) -> tuple[PythonCollectionDeclaration, PythonCollectionDeclaration]:
+    with mock.patch.object(Path, "exists", return_value=True), mock.patch(
+        "test_collections.matter.sdk_tests.support.models.sdk_test_folder.open",
+        new=mock.mock_open(read_data="unit-test-python-version"),
+    ):
+        folder = SDKTestFolder(path=tests_file_path, filename_pattern="TC_*")
+        non_mandatory = sdk_python_test_collection(
+            folder, tests_file_path=tests_file_path
+        )
+        mandatory = sdk_mandatory_python_test_collection(
+            folder, tests_file_path=tests_file_path
+        )
+        return non_mandatory, mandatory
 
 
 def test_sdk_python_test_collection(
@@ -69,3 +89,27 @@ def test_automated_suite(python_test_collection: PythonCollectionDeclaration) ->
         type_count[test_case.test_type] += 1
 
     assert type_count[MatterTestType.AUTOMATED] == expected_automated_test_cases
+
+
+def test_mandatory_test_not_duplicated_across_collections() -> None:
+    """Regression test for issue #1087.
+
+    A mandatory test case (e.g. TC_IDM_10_2) must be present in the
+    "Mandatory SDK Python Tests" collection only, and must not also be
+    duplicated into the "Old script format" (LEGACY) suite of the
+    non-mandatory "SDK Python Tests" collection.
+    """
+    tests_file_path = (
+        Path(__file__).parent / "test_python_script/mandatory_tests_info.json"
+    )
+    non_mandatory_collection, mandatory_collection = _load_collections_from(
+        tests_file_path
+    )
+
+    for suite in non_mandatory_collection.test_suites.values():
+        assert "TC_IDM_10_2" not in suite.test_cases
+
+    mandatory_suite_name = "Python Testing Suite - Mandatories"
+    assert mandatory_suite_name in mandatory_collection.test_suites.keys()
+    mandatory_suite = mandatory_collection.test_suites[mandatory_suite_name]
+    assert "TC_IDM_10_2" in mandatory_suite.test_cases
