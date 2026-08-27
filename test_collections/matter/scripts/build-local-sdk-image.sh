@@ -85,6 +85,40 @@ if ! curl -sfL "$DOCKERFILE_URL" -o $BUILD_DIR/Dockerfile; then
     exit 1
 fi
 
+# Building locally means running a Dockerfile that has not been built since
+# its image was published (arm64 installs download the prebuilt image, so the
+# Dockerfile at the pinned SDK_DOCKER_TAG never runs again). That Dockerfile
+# fetches the latest gn sources, and today's gn no longer builds in this older
+# environment. Apply the fix the current SDK Dockerfile already uses for this:
+# install the distro gn package instead of compiling gn.
+if grep -q "git clone https://gn.googlesource.com/gn" $BUILD_DIR/Dockerfile; then
+    print_script_step "Patching known gn issue in the Dockerfile"
+    echo "This Dockerfile builds the gn tool from unpinned tip-of-tree source, which"
+    echo "no longer compiles with the image's toolchain. Replacing that block with"
+    echo "the generate-ninja distro package (the current SDK Dockerfile's fix)."
+    python3 - "$BUILD_DIR/Dockerfile" <<'PYEOF'
+import re
+import sys
+
+path = sys.argv[1]
+src = open(path).read()
+block = re.search(r"# build and install gn\nRUN set -x \\\n(?:.*\n)*?    && : # last line\n", src)
+if not block:
+    print("WARNING: could not locate the gn build block, leaving the Dockerfile unpatched")
+    sys.exit(0)
+replacement = (
+    "# build and install gn (patched by build-local-sdk-image.sh: gn tip-of-tree\n"
+    "# no longer builds with this image's toolchain, install the distro package)\n"
+    "RUN apt-get update \\\n"
+    "    && DEBIAN_FRONTEND=noninteractive apt-get install -fy generate-ninja \\\n"
+    "    && rm -rf /var/lib/apt/lists/ \\\n"
+    "    && : # last line\n"
+)
+open(path, "w").write(src.replace(block.group(0), replacement))
+print("gn block patched")
+PYEOF
+fi
+
 print_script_step "Building '$SDK_DOCKER_IMAGE' for $(uname -m) (takes about an hour)"
 echo "Build output is also logged to: $LOG_PATH"
 set +e
@@ -96,10 +130,39 @@ if [[ $BUILD_EXIT -ne 0 ]]; then
     echo ""
     echo "ERROR: the SDK image build failed (exit code $BUILD_EXIT)."
     echo "Full build log: $LOG_PATH"
-    if [[ "$DOCKERFILE_REF" == "$SDK_DOCKER_TAG" ]]; then
-        echo "If the failure is in the image's build tooling, the Dockerfile at the"
-        echo "pinned tag may have bitrotted. Retry with the current SDK Dockerfile:"
+    # The failing Dockerfile stage tells apart tooling setup problems from SDK
+    # compile problems. Docker prints it in the error block as the stage name
+    # plus a step counter, e.g. "> [chip-build-cert 5/12]" means the 5th of 12
+    # instructions in the chip-build-cert stage; only the stage name matters here.
+    FAILED_STAGE=$(grep -oE '> \[[^]]+\]' "$LOG_PATH" | tail -1 | tr -d '>[]' | tr -s ' ' | sed 's/^ *//')
+    NETWORK_FAILURE=false
+    if grep -qiE "could not resolve host|unable to access|temporary failure in name resolution" "$LOG_PATH"; then
+        NETWORK_FAILURE=true
+        echo "The log shows a network failure: check the connection and retry."
+    elif [[ "$FAILED_STAGE" == *"chip-build-cert-bins"* ]]; then
+        echo "The failure happened while compiling the SDK binaries (at $FAILED_STAGE),"
+        echo "not in the image's tooling setup: retrying with another Dockerfile is"
+        echo "unlikely to help. Check the build log for the compile error."
+    elif [[ "$DOCKERFILE_REF" == "$SDK_DOCKER_TAG" ]]; then
+        echo "The failure happened while setting up the image's build tooling"
+        echo "${FAILED_STAGE:+(at $FAILED_STAGE) }and the Dockerfile at the pinned tag"
+        echo "fetches unpinned external tools that change over time."
+        echo ""
+        echo "Retrying with the current SDK Dockerfile may get past a tooling issue,"
+        echo "but note its later stages may not match the pinned SDK commit:"
         echo "  $0 master"
+    fi
+    if ! $NETWORK_FAILURE; then
+        # Manual patching must start from the pinned tag's Dockerfile: its later
+        # stages are the ones that match the pinned SDK commit's build output.
+        PINNED_DOCKERFILE_URL="https://raw.githubusercontent.com/project-chip/connectedhomeip/$SDK_DOCKER_TAG/integrations/docker/images/chip-cert-bins/Dockerfile"
+        echo ""
+        echo "To investigate and patch the pinned tag's Dockerfile manually:"
+        echo "  curl -sfL $PINNED_DOCKERFILE_URL -o Dockerfile"
+        echo "  # edit the failing step (see the build log), then rebuild:"
+        echo "  sudo docker build --build-arg COMMITHASH=$SDK_DOCKER_TAG -t $SDK_DOCKER_IMAGE ."
+        echo "  # once the image builds, continue with the sample apps installation:"
+        echo "  ./scripts/update.sh"
     fi
     exit $BUILD_EXIT
 fi
