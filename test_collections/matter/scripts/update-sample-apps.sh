@@ -32,11 +32,27 @@ SDK_DOCKER_IMAGE=$SDK_DOCKER_PACKAGE:$SDK_DOCKER_TAG
 
 
 DOCKER_IMAGE_FOUND=$(sudo docker images -q $SDK_DOCKER_IMAGE)
+HOST_ARCH=$(uname -m)
+
+# A local image with the right tag but the wrong architecture cannot run here:
+# treat it as not found, so the notice below applies and build-local-sdk-image.sh
+# rebuilds over it.
+if [[ -n "$DOCKER_IMAGE_FOUND" && "$HOST_ARCH" != "aarch64" ]]; then
+    case "$HOST_ARCH" in
+        x86_64) HOST_DOCKER_ARCH="amd64" ;;
+        armv7l) HOST_DOCKER_ARCH="arm" ;;
+        *)      HOST_DOCKER_ARCH="$HOST_ARCH" ;;
+    esac
+    IMAGE_ARCH=$(sudo docker image inspect --format '{{.Architecture}}' $SDK_DOCKER_IMAGE)
+    if [[ "$IMAGE_ARCH" != "$HOST_DOCKER_ARCH" ]]; then
+        echo "The local SDK image is $IMAGE_ARCH while the host needs $HOST_DOCKER_ARCH."
+        DOCKER_IMAGE_FOUND=""
+    fi
+fi
 
 # The published SDK image exists for arm64 only, so on any other architecture
 # the pull below cannot succeed. When there is no locally built image to use
 # either, exit gracefully with build instructions instead of failing the setup.
-HOST_ARCH=$(uname -m)
 if [[ -z "$DOCKER_IMAGE_FOUND" && "$HOST_ARCH" != "aarch64" ]]; then
     print_script_step "Skipping sample apps installation"
     echo "The SDK image '$SDK_DOCKER_IMAGE' is published for arm64 only and is not"

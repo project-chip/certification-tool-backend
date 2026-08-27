@@ -26,7 +26,7 @@
 #                   build (e.g. due to fixes that landed after the tag).
 
 set -e
-MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/..)
+MATTER_PROGRAM_DIR=$(realpath "$(dirname "$0")/..")
 TH_SCRIPTS_DIR="$MATTER_PROGRAM_DIR/../../../scripts"
 ROOT_DIR=$(realpath "$MATTER_PROGRAM_DIR/../../..")
 
