@@ -31,6 +31,7 @@ from app.db.session import get_db
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.models.test_run_execution import TestRunExecution
+from app.pics.pics_writer import PICSWriter
 from app.schemas.test_run_execution import TestRunExecutionUpdate
 from app.test_engine import TEST_ENGINE_ABORTING_TESTING_MESSAGE
 from app.test_engine.test_runner import AbortError, LoadingError, TestRunner
@@ -538,6 +539,68 @@ def download_grouped_log(
     zip_file = log_utils.create_grouped_log_zip_file(grouped_logs=logs)
 
     file_name = f"{test_run_execution.id}-{test_run_execution.title}.zip"
+    options: dict = {
+        "media_type": "application/zip",
+        "headers": {"Content-Disposition": f'attachment; filename="{file_name}"'},
+    }
+
+    return StreamingResponse(
+        zip_file,
+        **options,
+    )
+
+
+@router.get(
+    "/{id}/pics_export",
+    response_class=StreamingResponse,
+    responses={
+        "200": {
+            "description": "Successful Response",
+            "content": {
+                "application/zip": {"schema": {"type": "string", "format": "binary"}}
+            },
+            "headers": {
+                "Content-Disposition": {
+                    "description": "Suggests a filename for the downloaded ZIP file",
+                    "schema": {"type": "string"},
+                    "example": 'attachment; filename="archive.zip"',
+                }
+            },
+        }
+    },
+)
+def pics_export(
+    *,
+    db: Session = Depends(get_db),
+    id: int,
+) -> StreamingResponse:
+    """Export the PICS actually used by a test run execution.
+
+    Returns the PICS that were in effect when the execution ran (the
+    execution's own execution_pics override when set, otherwise the
+    project's PICS at the time of the request), as a zip archive containing
+    one PICS XML file per cluster. The XML format matches what is already
+    accepted by the PUT /projects/{id}/upload_pics endpoint, so the exported
+    files can be re-imported as-is.
+
+    Args:
+        id (int): ID of the TestRunExecution the PICS export is requested for
+
+    Raises:
+        HTTPException: If there's no TestRunExecution with the given ID
+
+    Returns:
+        StreamingResponse: .zip file containing one PICS XML file per cluster
+    """
+    test_run_execution = crud.test_run_execution.get(db=db, id=id)
+    if not test_run_execution:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
+        )
+
+    zip_file = PICSWriter.write_zip(pics=test_run_execution.effective_pics)
+
+    file_name = f"{test_run_execution.id}-{test_run_execution.title}-pics.zip"
     options: dict = {
         "media_type": "application/zip",
         "headers": {"Content-Disposition": f'attachment; filename="{file_name}"'},

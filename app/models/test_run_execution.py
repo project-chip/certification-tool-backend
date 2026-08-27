@@ -24,6 +24,7 @@ from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship, with_p
 
 from app.db.base_class import Base
 from app.db.pydantic_data_type import PydanticListType
+from app.schemas.pics import PICS
 
 from . import TestStateEnum
 from .test_suite_execution import TestSuiteExecution
@@ -99,6 +100,17 @@ class TestRunExecution(Base):
 
     def append_to_log(self, log_record: "TestRunLogEntry") -> None:
         self.log.append(log_record)
+
+    @property
+    def effective_pics(self) -> PICS:
+        """PICS that were actually in effect for this execution.
+
+        Returns execution_pics if set (temporary, per-execution override),
+        otherwise falls back to the project's persistent PICS.
+        """
+        if self.execution_pics is not None:
+            return PICS.parse_obj(self.execution_pics)
+        return self.project.pics
 
     def test_suite_execution_by_public_id(
         self, public_id: str

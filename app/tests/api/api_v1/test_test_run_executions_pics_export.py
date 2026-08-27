@@ -1,0 +1,114 @@
+#
+# Copyright (c) 2026 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""Tests for the GET /api/v1/test_run_executions/{id}/pics_export endpoint."""
+from http import HTTPStatus
+from io import BytesIO, StringIO
+from zipfile import ZipFile
+
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.pics.pics_parser import PICSParser
+from app.tests.utils.project import create_random_project
+from app.tests.utils.test_pics_data import create_random_project_with_pics
+from app.tests.utils.test_run_execution import create_random_test_run_execution
+
+BASE_URL = f"{settings.API_V1_STR}/test_run_executions"
+
+
+class _NamedStringIO(StringIO):
+    """PICSParser reads `file.name` for logging; plain StringIO lacks it."""
+
+    name = "exported.xml"
+
+
+def test_pics_export_returns_zip_of_project_pics(
+    client: TestClient, db: Session
+) -> None:
+    """When the execution has no execution_pics override, the exported PICS
+    match the project's PICS at request time."""
+    project = create_random_project_with_pics(db, config={})
+    execution = create_random_test_run_execution(db, project_id=project.id)
+
+    response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/zip"
+    assert "attachment" in response.headers["content-disposition"]
+    assert response.headers["content-disposition"].endswith('-pics.zip"')
+
+    with ZipFile(BytesIO(response.content)) as zf:
+        names = zf.namelist()
+        assert names == ["On_Off.xml"]
+
+        parsed = PICSParser.parse(file=_NamedStringIO(zf.read(names[0]).decode()))
+        expected_cluster = project.pics.clusters["On/Off"]
+        assert parsed.name == expected_cluster.name
+        for number, item in expected_cluster.items.items():
+            assert parsed.items[number].enabled == item.enabled
+
+
+def test_pics_export_prefers_execution_pics_over_project_pics(
+    client: TestClient, db: Session
+) -> None:
+    """When execution_pics is set on the execution, the export reflects it
+    instead of the (possibly since-changed) project PICS."""
+    project = create_random_project_with_pics(db, config={})
+    execution = create_random_test_run_execution(db, project_id=project.id)
+
+    execution_pics = {
+        "clusters": {
+            "TestCluster": {
+                "name": "TestCluster",
+                "items": {"TC.S.A0000": {"number": "TC.S.A0000", "enabled": True}},
+            }
+        }
+    }
+    execution.execution_pics = execution_pics
+    db.add(execution)
+    db.commit()
+
+    response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
+
+    assert response.status_code == HTTPStatus.OK
+    with ZipFile(BytesIO(response.content)) as zf:
+        names = zf.namelist()
+        assert names == ["TestCluster.xml"]
+
+        parsed = PICSParser.parse(file=_NamedStringIO(zf.read(names[0]).decode()))
+        assert parsed.items["TC.S.A0000"].enabled is True
+
+
+def test_pics_export_with_no_pics_returns_empty_zip(
+    client: TestClient, db: Session
+) -> None:
+    """A project with no PICS configured results in an empty (but valid) zip."""
+    project = create_random_project(db, config={})
+    execution = create_random_test_run_execution(db, project_id=project.id)
+
+    response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
+
+    assert response.status_code == HTTPStatus.OK
+    with ZipFile(BytesIO(response.content)) as zf:
+        assert zf.namelist() == []
+
+
+def test_pics_export_not_found(client: TestClient) -> None:
+    """Returns 404 when the test run execution does not exist."""
+    response = client.get(f"{BASE_URL}/999999/pics_export")
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
