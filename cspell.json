@@ -122,7 +122,11 @@
         "asname",
         "TLSCERT",
         "JFADMIN",
-        "AABBCCDD"
+        "AABBCCDD",
+        "aarch",
+        "armv",
+        "distro",
+        "PYEOF"
     ],
     "allowCompoundWords": true,
     "ignorePaths": [
