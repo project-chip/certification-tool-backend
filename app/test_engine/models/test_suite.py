@@ -75,10 +75,7 @@ class TestSuite(TestObservable):
         Returns execution_pics if available (temporary override from CLI),
         otherwise returns project.pics (persistent PICS).
         """
-        test_run_execution = self.test_suite_execution.test_run_execution
-        if test_run_execution.execution_pics is not None:
-            return PICS.parse_obj(test_run_execution.execution_pics)
-        return PICS.parse_obj(self.project.pics)
+        return self.test_suite_execution.test_run_execution.effective_pics
 
     @property
     def state(self) -> TestStateEnum:

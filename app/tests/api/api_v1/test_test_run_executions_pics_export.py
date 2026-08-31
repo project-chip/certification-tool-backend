@@ -21,10 +21,15 @@ from zipfile import ZipFile
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app import crud
 from app.core.config import settings
 from app.pics.pics_parser import PICSParser
+from app.schemas.project import ProjectUpdate
 from app.tests.utils.project import create_random_project
-from app.tests.utils.test_pics_data import create_random_project_with_pics
+from app.tests.utils.test_pics_data import (
+    create_random_pics,
+    create_random_project_with_pics,
+)
 from app.tests.utils.test_run_execution import create_random_test_run_execution
 
 BASE_URL = f"{settings.API_V1_STR}/test_run_executions"
@@ -39,8 +44,9 @@ class _NamedStringIO(StringIO):
 def test_pics_export_returns_zip_of_project_pics(
     client: TestClient, db: Session
 ) -> None:
-    """When the execution has no execution_pics override, the exported PICS
-    match the project's PICS at request time."""
+    """When the execution has no explicit execution_pics override at
+    creation time, its execution_pics is snapshotted from the project's
+    PICS at that time, and the export reflects that snapshot."""
     project = create_random_project_with_pics(db, config={})
     execution = create_random_test_run_execution(db, project_id=project.id)
 
@@ -60,6 +66,43 @@ def test_pics_export_returns_zip_of_project_pics(
         assert parsed.name == expected_cluster.name
         for number, item in expected_cluster.items.items():
             assert parsed.items[number].enabled == item.enabled
+
+
+def test_pics_export_reflects_pics_at_execution_time_not_current_project_pics(
+    client: TestClient, db: Session
+) -> None:
+    """The export must reflect what PICS were in effect when the execution
+    was created, even if the project's PICS are edited afterwards.
+
+    This is the scenario the feature exists for (replacing log-scraping,
+    which reflected historical PICS): editing a project's PICS after a run
+    completed must not silently rewrite what that historical run appears
+    to have used.
+    """
+    project = create_random_project_with_pics(db, config={})
+    original_cluster = project.pics.clusters["On/Off"]
+    original_states = {
+        num: item.enabled for num, item in original_cluster.items.items()
+    }
+
+    execution = create_random_test_run_execution(db, project_id=project.id)
+
+    # Edit the project's PICS *after* the execution was created: flip every
+    # item to the opposite of its original state.
+    edited_pics = create_random_pics()
+    for item in edited_pics.clusters["On/Off"].items.values():
+        item.enabled = not original_states[item.number]
+    crud.project.update(db=db, db_obj=project, obj_in=ProjectUpdate(pics=edited_pics))
+
+    response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
+
+    assert response.status_code == HTTPStatus.OK
+    with ZipFile(BytesIO(response.content)) as zf:
+        parsed = PICSParser.parse(file=_NamedStringIO(zf.read("On_Off.xml").decode()))
+        # Must match the ORIGINAL states (as of execution creation), not the
+        # project's current (edited, now-inverted) states.
+        for number, original_enabled in original_states.items():
+            assert parsed.items[number].enabled == original_enabled
 
 
 def test_pics_export_prefers_execution_pics_over_project_pics(

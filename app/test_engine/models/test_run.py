@@ -70,9 +70,7 @@ class TestRun(TestObservable, UserPromptSupport):
         Returns execution_pics if available (temporary, per-execution PICS),
         otherwise returns project.pics (persistent PICS).
         """
-        if self.test_run_execution.execution_pics is not None:
-            return PICS.parse_obj(self.test_run_execution.execution_pics)
-        return self.project.pics
+        return self.test_run_execution.effective_pics
 
     @property
     def state(self) -> TestStateEnum:

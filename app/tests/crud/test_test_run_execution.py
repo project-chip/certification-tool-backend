@@ -23,6 +23,7 @@ from unittest.mock import call
 
 import pytest
 from faker import Faker
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -36,6 +37,7 @@ from app.schemas.test_run_execution import (
 )
 from app.tests.utils.operator import operator_base_dict
 from app.tests.utils.project import create_random_project
+from app.tests.utils.test_pics_data import create_random_pics
 from app.tests.utils.test_run_config import (
     random_test_run_config_dict,
     test_run_config_base_dict,
@@ -77,6 +79,44 @@ def test_get_test_run_execution(db: Session) -> None:
     assert test_run_execution.id == stored_test_run_execution.id
     assert test_run_execution.title == stored_test_run_execution.title
     assert test_run_execution.description == stored_test_run_execution.description
+
+
+def test_create_test_run_execution_snapshots_project_pics(db: Session) -> None:
+    """When execution_pics is not explicitly provided at creation, create()
+    must snapshot the project's current PICS into execution_pics, so
+    effective_pics reflects what was configured at run time even if the
+    project's PICS are edited later."""
+    project = create_random_project(db, config={}, pics=create_random_pics())
+
+    test_run_execution_in = TestRunExecutionCreate(
+        title=random_lower_string(), project_id=project.id
+    )
+    test_run_execution = crud.test_run_execution.create(
+        db=db, obj_in=test_run_execution_in, selected_tests={}
+    )
+
+    assert test_run_execution.execution_pics is not None
+    assert test_run_execution.execution_pics == jsonable_encoder(project.pics)
+
+
+def test_create_test_run_execution_preserves_explicit_execution_pics_override(
+    db: Session,
+) -> None:
+    """An explicitly provided execution_pics (e.g. from the CLI) must not be
+    overwritten by the project's PICS snapshot."""
+    project = create_random_project(db, config={}, pics=create_random_pics())
+    override_pics = {"clusters": {}}
+
+    test_run_execution_in = TestRunExecutionCreate(
+        title=random_lower_string(),
+        project_id=project.id,
+        execution_pics=override_pics,
+    )
+    test_run_execution = crud.test_run_execution.create(
+        db=db, obj_in=test_run_execution_in, selected_tests={}
+    )
+
+    assert test_run_execution.execution_pics == override_pics
 
 
 def test_update_test_run_execution(db: Session) -> None:

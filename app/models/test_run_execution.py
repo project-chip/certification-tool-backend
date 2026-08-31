@@ -105,8 +105,15 @@ class TestRunExecution(Base):
     def effective_pics(self) -> PICS:
         """PICS that were actually in effect for this execution.
 
-        Returns execution_pics if set (temporary, per-execution override),
-        otherwise falls back to the project's persistent PICS.
+        execution_pics is snapshotted from the project's PICS at creation
+        time (see CRUDTestRunExecution.create), unless a temporary
+        per-execution override was explicitly provided instead. Either way,
+        this reflects what was configured when the run was created, not
+        whatever the project's PICS happen to be now.
+
+        The fallback to project.pics below only applies to executions
+        created before this snapshotting was introduced (execution_pics
+        left as None).
         """
         if self.execution_pics is not None:
             return PICS.parse_obj(self.execution_pics)

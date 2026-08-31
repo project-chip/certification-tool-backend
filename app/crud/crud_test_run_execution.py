@@ -203,9 +203,21 @@ class CRUDTestRunExecution(
     ) -> TestRunExecution:
         # TODO(#123): Remove "auto first project" when UI supports project management.
         # This will ensure that a test_run_execution is always associated with a project
+        project: Optional[Project]
         if obj_in.project_id is None:
             project = self.find_or_create_first_project(db)
             obj_in.project_id = project.id
+        else:
+            project = crud_project.get(db=db, id=obj_in.project_id)
+
+        # Snapshot the project's PICS at creation time, unless a temporary
+        # per-execution override was already provided (e.g. by the CLI).
+        # Without this, TestRunExecution.effective_pics would fall back to
+        # the *live* project.pics at every future read (including PICS
+        # export), so editing the project's PICS after a run would silently
+        # rewrite what that historical run appears to have used.
+        if obj_in.execution_pics is None and project is not None:
+            obj_in.execution_pics = jsonable_encoder(project.pics)
 
         test_run_execution = super().create(db=db, obj_in=obj_in)
 
