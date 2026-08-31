@@ -587,7 +587,8 @@ def pics_export(
         id (int): ID of the TestRunExecution the PICS export is requested for
 
     Raises:
-        HTTPException: If there's no TestRunExecution with the given ID
+        HTTPException: If there's no TestRunExecution with the given ID, or
+            if no PICS were used by the execution
 
     Returns:
         StreamingResponse: .zip file containing one PICS XML file per cluster
@@ -598,7 +599,14 @@ def pics_export(
             status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
         )
 
-    zip_file = PICSWriter.write_zip(pics=test_run_execution.effective_pics)
+    effective_pics = test_run_execution.effective_pics
+    if not effective_pics.clusters:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="No PICS were used by this test run execution",
+        )
+
+    zip_file = PICSWriter.write_zip(pics=effective_pics)
 
     file_name = f"{test_run_execution.id}-{test_run_execution.title}-pics.zip"
     options: dict = {

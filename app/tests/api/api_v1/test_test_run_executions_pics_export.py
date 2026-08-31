@@ -93,18 +93,33 @@ def test_pics_export_prefers_execution_pics_over_project_pics(
         assert parsed.items["TC.S.A0000"].enabled is True
 
 
-def test_pics_export_with_no_pics_returns_empty_zip(
+def test_pics_export_with_no_pics_returns_not_found(
     client: TestClient, db: Session
 ) -> None:
-    """A project with no PICS configured results in an empty (but valid) zip."""
+    """A project with no PICS configured returns 404 instead of an empty zip."""
     project = create_random_project(db, config={})
     execution = create_random_test_run_execution(db, project_id=project.id)
 
     response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
 
-    assert response.status_code == HTTPStatus.OK
-    with ZipFile(BytesIO(response.content)) as zf:
-        assert zf.namelist() == []
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_pics_export_with_empty_execution_pics_returns_not_found(
+    client: TestClient, db: Session
+) -> None:
+    """An execution_pics override with no clusters also returns 404, even if
+    the project itself has PICS configured."""
+    project = create_random_project_with_pics(db, config={})
+    execution = create_random_test_run_execution(db, project_id=project.id)
+
+    execution.execution_pics = {"clusters": {}}
+    db.add(execution)
+    db.commit()
+
+    response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_pics_export_not_found(client: TestClient) -> None:
