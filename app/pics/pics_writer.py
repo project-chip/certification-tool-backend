@@ -64,12 +64,31 @@ class PICSWriter:
         import.
         """
         file = BytesIO()
+        used_filenames: set[str] = set()
         with ZipFile(file=file, mode="w") as zip_file:
             for cluster in pics.clusters.values():
-                filename = f"{cls.__safe_filename(cluster.name)}.xml"
+                filename = cls.__unique_filename(cluster.name, used_filenames)
+                used_filenames.add(filename)
                 zip_file.writestr(filename, cls.write_cluster(cluster))
         file.seek(0)
         return file
+
+    @classmethod
+    def __unique_filename(cls, cluster_name: str, used_filenames: set[str]) -> str:
+        """Return a sanitized "<name>.xml" filename, deduplicated against
+        names already used in this archive.
+
+        Distinct cluster names can sanitize to the same value (e.g.
+        "On/Off" and "On:Off" both become "On_Off"); without dedup, the
+        later cluster would silently overwrite the earlier one in the zip.
+        """
+        base_name = cls.__safe_filename(cluster_name)
+        filename = f"{base_name}.xml"
+        suffix = 1
+        while filename in used_filenames:
+            suffix += 1
+            filename = f"{base_name}_{suffix}.xml"
+        return filename
 
     @classmethod
     def __safe_filename(cls, cluster_name: str) -> str:

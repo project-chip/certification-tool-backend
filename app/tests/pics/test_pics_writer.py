@@ -80,3 +80,30 @@ def test_write_zip_with_empty_pics_produces_empty_archive() -> None:
 
     with ZipFile(zip_file) as zf:
         assert zf.namelist() == []
+
+
+def test_write_zip_dedupes_colliding_cluster_filenames() -> None:
+    """Distinct cluster names that sanitize to the same filename (e.g.
+    "On/Off" and "On:Off" both -> "On_Off") must not collide in the zip -
+    each cluster's data must be retrievable."""
+    pics = PICS()
+    pics.clusters["On/Off"] = PICSCluster(
+        name="On/Off", items={"OO.S.A0000": PICSItem(number="OO.S.A0000", enabled=True)}
+    )
+    pics.clusters["On:Off"] = PICSCluster(
+        name="On:Off",
+        items={"OX.S.A0001": PICSItem(number="OX.S.A0001", enabled=False)},
+    )
+
+    zip_file = PICSWriter.write_zip(pics=pics)
+
+    with ZipFile(zip_file) as zf:
+        names = zf.namelist()
+        assert len(names) == 2
+        assert len(set(names)) == 2  # no two entries share a name
+
+        parsed_clusters = {
+            PICSParser.parse(file=_NamedStringIO(zf.read(name).decode())).name
+            for name in names
+        }
+        assert parsed_clusters == {"On/Off", "On:Off"}

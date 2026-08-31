@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import json
+import re
 from http import HTTPStatus
 from typing import Any
 
@@ -47,6 +48,17 @@ from test_collections.matter.sdk_tests.support.chip.chip_server import ChipServe
 router = APIRouter()
 
 DEFAULT_CLI_PROJECT_NAME = "CLI Project Execution"
+
+
+def __safe_filename_component(value: str) -> str:
+    """Sanitize a value for safe use as part of a Content-Disposition filename.
+
+    Keeps only alphanumeric characters, hyphens and underscores, replacing
+    everything else (including quotes and CR/LF) with "_". This avoids
+    header injection / malformed headers when the value originates from
+    user-controlled data (e.g. an execution title set via rename).
+    """
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", value)
 
 
 @router.get("/", response_model=list[schemas.TestRunExecutionWithStats])
@@ -566,7 +578,18 @@ def download_grouped_log(
                     "example": 'attachment; filename="archive.zip"',
                 }
             },
-        }
+        },
+        "404": {
+            "description": ("Test Run Execution not found, or no PICS were used by it"),
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {"detail": {"type": "string"}},
+                    }
+                }
+            },
+        },
     },
 )
 def pics_export(
@@ -608,7 +631,8 @@ def pics_export(
 
     zip_file = PICSWriter.write_zip(pics=effective_pics)
 
-    file_name = f"{test_run_execution.id}-{test_run_execution.title}-pics.zip"
+    safe_title = __safe_filename_component(test_run_execution.title)
+    file_name = f"{test_run_execution.id}-{safe_title}-pics.zip"
     options: dict = {
         "media_type": "application/zip",
         "headers": {"Content-Disposition": f'attachment; filename="{file_name}"'},

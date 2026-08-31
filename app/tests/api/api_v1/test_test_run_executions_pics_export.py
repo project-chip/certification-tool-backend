@@ -127,3 +127,23 @@ def test_pics_export_not_found(client: TestClient) -> None:
     response = client.get(f"{BASE_URL}/999999/pics_export")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_pics_export_sanitizes_title_in_content_disposition(
+    client: TestClient, db: Session
+) -> None:
+    """A title containing quotes/CR/LF must not break or inject into the
+    Content-Disposition header."""
+    project = create_random_project_with_pics(db, config={})
+    execution = create_random_test_run_execution(
+        db, project_id=project.id, title='evil" \r\nX-Injected: true'
+    )
+
+    response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
+
+    assert response.status_code == HTTPStatus.OK
+    content_disposition = response.headers["content-disposition"]
+    assert "\r" not in content_disposition
+    assert "\n" not in content_disposition
+    assert content_disposition.count('"') == 2
+    assert "X-Injected" not in response.headers
