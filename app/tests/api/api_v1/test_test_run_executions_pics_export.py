@@ -21,10 +21,8 @@ from zipfile import ZipFile
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app import crud
 from app.core.config import settings
 from app.pics.pics_parser import PICSParser
-from app.schemas.project import ProjectUpdate
 from app.tests.utils.project import create_random_project
 from app.tests.utils.test_pics_data import (
     create_random_pics,
@@ -88,11 +86,15 @@ def test_pics_export_reflects_pics_at_execution_time_not_current_project_pics(
     execution = create_random_test_run_execution(db, project_id=project.id)
 
     # Edit the project's PICS *after* the execution was created: flip every
-    # item to the opposite of its original state.
+    # item to the opposite of its original state. Mutate the model directly
+    # (rather than crud.project.update, which also validates/requires the
+    # program config and isn't what's under test here).
     edited_pics = create_random_pics()
     for item in edited_pics.clusters["On/Off"].items.values():
         item.enabled = not original_states[item.number]
-    crud.project.update(db=db, db_obj=project, obj_in=ProjectUpdate(pics=edited_pics))
+    project.pics = edited_pics
+    db.add(project)
+    db.commit()
 
     response = client.get(f"{BASE_URL}/{execution.id}/pics_export")
 
