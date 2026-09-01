@@ -136,7 +136,7 @@ def create_test_run_execution_with_some_test_cases(
                 "SampleTestSuite1": {"TCSS1001": 1, "TCSS1002": 2, "TCSS1003": 3}
             }
         },
-        **kwargs
+        **kwargs,
     )
 
 
