@@ -79,7 +79,7 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 # Ignore SDK repo in python intelisense in VSCode
