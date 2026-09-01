@@ -51,8 +51,8 @@ RUN pip install psycopg2_binary==2.9.1
 RUN pip install build lark stringcase
 
 # Install Poetry
-ENV POETRY_VERSION=1.6.1
-ENV POETRY_HOME=/opt/poetry 
+ENV POETRY_VERSION=2.4.2
+ENV POETRY_HOME=/opt/poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     cd /usr/local/bin && \
     ln -s /opt/poetry/bin/poetry && \
@@ -66,7 +66,7 @@ RUN curl -sSL https://get.docker.com/ | sh
 # We copy install dependencies before copying all app source to reuse the dependency install step in docker.
 COPY ./pyproject.toml ./poetry.lock* /app/
 # ARG INSTALL_DEV=false
-RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --no-dev ; fi"
+RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --without dev ; fi"
 
 # # Copy Source files
 COPY . /app
