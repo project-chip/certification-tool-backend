@@ -61,6 +61,7 @@ class DutPairingModeEnum(str, Enum):
     ON_NETWORK = "onnetwork"
     BLE_WIFI = "ble-wifi"
     NFC_WIFI = "nfc-wifi"
+    NFC_ETHERNET = "nfc-ethernet"
     BLE_THREAD = "ble-thread"
     WIFIPAF_WIFI = "wifipaf-wifi"
     NFC_THREAD = "nfc-thread"
@@ -69,5 +70,6 @@ class DutPairingModeEnum(str, Enum):
 
 NFC_PAIRING_MODES = {
     DutPairingModeEnum.NFC_WIFI.value,
+    DutPairingModeEnum.NFC_ETHERNET.value,
     DutPairingModeEnum.NFC_THREAD.value,
 }

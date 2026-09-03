@@ -355,7 +355,7 @@ def test_create_config_matter_with_non_thread_modes_no_ba_params_succeeds(
     assert config_matter.dut_config.pairing_mode == pairing_mode
 
 
-@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
+@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi", "nfc-ethernet"])
 def test_create_config_matter_nfc_without_discriminator_and_setup_code_succeeds(
     pairing_mode: str,
 ) -> None:
@@ -394,7 +394,7 @@ def test_create_config_matter_nfc_without_discriminator_and_setup_code_succeeds(
     assert config_matter.dut_config.setup_code is None
 
 
-@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
+@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi", "nfc-ethernet"])
 def test_create_config_matter_nfc_with_discriminator_succeeds(
     pairing_mode: str,
 ) -> None:
@@ -430,7 +430,7 @@ def test_create_config_matter_nfc_with_discriminator_succeeds(
     assert config_matter.dut_config.discriminator == "3840"
 
 
-@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi"])
+@pytest.mark.parametrize("pairing_mode", ["nfc-thread", "nfc-wifi", "nfc-ethernet"])
 def test_create_config_matter_nfc_with_setup_code_succeeds(
     pairing_mode: str,
 ) -> None:
