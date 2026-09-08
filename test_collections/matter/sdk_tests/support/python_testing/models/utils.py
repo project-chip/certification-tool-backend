@@ -207,6 +207,17 @@ def __copy_admin_storage_file(
     )
 
 
+def capture_admin_storage_file(
+    config: TestEnvironmentConfigMatter,
+    logger: loguru.Logger,
+) -> None:
+    """Re-capture admin_storage.json from the still-running container to the host
+    snapshot, so the snapshot reflects the message counters as they stood at the end
+    of this run rather than only as they stood right after the last commissioning.
+    """
+    __copy_admin_storage_file(config, logger)
+
+
 def log_test_output_file(logger: loguru.Logger) -> None:
     """Log the entire content of test_output.txt file.
 
@@ -222,7 +233,7 @@ def log_test_output_file(logger: loguru.Logger) -> None:
         file_output_path = sdk_tests_path / TEST_OUTPUT_FILE_PATH
 
         if file_output_path.exists():
-            with open(file_output_path, "r") as f:
+            with open(file_output_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 if content.strip():  # Only log if there's actual content
                     logger.log(PYTHON_TEST_LEVEL, content)
@@ -262,7 +273,10 @@ async def commission_device(
     logger.info("---- End of commissioning test output ----")
 
     # Copy admin_storage.json file from container, in case the user wants to
-    # reuse this information in the next execution
+    # reuse this information in the next execution. This duplicates the capture
+    # PythonTestSuite.cleanup() does unconditionally at the end of the suite run,
+    # but is kept intentionally: if the container is torn down abnormally before
+    # cleanup() runs, this is the only snapshot that survives.
     __copy_admin_storage_file(config, logger)
 
 
@@ -274,15 +288,18 @@ async def __thread_dataset_hex(
     if isinstance(thread_config, ThreadExternalConfig):
         hex_dataset = thread_config.operational_dataset_hex
     elif isinstance(thread_config, ThreadAutoConfig):
-        border_router: ThreadBorderRouter = ThreadBorderRouter()
+        if thread_config.operational_dataset_hex:
+            hex_dataset = thread_config.operational_dataset_hex
+        else:
+            border_router: ThreadBorderRouter = ThreadBorderRouter()
 
-        # Expecting false as the OTBR is started in the suite's setup.
-        # Either way, if true, we try to start and configure the container in case
-        # there's no OTBR application running.
-        if await border_router.start_device(thread_config):
-            await border_router.form_thread_topology()
+            # Expecting false as the OTBR is started in the suite's setup.
+            # Either way, if true, we try to start and configure the container in case
+            # there's no OTBR application running.
+            if await border_router.start_device(thread_config):
+                await border_router.form_thread_topology()
 
-        hex_dataset = border_router.active_dataset
+            hex_dataset = border_router.active_dataset
 
     return hex_dataset
 

@@ -38,11 +38,30 @@ class TestUpdateTypeEnum(str, Enum):
     TEST_CASE = "Test Case"
 
 
+# Maximum number of log entries broadcast in a single websocket message. A
+# dense burst of log lines (e.g. a large conformance report) can otherwise
+# accumulate thousands of entries into one flush, producing a single
+# multi-MB message whose synchronous JSON serialization (see
+# SocketConnectionManager.broadcast) has no yield point. Splitting into
+# multiple smaller messages, sent in order within a single task (see
+# __handle_test_run_log), lets the event loop interleave other work (e.g.
+# websocket keepalives) between chunks.
+LOG_RECORDS_BROADCAST_CHUNK_SIZE = 200
+
+
 class TestUIObserver(Observer):
     __test__ = False
-    __async_updates: list[Task] = []
-    __last_seen_run_state: Optional[TestStateEnum] = None
-    __last_seen_run_log_len = 0
+
+    def __init__(self) -> None:
+        # Instance state - must not be class-level mutable defaults. A list
+        # declared at class scope is shared across every TestUIObserver
+        # instance until an instance reassigns it; TestRunner creates a
+        # fresh instance per run, so a shared, ever-growing task list would
+        # leak Task references (and their retained coroutine state) across
+        # every run for the life of the process.
+        self.__async_updates: list[Task] = []
+        self.__last_seen_run_state: Optional[TestStateEnum] = None
+        self.__last_seen_run_log_len = 0
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -81,7 +100,11 @@ class TestUIObserver(Observer):
         log_len = len(test_run.log)
         if log_len > self.__last_seen_run_log_len:
             new_entries = test_run.log[self.__last_seen_run_log_len :]
-            self.__send_log_records_message(new_entries)
+            chunks = [
+                new_entries[i : i + LOG_RECORDS_BROADCAST_CHUNK_SIZE]
+                for i in range(0, len(new_entries), LOG_RECORDS_BROADCAST_CHUNK_SIZE)
+            ]
+            self.__send_log_records_messages_in_order(chunks)
             self.__last_seen_run_log_len = log_len
 
     def __onTestSuiteUpdate(self, observable: TestSuite) -> None:
@@ -138,13 +161,33 @@ class TestUIObserver(Observer):
             }
         )
 
-    def __send_log_records_message(self, log_entries: list[TestRunLogEntry]) -> None:
-        self.__send_message(
-            {
-                MessageKeysEnum.TYPE: MessageTypeEnum.TEST_LOG_RECORDS,
-                MessageKeysEnum.PAYLOAD: log_entries,
-            }
-        )
+    def __send_log_records_messages_in_order(
+        self, chunks: list[list[TestRunLogEntry]]
+    ) -> None:
+        """Broadcast each chunk of one flush as its own TEST_LOG_RECORDS
+        message, in order.
+
+        Scheduled as a single task for the whole flush, not one task per
+        chunk: chunks must be delivered in order, but independently
+        scheduled tasks don't guarantee that - SocketConnectionManager.
+        broadcast()'s websocket.send_text() is genuine async I/O that can
+        yield under backpressure, which could let a later chunk's task
+        complete first. Awaiting each chunk's broadcast sequentially within
+        one task guarantees order while still yielding the event loop
+        between chunks (each await is itself a yield point).
+        """
+
+        async def _send_in_order() -> None:
+            for chunk in chunks:
+                await socket_connection_manager.broadcast(
+                    {
+                        MessageKeysEnum.TYPE: MessageTypeEnum.TEST_LOG_RECORDS,
+                        MessageKeysEnum.PAYLOAD: chunk,
+                    }
+                )
+
+        task = create_task(_send_in_order())
+        self.__async_updates.append(task)
 
     def __send_message(self, message: dict[str, Any]) -> None:
         # enqueue update

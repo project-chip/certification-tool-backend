@@ -31,6 +31,7 @@ from app.container_manager.docker_shell_commands import (
     docker_kill_command,
     docker_rm_command,
     docker_run_command,
+    docker_stop_command,
 )
 from app.core.config import settings
 from app.singleton import Singleton
@@ -55,13 +56,35 @@ class ContainerManager(object, metaclass=Singleton):
 
         return container
 
-    def destroy(self, container: Container) -> None:
+    def destroy(self, container: Container, graceful: bool = False) -> None:
+        """Stop and remove a container.
+
+        By default this kills the container immediately (existing behavior, used by
+        most callers that don't need the process inside to shut down cleanly).
+        Pass `graceful=True` to try a normal stop (SIGTERM, falling back to SIGKILL
+        after Docker's stop timeout) first, so the process inside has a chance to
+        release any host resources it holds (e.g. a serial device) before removal.
+        """
         if self.is_running(container):
-            # Log equivalent shell command for kill
-            if settings.ENABLE_CONTAINER_LOGS:
-                shell_cmd = docker_kill_command(container.name)
-                logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
-            container.kill()
+            if graceful:
+                if settings.ENABLE_CONTAINER_LOGS:
+                    shell_cmd = docker_stop_command(container.name)
+                    logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
+                try:
+                    container.stop()
+                except docker.errors.APIError as error:
+                    logger.warning(
+                        f"Graceful stop failed for container '{container.name}', "
+                        f"falling back to kill: {error}"
+                    )
+                    graceful = False
+
+            if not graceful:
+                # Log equivalent shell command for kill
+                if settings.ENABLE_CONTAINER_LOGS:
+                    shell_cmd = docker_kill_command(container.name)
+                    logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
+                container.kill()
 
         # Log equivalent shell command for remove
         if settings.ENABLE_CONTAINER_LOGS:
@@ -75,6 +98,30 @@ class ContainerManager(object, metaclass=Singleton):
         except NotFound:
             logger.info(f"Did not find container by id or name: {id_or_name}.")
             return None
+
+    def remove_containers_for_image(self, docker_image_tag: str) -> None:
+        """Gracefully stop and remove any (running or stopped) container created
+        from the given image.
+
+        Used to clear out containers that a previous, no-longer-tracked instance of
+        this process left behind (e.g. after a crash or a failed start_device()
+        call), which would otherwise hold onto host resources (like an RCP serial
+        device) and block a new container from starting.
+
+        Note: this matches ANY container built from this image, host-wide, not just
+        ones this process created — acceptable here because these OTBR images are
+        dedicated to Test Harness use, but worth keeping in mind if this is ever
+        reused for a shared/general-purpose image.
+        """
+        stale_containers = self.__client.containers.list(
+            all=True, filters={"ancestor": docker_image_tag}
+        )
+        for container in stale_containers:
+            logger.warning(
+                f"Removing leftover container '{container.name}' "
+                f"({container.short_id}) for image {docker_image_tag}."
+            )
+            self.destroy(container, graceful=True)
 
     def is_running(self, container: Container) -> bool:
         # NOTE: we need to get a new container reference to get updated status.

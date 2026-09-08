@@ -20,7 +20,7 @@ from unittest import mock
 import pytest
 from fastapi import WebSocket
 from starlette.websockets import WebSocketState
-from websockets.exceptions import ConnectionClosedOK
+from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
 from app.constants.shared_constants import MessageKeysEnum, MessageTypeEnum
 from app.constants.websockets_constants import (
@@ -198,6 +198,39 @@ async def test_broadcast_failed_for_ConnectionClosed() -> None:
     await socket_connection_manager.broadcast(message=test_message)
     socket.send_text.assert_called_once_with(test_message)
     socket.close.assert_called_once()
+
+    # Cleanup
+    socket_connection_manager.active_connections.clear()
+
+
+@pytest.mark.asyncio
+async def test_broadcast_failed_for_ConnectionClosedError() -> None:
+    """
+    Tests that broadcast() also handles ConnectionClosedError (an abrupt
+    drop, e.g. from a missed keepalive ping under event-loop stall) the same
+    way as ConnectionClosedOK: the socket is closed and the dead connection
+    is removed from active_connections so it isn't retried for the rest of
+    the process's life (regression test for issue #1072).
+    """
+    test_message = "Test"
+    socket_connection_manager.active_connections.clear()
+
+    # Add a websocket object to the "active_connections" list to imitate
+    # an existing active connection
+    socket = mock.MagicMock(spec=WebSocket)
+    socket.application_state = WebSocketState.CONNECTED
+    connection = WebSocketConnection(socket, WebSocketTypeEnum.MAIN)
+
+    socket_connection_manager.active_connections.append(connection)
+    assert len(socket_connection_manager.active_connections) == 1
+
+    # Force an abrupt connection-closed exception
+    socket.send_text.side_effect = ConnectionClosedError(rcvd=None, sent=None)
+
+    await socket_connection_manager.broadcast(message=test_message)
+    socket.send_text.assert_called_once_with(test_message)
+    socket.close.assert_called_once()
+    assert connection not in socket_connection_manager.active_connections
 
     # Cleanup
     socket_connection_manager.active_connections.clear()

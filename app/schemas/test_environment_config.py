@@ -36,6 +36,7 @@ class ThreadAutoConfig(BaseModel):
     otbr_docker_image: Optional[str]
     ba_host: Optional[str] = None
     ba_port: Optional[int] = None
+    operational_dataset_hex: Optional[str] = None
 
 
 class TestEnvironmentConfigError(Exception):

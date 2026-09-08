@@ -35,6 +35,13 @@ from .test_step import TestStep
 OUTCOME_TIMEOUT_S = 60 * 10  # Seconds
 LOG_UPLOAD_TIMEOUT_S = 60 * 10  # Seconds
 
+# Number of lines from an uploaded manual log to combine into a single log entry.
+# Uploaded logs can have hundreds of thousands of lines; logging (and therefore
+# broadcasting to the UI websocket and persisting to the DB) one entry per line
+# stalls the event loop for long enough that the websocket's keepalive ping/pong
+# times out and the connection is dropped (see GitHub issue #1062).
+MANUAL_LOG_CHUNK_LINES = 500
+
 
 class TestError(Exception):
     """Raised when an error occurs during execution."""
@@ -197,16 +204,28 @@ class ManualLogUploadStep(TestStep, UserPromptSupport):
 
         logger.info(f"Uploading manual log: {file.filename}")
         logger.info("---- Start of Manual Log ----")
+        had_invalid_utf8 = False
         with file.file as f:
+            chunk: list[str] = []
             for line in f:
                 try:
-                    logger.info(line.decode("utf-8").strip())
+                    chunk.append(line.decode("utf-8").rstrip("\r\n"))
                 except UnicodeDecodeError:
-                    logger.warning(
-                        "WARNING: The following line contained invalid UTF-8."
-                        " Some content was replaced with: �"
-                    )
-                    logger.info(line.decode("utf-8", errors="replace").strip())
+                    had_invalid_utf8 = True
+                    chunk.append(line.decode("utf-8", errors="replace").rstrip("\r\n"))
+
+                if len(chunk) >= MANUAL_LOG_CHUNK_LINES:
+                    logger.info("\n".join(chunk))
+                    chunk = []
+
+            if chunk:
+                logger.info("\n".join(chunk))
+
+        if had_invalid_utf8:
+            logger.warning(
+                "WARNING: The uploaded log contained lines with invalid UTF-8."
+                " Some content was replaced with: �"
+            )
         logger.info("---- End of Manual Log ----")
 
 

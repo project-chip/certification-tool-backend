@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -98,8 +99,14 @@ def _parse_python_script_to_test_case_declarations(
     ]
 
 
+class CollectionType(Enum):
+    NON_MANDATORY = 0
+    MANDATORY = 1
+    ALL = 2
+
+
 def __parse_python_tests(
-    python_test_version: str, mandatory: bool, tests_file_path: Path
+    python_test_version: str, collection_type: CollectionType, tests_file_path: Path
 ) -> list[PythonSuiteDeclaration]:
     suites = _init_test_suites(python_test_version)
 
@@ -109,32 +116,47 @@ def __parse_python_tests(
 
     for test_case in test_cases:
         python_test_type = test_case.class_ref.python_test.python_test_type
-        if mandatory:
-            if python_test_type == PythonTestType.MANDATORY:
-                suites[SuiteType.MANDATORY].add_test_case(test_case)
-        else:
-            if python_test_type == PythonTestType.COMMISSIONING:
-                suites[SuiteType.COMMISSIONING].add_test_case(test_case)
-            elif python_test_type == PythonTestType.NO_COMMISSIONING:
-                suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
-            elif python_test_type != PythonTestType.MANDATORY:
-                suites[SuiteType.LEGACY].add_test_case(test_case)
+        if (
+            python_test_type == PythonTestType.MANDATORY
+            and collection_type != CollectionType.NON_MANDATORY
+        ):
+            suites[SuiteType.MANDATORY].add_test_case(test_case)
+        elif (
+            python_test_type == PythonTestType.COMMISSIONING
+            and collection_type != CollectionType.MANDATORY
+        ):
+            suites[SuiteType.COMMISSIONING].add_test_case(test_case)
+        elif (
+            python_test_type == PythonTestType.NO_COMMISSIONING
+            and collection_type != CollectionType.MANDATORY
+        ):
+            suites[SuiteType.NO_COMMISSIONING].add_test_case(test_case)
+        elif (
+            python_test_type != PythonTestType.MANDATORY
+            and collection_type != CollectionType.MANDATORY
+        ):
+            suites[SuiteType.LEGACY].add_test_case(test_case)
 
     return [s for s in list(suites.values()) if len(s.test_cases) != 0]
 
 
 def __sdk_python_test_collection(
-    name: str, python_test_folder: SDKTestFolder, mandatory: bool, tests_file_path: Path
+    name: str,
+    python_test_folder: SDKTestFolder,
+    collection_type: CollectionType,
+    tests_file_path: Path,
 ) -> PythonCollectionDeclaration:
     collection = PythonCollectionDeclaration(
-        name=name, folder=python_test_folder, mandatory=mandatory
+        name=name,
+        folder=python_test_folder,
+        mandatory=collection_type == CollectionType.MANDATORY,
     )
 
     python_test_version = python_test_folder.version
 
     suites = __parse_python_tests(
         python_test_version=python_test_version,
-        mandatory=mandatory,
+        collection_type=collection_type,
         tests_file_path=tests_file_path,
     )
 
@@ -153,7 +175,7 @@ def sdk_python_test_collection(
     return __sdk_python_test_collection(
         name="SDK Python Tests",
         python_test_folder=python_test_folder,
-        mandatory=False,
+        collection_type=CollectionType.NON_MANDATORY,
         tests_file_path=tests_file_path,
     )
 
@@ -166,7 +188,7 @@ def sdk_mandatory_python_test_collection(
     return __sdk_python_test_collection(
         name="Mandatory SDK Python Tests",
         python_test_folder=python_test_folder,
-        mandatory=True,
+        collection_type=CollectionType.MANDATORY,
         tests_file_path=tests_file_path,
     )
 
@@ -213,7 +235,9 @@ def _create_custom_python_test_collection(
     )
 
     suites = __parse_python_tests(
-        python_test_version="custom", mandatory=False, tests_file_path=tests_file_path
+        python_test_version="custom",
+        collection_type=CollectionType.ALL,
+        tests_file_path=tests_file_path,
     )
 
     for suite in suites:
