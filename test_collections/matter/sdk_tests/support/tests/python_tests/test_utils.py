@@ -30,7 +30,6 @@ from ...exec_run_in_container import ExecResultExtended
 from ...python_testing.models.utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
-    ADMIN_STORAGE_FILE_HOST,
     DUTCommissioningError,
     PromptOption,
     _container_logs_enabled,
