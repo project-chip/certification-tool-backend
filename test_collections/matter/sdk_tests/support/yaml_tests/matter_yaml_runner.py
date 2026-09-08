@@ -109,7 +109,10 @@ class MatterYAMLRunner(metaclass=Singleton):
         )
 
     async def setup(
-        self, server_type: ChipServerType, use_paa_certs: bool = False
+        self,
+        server_type: ChipServerType,
+        use_paa_certs: bool = False,
+        enable_container_logs: Optional[bool] = None,
     ) -> None:
         self.__pics_file_created = False
 
@@ -117,11 +120,13 @@ class MatterYAMLRunner(metaclass=Singleton):
         web_socket_config.server_address = self.__get_gateway_ip()
         self.__test_harness_runner = WebSocketRunner(config=web_socket_config)
 
-        self.__chip_tool_log = await self.chip_server.start(server_type, use_paa_certs)
+        self.__chip_tool_log = await self.chip_server.start(
+            server_type, use_paa_certs, enable_container_logs
+        )
 
-    async def stop(self) -> None:
+    async def stop(self, enable_container_logs: Optional[bool] = None) -> None:
         await self.stop_runner()
-        await self.chip_server.stop()
+        await self.chip_server.stop(enable_container_logs)
 
     def __get_gateway_ip(self) -> str:
         """

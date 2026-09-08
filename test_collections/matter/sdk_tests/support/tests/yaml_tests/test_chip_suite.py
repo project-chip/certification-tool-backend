@@ -204,13 +204,18 @@ async def test_pair_with_dut_thread_with_external_config_success() -> None:
         target=test_suite.runner,
         attribute="pairing_thread",
         return_value=True,
-    ) as mock_pairing_thread:
+    ) as mock_pairing_thread, mock.patch(
+        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
+        ".settings.ENABLE_CONTAINER_LOGS",
+        False,
+    ):
         result = await test_suite._ChipSuite__pair_with_dut_thread()
 
     assert result is True
     mock_gen_code.assert_called_once_with(
         discriminator="3840",
         setup_pin_code="20202021",
+        enable_container_logs=False,
     )
     mock_pairing_thread.assert_called_once_with(
         hex_dataset="0e080000000000010000000300001335060004001fffe002"
@@ -279,7 +284,11 @@ async def test_pair_with_dut_thread_with_auto_config_success() -> None:
         target=test_suite.runner,
         attribute="pairing_thread",
         return_value=True,
-    ) as mock_pairing_thread:
+    ) as mock_pairing_thread, mock.patch(
+        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
+        ".settings.ENABLE_CONTAINER_LOGS",
+        False,
+    ):
         result = await test_suite._ChipSuite__pair_with_dut_thread()
 
     assert result is True
@@ -288,6 +297,7 @@ async def test_pair_with_dut_thread_with_auto_config_success() -> None:
     mock_gen_code.assert_called_once_with(
         discriminator="3840",
         setup_pin_code="20202021",
+        enable_container_logs=False,
     )
     mock_pairing_thread.assert_called_once_with(
         hex_dataset="c0ffee123456",
@@ -422,3 +432,67 @@ async def test_pair_with_dut_thread_pairing_fails() -> None:
 
     assert result is False
     mock_pairing_thread.assert_called_once()
+
+
+def _config_dict_with_th_config(th_config: dict) -> dict:
+    return {
+        "network": {
+            "fabric_id": "0",
+            "thread": {
+                "operational_dataset_hex": "0e080000000000010000000300001335060004001ff"
+                "fe00208fedcba9876543210070800000000000000050800000000000000030d4f70656"
+                "e54687265616444656d6f01021234041011223344556677889900aabbccddeeff000c0"
+                "402a0f7f8",
+                "ba_host": "127.0.0.1",
+                "ba_port": 5684,
+            },
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+        },
+        "dut_config": {
+            "pairing_mode": "thread-meshcop",
+            "setup_code": "20202021",
+            "discriminator": "3840",
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+        "test_parameters": None,
+        "th_config": th_config,
+    }
+
+
+@pytest.mark.parametrize(
+    "th_config_value, env_value, expected",
+    [
+        (True, False, True),  # config override True beats env False
+        (False, True, False),  # config override False beats env True
+        (None, True, True),  # unset config defers to env True
+        (None, False, False),  # unset config defers to env False
+    ],
+)
+def test_container_logs_enabled_matrix(th_config_value, env_value, expected) -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    config_dict = _config_dict_with_th_config(
+        {"enable_container_logs": th_config_value}
+    )
+    test_suite._ChipSuite__config_matter = TestEnvironmentConfigMatter(**config_dict)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = env_value
+        assert test_suite._container_logs_enabled() is expected
+
+
+def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    config_dict = _config_dict_with_th_config({})
+    del config_dict["th_config"]
+    test_suite._ChipSuite__config_matter = TestEnvironmentConfigMatter(**config_dict)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = True
+        assert test_suite._container_logs_enabled() is True

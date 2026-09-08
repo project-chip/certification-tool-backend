@@ -822,6 +822,41 @@ def test_realtime_logs_enabled_defers_to_env_when_th_config_absent() -> None:
         assert instance._realtime_logs_enabled() is True
 
 
+@pytest.mark.parametrize(
+    "th_config_value, env_value, expected",
+    [
+        (True, False, True),  # config override True beats env False
+        (False, True, False),  # config override False beats env True
+        (None, True, True),  # unset config defers to env True
+        (None, False, False),  # unset config defers to env False
+    ],
+)
+def test_container_logs_enabled_matrix(
+    th_config_value: Optional[bool], env_value: bool, expected: bool
+) -> None:
+    instance = _instance_with_project_config(
+        {"th_config": {"enable_container_logs": th_config_value}}
+    )
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = env_value
+        assert instance._container_logs_enabled() is expected
+
+
+def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+    instance = _instance_with_project_config({})
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = True
+        assert instance._container_logs_enabled() is True
+
+
 def test_extract_logs_for_step_matches_composite_label() -> None:
     """Regression test for issue #1072: composite/alphanumeric step labels
     (e.g. from privilege-level loops such as TC-ACE-2.4) must be matched

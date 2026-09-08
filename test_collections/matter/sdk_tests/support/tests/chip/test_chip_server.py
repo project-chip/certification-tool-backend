@@ -100,7 +100,11 @@ async def test_start_waiting_failure() -> None:
         await chip_server.start(server_type)
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
+        expected_command,
+        prefix=expected_prefix,
+        is_stream=True,
+        is_socket=False,
+        enable_container_logs=None,
     )
     assert chip_server._ChipServer__server_logs == mock_result.output
     assert chip_server._ChipServer__chip_server_id == mock_result.exec_id
@@ -136,7 +140,11 @@ async def test_start_chip_tool() -> None:
         await chip_server.start(server_type, use_paa_certs=False)
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
+        expected_command,
+        prefix=expected_prefix,
+        is_stream=True,
+        is_socket=False,
+        enable_container_logs=None,
     )
     assert chip_server._ChipServer__server_logs == mock_result.output
     assert chip_server._ChipServer__chip_server_id == mock_result.exec_id
@@ -177,7 +185,11 @@ async def test_start_chip_tool_using_paa_certs() -> None:
         await chip_server.start(server_type, use_paa_certs=True)
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
+        expected_command,
+        prefix=expected_prefix,
+        is_stream=True,
+        is_socket=False,
+        enable_container_logs=None,
     )
     assert chip_server._ChipServer__server_logs == mock_result.output
     assert chip_server._ChipServer__chip_server_id == mock_result.exec_id
@@ -214,7 +226,11 @@ async def test_start_chip_app() -> None:
         await chip_server.start(server_type, use_paa_certs=False)
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
+        expected_command,
+        prefix=expected_prefix,
+        is_stream=True,
+        is_socket=False,
+        enable_container_logs=None,
     )
     assert chip_server._ChipServer__server_logs == mock_result.output
     assert chip_server._ChipServer__chip_server_id == mock_result.exec_id
@@ -255,7 +271,11 @@ async def test_start_chip_app_using_paa_certs() -> None:
         await chip_server.start(server_type, use_paa_certs=True)
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=expected_prefix, is_stream=True, is_socket=False
+        expected_command,
+        prefix=expected_prefix,
+        is_stream=True,
+        is_socket=False,
+        enable_container_logs=None,
     )
     assert chip_server._ChipServer__server_logs == mock_result.output
     assert chip_server._ChipServer__server_started is True

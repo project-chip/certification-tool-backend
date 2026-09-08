@@ -16,7 +16,8 @@
 import asyncio
 import io
 import tarfile
-from asyncio import TimeoutError, wait_for
+from asyncio import TimeoutError as AsyncioTimeoutError
+from asyncio import wait_for
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -42,21 +43,40 @@ from app.test_engine.logger import test_engine_logger as logger
 container_bring_up_timeout = 5  # Seconds
 
 
+def resolve_container_logs_enabled(override: Optional[bool] = None) -> bool:
+    """Resolve whether container-operation logging is enabled.
+
+    A per-project `th_config.enable_container_logs` override, when explicitly
+    resolved by a caller and passed in here, takes precedence over the
+    instance-wide ENABLE_CONTAINER_LOGS environment variable default.
+    """
+    return settings.ENABLE_CONTAINER_LOGS if override is None else override
+
+
 class ContainerManager(object, metaclass=Singleton):
     def __init__(self) -> None:
         self.__client = docker.from_env()
 
     async def create_container(
-        self, docker_image_tag: str, parameters: Dict = {}
+        self,
+        docker_image_tag: str,
+        parameters: Dict = {},
+        enable_container_logs: Optional[bool] = None,
     ) -> Container:
-        container = self.__run_new_container(docker_image_tag, parameters)
+        logs_enabled = resolve_container_logs_enabled(enable_container_logs)
+        container = self.__run_new_container(docker_image_tag, parameters, logs_enabled)
         await self.__container_ready(container)
-        if settings.ENABLE_CONTAINER_LOGS:
+        if logs_enabled:
             logger.info(f"Container running for {docker_image_tag}")
 
         return container
 
-    def destroy(self, container: Container, graceful: bool = False) -> None:
+    def destroy(
+        self,
+        container: Container,
+        graceful: bool = False,
+        enable_container_logs: Optional[bool] = None,
+    ) -> None:
         """Stop and remove a container.
 
         By default this kills the container immediately (existing behavior, used by
@@ -65,9 +85,10 @@ class ContainerManager(object, metaclass=Singleton):
         after Docker's stop timeout) first, so the process inside has a chance to
         release any host resources it holds (e.g. a serial device) before removal.
         """
+        logs_enabled = resolve_container_logs_enabled(enable_container_logs)
         if self.is_running(container):
             if graceful:
-                if settings.ENABLE_CONTAINER_LOGS:
+                if logs_enabled:
                     shell_cmd = docker_stop_command(container.name)
                     logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
                 try:
@@ -81,13 +102,13 @@ class ContainerManager(object, metaclass=Singleton):
 
             if not graceful:
                 # Log equivalent shell command for kill
-                if settings.ENABLE_CONTAINER_LOGS:
+                if logs_enabled:
                     shell_cmd = docker_kill_command(container.name)
                     logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
                 container.kill()
 
         # Log equivalent shell command for remove
-        if settings.ENABLE_CONTAINER_LOGS:
+        if logs_enabled:
             shell_cmd = docker_rm_command(container.name, force=True)
             logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
         container.remove(force=True)
@@ -156,11 +177,13 @@ class ContainerManager(object, metaclass=Singleton):
         return None
 
     # Internal Methods
-    def __run_new_container(self, docker_image_tag: str, parameters: Dict) -> Container:
+    def __run_new_container(
+        self, docker_image_tag: str, parameters: Dict, enable_container_logs: bool
+    ) -> Container:
         # Create containers
         try:
             # Log equivalent shell command
-            if settings.ENABLE_CONTAINER_LOGS:
+            if enable_container_logs:
                 shell_cmd = docker_run_command(docker_image_tag, parameters)
                 logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 
@@ -177,7 +200,7 @@ class ContainerManager(object, metaclass=Singleton):
             await wait_for(
                 self.__container_started(container), container_bring_up_timeout
             )
-        except TimeoutError as e:
+        except AsyncioTimeoutError as e:
             logger.error(
                 f"Container did start timed out in {container_bring_up_timeout}s"
             )
@@ -201,9 +224,10 @@ class ContainerManager(object, metaclass=Singleton):
         container_file_path: Path,
         destination_path: Path,
         destination_file_name: str,
+        enable_container_logs: Optional[bool] = None,
     ) -> None:
         try:
-            if settings.ENABLE_CONTAINER_LOGS:
+            if resolve_container_logs_enabled(enable_container_logs):
                 logger.info(
                     "### File Copy: CONTAINER->HOST"
                     f" From Container Path: {str(container_file_path)}"
@@ -237,9 +261,10 @@ class ContainerManager(object, metaclass=Singleton):
         container: Container,
         host_file_path: Path,
         destination_container_path: Path,
+        enable_container_logs: Optional[bool] = None,
     ) -> None:
         try:
-            if settings.ENABLE_CONTAINER_LOGS:
+            if resolve_container_logs_enabled(enable_container_logs):
                 logger.info(
                     "### File Copy: HOST->CONTAINER"
                     f" From Host Path: {str(host_file_path)}"

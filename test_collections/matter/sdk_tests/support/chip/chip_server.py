@@ -99,6 +99,7 @@ class ChipServer(metaclass=Singleton):
         version: int = 0,
         vendor_id: int = 0,
         product_id: int = 0,
+        enable_container_logs: Optional[bool] = None,
     ) -> str:
         """Generate manual pairing code using chip-tool payload command.
 
@@ -110,6 +111,7 @@ class ChipServer(metaclass=Singleton):
             version: Version number (default: 0)
             vendor_id: Vendor ID (default: 0)
             product_id: Product ID (default: 0)
+            enable_container_logs: Per-run override for container-operation logging
 
         Returns:
             str: Manual pairing code or empty string if generation fails
@@ -140,6 +142,7 @@ class ChipServer(metaclass=Singleton):
             result = self.sdk_container.send_command(
                 command,
                 prefix=CHIP_TOOL_EXE,
+                enable_container_logs=enable_container_logs,
             )
 
             # Parse the output result to extract the manual pairing code
@@ -199,7 +202,10 @@ class ChipServer(metaclass=Singleton):
             return False
 
     async def start(
-        self, server_type: ChipServerType, use_paa_certs: bool = False
+        self,
+        server_type: ChipServerType,
+        use_paa_certs: bool = False,
+        enable_container_logs: Optional[bool] = None,
     ) -> Generator:
         if self.__server_started:
             self.logger.info("Chip server is already started")
@@ -239,6 +245,7 @@ class ChipServer(metaclass=Singleton):
             prefix=prefix,
             is_stream=True,
             is_socket=False,
+            enable_container_logs=enable_container_logs,
         )
         self.__server_logs = exec_result.output
         self.__chip_server_id = exec_result.exec_id
@@ -280,13 +287,15 @@ class ChipServer(metaclass=Singleton):
 
         return exit_code
 
-    async def stop(self) -> None:
+    async def stop(self, enable_container_logs: Optional[bool] = None) -> None:
         if not self.__server_started:
             return
 
         try:
             self.sdk_container.send_command(
-                f'-SIGTERM -f "{self.__server_full_command}"', prefix="pkill"
+                f'-SIGTERM -f "{self.__server_full_command}"',
+                prefix="pkill",
+                enable_container_logs=enable_container_logs,
             )
             self.__wait_for_server_exit()
         except Exception as e:
@@ -305,6 +314,8 @@ class ChipServer(metaclass=Singleton):
         path = Path(DOCKER_LOGS_PATH) / filename
         return f'--trace_file "{path}" --trace_decode 1'
 
-    async def restart(self) -> None:
-        await self.stop()
-        await self.start(self.__server_type, self.__use_paa_certs)
+    async def restart(self, enable_container_logs: Optional[bool] = None) -> None:
+        await self.stop(enable_container_logs)
+        await self.start(
+            self.__server_type, self.__use_paa_certs, enable_container_logs
+        )

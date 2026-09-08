@@ -15,7 +15,7 @@
 #
 # flake8: noqa
 # Ignore flake8 check for this file
-from typing import Type
+from typing import Optional, Type
 from unittest import mock
 
 import pytest
@@ -618,3 +618,58 @@ async def test_should_perform_new_commissioning_no() -> None:
         python_suite_setup.assert_called_once()
         mock_prompt_commissioning.assert_not_called()
         mock_commission_device.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "th_config_value, env_value, expected",
+    [
+        (True, False, True),  # config override True beats env False
+        (False, True, False),  # config override False beats env True
+        (None, True, True),  # unset config defers to env True
+        (None, False, False),  # unset config defers to env False
+    ],
+)
+def test_container_logs_enabled_matrix(
+    th_config_value: Optional[bool], env_value: bool, expected: bool
+) -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.NO_COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="some_version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value={"th_config": {"enable_container_logs": th_config_value}},
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = env_value
+        assert suite_instance._container_logs_enabled() is expected
+
+
+def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.NO_COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="some_version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value={},
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = True
+        assert suite_instance._container_logs_enabled() is True

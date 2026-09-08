@@ -31,9 +31,12 @@ from ...python_testing.models.utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
     DUTCommissioningError,
+    PromptOption,
+    _container_logs_enabled,
     capture_admin_storage_file,
     commission_device,
     generate_command_arguments,
+    should_perform_new_commissioning,
 )
 from ...sdk_container import SDKContainer
 
@@ -623,13 +626,21 @@ async def test_commission_device() -> None:
         ".log_test_output_file"
     ) as mock_log_test_output, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=0
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings.ENABLE_CONTAINER_LOGS",
+        new=False,
     ):
         await commission_device(
             default_environment_config, test_engine_logger  # type: ignore
         )
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
+        expected_command,
+        prefix=EXECUTABLE,
+        is_stream=True,
+        is_socket=False,
+        enable_container_logs=False,
     )
     mock_handle_logs.assert_called_once()
     mock_log_test_output.assert_called_once()
@@ -655,6 +666,10 @@ async def test_commission_device_failure() -> None:
         ".handle_logs"
     ) as mock_handle_logs, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=1
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings.ENABLE_CONTAINER_LOGS",
+        new=False,
     ), pytest.raises(
         DUTCommissioningError
     ):
@@ -663,9 +678,53 @@ async def test_commission_device_failure() -> None:
         )
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
+        expected_command,
+        prefix=EXECUTABLE,
+        is_stream=True,
+        is_socket=False,
+        enable_container_logs=False,
     )
     mock_handle_logs.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Tests for should_perform_new_commissioning (admin_storage.json reuse prompt)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_should_perform_new_commissioning_copies_file_with_container_logs() -> (
+    None
+):
+    """Regression test: the copy_file_to_container call here must thread through
+    enable_container_logs, like its sibling commission_device/
+    __copy_admin_storage_file calls in this same module do."""
+    sdk_container: SDKContainer = SDKContainer()
+    mock_storage_host = mock.MagicMock()
+    mock_storage_host.exists.return_value = True
+
+    with mock.patch.object(
+        target=sdk_container, attribute="copy_file_to_container"
+    ) as mock_copy, mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".ADMIN_STORAGE_FILE_HOST",
+        new=mock_storage_host,
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".prompt_reuse_commissioning",
+        return_value=PromptOption.PASS,
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings.ENABLE_CONTAINER_LOGS",
+        new=True,
+    ):
+        result = await should_perform_new_commissioning(
+            mock.Mock(), default_environment_config, test_engine_logger  # type: ignore
+        )
+
+    assert result is False
+    mock_copy.assert_called_once()
+    assert mock_copy.call_args.kwargs["enable_container_logs"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -1009,3 +1068,56 @@ async def test_nfc_reader_index_not_injected_for_non_nfc_modes() -> None:
     arguments = await generate_command_arguments(cfg)
     joined = " ".join(arguments)
     assert "NFC_Reader_index" not in joined
+
+
+# ---------------------------------------------------------------------------
+# Tests for _container_logs_enabled
+# ---------------------------------------------------------------------------
+
+
+def test_container_logs_enabled_uses_th_config_override_true() -> None:
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.th_config.enable_container_logs = True
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = False
+        assert _container_logs_enabled(config) is True
+
+
+def test_container_logs_enabled_uses_th_config_override_false() -> None:
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.th_config.enable_container_logs = False
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = True
+        assert _container_logs_enabled(config) is False
+
+
+def test_container_logs_enabled_defers_to_env_when_unset() -> None:
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.th_config.enable_container_logs = None
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = True
+        assert _container_logs_enabled(config) is True
+
+
+def test_container_logs_enabled_defers_to_env_when_th_config_none() -> None:
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.th_config = None
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.ENABLE_CONTAINER_LOGS = False
+        assert _container_logs_enabled(config) is False

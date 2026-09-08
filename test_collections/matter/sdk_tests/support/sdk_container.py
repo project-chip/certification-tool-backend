@@ -22,11 +22,11 @@ import loguru
 from docker.models.containers import Container
 
 from app.container_manager import container_manager
+from app.container_manager.container_manager import resolve_container_logs_enabled
 from app.container_manager.docker_shell_commands import (
     SHELL_CMD_LOG_PREFIX,
     docker_exec_command,
 )
-from app.core.config import settings
 from app.schemas.pics import PICS, PICSError
 from app.singleton import Singleton
 from app.test_engine.logger import test_engine_logger as logger
@@ -136,14 +136,18 @@ class SDKContainer(metaclass=Singleton):
     def pics_file_created(self) -> bool:
         return self.__pics_file_created
 
-    def __destroy_existing_container(self) -> None:
+    def __destroy_existing_container(
+        self, enable_container_logs: Optional[bool] = None
+    ) -> None:
         """This will kill and remove any existing container using the same name."""
         existing_container = container_manager.get_container(self.container_name)
         if existing_container is not None:
             logger.info(
                 f'Existing container named "{self.container_name}" found. Destroying.'
             )
-            container_manager.destroy(existing_container)
+            container_manager.destroy(
+                existing_container, enable_container_logs=enable_container_logs
+            )
 
     def is_running(self) -> bool:
         if self.__container is None:
@@ -151,7 +155,7 @@ class SDKContainer(metaclass=Singleton):
         else:
             return container_manager.is_running(self.__container)
 
-    async def start(self) -> None:
+    async def start(self, enable_container_logs: Optional[bool] = None) -> None:
         """Creates the SDK container.
 
         Returns only when the container is created.
@@ -164,11 +168,13 @@ class SDKContainer(metaclass=Singleton):
             return
 
         # Ensure there's no existing container running using the same name.
-        self.__destroy_existing_container()
+        self.__destroy_existing_container(enable_container_logs)
 
         # Async return when the container is running
         self.__container = await container_manager.create_container(
-            self.image_tag, self.run_parameters
+            self.image_tag,
+            self.run_parameters,
+            enable_container_logs=enable_container_logs,
         )
 
         self.logger.info(
@@ -176,10 +182,12 @@ class SDKContainer(metaclass=Singleton):
             f" with configuration: {self.run_parameters}"
         )
 
-    def destroy(self) -> None:
+    def destroy(self, enable_container_logs: Optional[bool] = None) -> None:
         """Destroy the container."""
         if self.__container is not None:
-            container_manager.destroy(self.__container)
+            container_manager.destroy(
+                self.__container, enable_container_logs=enable_container_logs
+            )
         self.__container = None
 
     def send_command(
@@ -189,6 +197,7 @@ class SDKContainer(metaclass=Singleton):
         is_stream: bool = False,
         is_socket: bool = False,
         is_detach: bool = False,
+        enable_container_logs: Optional[bool] = None,
     ) -> ExecResultExtended:
         if self.__container is None:
             raise SDKContainerNotRunning()
@@ -203,7 +212,7 @@ class SDKContainer(metaclass=Singleton):
         self.logger.info("Sending command to SDK container: " + full_cmd_str)
 
         # Log equivalent shell command
-        if settings.ENABLE_CONTAINER_LOGS:
+        if resolve_container_logs_enabled(enable_container_logs):
             shell_cmd = docker_exec_command(
                 self.container_name,
                 full_cmd_str,
@@ -268,19 +277,25 @@ class SDKContainer(metaclass=Singleton):
         container_file_path: Path,
         destination_path: Path,
         destination_file_name: str,
+        enable_container_logs: Optional[bool] = None,
     ) -> None:
         container_manager.copy_file_from_container(
             container=self.__container,
             container_file_path=container_file_path,
             destination_path=destination_path,
             destination_file_name=destination_file_name,
+            enable_container_logs=enable_container_logs,
         )
 
     def copy_file_to_container(
-        self, host_file_path: Path, destination_container_path: Path
+        self,
+        host_file_path: Path,
+        destination_container_path: Path,
+        enable_container_logs: Optional[bool] = None,
     ) -> None:
         container_manager.copy_file_to_container(
             container=self.__container,
             host_file_path=host_file_path,
             destination_container_path=destination_container_path,
+            enable_container_logs=enable_container_logs,
         )

@@ -55,6 +55,9 @@ class THConfig(BaseModel):
     # None means "not set at project level", deferring to the
     # ENABLE_REALTIME_PYTHON_TEST_LOGS environment variable.
     enable_realtime_python_test_logs: Optional[bool] = None
+    # None means "not set at project level", deferring to the
+    # ENABLE_CONTAINER_LOGS environment variable.
+    enable_container_logs: Optional[bool] = None
 
 
 class TestEnvironmentConfig(BaseModel):
@@ -76,3 +79,22 @@ class TestEnvironmentConfig(BaseModel):
 
     def validate_model(self, dict_model: dict) -> None:
         raise NotImplementedError  # Must be overridden by subclass
+
+
+def get_th_config_value(config: Optional[dict], key: str) -> Any:
+    """Extract a value from a project's th_config, given the raw `.config` dict.
+
+    Tolerates `th_config` being either a plain dict (the normal production
+    shape, since `.config` is always the raw project/execution config dict) or
+    a THConfig/pydantic object — some test doubles fake `.config` via
+    `SomeModel.__dict__`, which does not recursively convert nested pydantic
+    models to dicts, so `th_config` can show up as a THConfig instance there.
+    """
+    if not config:
+        return None
+    th_config = config.get("th_config") if isinstance(config, dict) else None
+    if th_config is None:
+        return None
+    if isinstance(th_config, dict):
+        return th_config.get(key)
+    return getattr(th_config, key, None)

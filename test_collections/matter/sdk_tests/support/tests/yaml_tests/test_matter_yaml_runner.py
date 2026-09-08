@@ -51,7 +51,7 @@ async def test_setup() -> None:
     ), mock.patch.object(target=chip_server, attribute="start") as mock_start:
         await runner.setup(server_type, False)
 
-    mock_start.assert_awaited_once_with(server_type, False)
+    mock_start.assert_awaited_once_with(server_type, False, None)
     assert runner._MatterYAMLRunner__test_harness_runner is not None
 
     # clean up:
@@ -71,7 +71,7 @@ async def test_setup_using_paa_certs() -> None:
     ), mock.patch.object(target=chip_server, attribute="start") as mock_start:
         await runner.setup(server_type, use_paa_certs=True)
 
-    mock_start.assert_awaited_once_with(server_type, True)
+    mock_start.assert_awaited_once_with(server_type, True, None)
     assert runner._MatterYAMLRunner__test_harness_runner is not None
 
     # clean up:

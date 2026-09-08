@@ -23,6 +23,7 @@ from typing import Generator, cast
 import loguru
 
 from app.constants.shared_constants import NFC_PAIRING_MODES, DutPairingModeEnum
+from app.core.config import settings
 from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
@@ -203,6 +204,18 @@ def __retrieve_storage_path(config: TestEnvironmentConfigMatter) -> Path:
     return storage_path
 
 
+def _container_logs_enabled(config: TestEnvironmentConfigMatter) -> bool:
+    """Whether container-operation logging is enabled.
+
+    The project's th_config.enable_container_logs, when explicitly set,
+    overrides the instance-wide ENABLE_CONTAINER_LOGS env var.
+    """
+    override = config.th_config.enable_container_logs if config.th_config else None
+    if override is not None:
+        return bool(override)
+    return settings.ENABLE_CONTAINER_LOGS
+
+
 def __copy_admin_storage_file(
     config: TestEnvironmentConfigMatter,
     logger: loguru.Logger,
@@ -216,6 +229,7 @@ def __copy_admin_storage_file(
         container_file_path=Path(storage_path),
         destination_path=ADMIN_STORAGE_FILE_HOST_PATH,
         destination_file_name=ADMIN_STORAGE_FILE_DEFAULT_NAME,
+        enable_container_logs=_container_logs_enabled(config),
     )
 
 
@@ -270,6 +284,7 @@ async def commission_device(
         prefix=EXECUTABLE,
         is_stream=True,
         is_socket=False,
+        enable_container_logs=_container_logs_enabled(config),
     )
 
     handle_logs(cast(Generator, exec_result.output), logger)
@@ -336,6 +351,7 @@ async def should_perform_new_commissioning(
             sdk_container.copy_file_to_container(
                 host_file_path=ADMIN_STORAGE_FILE_HOST,
                 destination_container_path=storage_path,
+                enable_container_logs=_container_logs_enabled(config),
             )
             return False
 

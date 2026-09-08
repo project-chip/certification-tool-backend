@@ -51,6 +51,25 @@ def test_create_config_matter_with_th_config_round_trips() -> None:
     assert config_matter.th_config is not None
     assert config_matter.th_config.prompt_timeout_seconds == 120
     assert config_matter.th_config.enable_realtime_python_test_logs is True
+    assert config_matter.th_config.enable_container_logs is True
+
+
+def test_create_config_matter_with_no_th_config_enable_container_logs_defaults_none() -> (  # noqa: E501
+    None
+):
+    config_matter = TestEnvironmentConfigMatter(**default_matter_config)
+
+    assert config_matter.th_config is None
+
+
+def test_create_config_matter_with_invalid_enable_container_logs_type_fails() -> None:
+    config = {
+        **default_matter_config,
+        "th_config": {"enable_container_logs": "not-a-bool"},
+    }
+
+    with pytest.raises(TestEnvironmentConfigError):
+        TestEnvironmentConfigMatter(**config)
 
 
 def test_create_config_matter_with_invalid_th_config_type_fails() -> None:

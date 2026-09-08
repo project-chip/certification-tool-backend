@@ -16,6 +16,7 @@
 from typing import Optional
 
 from app.constants.shared_constants import DutPairingModeEnum
+from app.core.config import settings
 from app.models import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
@@ -67,16 +68,39 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
         return self.__config_matter  # type: ignore
 
+    def _container_logs_enabled(self) -> bool:
+        """Whether container-operation logging is enabled.
+
+        The project's th_config.enable_container_logs, when explicitly set,
+        overrides the instance-wide ENABLE_CONTAINER_LOGS env var.
+        """
+        try:
+            th_config = self.config_matter.th_config
+        except Exception:
+            th_config = None
+        override = th_config.enable_container_logs if th_config else None
+        if override is not None:
+            return bool(override)
+        return settings.ENABLE_CONTAINER_LOGS
+
     async def setup(self) -> None:
         logger.info("Setting up SDK container")
-        await self.sdk_container.start()
+        await self.sdk_container.start(
+            enable_container_logs=self._container_logs_enabled()
+        )
 
         # pcscd is required for NFC reader access regardless of pairing mode
-        self.sdk_container.send_command("--disable-polkit", prefix="pcscd")
+        self.sdk_container.send_command(
+            "--disable-polkit",
+            prefix="pcscd",
+            enable_container_logs=self._container_logs_enabled(),
+        )
 
         logger.info("Setting up test runner")
         await self.runner.setup(
-            self.server_type, self.config_matter.dut_config.chip_use_paa_certs
+            self.server_type,
+            self.config_matter.dut_config.chip_use_paa_certs,
+            enable_container_logs=self._container_logs_enabled(),
         )
 
         if len(self.pics.clusters) > 0:
@@ -248,6 +272,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
         payload = self.runner.chip_server.generate_manual_pairing_code_with_chip_tool(
             discriminator=self.config_matter.dut_config.discriminator or "",
             setup_pin_code=self.config_matter.dut_config.setup_code or "",
+            enable_container_logs=self._container_logs_enabled(),
         )
 
         return await self.runner.pairing_thread(
@@ -283,10 +308,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
                 await self.__prompt_user_to_perform_decommission()
 
         logger.info("Stopping test runner")
-        await self.runner.stop()
+        await self.runner.stop(enable_container_logs=self._container_logs_enabled())
 
         logger.info("Stopping SDK container")
-        self.sdk_container.destroy()
+        self.sdk_container.destroy(enable_container_logs=self._container_logs_enabled())
 
         if self.border_router is not None:
             logger.info("Stopping border router container")

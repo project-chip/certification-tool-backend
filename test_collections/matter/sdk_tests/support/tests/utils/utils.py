@@ -48,6 +48,7 @@ default_matter_config_with_th_config: dict[str, Any] = {
     "th_config": {
         "prompt_timeout_seconds": 120,
         "enable_realtime_python_test_logs": True,
+        "enable_container_logs": True,
     },
 }
 

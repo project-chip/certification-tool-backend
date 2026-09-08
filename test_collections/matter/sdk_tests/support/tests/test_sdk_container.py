@@ -45,7 +45,7 @@ async def test_start(real_sdk_container) -> None:  # noqa
         await real_sdk_container.start()
 
     mock_create_container.assert_called_once_with(
-        docker_image, real_sdk_container.run_parameters
+        docker_image, real_sdk_container.run_parameters, enable_container_logs=None
     )
     assert real_sdk_container._SDKContainer__container is not None
 
@@ -165,6 +165,61 @@ async def test_send_command_default_prefix(real_sdk_container) -> None:  # noqa
         detach=False,
     )
     assert result == mock_result
+
+    # clean up:
+    real_sdk_container._SDKContainer__last_exec_id = None
+    real_sdk_container._SDKContainer__container = None
+
+
+@pytest.mark.asyncio
+async def test_send_command_logs_shell_command_when_enabled(
+    real_sdk_container,  # noqa
+) -> None:
+    fake_container = make_fake_container()
+    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
+    real_sdk_container._SDKContainer__container = fake_container
+
+    with mock.patch(
+        target=(
+            "test_collections.matter.sdk_tests.support.sdk_container"
+            ".exec_run_in_container"
+        ),
+        return_value=mock_result,
+    ), mock.patch.object(real_sdk_container, "logger") as mock_logger:
+        real_sdk_container.send_command(
+            "--help", prefix="cmd-prefix", enable_container_logs=True
+        )
+
+    mock_logger.info.assert_any_call(mock.ANY)
+    # One "Sending command..." line plus one for the equivalent shell command.
+    assert mock_logger.info.call_count == 2
+
+    # clean up:
+    real_sdk_container._SDKContainer__last_exec_id = None
+    real_sdk_container._SDKContainer__container = None
+
+
+@pytest.mark.asyncio
+async def test_send_command_does_not_log_shell_command_when_disabled(
+    real_sdk_container,  # noqa
+) -> None:
+    fake_container = make_fake_container()
+    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
+    real_sdk_container._SDKContainer__container = fake_container
+
+    with mock.patch(
+        target=(
+            "test_collections.matter.sdk_tests.support.sdk_container"
+            ".exec_run_in_container"
+        ),
+        return_value=mock_result,
+    ), mock.patch.object(real_sdk_container, "logger") as mock_logger:
+        real_sdk_container.send_command(
+            "--help", prefix="cmd-prefix", enable_container_logs=False
+        )
+
+    # Only the "Sending command..." line, no equivalent shell command line.
+    assert mock_logger.info.call_count == 1
 
     # clean up:
     real_sdk_container._SDKContainer__last_exec_id = None
