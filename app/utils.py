@@ -25,7 +25,6 @@ from typing import IO, Optional, Tuple, Type
 
 from loguru import logger
 
-from app.core.config import settings
 from app.models import TestRunExecution
 from app.schemas import TestSelection
 
