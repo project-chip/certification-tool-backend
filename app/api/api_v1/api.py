@@ -23,7 +23,6 @@ from app.api.api_v1.endpoints import (
     test_harness_backend_version,
     test_run_configs,
     test_run_executions,
-    utils,
 )
 from app.api.api_v1.sockets import web_sockets
 
@@ -44,7 +43,6 @@ api_router.include_router(
 )
 
 api_router.include_router(test_harness_backend_version.router, tags=["version"])
-api_router.include_router(utils.router, prefix="/utils", tags=["utils"])
 api_router.include_router(devices.router, prefix="/devices", tags=["devices"])
 
 # Websocket API:

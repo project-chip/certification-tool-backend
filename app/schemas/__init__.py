@@ -16,7 +16,6 @@
 from .chip_server_info import ChipServerInfo
 from .grouped_test_run_execution_logs import GroupedTestRunExecutionLogs
 from .mock import Mock
-from .msg import Msg
 from .operator import (
     Operator,
     OperatorCreate,

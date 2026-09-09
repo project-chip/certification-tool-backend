@@ -21,7 +21,6 @@ from pathlib import Path
 from types import FrameType
 
 from loguru import logger
-from notifiers.logging import NotificationHandler
 
 from app.core.config import settings
 
@@ -102,24 +101,6 @@ def configure_logging() -> None:
         retention=settings.LOGGING_RETENTION,
         format=settings.LOGGING_FORMAT,
     )
-
-    __configure_notifier_handler()
-
-
-def __configure_notifier_handler() -> None:
-    if settings.NOTIFIER_ENABLE_NOTIFICATIONS is False:
-        logger.info("Exception notifier not enabled")
-        return
-
-    defaults = {
-        "username": settings.NOTIFIER_USERNAME,
-        "password": settings.NOTIFIER_PASSWORD,
-        "to": settings.NOTIFIER_TO,
-        "subject": settings.NOTIFIER_SUBJECT,
-    }
-
-    handler = NotificationHandler("gmail", defaults=defaults)
-    logger.add(handler, level=logging.ERROR)
 
 
 def __configure_logging(
