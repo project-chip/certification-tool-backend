@@ -47,6 +47,10 @@ DOCKER_PAA_CERTS_PATH = "/paa-root-certs"
 LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
 DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
+# wpa_supplicant mount (required for CNET tests to manage Wi-Fi networks)
+LOCAL_WPA_SUPPLICANT_PATH = Path("/var/run/wpa_supplicant")
+DOCKER_WPA_SUPPLICANT_PATH = "/var/run/wpa_supplicant"
+
 # Python Testing Folder
 LOCAL_TEST_COLLECTIONS_PATH = (
     "/home/ubuntu/certification-tool/backend/test_collections/matter"
@@ -106,6 +110,10 @@ class SDKContainer(metaclass=Singleton):
             LOCAL_CREDENTIALS_DEVELOPMENT_PATH: {
                 "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
                 "mode": "ro",
+            },
+            LOCAL_WPA_SUPPLICANT_PATH: {
+                "bind": DOCKER_WPA_SUPPLICANT_PATH,
+                "mode": "rw",
             },
             LOCAL_PYTHON_TESTING_PATH: {
                 "bind": DOCKER_PYTHON_TESTING_PATH,
