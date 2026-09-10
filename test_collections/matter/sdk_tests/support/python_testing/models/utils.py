@@ -348,7 +348,7 @@ async def should_perform_new_commissioning(
 
             storage_path = __retrieve_storage_path(config)
 
-            sdk_container.copy_file_to_container(
+            sdk_container.copy_archive_to_container(
                 host_file_path=ADMIN_STORAGE_FILE_HOST,
                 destination_container_path=storage_path,
                 enable_container_logs=_container_logs_enabled(config),

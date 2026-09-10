@@ -35,6 +35,8 @@ from test_collections.matter.config import matter_settings
 from .exec_run_in_container import ExecResultExtended, exec_run_in_container
 from .pics import set_pics_command
 
+REPO_ROOT = Path(__file__).resolve().parents[5]
+
 # Trace mount
 LOCAL_LOGS_PATH = Path("/var/tmp")
 DOCKER_LOGS_PATH = "/logs"
@@ -285,6 +287,15 @@ class SDKContainer(metaclass=Singleton):
             destination_path=destination_path,
             destination_file_name=destination_file_name,
             enable_container_logs=enable_container_logs,
+        )
+
+    def copy_archive_to_container(
+        self, host_file_path: Path, destination_container_path: Path
+    ) -> None:
+        container_manager.copy_archive_to_container(
+            container=self.__container,
+            host_file_path=host_file_path,
+            destination_container_path=destination_container_path,
         )
 
     def copy_file_to_container(
