@@ -552,11 +552,16 @@ def download_project_logs(
                 entry_name = f"{execution.id}-{safe_title}.log"
                 outer_zip.writestr(entry_name, "\n".join(log_lines))
 
-            # Detach the execution (and its now-loaded log blob) from the
-            # session's identity map so it can be garbage collected before
-            # the next iteration, instead of every execution's full log
-            # staying resident in memory for the rest of the loop.
+            # Detach the execution from the session's identity map, then
+            # drop its now-loaded log blob so it becomes eligible for GC
+            # immediately - expunge alone doesn't do this, since the
+            # `executions` list (held for the whole loop) still keeps a
+            # strong reference to the instance and its loaded `log`
+            # attribute. Safe to mutate post-expunge: this session is never
+            # committed (see app.db.session.get_db), so nothing ever flushes
+            # this change to the DB.
             db.expunge(execution)
+            execution.log = None
 
     outer_zip_buffer.seek(0)
 

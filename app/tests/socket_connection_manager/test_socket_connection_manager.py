@@ -15,6 +15,7 @@
 #
 import asyncio
 import json
+import socket
 from typing import Any, Dict
 from unittest import mock
 
@@ -310,22 +311,32 @@ async def test_received_message_invalid_json() -> None:
         )
 
 
+def _bind_ephemeral_udp_port() -> int:
+    """Reserve a free UDP port on loopback, then release it for the code
+    under test to bind to - avoids hard-coding the real UDP_SOCKET_PORT
+    (5000), which would conflict with a live TH instance or with parallel
+    test workers (pytest-xdist)."""
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    probe.bind(("127.0.0.1", 0))
+    port = probe.getsockname()[1]
+    probe.close()
+    return port
+
+
 @pytest.mark.asyncio
 async def test_relay_video_frames_forwards_frames_until_disconnect() -> None:
     """
     Validates that relay_video_frames() forwards UDP frames to the websocket
-    and that a client disconnect (detected via receive_text()) is handled
-    without waiting on/blocking the UDP relay side.
+    over a real (ephemeral-port, loopback) socket, and that a client
+    disconnect (detected via receive_text()) cleanly cancels the pending UDP
+    receive. Uses a real socket rather than mocking `sock.recvfrom()`,
+    because the implementation now uses the event loop's native
+    `sock_recv()` (regression coverage for the switch away from a
+    thread-pool-blocking `recvfrom()`, which couldn't be cancelled once the
+    underlying OS thread was blocked in it).
     """
     frame = b"fake-h264-frame"
-
-    mock_sock = mock.MagicMock()
-    # First recvfrom() returns a frame, subsequent calls time out so the UDP
-    # relay task keeps retrying while we wait for the disconnect task below.
-    mock_sock.recvfrom.side_effect = [
-        (frame, ("127.0.0.1", 12345)),
-        *([TimeoutError()] * 50),
-    ]
+    port = _bind_ephemeral_udp_port()
 
     websocket = mock.MagicMock(spec=WebSocket)
     websocket.send_bytes = mock.AsyncMock()
@@ -334,21 +345,62 @@ async def test_relay_video_frames_forwards_frames_until_disconnect() -> None:
     async def _disconnect_after_first_frame() -> str:
         # Give the UDP relay task a chance to process the first frame before
         # the disconnect is "detected".
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.2)
         raise WebSocketDisconnect()
 
     websocket.receive_text = mock.AsyncMock(side_effect=_disconnect_after_first_frame)
 
     connection = WebSocketConnection(websocket, WebSocketTypeEnum.VIDEO)
 
-    with mock.patch("app.socket_connection_manager.socket.socket") as mock_socket_cls:
-        mock_socket_cls.return_value = mock_sock
+    with mock.patch("app.socket_connection_manager.UDP_SOCKET_PORT", port), mock.patch(
+        "app.socket_connection_manager.UDP_SOCKET_INTERFACE", "127.0.0.1"
+    ):
+        relay_task = asyncio.ensure_future(
+            socket_connection_manager.relay_video_frames(connection)
+        )
+        await asyncio.sleep(0.1)  # let relay_video_frames bind before sending
 
-        await socket_connection_manager.relay_video_frames(connection)
+        sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sender.sendto(frame, ("127.0.0.1", port))
+        sender.close()
+
+        await asyncio.wait_for(relay_task, timeout=2.0)
 
     websocket.send_bytes.assert_any_call(frame)
     websocket.close.assert_called_once()
-    mock_sock.close.assert_called_once()
+    assert connection not in socket_connection_manager.active_connections
+
+
+@pytest.mark.asyncio
+async def test_relay_video_frames_cancels_pending_udp_receive_on_disconnect() -> None:
+    """
+    Regression test: disconnecting while the UDP receive is genuinely
+    pending (no frames ever arrive) must cancel it promptly rather than
+    leaving it hanging. This is the failure mode of the old
+    run_in_executor()-based recvfrom(): cancelling the asyncio task couldn't
+    stop the underlying OS thread once it was blocked in a real recvfrom()
+    call, leaving executor work behind.
+    """
+    port = _bind_ephemeral_udp_port()
+
+    websocket = mock.MagicMock(spec=WebSocket)
+    websocket.send_bytes = mock.AsyncMock()
+    websocket.close = mock.AsyncMock()
+    websocket.receive_text = mock.AsyncMock(side_effect=WebSocketDisconnect())
+
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.VIDEO)
+
+    with mock.patch("app.socket_connection_manager.UDP_SOCKET_PORT", port), mock.patch(
+        "app.socket_connection_manager.UDP_SOCKET_INTERFACE", "127.0.0.1"
+    ):
+        # No data is ever sent to `port`, so the UDP receive stays genuinely
+        # pending. If disconnecting doesn't cancel it cleanly, this hangs and
+        # the test fails with a TimeoutError instead of passing silently.
+        await asyncio.wait_for(
+            socket_connection_manager.relay_video_frames(connection), timeout=2.0
+        )
+
+    websocket.close.assert_called_once()
     assert connection not in socket_connection_manager.active_connections
 
 
