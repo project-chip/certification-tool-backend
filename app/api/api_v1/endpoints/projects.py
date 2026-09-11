@@ -15,9 +15,9 @@
 #
 import json
 import re
+import tempfile
 import traceback
 from http import HTTPStatus
-from io import BytesIO
 from typing import List, Sequence, Union
 from zipfile import ZipFile
 
@@ -529,7 +529,7 @@ def download_project_logs(
             detail=f"Project {id} has no test run executions to download logs for",
         )
 
-    outer_zip_buffer = BytesIO()
+    outer_zip_buffer = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
 
     with ZipFile(file=outer_zip_buffer, mode="w") as outer_zip:
         for execution in executions:
@@ -551,6 +551,17 @@ def download_project_logs(
                 )
                 entry_name = f"{execution.id}-{safe_title}.log"
                 outer_zip.writestr(entry_name, "\n".join(log_lines))
+
+            # Detach the execution from the session's identity map, then
+            # drop its now-loaded log blob so it becomes eligible for GC
+            # immediately - expunge alone doesn't do this, since the
+            # `executions` list (held for the whole loop) still keeps a
+            # strong reference to the instance and its loaded `log`
+            # attribute. Safe to mutate post-expunge: this session is never
+            # committed (see app.db.session.get_db), so nothing ever flushes
+            # this change to the DB.
+            db.expunge(execution)
+            execution.log = None
 
     outer_zip_buffer.seek(0)
 

@@ -15,7 +15,7 @@
 #
 from enum import Enum
 from queue import Empty, Queue
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from matter.yamltests.hooks import TestRunnerHooks
 from pydantic import BaseModel
@@ -149,16 +149,6 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
         SDKPythonTestRunnerHooks.finished = False
         SDKPythonTestRunnerHooks.results = Queue()
 
-    def update_test(self) -> Union[dict, None]:
-        try:
-            result = self.results.get(block=False)
-            return result
-        except Empty:
-            return None
-
-    def is_finished(self) -> bool:
-        return SDKPythonTestRunnerHooks.finished
-
     def start(self, count: int) -> None:
         self.results.put(SDKPythonTestResultStart(count=count))
 
@@ -246,3 +236,10 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
 
     def show_push_av_stream_prompt(self, msg: str) -> None:
         self.results.put(SDKPythonTestResultShowPushAVStreamPrompt(msg=msg))
+
+    def get_update(self) -> tuple[SDKPythonTestResultBase | None, bool]:
+        """Returns (update_or_None, is_finished) in a single IPC call."""
+        try:
+            return self.results.get(block=False), False
+        except Empty:
+            return None, SDKPythonTestRunnerHooks.finished

@@ -25,6 +25,7 @@ from app.crud import project as crud_project
 from app.crud import test_run_config as crud_test_run_config
 from app.crud.base import CRUDBaseCreate, CRUDBaseDelete, CRUDBaseRead, CRUDBaseUpdate
 from app.models import Project, TestCaseExecution, TestRunExecution, TestSuiteExecution
+from app.models.operator import Operator as OperatorModel
 from app.schemas import (
     TestRunConfigCreate,
     TestRunExecutionToExport,
@@ -124,57 +125,71 @@ class CRUDTestRunExecution(
             limit=limit,
         )
         # load stats for each test run
-        return list(map(lambda tre: self.__load_stats(db, tre), results))
+        return self.__load_stats_batch(db, results)
 
-    def __load_stats(
-        self, db: Session, test_run_execution: TestRunExecution
-    ) -> TestRunExecutionWithStats:
-        stats = TestRunExecutionStats()
+    def __load_stats_batch(
+        self, db: Session, test_run_executions: Sequence[TestRunExecution]
+    ) -> List[TestRunExecutionWithStats]:
+        ids = [tre.id for tre in test_run_executions]
 
-        # get total test case count
-        count = (
-            db.scalar(
-                select(func.count())
+        stats_by_run_id: dict[int, TestRunExecutionStats] = {
+            id_: TestRunExecutionStats() for id_ in ids
+        }
+
+        if ids:
+            # Collect state statistics for every run in a single grouped query,
+            # instead of two queries (a count + a grouped count) per run.
+            state_counts = db.execute(
+                select(
+                    TestSuiteExecution.test_run_execution_id,
+                    TestCaseExecution.state,
+                    func.count(),
+                )
                 .select_from(TestCaseExecution)
                 .join(TestSuiteExecution)
-                .join(TestRunExecution)
-                .filter(TestRunExecution.id == test_run_execution.id)
+                .filter(TestSuiteExecution.test_run_execution_id.in_(ids))
+                .group_by(
+                    TestSuiteExecution.test_run_execution_id, TestCaseExecution.state
+                )
+            ).all()
+            # The state counts are returned as a list of tuples
+            # (run_id, Enum, Count). Example:
+            # [(1, TestStateEnum.ERROR, 11), (1, TestStateEnum.PENDING, 1)]
+            for run_id, state, count in state_counts:
+                stats = stats_by_run_id[run_id]
+                stats.states[state.value] = count
+                stats.test_case_count += count
+
+        # Batch-load operators for every run in a single query, instead of
+        # relying on the per-instance lazy-loaded `operator` relationship.
+        operator_ids = {
+            tre.operator_id
+            for tre in test_run_executions
+            if tre.operator_id is not None
+        }
+        operators_by_id: dict[int, OperatorModel] = {}
+        if operator_ids:
+            operators_by_id = {
+                operator.id: operator
+                for operator in db.scalars(
+                    select(OperatorModel).filter(OperatorModel.id.in_(operator_ids))
+                ).all()
+            }
+
+        results_with_stats = []
+        for test_run_execution in test_run_executions:
+            result = TestRunExecutionWithStats(
+                **dict(
+                    test_run_execution.__dict__,
+                    test_case_stats=stats_by_run_id[test_run_execution.id],
+                )
             )
-            or 0
-        )
+            operator = operators_by_id.get(test_run_execution.operator_id)
+            if operator is not None:
+                result.operator = Operator.from_orm(operator)
+            results_with_stats.append(result)
 
-        stats.test_case_count = count
-
-        # Collect state statistics
-        state_counts = db.execute(
-            select(func.count(TestCaseExecution.state), TestCaseExecution.state)
-            .join(TestSuiteExecution)
-            .join(TestRunExecution)
-            .filter(TestRunExecution.id == test_run_execution.id)
-            .group_by(TestCaseExecution.state)
-        ).all()
-        # The state counts are returned as a list of tuples (Count, Enum):
-        # Example: [(11, TestStateEnum.ERROR), (1, TestStateEnum.PENDING)]
-        # Below we extract these stats, and use subscript notation to access
-        # the tuple elements
-        for state_count in state_counts:
-            count = state_count[0]
-            state = state_count[1].value
-            stats.states[state] = count
-
-        result = TestRunExecutionWithStats(
-            **dict(test_run_execution.__dict__, test_case_stats=stats)
-        )
-
-        # Operator is lazy loaded, so it might not be included in __dict__.
-        # TODO #296: This could be solved by using from_orm, but it doesn't
-        # support adding the `test_case_stats` see :
-        # https://github.com/samuelcolvin/pydantic/pull/3375
-        #
-        if test_run_execution.operator is not None:
-            result.operator = Operator.from_orm(test_run_execution.operator)
-
-        return result
+        return results_with_stats
 
     def __sort_selected_tests(
         self, selected_tests: List[TestSuiteExecution]
