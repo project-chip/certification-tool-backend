@@ -182,7 +182,7 @@ class SocketConnectionManager(object, metaclass=Singleton):
             sock = None
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-                sock.settimeout(1.0)
+                sock.setblocking(False)
                 sock.bind((UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT))
                 logger.info("UDP socket bound successfully")
                 loop = asyncio.get_running_loop()
@@ -229,11 +229,8 @@ class SocketConnectionManager(object, metaclass=Singleton):
         websocket: WebSocket,
     ) -> None:
         while True:
-            try:
-                data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
-                await websocket.send_bytes(data)
-            except TimeoutError:
-                continue
+            data = await loop.sock_recv(sock, 65536)
+            await websocket.send_bytes(data)
 
     async def __wait_for_disconnect(self, websocket: WebSocket) -> None:
         # WebSocketDisconnect is not raised unless we poll

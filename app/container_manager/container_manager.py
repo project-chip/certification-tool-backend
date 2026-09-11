@@ -65,9 +65,25 @@ class ContainerManager(object, metaclass=Singleton):
     ) -> Container:
         logs_enabled = resolve_container_logs_enabled(enable_container_logs)
         loop = asyncio.get_running_loop()
-        container = await loop.run_in_executor(
+        future = loop.run_in_executor(
             None, self.__run_new_container, docker_image_tag, parameters, logs_enabled
         )
+        try:
+            container = await asyncio.shield(future)
+        except asyncio.CancelledError:
+            # We were cancelled while waiting on the executor thread. A
+            # concurrent.futures.Future can't be interrupted once its
+            # callable has started running, so the container may still get
+            # created in the background after we've unwound here - wait for
+            # it and destroy it so we don't leak an untracked container.
+            try:
+                container = await future
+            except Exception:
+                pass
+            else:
+                self.destroy(container)
+            raise
+
         await self.__container_ready(container)
         if logs_enabled:
             logger.info(f"Container running for {docker_image_tag}")
@@ -204,6 +220,13 @@ class ContainerManager(object, metaclass=Singleton):
                 self.__container_started(container), container_bring_up_timeout
             )
         except AsyncioTimeoutError as e:
+            if self.is_running(container):
+                # The container actually finished starting during the final
+                # poll's sleep window - the 1s poll interval just hadn't
+                # re-checked yet when the hard timeout fired. Treat this as
+                # a successful start rather than destroying a running
+                # container.
+                return
             logger.error(
                 f"Container did start timed out in {container_bring_up_timeout}s"
             )
