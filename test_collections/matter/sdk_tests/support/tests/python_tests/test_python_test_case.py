@@ -654,10 +654,6 @@ async def test_execute_commissioning_nfc_drops_qr_code() -> None:
         mock_sdk_container.send_command.return_value = mock_exec_result
         mock_sdk_container.pics_file_created = False
 
-        mock_hooks = mock.MagicMock()
-        mock_hooks.update_test.return_value = None
-        mock_hooks.is_finished.return_value = True
-
         with mock.patch(
             "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
             ".SDKPythonTestRunnerHooks",

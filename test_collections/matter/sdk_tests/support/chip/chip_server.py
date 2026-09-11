@@ -15,12 +15,13 @@
 #
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from random import randrange
-from time import sleep, time
+from time import time
 from typing import Generator, Optional, Union, cast
 
 import loguru
@@ -260,7 +261,7 @@ class ChipServer(metaclass=Singleton):
 
         return cast(Generator, self.__server_logs)
 
-    def __wait_for_server_exit(self) -> Optional[int]:
+    async def __wait_for_server_exit(self) -> Optional[int]:
         if self.__chip_server_id is None:
             self.logger.info(
                 "Server execution id not found, cannot wait for server exit."
@@ -279,7 +280,7 @@ class ChipServer(metaclass=Singleton):
                 f"Sleeping for {sleeping_seconds} seconds before verifying chip server "
                 "exit code again."
             )
-            sleep(sleeping_seconds)
+            await asyncio.sleep(sleeping_seconds)
             exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
 
         if exit_code is None:
@@ -297,7 +298,7 @@ class ChipServer(metaclass=Singleton):
                 prefix="pkill",
                 enable_container_logs=enable_container_logs,
             )
-            self.__wait_for_server_exit()
+            await self.__wait_for_server_exit()
         except Exception as e:
             # Issue: https://github.com/project-chip/certification-tool/issues/414
             self.logger.info(

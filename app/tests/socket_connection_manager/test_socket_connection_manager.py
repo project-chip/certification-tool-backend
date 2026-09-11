@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 import json
 from typing import Any, Dict
 from unittest import mock
 
 import pytest
 from fastapi import WebSocket
+from fastapi.websockets import WebSocketDisconnect
 from starlette.websockets import WebSocketState
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
@@ -306,6 +308,64 @@ async def test_received_message_invalid_json() -> None:
         notify_invalid_message.assert_called_once_with(
             websocket=socket, message=INVALID_JSON_ERROR_STR
         )
+
+
+@pytest.mark.asyncio
+async def test_relay_video_frames_forwards_frames_until_disconnect() -> None:
+    """
+    Validates that relay_video_frames() forwards UDP frames to the websocket
+    and that a client disconnect (detected via receive_text()) is handled
+    without waiting on/blocking the UDP relay side.
+    """
+    frame = b"fake-h264-frame"
+
+    mock_sock = mock.MagicMock()
+    # First recvfrom() returns a frame, subsequent calls time out so the UDP
+    # relay task keeps retrying while we wait for the disconnect task below.
+    mock_sock.recvfrom.side_effect = [
+        (frame, ("127.0.0.1", 12345)),
+        *([TimeoutError()] * 50),
+    ]
+
+    websocket = mock.MagicMock(spec=WebSocket)
+    websocket.send_bytes = mock.AsyncMock()
+    websocket.close = mock.AsyncMock()
+
+    async def _disconnect_after_first_frame() -> str:
+        # Give the UDP relay task a chance to process the first frame before
+        # the disconnect is "detected".
+        await asyncio.sleep(0.05)
+        raise WebSocketDisconnect()
+
+    websocket.receive_text = mock.AsyncMock(side_effect=_disconnect_after_first_frame)
+
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.VIDEO)
+
+    with mock.patch("app.socket_connection_manager.socket.socket") as mock_socket_cls:
+        mock_socket_cls.return_value = mock_sock
+
+        await socket_connection_manager.relay_video_frames(connection)
+
+    websocket.send_bytes.assert_any_call(frame)
+    websocket.close.assert_called_once()
+    mock_sock.close.assert_called_once()
+    assert connection not in socket_connection_manager.active_connections
+
+
+@pytest.mark.asyncio
+async def test_relay_video_frames_wrong_connection_type() -> None:
+    """
+    Validates that relay_video_frames() refuses to run for a connection that
+    isn't of type VIDEO, without touching any sockets.
+    """
+    websocket = mock.MagicMock(spec=WebSocket)
+    connection = WebSocketConnection(websocket, WebSocketTypeEnum.MAIN)
+
+    with mock.patch("app.socket_connection_manager.socket.socket") as mock_socket_cls:
+        await socket_connection_manager.relay_video_frames(connection)
+
+        mock_socket_cls.assert_not_called()
+    websocket.close.assert_not_called()
 
 
 def __expected_response_dict_okay() -> Dict[MessageKeysEnum, Any]:

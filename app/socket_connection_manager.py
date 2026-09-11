@@ -186,17 +186,25 @@ class SocketConnectionManager(object, metaclass=Singleton):
                 sock.bind((UDP_SOCKET_INTERFACE, UDP_SOCKET_PORT))
                 logger.info("UDP socket bound successfully")
                 loop = asyncio.get_running_loop()
-                while True:
-                    try:
-                        data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
-                        await websocket.send_bytes(data)
-                    except TimeoutError:
-                        try:
-                            # WebSocketDisconnect is not raised unless we poll
-                            # https://github.com/tiangolo/fastapi/issues/3008
-                            await asyncio.wait_for(websocket.receive_text(), 1.0)
-                        except asyncio.TimeoutError:
-                            pass
+
+                # Run the UDP relay and the disconnect listener concurrently so
+                # that waiting on one never delays servicing the other (e.g. a
+                # frame arriving while we're polling for disconnect).
+                udp_task = asyncio.ensure_future(
+                    self.__relay_udp_frames(loop, sock, websocket)
+                )
+                disconnect_task = asyncio.ensure_future(
+                    self.__wait_for_disconnect(websocket)
+                )
+                done, pending = await asyncio.wait(
+                    {udp_task, disconnect_task},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in pending:
+                    task.cancel()
+                await asyncio.gather(*pending, return_exceptions=True)
+                for task in done:
+                    task.result()
             # Starlette raises websockets.exceptions.ConnectionClosedOK
             # when trying to send to a closed websocket.
             # https://github.com/encode/starlette/issues/759
@@ -213,6 +221,25 @@ class SocketConnectionManager(object, metaclass=Singleton):
             logger.error(
                 f"Expected websocket connection of type {WebSocketTypeEnum.VIDEO}"
             )
+
+    async def __relay_udp_frames(
+        self,
+        loop: asyncio.AbstractEventLoop,
+        sock: socket.socket,
+        websocket: WebSocket,
+    ) -> None:
+        while True:
+            try:
+                data, _ = await loop.run_in_executor(None, sock.recvfrom, 65536)
+                await websocket.send_bytes(data)
+            except TimeoutError:
+                continue
+
+    async def __wait_for_disconnect(self, websocket: WebSocket) -> None:
+        # WebSocketDisconnect is not raised unless we poll
+        # https://github.com/tiangolo/fastapi/issues/3008
+        while True:
+            await websocket.receive_text()
 
     # Note: Currently we only support one message handler per type, registering the
     # handler will displace the previous handler(if any)

@@ -15,7 +15,7 @@
 #
 from enum import Enum
 from queue import Empty, Queue
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from matter.yamltests.hooks import TestRunnerHooks
 from pydantic import BaseModel
@@ -148,16 +148,6 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
     def __init__(self) -> None:
         SDKPythonTestRunnerHooks.finished = False
         SDKPythonTestRunnerHooks.results = Queue()
-
-    def update_test(self) -> Union[dict, None]:
-        try:
-            result = self.results.get(block=False)
-            return result
-        except Empty:
-            return None
-
-    def is_finished(self) -> bool:
-        return SDKPythonTestRunnerHooks.finished
 
     def start(self, count: int) -> None:
         self.results.put(SDKPythonTestResultStart(count=count))

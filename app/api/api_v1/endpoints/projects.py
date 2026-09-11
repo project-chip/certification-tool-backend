@@ -15,9 +15,9 @@
 #
 import json
 import re
+import tempfile
 import traceback
 from http import HTTPStatus
-from io import BytesIO
 from typing import List, Sequence, Union
 from zipfile import ZipFile
 
@@ -529,7 +529,7 @@ def download_project_logs(
             detail=f"Project {id} has no test run executions to download logs for",
         )
 
-    outer_zip_buffer = BytesIO()
+    outer_zip_buffer = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
 
     with ZipFile(file=outer_zip_buffer, mode="w") as outer_zip:
         for execution in executions:
@@ -551,6 +551,12 @@ def download_project_logs(
                 )
                 entry_name = f"{execution.id}-{safe_title}.log"
                 outer_zip.writestr(entry_name, "\n".join(log_lines))
+
+            # Detach the execution (and its now-loaded log blob) from the
+            # session's identity map so it can be garbage collected before
+            # the next iteration, instead of every execution's full log
+            # staying resident in memory for the rest of the loop.
+            db.expunge(execution)
 
     outer_zip_buffer.seek(0)
 
