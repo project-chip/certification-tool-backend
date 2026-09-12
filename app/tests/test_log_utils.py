@@ -242,6 +242,17 @@ mocked_log: List[TestRunLogEntry] = [
     ),
 ]
 
+
+def mocked_log_rows() -> List[models.TestRunLogEntry]:
+    """The same entries as ORM rows, for assigning to TestRunExecution.log.
+
+    `log` is a relationship rather than a JSON column, so it holds mapped
+    instances; assigning the pydantic entries straight into it fails in
+    SQLAlchemy's backref event with "no attribute '_sa_instance_state'".
+    """
+    return [models.TestRunLogEntry(**entry.dict()) for entry in mocked_log]
+
+
 mocked_test_run_execution = schemas.TestRunExecutionWithChildren(
     title="Mocked test run",
     id=1,
@@ -427,7 +438,7 @@ def test_group_test_run_execution_logs() -> None:
     test_run_execution = models.TestRunExecution(
         **jsonable_encoder(mocked_test_run_execution)
     )
-    test_run_execution.log = mocked_log
+    test_run_execution.log = mocked_log_rows()
 
     grouped_logs = log_utils.group_test_run_execution_logs(test_run_execution)
 
@@ -455,7 +466,7 @@ def test_create_grouped_log_zip_file_returns_valid_zip() -> None:
     test_run_execution = models.TestRunExecution(
         **jsonable_encoder(mocked_test_run_execution)
     )
-    test_run_execution.log = mocked_log
+    test_run_execution.log = mocked_log_rows()
 
     grouped_logs = log_utils.group_test_run_execution_logs(test_run_execution)
     zip_buffer = log_utils.create_grouped_log_zip_file(grouped_logs=grouped_logs)

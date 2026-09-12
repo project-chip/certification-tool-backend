@@ -566,16 +566,16 @@ def download_project_logs(
                     ):
                         entry_file.write(line.encode())
 
-            # Detach the execution from the session's identity map, then
-            # drop its now-loaded log blob so it becomes eligible for GC
-            # immediately - expunge alone doesn't do this, since the
-            # `executions` list (held for the whole loop) still keeps a
-            # strong reference to the instance and its loaded `log`
-            # attribute. Safe to mutate post-expunge: this session is never
-            # committed (see app.db.session.get_db), so nothing ever flushes
-            # this change to the DB.
-            db.expunge(execution)
-            execution.log = []
+            # Drop the log entries loaded above so they become eligible for GC
+            # immediately, rather than staying resident until the loop ends:
+            # `executions` holds a strong reference to every execution for the
+            # whole loop, and through it to each one's loaded `log`.
+            # expire() rather than assigning an empty list, because `log` is a
+            # delete-orphan relationship - assigning to it stages the entries
+            # for deletion, which this session happens never to flush (see
+            # app.db.session.get_db), but only by luck. Expiring discards the
+            # loaded collection without touching the attribute's value.
+            db.expire(execution, ["log"])
 
     outer_zip_buffer.seek(0)
 

@@ -48,12 +48,3 @@ class PydanticModelType(PydanticBaseType):
         if value is None:
             return None
         return parse_obj_as(self.pydantic_type, value)
-
-
-class PydanticListType(PydanticBaseType):
-    def process_result_value(self, value: Any, _: Any) -> Optional[list[BaseModel]]:
-        if value is None:
-            return None
-        return parse_obj_as(
-            list[self.pydantic_type], obj=value  # type: ignore[name-defined]
-        )

@@ -22,6 +22,7 @@ from app.models.test_case_execution import TestCaseExecution  # noqa
 from app.models.test_case_metadata import TestCaseMetadata  # noqa
 from app.models.test_run_config import TestRunConfig  # noqa
 from app.models.test_run_execution import TestRunExecution  # noqa
+from app.models.test_run_log_entry import TestRunLogEntry  # noqa
 from app.models.test_step_execution import TestStepExecution  # noqa
 from app.models.test_suite_execution import TestSuiteExecution  # noqa
 from app.models.test_suite_metadata import TestSuiteMetadata  # noqa

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import json
 import tempfile
 from datetime import datetime
 from functools import reduce
@@ -71,7 +70,7 @@ def convert_execution_log_to_list(log: list, json_entries: bool) -> list:
 
     for log_line in log:
         if json_entries:
-            log_entries.append(json.dumps(log_line.__dict__))
+            log_entries.append(schemas.TestRunLogEntry.from_orm(log_line).json())
         else:
             entry = log_line
             timestamp = datetime.fromtimestamp(entry.timestamp).strftime(
@@ -95,7 +94,8 @@ def group_test_run_execution_logs(
     # - For test suite specific logs (not related to any test case), the indexes for
     # test case and test step are None and the test_suite_execution_index is not None;
     # - For test case logs, the indexes for test suite and test case are not None.
-    for entry in test_run_execution.log:
+    for row in test_run_execution.log:
+        entry = schemas.TestRunLogEntry.from_orm(row)
         if test_case := __test_case_execution_for_log_entry(
             test_run_execution=test_run_execution, log_entry=entry
         ):
