@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import loguru
 from docker.models.containers import Container
@@ -88,7 +88,7 @@ class SDKContainer(metaclass=Singleton):
 
     container_name = matter_settings.SDK_CONTAINER_NAME
     image_tag = f"{matter_settings.SDK_DOCKER_IMAGE}:{matter_settings.SDK_DOCKER_TAG}"
-    run_parameters = {
+    run_parameters: Dict[str, Any] = {
         "privileged": True,
         "detach": True,
         "network": "host",
@@ -110,10 +110,6 @@ class SDKContainer(metaclass=Singleton):
             LOCAL_CREDENTIALS_DEVELOPMENT_PATH: {
                 "bind": DOCKER_CREDENTIALS_DEVELOPMENT_PATH,
                 "mode": "ro",
-            },
-            LOCAL_WPA_SUPPLICANT_PATH: {
-                "bind": DOCKER_WPA_SUPPLICANT_PATH,
-                "mode": "rw",
             },
             LOCAL_PYTHON_TESTING_PATH: {
                 "bind": DOCKER_PYTHON_TESTING_PATH,
@@ -163,6 +159,21 @@ class SDKContainer(metaclass=Singleton):
         else:
             return container_manager.is_running(self.__container)
 
+    @staticmethod
+    def __optional_volumes() -> Dict[Any, Any]:
+        # Only mount paths that exist on the host, so hosts without them
+        # (no Wi-Fi hardware, Docker Desktop for Mac, rootless Docker) can
+        # still start the SDK container.
+        volumes: Dict[Any, Any] = {}
+
+        if LOCAL_WPA_SUPPLICANT_PATH.is_dir():
+            volumes[LOCAL_WPA_SUPPLICANT_PATH] = {
+                "bind": DOCKER_WPA_SUPPLICANT_PATH,
+                "mode": "rw",
+            }
+
+        return volumes
+
     async def start(self, enable_container_logs: Optional[bool] = None) -> None:
         """Creates the SDK container.
 
@@ -178,16 +189,24 @@ class SDKContainer(metaclass=Singleton):
         # Ensure there's no existing container running using the same name.
         self.__destroy_existing_container(enable_container_logs)
 
+        run_parameters = {
+            **self.run_parameters,
+            "volumes": {
+                **self.run_parameters["volumes"],
+                **self.__optional_volumes(),
+            },
+        }
+
         # Async return when the container is running
         self.__container = await container_manager.create_container(
             self.image_tag,
-            self.run_parameters,
+            run_parameters,
             enable_container_logs=enable_container_logs,
         )
 
         self.logger.info(
             f"{self.container_name} container started"
-            f" with configuration: {self.run_parameters}"
+            f" with configuration: {run_parameters}"
         )
 
     def destroy(self, enable_container_logs: Optional[bool] = None) -> None:
