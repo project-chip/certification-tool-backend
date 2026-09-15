@@ -52,7 +52,7 @@ COPY --from=builder \
     /usr/local/sbin/hostapd_cli \
     /usr/local/sbin/wpa_supplicant \
     /usr/local/sbin/wpa_cli \
-    /usr/local/sbin
+    /usr/local/sbin/
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
