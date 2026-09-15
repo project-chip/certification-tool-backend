@@ -84,6 +84,9 @@ class WiFiContainer(metaclass=Singleton):
             "WIFI_FIXTURE_IFNAMES=" + ",".join(config.interfaces)
         ]
 
+        # This instance outlives the suite that configured it, so start from the
+        # default every time rather than letting a previous suite's override stick.
+        self.__docker_image = DEFAULT_DOCKER_IMAGE
         if config.docker_image is not None:
             self.__docker_image = config.docker_image
             logger.warning(
