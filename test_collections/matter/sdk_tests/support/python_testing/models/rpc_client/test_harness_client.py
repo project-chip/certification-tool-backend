@@ -27,8 +27,9 @@ from matter.testing.CommissioningPreTest import CommissionDeviceTest
 from matter.testing.matter_testing import MatterTestConfig
 from matter.testing.runner import (
     TestStep,
+    convert_args_to_matter_config,
     get_test_info,
-    parse_matter_test_args,
+    matter_test_args_parser,
     run_tests,
 )
 
@@ -84,14 +85,15 @@ TH_ARGUMENT_PARSER.add_argument(
 
 def parse_th_arguments(args: list[str]) -> tuple[list[str], dict]:
     """
-    Parse TH-specific arguments using argparse before passing remaining args to parse_matter_test_args.
+    Parse TH-specific arguments using argparse before passing remaining args to
+    matter_test_args_parser()/convert_args_to_matter_config().
 
     Returns:
         tuple: (remaining_args, th_specific_args)
-            - remaining_args: Arguments to pass to parse_matter_test_args
+            - remaining_args: Arguments to pass to matter_test_args_parser()/convert_args_to_matter_config()
             - th_specific_args: Dictionary containing TH-specific argument values
     """
-    # Parse known args, leaving the rest for parse_matter_test_args
+    # Parse known args, leaving the rest for matter_test_args_parser()
     th_args, remaining_args = TH_ARGUMENT_PARSER.parse_known_args(args)
 
     # Convert to dictionary format matching the original interface
@@ -153,11 +155,13 @@ def main() -> None:
     print("Remaining args:", remaining_args)
     print("TH-specific args:", th_args)
 
-    # Temporarily override sys.argv to prevent parse_matter_test_args from using it
+    # Temporarily override sys.argv to prevent matter_test_args_parser() from using it
     original_argv = sys.argv
     try:
         sys.argv = [sys.argv[0]] + remaining_args
-        config = parse_matter_test_args(remaining_args)
+        config = convert_args_to_matter_config(
+            matter_test_args_parser().parse_args(remaining_args)
+        )
     finally:
         sys.argv = original_argv
 
