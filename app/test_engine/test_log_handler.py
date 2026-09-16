@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from asyncio import CancelledError, Task
 from typing import Optional
 
@@ -46,6 +47,7 @@ class TestLogHandler:
     def __init__(self, test_run: TestRun) -> None:
         self.__test_run: TestRun = test_run
         self.__pending_log_entries: list[TestRunLogEntry] = []
+        self.__pending_log_entries_lock = threading.Lock()
         self.__logger_sink_id = self.__subscribe_to_test_run_log_messages()
         self.__process_entries_task: Task = asyncio.create_task(
             self.__periodically_process_entries()
@@ -132,7 +134,8 @@ class TestLogHandler:
             test_case_execution_index=self.__current_test_case_index,
             test_step_execution_index=self.__current_test_step_index,
         )
-        self.__pending_log_entries.append(log_entry)
+        with self.__pending_log_entries_lock:
+            self.__pending_log_entries.append(log_entry)
 
     async def __periodically_process_entries(self) -> None:
         """This will process the pending entries at a pre-defined interval."""
@@ -146,15 +149,15 @@ class TestLogHandler:
             pass
 
     async def __process_pending_entries(self) -> None:
-        if len(self.__pending_log_entries) == 0:
-            return
-
         # test_run.append_log_entries will cause updating UI/DB so there's a risk
-        # that new log entries are added during this call,
-        # causing entries to be missed. Thus, using a copy and resetting pending.
-        # This is an issue as loguru runs `__handle_test_run_log_message` on
-        # a different thread.
-        entries = self.__pending_log_entries
-        self.__pending_log_entries = []
+        # that new log entries are added during this call, causing entries to be
+        # missed. Thus, using a copy and resetting pending under a lock: entries
+        # can now arrive from a worker thread too (e.g. commission_device()'s
+        # asyncio.to_thread-offloaded logging), not just the event loop thread.
+        with self.__pending_log_entries_lock:
+            if len(self.__pending_log_entries) == 0:
+                return
+            entries = self.__pending_log_entries
+            self.__pending_log_entries = []
 
         self.__test_run.append_log_entries(entries)
