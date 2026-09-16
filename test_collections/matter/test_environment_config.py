@@ -28,6 +28,12 @@ class TestEnvironmentConfigMatterError(Exception):
 class WiFiConfig(BaseModel):
     ssid: str
     password: str
+    # Radios the Wi-Fi fixture owns, by interface name. Naming any of them is what
+    # asks for the fixture container: no test can request it, because a Python test
+    # is only reachable through the argument list built from dut_config and
+    # test_parameters.
+    interfaces: list[str] = []
+    docker_image: Optional[str] = None
 
 
 class ThreadExternalConfig(BaseModel):

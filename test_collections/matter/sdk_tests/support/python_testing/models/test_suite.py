@@ -25,6 +25,7 @@ from app.user_prompt_support.user_prompt_support import UserPromptSupport
 from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
     ThreadBorderRouter,
 )
+from test_collections.matter.sdk_tests.support.wifi_container import WiFiContainer
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...sdk_container import SDKContainer
@@ -59,6 +60,7 @@ class PythonTestSuite(TestSuite):
     suite_name: str
     sdk_container: SDKContainer = SDKContainer(logger)
     border_router: ThreadBorderRouter = ThreadBorderRouter()
+    wifi_container: WiFiContainer = WiFiContainer()
     matter_config: Optional[TestEnvironmentConfigMatter] = None
 
     @classmethod
@@ -117,6 +119,11 @@ class PythonTestSuite(TestSuite):
             enable_container_logs=self._container_logs_enabled(),
         )
 
+        # Naming radios is the way a run asks for the Wi-Fi fixture, so start it
+        # for every suite that does, and leave it to the tests to use or ignore.
+        if self.matter_config.network.wifi.interfaces:
+            await self.wifi_container.start(self.matter_config.network.wifi)
+
         if len(self.pics.clusters) > 0:
             logger.info("Create PICS file for DUT")
             self.sdk_container.set_pics(pics=self.pics)
@@ -164,6 +171,9 @@ class PythonTestSuite(TestSuite):
 
         logger.info("Stopping Border Router")
         self.border_router.destroy_device()
+
+        logger.info("Stopping Wi-Fi fixture")
+        self.wifi_container.destroy()
 
 
 class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):

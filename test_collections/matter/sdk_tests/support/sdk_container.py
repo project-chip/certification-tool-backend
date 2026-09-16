@@ -34,6 +34,7 @@ from test_collections.matter.config import matter_settings
 
 from .exec_run_in_container import ExecResultExtended, exec_run_in_container
 from .pics import set_pics_command
+from .wifi_container import WIFI_FIXTURE_ROOT
 
 # Trace mount
 LOCAL_LOGS_PATH = Path("/var/tmp")
@@ -97,6 +98,15 @@ class SDKContainer(metaclass=Singleton):
         "volumes": {
             "/var/run/dbus/system_bus_socket": {
                 "bind": "/var/run/dbus/system_bus_socket",
+                "mode": "rw",
+            },
+            # Shared with the Wi-Fi fixture container. Mounted unconditionally
+            # because this container is a singleton started before the configuration
+            # is read, and docker creates the directory if no fixture has ever run.
+            # A test therefore has to reach a control socket to know it has a
+            # fixture, rather than trusting what it finds here.
+            WIFI_FIXTURE_ROOT: {
+                "bind": WIFI_FIXTURE_ROOT,
                 "mode": "rw",
             },
             LOCAL_LOGS_PATH: {
