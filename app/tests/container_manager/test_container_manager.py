@@ -133,7 +133,9 @@ async def test_container_ready_timeout_but_actually_running_treated_as_success()
         container_manager, "is_running", side_effect=[False, True]
     ), mock.patch.object(
         container_manager_module, "container_bring_up_timeout", 0.05
-    ), mock.patch.object(container_manager, "destroy") as destroy:
+    ), mock.patch.object(
+        container_manager, "destroy"
+    ) as destroy:
         container = await container_manager.create_container(
             docker_image_tag="org/image:tag"
         )

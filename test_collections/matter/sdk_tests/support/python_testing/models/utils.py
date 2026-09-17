@@ -19,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-from typing import Generator, cast
+from typing import Generator, Iterable, cast
 
 import loguru
 
@@ -179,7 +179,7 @@ async def generate_command_arguments(
     return arguments
 
 
-def handle_logs(log_generator: Generator, logger: loguru.Logger) -> None:
+def handle_logs(log_generator: Iterable[bytes], logger: loguru.Logger) -> None:
     for chunk in log_generator:
         decoded_log = chunk.decode().strip()
         log_lines = decoded_log.splitlines()
