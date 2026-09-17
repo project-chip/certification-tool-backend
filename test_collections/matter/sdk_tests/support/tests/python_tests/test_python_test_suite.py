@@ -567,6 +567,44 @@ async def test_cleanup_still_destroys_container_when_capture_fails() -> None:
 
 
 @pytest.mark.asyncio
+async def test_cleanup_continues_teardown_after_a_step_fails() -> None:
+    """Teardown is best effort: a failure stopping one container must not skip the
+    steps after it. The Test Harness backend stays up across runs, so a container
+    left behind here - and the singleton state tracking it - leaks into the next
+    suite."""
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    suite_instance.matter_config = mock.Mock()
+
+    with mock.patch.object(
+        target=suite_instance.sdk_container, attribute="is_running", return_value=True
+    ), mock.patch.object(
+        target=suite_instance.sdk_container,
+        attribute="destroy",
+        side_effect=RuntimeError("docker is having a bad day"),
+    ) as mock_destroy, mock.patch.object(
+        target=suite_instance.border_router,
+        attribute="destroy_device",
+        side_effect=RuntimeError("docker is still having a bad day"),
+    ) as mock_destroy_device, mock.patch.object(
+        target=suite_instance.wifi_container, attribute="destroy"
+    ) as mock_destroy_wifi, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_admin_storage_file"
+    ):
+        await suite_instance.cleanup()
+
+    mock_destroy.assert_called_once()
+    mock_destroy_device.assert_called_once()
+    mock_destroy_wifi.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_should_perform_new_commissioning_no() -> None:
     """Test that when should_perform_new_commissioning returns False,
     the setup process skips the new commissioning.
