@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 import importlib
+import time
 from asyncio import TimeoutError as AsyncioTimeoutError
 from pathlib import Path
 from unittest import mock
 
 import pytest
-from docker.errors import NotFound
+from docker.errors import DockerException, NotFound
 
 from app.container_manager.container_manager import (
     container_manager,
@@ -116,6 +118,119 @@ async def test_create_container_timeout() -> None:
     ):
         with pytest.raises(AsyncioTimeoutError):
             await container_manager.create_container(docker_image_tag="org/image:tag")
+
+
+@pytest.mark.asyncio
+async def test_container_ready_timeout_but_actually_running_treated_as_success() -> (
+    None
+):
+    """If is_running() reports True right at the timeout boundary, the
+    container actually finished starting just after the last poll - this
+    should be treated as a successful start, not a failure."""
+    with mock.patch(
+        "docker.models.containers.ContainerCollection.run"
+    ), mock.patch.object(
+        container_manager, "is_running", side_effect=[False, True]
+    ), mock.patch.object(
+        container_manager_module, "container_bring_up_timeout", 0.05
+    ), mock.patch.object(container_manager, "destroy") as destroy:
+        container = await container_manager.create_container(
+            docker_image_tag="org/image:tag"
+        )
+
+    assert container is not None
+    destroy.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_create_container_cancelled_destroys_orphaned_container() -> None:
+    """If create_container() is cancelled while the container is still being
+    created on the executor thread, the container should be waited for and
+    destroyed once it appears, and the CancelledError should still propagate
+    to the caller."""
+    container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
+
+    def slow_run_new_container(*args: object, **kwargs: object) -> Container:
+        time.sleep(0.2)
+        return container
+
+    with mock.patch.object(
+        container_manager,
+        "_ContainerManager__run_new_container",
+        side_effect=slow_run_new_container,
+    ), mock.patch.object(container, "kill") as kill, mock.patch.object(
+        container, "remove"
+    ) as remove, mock.patch(
+        "app.container_manager.container_manager.get_container",
+        return_value=container,
+    ):
+        task = asyncio.ensure_future(
+            container_manager.create_container(docker_image_tag="org/image:tag")
+        )
+        await asyncio.sleep(0.05)  # let the executor call start before cancelling
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    kill.assert_called_once()
+    remove.assert_called_once_with(force=True)
+
+
+@pytest.mark.asyncio
+async def test_create_container_cancelled_destroy_failure_does_not_mask_it() -> None:
+    """A Docker error while destroying the orphaned container must not
+    replace the CancelledError the caller is waiting for."""
+    container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
+
+    def slow_run_new_container(*args: object, **kwargs: object) -> Container:
+        time.sleep(0.2)
+        return container
+
+    with mock.patch.object(
+        container_manager,
+        "_ContainerManager__run_new_container",
+        side_effect=slow_run_new_container,
+    ), mock.patch.object(
+        container_manager, "destroy", side_effect=DockerException("boom")
+    ), mock.patch(
+        "app.container_manager.container_manager.get_container",
+        return_value=container,
+    ):
+        task = asyncio.ensure_future(
+            container_manager.create_container(docker_image_tag="org/image:tag")
+        )
+        await asyncio.sleep(0.05)
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+
+@pytest.mark.asyncio
+async def test_create_container_cancelled_logs_background_creation_failure() -> None:
+    """If the container creation itself fails in the background after
+    cancellation, that failure must be logged rather than silently dropped."""
+
+    def slow_failing_run_new_container(*args: object, **kwargs: object) -> Container:
+        time.sleep(0.2)
+        raise DockerException("create failed")
+
+    with mock.patch.object(
+        container_manager,
+        "_ContainerManager__run_new_container",
+        side_effect=slow_failing_run_new_container,
+    ), mock.patch.object(container_manager_module, "logger") as mock_logger:
+        task = asyncio.ensure_future(
+            container_manager.create_container(docker_image_tag="org/image:tag")
+        )
+        await asyncio.sleep(0.05)
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    mock_logger.warning.assert_called_once()
 
 
 def test_get_container_found() -> None:

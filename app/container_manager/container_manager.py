@@ -78,10 +78,22 @@ class ContainerManager(object, metaclass=Singleton):
             # it and destroy it so we don't leak an untracked container.
             try:
                 container = await future
-            except Exception:
-                pass
+            except Exception as error:
+                logger.warning(
+                    f"Container creation for '{docker_image_tag}' failed "
+                    f"after cancellation while finishing in the background: "
+                    f"{error}"
+                )
             else:
-                self.destroy(container)
+                try:
+                    self.destroy(container)
+                except Exception as error:
+                    # Never let a destroy failure replace the CancelledError
+                    # we're about to re-raise below.
+                    logger.warning(
+                        f"Failed to destroy orphaned container "
+                        f"'{container.name}' after cancellation: {error}"
+                    )
             raise
 
         await self.__container_ready(container)
