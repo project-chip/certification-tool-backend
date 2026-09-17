@@ -583,7 +583,7 @@ def download_project_logs(
             # committed (see app.db.session.get_db), so nothing ever flushes
             # this change to the DB.
             db.expunge(execution)
-            execution.log = None
+            execution.log = []
 
     outer_zip_buffer.seek(0)
 
