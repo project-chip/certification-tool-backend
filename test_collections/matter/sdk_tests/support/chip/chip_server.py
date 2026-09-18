@@ -205,9 +205,7 @@ class ChipServer(metaclass=Singleton):
         # Iterating log_generator blocks on the live Docker exec socket until
         # chip-tool prints its startup line - offload so it doesn't freeze
         # the event loop for the whole chip-tool boot sequence.
-        return await asyncio.to_thread(
-            self.__wait_for_server_start_sync, log_generator
-        )
+        return await asyncio.to_thread(self.__wait_for_server_start_sync, log_generator)
 
     async def start(
         self,
