@@ -182,9 +182,7 @@ async def test_suite_setup_does_not_block_event_loop() -> None:
             await asyncio.sleep(0.02)
             heartbeat_ticks += 1
 
-    with mock.patch.object(
-        target=sdk_container, attribute="start"
-    ), mock.patch.object(
+    with mock.patch.object(target=sdk_container, attribute="start"), mock.patch.object(
         target=sdk_container, attribute="send_command", side_effect=_slow_send_command
     ), mock.patch(
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
