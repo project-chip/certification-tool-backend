@@ -15,7 +15,9 @@
 #
 import json
 from http import HTTPStatus
+from io import BytesIO
 from json import JSONDecodeError
+from zipfile import ZipFile
 
 import pytest
 from httpx import AsyncClient
@@ -183,3 +185,41 @@ async def test_test_run_execution_json_log(
     parsed_line = json.loads(response_first_line)
     original_first_line = run_db.log[0]
     assert parsed_line == original_first_line
+
+
+@pytest.mark.asyncio
+async def test_test_run_execution_grouped_log_download(
+    async_client: AsyncClient, db: Session
+) -> None:
+    """The grouped-log zip must actually be streamable end-to-end - this is a
+    regression test for create_grouped_log_zip_file() returning a
+    SpooledTemporaryFile: passing that directly to StreamingResponse (instead
+    of wrapping it with log_utils.iter_and_close()) raises "TypeError: '...'
+    object is not an iterator", since SpooledTemporaryFile forwards read()/
+    seek() via __getattr__ but doesn't implement the iterator protocol
+    itself. No existing test exercised this endpoint at all before, so
+    nothing caught that when the return type changed.
+    """
+    _, run, _, _ = await load_and_run_tool_unit_tests(
+        db, TestSuiteExpected, TCTRExpectedPass
+    )
+
+    run_db = run.test_run_execution
+    id = run_db.id
+    url = f"{settings.API_V1_STR}/test_run_executions/{id}/grouped-log"
+    response = await async_client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+
+    content_type_header = response.headers.get("content-type")
+    assert content_type_header == "application/zip"
+
+    content_disposition_header = response.headers.get("content-disposition")
+    assert content_disposition_header is not None
+    expected_filename = f"{id}-{run_db.title}.zip"
+    assert content_disposition_header == f'attachment; filename="{expected_filename}"'
+
+    with ZipFile(BytesIO(response.content)) as zf:
+        names = zf.namelist()
+        assert "summary.txt" in names
+        assert "test_suites_setup_and_cleanup.log" in names

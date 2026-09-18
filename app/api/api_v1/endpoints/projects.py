@@ -18,7 +18,7 @@ import re
 import tempfile
 import traceback
 from http import HTTPStatus
-from typing import IO, Generator, List, Sequence, Union
+from typing import List, Sequence, Union
 from zipfile import ZipFile
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -389,28 +389,6 @@ def __safe_filename_component(
     return re.sub(r"[^a-zA-Z0-9_-]", "_", source)
 
 
-def __iter_and_close(
-    file_obj: IO[bytes], chunk_size: int = 64 * 1024
-) -> Generator[bytes, None, None]:
-    """Stream a file-like object in chunks, then close it.
-
-    `tempfile.SpooledTemporaryFile` forwards normal method calls (read/seek)
-    via `__getattr__`, but doesn't implement `__iter__`/`__next__` itself, so
-    passing it directly to `StreamingResponse` raises
-    "TypeError: '...' object is not an iterator". Wrapping it in a plain
-    generator (which does support the iterator protocol) fixes that while
-    still bounding memory via the underlying SpooledTemporaryFile's
-    disk-spill threshold. The `finally` also runs on early client
-    disconnect (generators receive `GeneratorExit`), so the temp file (if
-    the content spilled to disk) doesn't linger.
-    """
-    try:
-        while chunk := file_obj.read(chunk_size):
-            yield chunk
-    finally:
-        file_obj.close()
-
-
 def __persist_update_not_mutable(db: Session, project: Project, field: str) -> Project:
     """Update Project JSON fields in DB.
 
@@ -566,13 +544,27 @@ def download_project_logs(
                     grouped_logs=grouped_logs
                 )
                 entry_name = f"{execution.id}-{safe_title}.zip"
-                outer_zip.writestr(entry_name, inner_zip_buffer.read())
+                # Stream the already-spooled-to-disk inner zip into the outer
+                # one in chunks (and close it once drained), rather than
+                # inner_zip_buffer.read() (which would pull the whole thing
+                # into memory just to hand it to writestr()).
+                with outer_zip.open(entry_name, mode="w") as entry_file:
+                    for chunk in log_utils.iter_and_close(inner_zip_buffer):
+                        entry_file.write(chunk)
             else:
-                log_lines = log_utils.convert_execution_log_to_list(
-                    log=execution.log, json_entries=False
-                )
                 entry_name = f"{execution.id}-{safe_title}.log"
-                outer_zip.writestr(entry_name, "\n".join(log_lines))
+                # Stream line-by-line via outer_zip.open() instead of
+                # materializing convert_execution_log_to_list()'s full list of
+                # formatted lines *and* "\n".join()'s single giant string -
+                # for an execution with a very large log (e.g. an old seed
+                # captured before CHIP_TOOL_TRACE defaulted to off), those two
+                # extra full-content copies were what pushed peak memory over
+                # the edge on resource-constrained hardware.
+                with outer_zip.open(entry_name, mode="w") as entry_file:
+                    for line in log_utils.log_generator(
+                        log_entries=execution.log, json_entries=False
+                    ):
+                        entry_file.write(line.encode())
 
             # Detach the execution from the session's identity map, then
             # drop its now-loaded log blob so it becomes eligible for GC
@@ -591,7 +583,7 @@ def download_project_logs(
     file_name = f"{safe_name}-logs.zip"
 
     return StreamingResponse(
-        __iter_and_close(outer_zip_buffer),
+        log_utils.iter_and_close(outer_zip_buffer),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
     )

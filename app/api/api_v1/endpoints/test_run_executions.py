@@ -557,7 +557,7 @@ def download_grouped_log(
     }
 
     return StreamingResponse(
-        zip_file,
+        log_utils.iter_and_close(zip_file),
         **options,
     )
 
