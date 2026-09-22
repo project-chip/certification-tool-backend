@@ -121,6 +121,10 @@ class WiFiContainer(metaclass=Singleton):
         # tracking, one it no longer tracks (a failed start, or a backend restart
         # that dropped the reference), and one started by hand for debugging. Any of
         # them would keep the new container's hostapd from claiming the dongle.
+        # Drop the reference before removing the first of those, so that a failure
+        # before create_container() returns doesn't leave destroy() holding a
+        # container that's already gone.
+        self.__container = None
         self.__destroy_existing_container()
         container_manager.remove_containers_for_image(self.__docker_image)
 
