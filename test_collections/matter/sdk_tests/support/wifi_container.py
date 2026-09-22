@@ -48,6 +48,36 @@ class WiFiContainerError(Exception):
     pass
 
 
+def require_unclaimed_interfaces(ifnames: list[str]) -> None:
+    """Fails unless the fixture can have these radios to itself.
+
+    A host service that also manages one will fight the fixture for it: at best by
+    suppressing the link-local IPv6 address the access point needs for a DUT to
+    reach the Test Harness, at worst by taking the interface down, putting it back
+    in station mode, or changing its MAC address in the middle of a test. None of
+    that is the fixture's to repair.
+    """
+    # Imported here rather than at module scope so that a backend image without the
+    # D-Bus client this needs affects Wi-Fi runs only: every Python test suite
+    # reaches this module, by way of sdk_container.
+    from .host_network_config import interface_claims
+
+    claims = interface_claims(ifnames)
+    managed = [
+        f"{ifname} is managed by {' and '.join(services)}"
+        for ifname, services in claims.items()
+        if services
+    ]
+    if managed:
+        raise WiFiContainerError(
+            "The Wi-Fi fixture requires exclusive use of the interfaces it is given,"
+            " but , ".join(managed)
+        )
+
+    if claims:
+        logger.info(f"No known host service manages {', '.join(ifnames)}")
+
+
 class WiFiContainer(metaclass=Singleton):
     """The Wi-Fi fixture container, for the duration of a test suite.
 
@@ -112,10 +142,10 @@ class WiFiContainer(metaclass=Singleton):
             return False
 
         self.__load_config(config)
-        logger.info(
-            f"Starting Wi-Fi fixture for interfaces {config.interfaces}"
-            f" via docker image: {self.__docker_image}"
-        )
+        logger.info(f"Preparing Wi-Fi fixture using interfaces {config.interfaces}")
+
+        # Check the radios are unclaimed before starting the container.
+        require_unclaimed_interfaces(config.interfaces)
 
         # Remove anything still holding the radios: a container this instance no
         # longer tracks (a failed start, or a backend restart that dropped the
@@ -124,6 +154,7 @@ class WiFiContainer(metaclass=Singleton):
         self.__destroy_existing_container()
         container_manager.remove_containers_for_image(self.__docker_image)
 
+        logger.info(f"Starting Wi-Fi fixture using docker image: {self.__docker_image}")
         self.__container = await container_manager.create_container(
             self.__docker_image, self.run_parameters
         )
