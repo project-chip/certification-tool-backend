@@ -55,7 +55,7 @@ install_matter_wheels () {
   pip install ${wheel_dir}/*.whl --force-reinstall --no-deps
 
   # this should pick up any new dependencies added to the wheels that aren't in our pyproject.toml
-  pip install ${wheel_dir}/*.whl --constraint <(pip freeze)
+  pip install ${wheel_dir}/*.whl --constraint <(pip freeze --exclude chipyaml --exclude matter-idl --exclude matter-yamltests)
 }
 
 for arg in "$@"
