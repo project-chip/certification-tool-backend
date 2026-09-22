@@ -28,8 +28,7 @@ from app.test_engine.logger import test_engine_logger as logger
 from test_collections.matter.test_environment_config import WiFiConfig
 
 # Built from `wifi_container` in this repository.
-# Tracking :latest until the image lands in main and there is a commit to pin.
-DEFAULT_DOCKER_IMAGE = "ghcr.io/project-chip/csa-certification-tool-wifi:latest"
+DEFAULT_DOCKER_IMAGE = "ghcr.io/project-chip/csa-certification-tool-wifi:ed2832c"
 
 CONTAINER_NAME = "certification-tool-wifi"
 
@@ -99,17 +98,18 @@ class WiFiContainer(metaclass=Singleton):
             return False
         return container_manager.is_running(self.__container)
 
-    async def start(self, config: WiFiConfig) -> bool:
+    async def start(self, config: WiFiConfig) -> None:
         """Create the fixture container with the configured radios.
 
-        Returns true once both daemons answer on their global control socket, or
-        false if the container is already running.
+        Returns once both daemons answer on their global control socket, and raises
+        WiFiContainerError if the fixture doesn't get that far.
         """
         if self.is_running():
-            logger.warning(
-                "Wi-Fi fixture container is already running for " + self.__docker_image
-            )
-            return False
+            # A previous suite's cleanup didn't get as far as destroy(). Nothing
+            # reuses the fixture across suites, and its daemons still hold whatever
+            # that suite configured, so replace it rather than run this suite
+            # against it.
+            logger.warning("A Wi-Fi fixture container is still running. Replacing it.")
 
         self.__load_config(config)
         logger.info(
@@ -117,10 +117,14 @@ class WiFiContainer(metaclass=Singleton):
             f" via docker image: {self.__docker_image}"
         )
 
-        # Remove anything still holding the radios: a container this instance no
-        # longer tracks (a failed start, or a backend restart that dropped the
-        # reference), and one started by hand for debugging. Both would keep the new
-        # container's hostapd from claiming the dongle.
+        # Remove anything still holding the radios: the container this instance was
+        # tracking, one it no longer tracks (a failed start, or a backend restart
+        # that dropped the reference), and one started by hand for debugging. Any of
+        # them would keep the new container's hostapd from claiming the dongle.
+        # Drop the reference before removing the first of those, so that a failure
+        # before create_container() returns doesn't leave destroy() holding a
+        # container that's already gone.
+        self.__container = None
         self.__destroy_existing_container()
         container_manager.remove_containers_for_image(self.__docker_image)
 
@@ -143,7 +147,6 @@ class WiFiContainer(metaclass=Singleton):
             with configuration: {self.run_parameters}
             """
         )
-        return True
 
     def __destroy_existing_container(self) -> None:
         """Kill and remove any existing container using the same name."""
@@ -152,7 +155,9 @@ class WiFiContainer(metaclass=Singleton):
             logger.info(
                 f'Existing container named "{CONTAINER_NAME}" found. Destroying.'
             )
-            container_manager.destroy(existing_container)
+            # Graceful for the same reason as in destroy(): give the daemons a
+            # chance to release the radios before the new container claims them.
+            container_manager.destroy(existing_container, graceful=True)
 
     async def __wait_for_daemons(self) -> None:
         """Wait for hostapd and wpa_supplicant to answer on their global sockets."""

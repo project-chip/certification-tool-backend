@@ -162,18 +162,27 @@ class PythonTestSuite(TestSuite):
                 capture_admin_storage_file(self.matter_config, logger)
             except Exception as e:
                 # Deliberately broad Exception.
-                # The ideia is to never block container/border-router teardown below,
+                # The idea is to never block container/border-router teardown below,
                 # so don't narrow this to specific exception types.
                 logger.warning(f"Could not capture admin_storage.json snapshot: {e}")
 
-        logger.info("Stopping SDK container")
+        # Teardown is best effort: every step runs even if an earlier one failed, so
+        # that a transient docker error stopping one container can't leave the next
+        # one - and the singleton state tracking it - behind for the following suite.
+        for description, teardown in (
+            ("SDK container", self._destroy_sdk_container),
+            ("Border Router", self.border_router.destroy_device),
+            ("Wi-Fi fixture", self.wifi_container.destroy),
+        ):
+            logger.info(f"Stopping {description}")
+            try:
+                teardown()
+            except Exception as e:
+                # Deliberately broad, for the same reason as above.
+                logger.warning(f"Could not stop {description}: {e}")
+
+    def _destroy_sdk_container(self) -> None:
         self.sdk_container.destroy(enable_container_logs=self._container_logs_enabled())
-
-        logger.info("Stopping Border Router")
-        self.border_router.destroy_device()
-
-        logger.info("Stopping Wi-Fi fixture")
-        self.wifi_container.destroy()
 
 
 class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
