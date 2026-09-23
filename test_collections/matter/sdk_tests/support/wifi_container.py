@@ -70,8 +70,8 @@ def require_unclaimed_interfaces(ifnames: list[str]) -> None:
     ]
     if managed:
         raise WiFiContainerError(
-            "The Wi-Fi fixture requires exclusive use of the interfaces it is given,"
-            " but , ".join(managed)
+            f"The Wi-Fi fixture requires exclusive use of the interfaces it is given,"
+            f" but {', '.join(managed)}"
         )
 
     if claims:
