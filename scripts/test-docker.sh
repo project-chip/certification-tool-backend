@@ -15,10 +15,13 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 ROOT_DIR=$(realpath $(dirname "$0")/..)
+REPO_ROOT=$(dirname "$ROOT_DIR")
 
 KEY="BACKEND_FILEPATH_ON_HOST"
-VALUE=$(readlink -f $ROOT_DIR/backend)
+VALUE=$(readlink -f "$ROOT_DIR")
 export $KEY=$VALUE
+
+cd "$REPO_ROOT"
 
 # Exit in case of error
 set -e

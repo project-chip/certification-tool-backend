@@ -18,4 +18,4 @@
 set -e
 set -x
 
-bash scripts/test.sh --cov-report=html "${@}"
+bash scripts/test-local.sh --cov-report=html "${@}"

@@ -16,5 +16,5 @@ set -x
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-isort --recursive --apply app
+isort app
 sh ./scripts/format.sh
