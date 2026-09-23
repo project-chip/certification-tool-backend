@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import asyncio
+import time
 from unittest import mock
 
 import pytest
 
 from app.constants.shared_constants import DutPairingModeEnum
 from app.default_environment_config import default_environment_config
-from app.test_engine.logger import test_engine_logger
+from app.test_engine.logger import PYTHON_TEST_LEVEL, test_engine_logger
 from test_collections.matter.test_environment_config import (
     DutConfig,
     TestEnvironmentConfigMatter,
@@ -36,6 +38,7 @@ from ...python_testing.models.utils import (
     capture_admin_storage_file,
     commission_device,
     generate_command_arguments,
+    handle_logs,
     should_perform_new_commissioning,
 )
 from ...sdk_container import SDKContainer
@@ -685,6 +688,81 @@ async def test_commission_device_failure() -> None:
         enable_container_logs=False,
     )
     mock_handle_logs.assert_called_once()
+
+
+def test_handle_logs_decodes_and_logs_each_line() -> None:
+    """handle_logs() is always mocked out in the commission_device tests above,
+    so exercise its real chunk-decode/line-split behavior directly here."""
+    chunks = [b"line one\nline two\n", b"line three\n"]
+    fake_logger = mock.MagicMock()
+
+    handle_logs(iter(chunks), fake_logger)
+
+    assert fake_logger.log.call_args_list == [
+        mock.call(PYTHON_TEST_LEVEL, "line one"),
+        mock.call(PYTHON_TEST_LEVEL, "line two"),
+        mock.call(PYTHON_TEST_LEVEL, "line three"),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_commission_device_does_not_block_event_loop() -> None:
+    """Regression test for commission_device() freezing the whole backend for
+    the duration of DUT commissioning: handle_logs() (and the other blocking
+    Docker/file I/O calls) must run via asyncio.to_thread so a slow
+    commissioning exchange doesn't stall unrelated concurrent work."""
+    sdk_container: SDKContainer = SDKContainer()
+
+    command_args = ["arg1", "arg2", "arg3"]
+    mock_result = ExecResultExtended(0, "log output".encode(), "ID", mock.MagicMock())
+
+    def _slow_handle_logs(*_args: object, **_kwargs: object) -> None:
+        # Simulate a real (slow) Docker exec stream read. If commission_device
+        # called this directly instead of via asyncio.to_thread, this sleep
+        # would block the whole event loop instead of just this thread.
+        time.sleep(0.3)
+
+    heartbeat_ticks = 0
+
+    async def _heartbeat() -> None:
+        nonlocal heartbeat_ticks
+        for _ in range(10):
+            await asyncio.sleep(0.03)
+            heartbeat_ticks += 1
+
+    with mock.patch.object(
+        target=sdk_container, attribute="send_command", return_value=mock_result
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".generate_command_arguments",
+        return_value=command_args,
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".handle_logs",
+        side_effect=_slow_handle_logs,
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".log_test_output_file"
+    ), mock.patch.object(
+        target=sdk_container, attribute="exec_exit_code", return_value=0
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".__copy_admin_storage_file"
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".settings.ENABLE_CONTAINER_LOGS",
+        new=False,
+    ):
+        await asyncio.gather(
+            commission_device(
+                default_environment_config, test_engine_logger  # type: ignore
+            ),
+            _heartbeat(),
+        )
+
+    # If commission_device() blocked the event loop, the heartbeat coroutine
+    # would never have gotten a chance to run concurrently, and this would be 0.
+    assert heartbeat_ticks > 0
 
 
 # ---------------------------------------------------------------------------

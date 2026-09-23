@@ -17,6 +17,8 @@
 # type: ignore
 # Ignore mypy type check for this file
 
+import asyncio
+import time
 from unittest import mock
 
 import pytest
@@ -278,6 +280,51 @@ async def test_start_chip_app_using_paa_certs() -> None:
         enable_container_logs=None,
     )
     assert chip_server._ChipServer__server_logs == mock_result.output
+    assert chip_server._ChipServer__server_started is True
+
+    # clean up:
+    chip_server._ChipServer__server_logs = None
+    chip_server._ChipServer__chip_server_id = None
+    chip_server._ChipServer__server_started = False
+    matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
+
+
+@pytest.mark.asyncio
+async def test_start_does_not_block_event_loop() -> None:
+    """Regression test: waiting for chip-tool's startup log line must not
+    block the event loop, even though it now runs on a worker thread reading
+    a real (slow) generator - this is the fix for the chip-tool boot
+    sequence being one of the two remaining event-loop stalls."""
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
+    if original_trace_setting_value is True:
+        matter_settings.CHIP_TOOL_TRACE = False
+
+    chip_server: ChipServer = ChipServer()
+    sdk_container: SDKContainer = SDKContainer()
+    server_type = ChipServerType.CHIP_TOOL
+
+    def _slow_log_generator():
+        time.sleep(0.3)
+        yield b"[TOO] LWS_CALLBACK_PROTOCOL_INIT\n"
+
+    mock_result = ExecResultExtended(0, _slow_log_generator(), "ID", mock.MagicMock())
+
+    heartbeat_ticks = 0
+
+    async def _heartbeat() -> None:
+        nonlocal heartbeat_ticks
+        for _ in range(10):
+            await asyncio.sleep(0.02)
+            heartbeat_ticks += 1
+
+    with mock.patch.object(
+        target=sdk_container, attribute="send_command", return_value=mock_result
+    ):
+        await asyncio.gather(
+            chip_server.start(server_type, use_paa_certs=False), _heartbeat()
+        )
+
+    assert heartbeat_ticks > 0
     assert chip_server._ChipServer__server_started is True
 
     # clean up:

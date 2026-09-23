@@ -17,6 +17,8 @@
 # type: ignore
 # Ignore mypy type check for this file
 
+import asyncio
+import time
 from subprocess import CompletedProcess
 from unittest import mock
 
@@ -122,6 +124,58 @@ def test_set_pics_with_error() -> None:
     ), pytest.raises(PICSError):
         runner.set_pics(pics)
         assert runner._MatterYAMLRunner__pics_file_created is False
+
+
+@pytest.mark.asyncio
+async def test_send_websocket_command_does_not_block_event_loop() -> None:
+    """Regression test: logging a response's decoded log entries must not
+    block the event loop, even when the sink is momentarily slow (e.g. many
+    verbose trace lines backing up behind a loguru enqueue=True sink, as
+    happens when CHIP_TOOL_TRACE-style verbose logging produces hundreds of
+    lines for a single commissioning response).
+    """
+    runner: MatterYAMLRunner = MatterYAMLRunner()
+    runner._MatterYAMLRunner__test_harness_runner = WebSocketRunner(
+        WebSocketRunnerConfig()
+    )
+
+    heartbeat_ticks = 0
+
+    async def _heartbeat() -> None:
+        nonlocal heartbeat_ticks
+        for _ in range(10):
+            await asyncio.sleep(0.02)
+            heartbeat_ticks += 1
+
+    def _slow_log_entries(logs: list) -> None:
+        time.sleep(0.3)
+
+    with mock.patch(
+        target="test_collections.matter.sdk_tests.support.yaml_tests.matter_yaml_runner"
+        ".WebSocketRunner.is_connected",
+        new_callable=mock.PropertyMock,
+        return_value=True,
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.yaml_tests.matter_yaml_runner"
+        ".WebSocketRunner.execute",
+        return_value='{"logs": []}',
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.yaml_tests.matter_yaml_runner"
+        ".MatterLog.decode_logs",
+        return_value=[],
+    ), mock.patch.object(
+        target=runner,
+        attribute="_MatterYAMLRunner__log_entries",
+        side_effect=_slow_log_entries,
+    ):
+        await asyncio.gather(
+            runner.send_websocket_command("some command"), _heartbeat()
+        )
+
+    assert heartbeat_ticks > 0
+
+    # clean up:
+    runner._MatterYAMLRunner__test_harness_runner = None
 
 
 @pytest.mark.asyncio

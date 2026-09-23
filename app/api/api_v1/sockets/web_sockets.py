@@ -35,7 +35,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             # WebSocketDisconnect is not raised unless we poll
             # https://github.com/tiangolo/fastapi/issues/3008
             try:
-                message = await asyncio.wait_for(websocket.receive_text(), 0.1)
+                message = await asyncio.wait_for(websocket.receive_text(), 5.0)
                 await socket_connection_manager.received_message(
                     websocket=websocket, message=message
                 )

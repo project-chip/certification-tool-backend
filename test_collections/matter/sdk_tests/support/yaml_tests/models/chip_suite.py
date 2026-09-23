@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 from typing import Optional
 
 from app.constants.shared_constants import DutPairingModeEnum
@@ -90,7 +91,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
         )
 
         # pcscd is required for NFC reader access regardless of pairing mode
-        self.sdk_container.send_command(
+        await asyncio.to_thread(
+            self.sdk_container.send_command,
             "--disable-polkit",
             prefix="pcscd",
             enable_container_logs=self._container_logs_enabled(),
@@ -269,7 +271,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
             raise DUTCommissioningError("Invalid thread configuration")
 
         # Generate manual pairing code from discriminator and setup code
-        payload = self.runner.chip_server.generate_manual_pairing_code_with_chip_tool(
+        payload = await asyncio.to_thread(
+            self.runner.chip_server.generate_manual_pairing_code_with_chip_tool,
             discriminator=self.config_matter.dut_config.discriminator or "",
             setup_pin_code=self.config_matter.dut_config.setup_code or "",
             enable_container_logs=self._container_logs_enabled(),
