@@ -30,7 +30,10 @@ ORG=${DOCKER_BUILD_ORG:-project-chip}
 GIT_SHA=$(git rev-parse --short HEAD)
 
 # If working copy has changes (staged or unstaged), append `-local` to hash
-DIRTY=$(git status --porcelain --untracked-files=no)
+if ! DIRTY=$(git status --porcelain --untracked-files=no); then
+  echo "  🔴 Failed to determine git status." >&2
+  exit 1
+fi
 if [[ -n "$DIRTY" ]]; then
   GIT_DIFF="-local"
   echo "  🔴 Git repo has changes. Please commit all changes before publishing."

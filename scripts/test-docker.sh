@@ -19,7 +19,7 @@ REPO_ROOT=$(dirname "$ROOT_DIR")
 
 KEY="BACKEND_FILEPATH_ON_HOST"
 VALUE=$(readlink -f "$ROOT_DIR")
-export $KEY=$VALUE
+export "$KEY=$VALUE"
 
 cd "$REPO_ROOT"
 
