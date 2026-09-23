@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
 from enum import Enum
 from typing import Optional, Type, TypeVar
 
@@ -113,7 +114,8 @@ class PythonTestSuite(TestSuite):
 
         self.matter_config = TestEnvironmentConfigMatter(**self.config)
         # pcscd is required for NFC reader access regardless of pairing mode
-        self.sdk_container.send_command(
+        await asyncio.to_thread(
+            self.sdk_container.send_command,
             "--disable-polkit",
             prefix="pcscd",
             enable_container_logs=self._container_logs_enabled(),

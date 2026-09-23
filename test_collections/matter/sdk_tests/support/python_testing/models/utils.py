@@ -16,9 +16,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
-from typing import Generator, cast
+from typing import Generator, Iterable, cast
 
 import loguru
 
@@ -178,7 +179,7 @@ async def generate_command_arguments(
     return arguments
 
 
-def handle_logs(log_generator: Generator, logger: loguru.Logger) -> None:
+def handle_logs(log_generator: Iterable[bytes], logger: loguru.Logger) -> None:
     for chunk in log_generator:
         decoded_log = chunk.decode().strip()
         log_lines = decoded_log.splitlines()
@@ -279,7 +280,14 @@ async def commission_device(
     command_arguments = await generate_command_arguments(config)
     command.extend(command_arguments)
 
-    exec_result = sdk_container.send_command(
+    # Every call below is a blocking Docker API call or local file I/O
+    # (send_command/exec_exit_code hit the Docker daemon; handle_logs blocks
+    # for the full commissioning conversation with the DUT, reading a live
+    # Docker exec socket). Offload each to a thread so a long commissioning
+    # exchange doesn't freeze the whole backend's event loop (issue: a ~14s
+    # full-process freeze was observed with these calls made directly).
+    exec_result = await asyncio.to_thread(
+        sdk_container.send_command,
         command,
         prefix=EXECUTABLE,
         is_stream=True,
@@ -287,16 +295,18 @@ async def commission_device(
         enable_container_logs=_container_logs_enabled(config),
     )
 
-    handle_logs(cast(Generator, exec_result.output), logger)
+    await asyncio.to_thread(handle_logs, cast(Generator, exec_result.output), logger)
 
-    exit_code = sdk_container.exec_exit_code(exec_result.exec_id)
+    exit_code = await asyncio.to_thread(
+        sdk_container.exec_exit_code, exec_result.exec_id
+    )
 
     if exit_code:
         raise DUTCommissioningError("Failed to commission DUT")
 
     # Print all content from test_output.txt file after commissioning
     logger.info("---- Start of commissioning test output ----")
-    log_test_output_file(logger)
+    await asyncio.to_thread(log_test_output_file, logger)
     logger.info("---- End of commissioning test output ----")
 
     # Copy admin_storage.json file from container, in case the user wants to
@@ -304,7 +314,7 @@ async def commission_device(
     # PythonTestSuite.cleanup() does unconditionally at the end of the suite run,
     # but is kept intentionally: if the container is torn down abnormally before
     # cleanup() runs, this is the only snapshot that survives.
-    __copy_admin_storage_file(config, logger)
+    await asyncio.to_thread(__copy_admin_storage_file, config, logger)
 
 
 async def __thread_dataset_hex(

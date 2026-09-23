@@ -15,12 +15,13 @@
 #
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from random import randrange
-from time import sleep, time
+from time import time
 from typing import Generator, Optional, Union, cast
 
 import loguru
@@ -189,7 +190,7 @@ class ChipServer(metaclass=Singleton):
         self.logger.info(f"New Node Id generated: {hex(self.__node_id)}")
         return self.__node_id
 
-    async def __wait_for_server_start(self, log_generator: Generator) -> bool:
+    def __wait_for_server_start_sync(self, log_generator: Generator) -> bool:
         for chunk in log_generator:
             decoded_log = chunk.decode().strip()
             log_lines = decoded_log.splitlines()
@@ -198,8 +199,13 @@ class ChipServer(metaclass=Singleton):
                     self.logger.log(CHIPTOOL_LEVEL, line)
                     return True
                 self.logger.log(CHIPTOOL_LEVEL, line)
-        else:
-            return False
+        return False
+
+    async def __wait_for_server_start(self, log_generator: Generator) -> bool:
+        # Iterating log_generator blocks on the live Docker exec socket until
+        # chip-tool prints its startup line - offload so it doesn't freeze
+        # the event loop for the whole chip-tool boot sequence.
+        return await asyncio.to_thread(self.__wait_for_server_start_sync, log_generator)
 
     async def start(
         self,
@@ -240,7 +246,8 @@ class ChipServer(metaclass=Singleton):
         # Need to store the command to use it later to stop the proccess
         self.__server_full_command = " ".join([prefix] + command)
 
-        exec_result = self.sdk_container.send_command(
+        exec_result = await asyncio.to_thread(
+            self.sdk_container.send_command,
             command,
             prefix=prefix,
             is_stream=True,
@@ -260,7 +267,7 @@ class ChipServer(metaclass=Singleton):
 
         return cast(Generator, self.__server_logs)
 
-    def __wait_for_server_exit(self) -> Optional[int]:
+    async def __wait_for_server_exit(self) -> Optional[int]:
         if self.__chip_server_id is None:
             self.logger.info(
                 "Server execution id not found, cannot wait for server exit."
@@ -272,15 +279,19 @@ class ChipServer(metaclass=Singleton):
         # In case the timeout is triggered, the process continues after logging
         sleeping_seconds = CHIP_SERVER_EXIT_TIMEOUT / 5
         timeout = time() + CHIP_SERVER_EXIT_TIMEOUT
-        exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
+        exit_code = await asyncio.to_thread(
+            self.sdk_container.exec_exit_code, self.__chip_server_id
+        )
 
         while exit_code is None and time() <= timeout:
             self.logger.info(
                 f"Sleeping for {sleeping_seconds} seconds before verifying chip server "
                 "exit code again."
             )
-            sleep(sleeping_seconds)
-            exit_code = self.sdk_container.exec_exit_code(self.__chip_server_id)
+            await asyncio.sleep(sleeping_seconds)
+            exit_code = await asyncio.to_thread(
+                self.sdk_container.exec_exit_code, self.__chip_server_id
+            )
 
         if exit_code is None:
             raise ChipServerExitError("Timeout while waiting to exit chip server")
@@ -292,12 +303,13 @@ class ChipServer(metaclass=Singleton):
             return
 
         try:
-            self.sdk_container.send_command(
+            await asyncio.to_thread(
+                self.sdk_container.send_command,
                 f'-SIGTERM -f "{self.__server_full_command}"',
                 prefix="pkill",
                 enable_container_logs=enable_container_logs,
             )
-            self.__wait_for_server_exit()
+            await self.__wait_for_server_exit()
         except Exception as e:
             # Issue: https://github.com/project-chip/certification-tool/issues/414
             self.logger.info(

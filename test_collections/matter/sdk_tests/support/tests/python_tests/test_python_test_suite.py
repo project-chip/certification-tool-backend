@@ -15,6 +15,8 @@
 #
 # flake8: noqa
 # Ignore flake8 check for this file
+import asyncio
+import time
 from typing import Optional, Type
 from unittest import mock
 
@@ -152,6 +154,51 @@ async def test_suite_setup_log_python_version() -> None:
 
             logger_info.assert_called()
             logger_info.assert_any_call(f"Python Test Version: {python_test_version}")
+
+
+@pytest.mark.asyncio
+async def test_suite_setup_does_not_block_event_loop() -> None:
+    """Regression test: the pcscd --disable-polkit send_command() call in
+    setup() must not block the event loop, even if it's slow."""
+    sdk_container: SDKContainer = SDKContainer()
+
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.NO_COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="best_version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+
+    def _slow_send_command(*_args: object, **_kwargs: object) -> mock.Mock:
+        time.sleep(0.3)
+        return mock.Mock()
+
+    heartbeat_ticks = 0
+
+    async def _heartbeat() -> None:
+        nonlocal heartbeat_ticks
+        for _ in range(10):
+            await asyncio.sleep(0.02)
+            heartbeat_ticks += 1
+
+    with mock.patch.object(target=sdk_container, attribute="start"), mock.patch.object(
+        target=sdk_container, attribute="send_command", side_effect=_slow_send_command
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.pics",
+        new_callable=PICS,
+    ), mock.patch.object(
+        target=sdk_container, attribute="reset_pics_state"
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=default_environment_config.__dict__,
+    ):
+        await asyncio.gather(suite_instance.setup(), _heartbeat())
+
+    assert heartbeat_ticks > 0
 
 
 @pytest.mark.asyncio

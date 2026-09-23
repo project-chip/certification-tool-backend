@@ -14,16 +14,37 @@
 # limitations under the License.
 #
 import json
+import tempfile
 from datetime import datetime
 from functools import reduce
-from io import BytesIO
 from operator import add
-from typing import AsyncGenerator, Generator, List, Optional
+from typing import IO, AsyncGenerator, Generator, List, Optional
 from zipfile import ZipFile
 
 from app import models, schemas
 
 LOG_SECTION_TEMPLATE = "--------------------- {} ---------------------\n"
+
+
+def iter_and_close(
+    file_obj: IO[bytes], chunk_size: int = 64 * 1024
+) -> Generator[bytes, None, None]:
+    """Stream a file-like object in chunks, then close it.
+
+    `tempfile.SpooledTemporaryFile` forwards normal method calls (read/seek)
+    via `__getattr__`, but doesn't implement `__iter__`/`__next__` itself, so
+    passing it directly to `StreamingResponse` raises "TypeError: '...'
+    object is not an iterator". Wrapping it in a plain generator (which does
+    support the iterator protocol) fixes that while still bounding memory via
+    the underlying SpooledTemporaryFile's disk-spill threshold. The `finally`
+    also runs on early client disconnect (generators receive `GeneratorExit`),
+    so the temp file (if the content spilled to disk) doesn't linger.
+    """
+    try:
+        while chunk := file_obj.read(chunk_size):
+            yield chunk
+    finally:
+        file_obj.close()
 
 
 def log_generator(
@@ -100,8 +121,12 @@ def group_test_run_execution_logs(
 
 def create_grouped_log_zip_file(
     grouped_logs: schemas.GroupedTestRunExecutionLogs,
-) -> BytesIO:
-    file = BytesIO()
+) -> IO[bytes]:
+    # SpooledTemporaryFile, not BytesIO: for projects with many/large executions,
+    # download_project_logs() builds one of these per execution before copying it
+    # into the outer zip - keeping every one fully in memory at once (BytesIO)
+    # is what was driving peak memory sky-high. This spills to disk past 10MB.
+    file = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
 
     with ZipFile(file=file, mode="w") as zip_file:
         __create_summary_file(grouped_logs=grouped_logs, zip_file=zip_file)
