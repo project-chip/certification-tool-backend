@@ -18,7 +18,14 @@ from pydantic import BaseSettings
 
 class MatterSettings(BaseSettings):
     # Test Engine Config
-    CHIP_TOOL_TRACE: bool = True
+    # Verbose byte-level protocol trace-decode logging from chip-tool
+    # (--trace_decode 1). Off by default: it emits hundreds of log lines per
+    # commissioning, and synchronously logging that volume can stall the
+    # backend event loop (loguru's enqueue=True sinks apply backpressure once
+    # their queue fills faster than stdout/file can drain it). Opt back in via
+    # the CHIP_TOOL_TRACE env var when the detailed trace is needed for
+    # debugging.
+    CHIP_TOOL_TRACE: bool = False
     SDK_CONTAINER_NAME: str = "th-sdk"
 
     # SDK Docker Image

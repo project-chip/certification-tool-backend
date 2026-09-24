@@ -33,7 +33,10 @@ from app.container_manager import container_manager
 from app.schemas.test_environment_config import ThreadAutoConfig
 from app.singleton import Singleton
 
-DEFAULT_DOCKER_IMAGE = "nrfconnect/otbr:9185bda"  # spell-checker:disable-line
+DEFAULT_DOCKER_IMAGE = (
+    "openthread/otbr@sha256:"
+    "aa02bd1534984be704c84a575f97412c71fab504e6e1f094d0de4e06bfe46cf3"
+)
 
 APP_PATH = Path(__file__).parent.parent.resolve()
 BACKEND_DOCKER_OTBR_DIRNAME = Path(__file__).resolve().parent.relative_to(APP_PATH)

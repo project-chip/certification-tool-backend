@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from tempfile import SpooledTemporaryFile
 from typing import List
+from zipfile import ZipFile
 
 from fastapi.encoders import jsonable_encoder
 
@@ -443,3 +445,44 @@ def test_group_test_run_execution_logs() -> None:
     assert len(grouped_logs.cases[TestStateEnum.ERROR]["TC-Y-1.1"]) == 5
     assert len(grouped_logs.cases[TestStateEnum.FAILED]["TC-Y-1.2"]) == 3
     assert len(grouped_logs.cases[TestStateEnum.NOT_APPLICABLE]["TC-Y-1.4"]) == 2
+
+
+def test_create_grouped_log_zip_file_returns_valid_zip() -> None:
+    """create_grouped_log_zip_file() returns a SpooledTemporaryFile (not a
+    BytesIO) so peak memory for large log exports is bounded by disk
+    spillover instead of holding the whole compressed archive in RAM. Verify
+    it's still a valid, readable zip archive despite the type change."""
+    test_run_execution = models.TestRunExecution(
+        **jsonable_encoder(mocked_test_run_execution)
+    )
+    test_run_execution.log = mocked_log
+
+    grouped_logs = log_utils.group_test_run_execution_logs(test_run_execution)
+    zip_buffer = log_utils.create_grouped_log_zip_file(grouped_logs=grouped_logs)
+
+    assert isinstance(zip_buffer, SpooledTemporaryFile)
+
+    with ZipFile(zip_buffer) as zf:
+        names = zf.namelist()
+        assert "summary.txt" in names
+        assert "test_suites_setup_and_cleanup.log" in names
+        assert f"{TestStateEnum.PASSED}_test_cases.log" in names
+
+    zip_buffer.close()
+
+
+def test_iter_and_close_streams_and_closes_spooled_temporary_file() -> None:
+    """Regression test: iter_and_close() must work with a SpooledTemporaryFile
+    specifically (not just a BytesIO), since SpooledTemporaryFile forwards
+    read()/seek() via __getattr__ but doesn't implement __iter__/__next__
+    itself - passing one directly to StreamingResponse raises "TypeError:
+    '...' object is not an iterator"."""
+    file_obj = SpooledTemporaryFile(max_size=1024)
+    content = b"a" * 10 + b"b" * 10
+    file_obj.write(content)
+    file_obj.seek(0)
+
+    chunks = list(log_utils.iter_and_close(file_obj, chunk_size=10))
+
+    assert chunks == [b"a" * 10, b"b" * 10]
+    assert file_obj.closed

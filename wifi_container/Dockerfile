@@ -13,9 +13,10 @@
 # limitations under the License.
 
 # ---- builder ----------------------------------------------------------------
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 # Build prerequisites
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential pkg-config git ca-certificates \
         libnl-3-dev libnl-genl-3-dev libssl-dev \
@@ -39,7 +40,7 @@ RUN cd hostap \
     && make -j"$(nproc)" install CONFIG_NO_GITVER=y BINDIR=/usr/local/sbin
 
 # ---- runtime ----------------------------------------------------------------
-FROM ubuntu:22.04 AS runtime
+FROM ubuntu:24.04 AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libnl-3-200 libnl-genl-3-200 libssl3 \

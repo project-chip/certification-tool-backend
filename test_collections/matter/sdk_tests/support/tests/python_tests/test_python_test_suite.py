@@ -15,6 +15,8 @@
 #
 # flake8: noqa
 # Ignore flake8 check for this file
+import asyncio
+import time
 from typing import Optional, Type
 from unittest import mock
 
@@ -152,6 +154,51 @@ async def test_suite_setup_log_python_version() -> None:
 
             logger_info.assert_called()
             logger_info.assert_any_call(f"Python Test Version: {python_test_version}")
+
+
+@pytest.mark.asyncio
+async def test_suite_setup_does_not_block_event_loop() -> None:
+    """Regression test: the pcscd --disable-polkit send_command() call in
+    setup() must not block the event loop, even if it's slow."""
+    sdk_container: SDKContainer = SDKContainer()
+
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.NO_COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="best_version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+
+    def _slow_send_command(*_args: object, **_kwargs: object) -> mock.Mock:
+        time.sleep(0.3)
+        return mock.Mock()
+
+    heartbeat_ticks = 0
+
+    async def _heartbeat() -> None:
+        nonlocal heartbeat_ticks
+        for _ in range(10):
+            await asyncio.sleep(0.02)
+            heartbeat_ticks += 1
+
+    with mock.patch.object(target=sdk_container, attribute="start"), mock.patch.object(
+        target=sdk_container, attribute="send_command", side_effect=_slow_send_command
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.pics",
+        new_callable=PICS,
+    ), mock.patch.object(
+        target=sdk_container, attribute="reset_pics_state"
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=default_environment_config.__dict__,
+    ):
+        await asyncio.gather(suite_instance.setup(), _heartbeat())
+
+    assert heartbeat_ticks > 0
 
 
 @pytest.mark.asyncio
@@ -564,6 +611,44 @@ async def test_cleanup_still_destroys_container_when_capture_fails() -> None:
 
     mock_destroy.assert_called_once()
     mock_destroy_device.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_cleanup_continues_teardown_after_a_step_fails() -> None:
+    """Teardown is best effort: a failure stopping one container must not skip the
+    steps after it. The Test Harness backend stays up across runs, so a container
+    left behind here - and the singleton state tracking it - leaks into the next
+    suite."""
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    suite_instance.matter_config = mock.Mock()
+
+    with mock.patch.object(
+        target=suite_instance.sdk_container, attribute="is_running", return_value=True
+    ), mock.patch.object(
+        target=suite_instance.sdk_container,
+        attribute="destroy",
+        side_effect=RuntimeError("docker is having a bad day"),
+    ) as mock_destroy, mock.patch.object(
+        target=suite_instance.border_router,
+        attribute="destroy_device",
+        side_effect=RuntimeError("docker is still having a bad day"),
+    ) as mock_destroy_device, mock.patch.object(
+        target=suite_instance.wifi_container, attribute="destroy"
+    ) as mock_destroy_wifi, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_admin_storage_file"
+    ):
+        await suite_instance.cleanup()
+
+    mock_destroy.assert_called_once()
+    mock_destroy_device.assert_called_once()
+    mock_destroy_wifi.assert_called_once()
 
 
 @pytest.mark.asyncio

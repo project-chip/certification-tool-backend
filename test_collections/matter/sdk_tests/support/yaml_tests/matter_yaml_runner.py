@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+import asyncio
 import json
 import subprocess
 from pathlib import Path
@@ -163,13 +164,21 @@ class MatterYAMLRunner(metaclass=Singleton):
             json_payload = json.loads(response)
             logs = MatterLog.decode_logs(json_payload.get("logs"))
 
-            for log_entry in logs:
-                self.logger.log(
-                    CHIPTOOL_LEVEL,
-                    CHIP_LOG_FORMAT.format(log_entry.module, log_entry.message),
-                )
+            # Offloaded to a thread: a single response can carry hundreds of
+            # protocol trace lines (e.g. commissioning), and logging that
+            # many lines back-to-back can itself stall the event loop if a
+            # loguru enqueue=True sink's queue fills up faster than it drains
+            # (see CHIP_TOOL_TRACE).
+            await asyncio.to_thread(self.__log_entries, logs)
 
         return response
+
+    def __log_entries(self, logs: list) -> None:
+        for log_entry in logs:
+            self.logger.log(
+                CHIPTOOL_LEVEL,
+                CHIP_LOG_FORMAT.format(log_entry.module, log_entry.message),
+            )
 
     async def pairing(self, mode: str, *params: str) -> bool:
         command = [PAIRING_CMD, mode] + list(params)

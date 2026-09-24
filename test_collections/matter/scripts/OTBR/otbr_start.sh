@@ -19,9 +19,9 @@ TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 BR_INTERFACE="eth0"
 BR_VARIANT="35"
 BR_CHANNEL=25 # The Thread communication channel used
-BR_IMAGE_BASE="nrfconnect/otbr"
-BR_IMAGE_TAG="9185bda"
-BR_IMAGE=$BR_IMAGE_BASE":"$BR_IMAGE_TAG
+BR_IMAGE_BASE="openthread/otbr"
+BR_IMAGE_TAG="sha256:aa02bd1534984be704c84a575f97412c71fab504e6e1f094d0de4e06bfe46cf3"
+BR_IMAGE=$BR_IMAGE_BASE"@"$BR_IMAGE_TAG
 
 while getopts ":i:v:" opt; do
   case $opt in
@@ -62,7 +62,7 @@ if [ -n "$STALE_OTBR_CONTAINERS" ]; then
 	echo "$STALE_OTBR_CONTAINERS" | xargs -r sudo docker rm -f > /dev/null 2>&1
 fi
 
-if docker images | grep $BR_IMAGE_BASE | grep $BR_IMAGE_TAG;
+if docker image inspect $BR_IMAGE > /dev/null 2>&1;
 then
 	echo "otbr image "$BR_IMAGE" already installed"
 else

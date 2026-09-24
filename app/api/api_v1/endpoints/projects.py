@@ -15,9 +15,9 @@
 #
 import json
 import re
+import tempfile
 import traceback
 from http import HTTPStatus
-from io import BytesIO
 from typing import List, Sequence, Union
 from zipfile import ZipFile
 
@@ -529,7 +529,7 @@ def download_project_logs(
             detail=f"Project {id} has no test run executions to download logs for",
         )
 
-    outer_zip_buffer = BytesIO()
+    outer_zip_buffer = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
 
     with ZipFile(file=outer_zip_buffer, mode="w") as outer_zip:
         for execution in executions:
@@ -544,13 +544,38 @@ def download_project_logs(
                     grouped_logs=grouped_logs
                 )
                 entry_name = f"{execution.id}-{safe_title}.zip"
-                outer_zip.writestr(entry_name, inner_zip_buffer.read())
+                # Stream the already-spooled-to-disk inner zip into the outer
+                # one in chunks (and close it once drained), rather than
+                # inner_zip_buffer.read() (which would pull the whole thing
+                # into memory just to hand it to writestr()).
+                with outer_zip.open(entry_name, mode="w") as entry_file:
+                    for chunk in log_utils.iter_and_close(inner_zip_buffer):
+                        entry_file.write(chunk)
             else:
-                log_lines = log_utils.convert_execution_log_to_list(
-                    log=execution.log, json_entries=False
-                )
                 entry_name = f"{execution.id}-{safe_title}.log"
-                outer_zip.writestr(entry_name, "\n".join(log_lines))
+                # Stream line-by-line via outer_zip.open() instead of
+                # materializing convert_execution_log_to_list()'s full list of
+                # formatted lines *and* "\n".join()'s single giant string -
+                # for an execution with a very large log (e.g. an old seed
+                # captured before CHIP_TOOL_TRACE defaulted to off), those two
+                # extra full-content copies were what pushed peak memory over
+                # the edge on resource-constrained hardware.
+                with outer_zip.open(entry_name, mode="w") as entry_file:
+                    for line in log_utils.log_generator(
+                        log_entries=execution.log, json_entries=False
+                    ):
+                        entry_file.write(line.encode())
+
+            # Detach the execution from the session's identity map, then
+            # drop its now-loaded log blob so it becomes eligible for GC
+            # immediately - expunge alone doesn't do this, since the
+            # `executions` list (held for the whole loop) still keeps a
+            # strong reference to the instance and its loaded `log`
+            # attribute. Safe to mutate post-expunge: this session is never
+            # committed (see app.db.session.get_db), so nothing ever flushes
+            # this change to the DB.
+            db.expunge(execution)
+            execution.log = []
 
     outer_zip_buffer.seek(0)
 
@@ -558,7 +583,7 @@ def download_project_logs(
     file_name = f"{safe_name}-logs.zip"
 
     return StreamingResponse(
-        outer_zip_buffer,
+        log_utils.iter_and_close(outer_zip_buffer),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
     )
