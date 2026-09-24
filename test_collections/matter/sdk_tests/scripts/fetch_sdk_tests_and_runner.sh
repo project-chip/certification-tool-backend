@@ -16,7 +16,7 @@
  # limitations under the License.
 
 # Usage: ./test_collections/matter/sdk_tests/fetch_sdk_tests_and_runner.sh [sdk path]
-# 
+#
 # When an SDK path is supplied, the SDK_SHA from .env is ignored.
 # Otherwise a temporary checkout of matter sdk will be made.
 set -x
@@ -50,7 +50,12 @@ PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH="$PYTHON_TESTING_TEST_COLLECTION_PAT
 CURRENT_SDK_CHECKOUT_VERSION="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/.version"
 
 install_matter_wheels () {
-  pip install ${TEST_COLLECTIONS_SDK_CHECKOUT_PATH}/sdk_runner/*.whl --force-reinstall $@
+  local wheel_dir="${TEST_COLLECTIONS_SDK_CHECKOUT_PATH}/sdk_runner"
+
+  pip install ${wheel_dir}/*.whl --force-reinstall --no-deps
+
+  # this should pick up any new dependencies added to the wheels that aren't in our pyproject.toml
+  pip install ${wheel_dir}/*.whl --constraint <(pip freeze --exclude chipyaml --exclude matter-idl --exclude matter-yamltests)
 }
 
 for arg in "$@"
@@ -79,7 +84,7 @@ else
     # Get configured SDK_SHA (will default to value in test_collection/matter/config.py)
     SDK_SHA=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
     if [[ $FORCE_UPDATE -eq 1 ]]
-    then 
+    then
         echo "Update is forced."
         SDK_CHECKOUT_VERSION=$SDK_SHA
     elif [ ! -f "$CURRENT_SDK_CHECKOUT_VERSION" ] || [[ $(< "$CURRENT_SDK_CHECKOUT_VERSION") != "$SDK_SHA" ]]
@@ -87,15 +92,15 @@ else
         SDK_CHECKOUT_VERSION=$SDK_SHA
     else
         echo "Current version of test yaml are up to date with SDK: $SDK_SHA"
-        # Need to install wheels after docker restart.
-        install_matter_wheels --no-deps
+        # Re-run install in case the wheels have some new deps
+        install_matter_wheels
         exit 0
     fi
 fi
 # If SDK path is not present, then do local checkout
 if [ -z "$SDK_PATH" ]
 then
-    # Checkout SDK sparsely 
+    # Checkout SDK sparsely
     cd /tmp
     rm -rf $TMP_SDK_PATH
     git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $TMP_SDK_FOLDER
@@ -106,9 +111,9 @@ then
     SDK_PATH="$TMP_SDK_PATH"
 fi
 
-if [ ! -d "$SDK_PATH" ] 
+if [ ! -d "$SDK_PATH" ]
 then
-    echo "Unexpected: SDK path: $SDK_PATH DOES NOT exists." 
+    echo "Unexpected: SDK path: $SDK_PATH DOES NOT exists."
     exit 1
 fi
 
@@ -190,7 +195,7 @@ rm -rf ${EXTRACTION_ROOT}/chipyaml_src
 # Change to a safe directory before installing wheels
 cd ${EXTRACTION_ROOT}
 
-echo "install_matter_wheels" 
+echo "install_matter_wheels"
 install_matter_wheels
 
 # The runner needs some cluster definitions to used when parsing the YAML test. It allows to properly translate YAML
