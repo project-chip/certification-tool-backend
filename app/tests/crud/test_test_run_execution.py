@@ -925,3 +925,54 @@ def test_get_test_run_executions_limit_zero_returns_all(db: Session) -> None:
     created_ids = {tr.id for tr in test_runs}
     result_ids = {tr.id for tr in all_results}
     assert created_ids.issubset(result_ids)
+
+
+def test_iter_log_entries_yields_entries_in_seq_order(db: Session) -> None:
+    """iter_log_entries() must return a run's entries ordered by seq, and must
+    not depend on the run's `log` relationship being loaded - its whole purpose
+    is to avoid materializing the collection."""
+    test_run_execution = crud.test_run_execution.create(
+        db=db,
+        obj_in=TestRunExecutionCreate(**random_test_run_execution_dict()),
+        selected_tests={},
+    )
+    # Appended out of order to prove the ordering comes from seq rather than
+    # from insertion order or id.
+    for seq in (2, 0, 1):
+        db.add(
+            models.TestRunLogEntry(
+                test_run_execution_id=test_run_execution.id,
+                seq=seq,
+                level="INFO",
+                timestamp=1684878223.0 + seq,
+                message=f"entry {seq}",
+            )
+        )
+    db.commit()
+    db.expire(test_run_execution, ["log"])
+
+    entries = list(
+        crud.test_run_execution.iter_log_entries(
+            db=db, run_id=test_run_execution.id, batch_size=2
+        )
+    )
+
+    assert [entry.seq for entry in entries] == [0, 1, 2]
+    assert [entry.message for entry in entries] == ["entry 0", "entry 1", "entry 2"]
+
+
+def test_iter_log_entries_is_empty_for_a_run_with_no_log(db: Session) -> None:
+    test_run_execution = crud.test_run_execution.create(
+        db=db,
+        obj_in=TestRunExecutionCreate(**random_test_run_execution_dict()),
+        selected_tests={},
+    )
+
+    assert (
+        list(
+            crud.test_run_execution.iter_log_entries(
+                db=db, run_id=test_run_execution.id
+            )
+        )
+        == []
+    )

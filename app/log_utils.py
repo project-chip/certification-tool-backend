@@ -17,12 +17,17 @@ import tempfile
 from datetime import datetime
 from functools import reduce
 from operator import add
-from typing import IO, AsyncGenerator, Generator, List, Optional
+from typing import IO, AsyncGenerator, Generator, Iterable, List, Optional, Union
 from zipfile import ZipFile
 
 from app import models, schemas
 
 LOG_SECTION_TEMPLATE = "--------------------- {} ---------------------\n"
+
+# Log entries reach the formatting helpers either as rows read from the
+# testrunlogentry table or as the pydantic entries that the grouping code and
+# the test engine deal in. Both expose level/timestamp/message.
+LogEntry = Union[schemas.TestRunLogEntry, models.TestRunLogEntry]
 
 
 def iter_and_close(
@@ -46,12 +51,13 @@ def iter_and_close(
         file_obj.close()
 
 
-def log_generator(
-    log_entries: List[schemas.TestRunLogEntry], json_entries: bool
-) -> Generator:
+def log_generator(log_entries: Iterable[LogEntry], json_entries: bool) -> Generator:
     for log_line in log_entries:
         if json_entries:
-            yield log_line.json()
+            # Via the schema rather than log_line.json(), so that either a
+            # pydantic entry or a TestRunLogEntry row can be formatted; the
+            # rows have no .json().
+            yield schemas.TestRunLogEntry.from_orm(log_line).json()
             yield "\n"
         else:
             timestamp = datetime.fromtimestamp(log_line.timestamp).strftime(

@@ -551,6 +551,19 @@ def download_project_logs(
                 with outer_zip.open(entry_name, mode="w") as entry_file:
                     for chunk in log_utils.iter_and_close(inner_zip_buffer):
                         entry_file.write(chunk)
+
+                # Drop the entries that group_test_run_execution_logs() just
+                # loaded through `execution.log`, so they become eligible for GC
+                # immediately rather than staying resident until the loop ends:
+                # `executions` holds a strong reference to every execution for
+                # the whole loop, and through it to each one's loaded `log`.
+                # expire() rather than assigning an empty list, because `log` is
+                # a delete-orphan relationship - assigning to it stages the
+                # entries for deletion, which this session happens never to
+                # flush (see app.db.session.get_db), but only by luck. Expiring
+                # discards the loaded collection without touching the
+                # attribute's value.
+                db.expire(execution, ["log"])
             else:
                 entry_name = f"{execution.id}-{safe_title}.log"
                 # Stream line-by-line via outer_zip.open() instead of
@@ -560,22 +573,20 @@ def download_project_logs(
                 # captured before CHIP_TOOL_TRACE defaulted to off), those two
                 # extra full-content copies were what pushed peak memory over
                 # the edge on resource-constrained hardware.
+                #
+                # Entries come from iter_log_entries() rather than
+                # `execution.log`, so they arrive in server-side cursor batches
+                # and are never all resident at once - reading the relationship
+                # would undo the point of the streaming above, and is why this
+                # branch needs no expire().
                 with outer_zip.open(entry_name, mode="w") as entry_file:
                     for line in log_utils.log_generator(
-                        log_entries=execution.log, json_entries=False
+                        log_entries=crud.test_run_execution.iter_log_entries(
+                            db=db, run_id=execution.id
+                        ),
+                        json_entries=False,
                     ):
                         entry_file.write(line.encode())
-
-            # Drop the log entries loaded above so they become eligible for GC
-            # immediately, rather than staying resident until the loop ends:
-            # `executions` holds a strong reference to every execution for the
-            # whole loop, and through it to each one's loaded `log`.
-            # expire() rather than assigning an empty list, because `log` is a
-            # delete-orphan relationship - assigning to it stages the entries
-            # for deletion, which this session happens never to flush (see
-            # app.db.session.get_db), but only by luck. Expiring discards the
-            # loaded collection without touching the attribute's value.
-            db.expire(execution, ["log"])
 
     outer_zip_buffer.seek(0)
 
