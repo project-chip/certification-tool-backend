@@ -32,7 +32,11 @@ from .utils import (
     DUTCommissioningError,
     capture_admin_storage_file,
     commission_device,
+    invalidate_reusable_commissioning_state,
+    load_persisted_thread_active_dataset,
+    persist_thread_active_dataset,
     should_perform_new_commissioning,
+    uses_managed_thread_network,
 )
 
 
@@ -125,11 +129,22 @@ class PythonTestSuite(TestSuite):
                     "Capturing latest admin_storage.json snapshot from container"
                 )
                 capture_admin_storage_file(self.matter_config, logger)
+                if uses_managed_thread_network(self.matter_config):
+                    if not self.border_router.is_running():
+                        raise DUTCommissioningError(
+                            "Cannot capture reusable Thread state while OTBR is stopped"
+                        )
+                    persist_thread_active_dataset(
+                        self.border_router.active_dataset_bytes, logger
+                    )
             except Exception as e:
                 # Deliberately broad Exception.
-                # The ideia is to never block container/border-router teardown below,
+                # The idea is to never block container/border-router teardown below,
                 # so don't narrow this to specific exception types.
-                logger.warning(f"Could not capture admin_storage.json snapshot: {e}")
+                logger.warning(
+                    f"Could not capture reusable commissioning state snapshot: {e}"
+                )
+                invalidate_reusable_commissioning_state(self.matter_config, logger)
 
         logger.info("Stopping SDK container")
         self.sdk_container.destroy()
@@ -143,6 +158,10 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         await super().setup()
         assert self.matter_config is not None
 
+        perform_new_commissioning = await should_perform_new_commissioning(
+            self, config=self.matter_config, logger=logger
+        )
+
         # If in BLE-Thread, NFC-Thread, or THREAD_MESHCOP mode and a Thread Auto-Config
         # was provided by the user, start a new OTBR container app with the according
         # Thread topology for all tests in the Python Tests Suite.
@@ -151,15 +170,37 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
             DutPairingModeEnum.NFC_THREAD,
             DutPairingModeEnum.THREAD_MESHCOP,
         ) and isinstance(self.matter_config.network.thread, ThreadAutoConfig):
-            await self.border_router.start_device(self.matter_config.network.thread)
-            await self.border_router.form_thread_topology()
+            thread_config = self.matter_config.network.thread
+            dataset_to_restore = (
+                load_persisted_thread_active_dataset(logger)
+                if not perform_new_commissioning
+                else (
+                    bytes.fromhex(thread_config.operational_dataset_hex)
+                    if thread_config.operational_dataset_hex
+                    else None
+                )
+            )
 
-        # If a local copy of admin_storage.json file exists, prompt user if the
-        # execution should retrieve the previous commissioning information or
-        # if it should perform a new commissioning
-        if await should_perform_new_commissioning(
-            self, config=self.matter_config, logger=logger
-        ):
+            if await self.border_router.start_device(thread_config):
+                active_dataset = await self.border_router.form_thread_topology(
+                    dataset_to_restore
+                )
+            else:
+                active_dataset = self.border_router.active_dataset_bytes
+                if (
+                    dataset_to_restore is not None
+                    and active_dataset != dataset_to_restore
+                ):
+                    raise DUTCommissioningError(
+                        "Running OTBR Thread Active Dataset does not match reusable "
+                        "commissioning state"
+                    )
+
+            thread_config.operational_dataset_hex = active_dataset.hex()
+            if perform_new_commissioning:
+                persist_thread_active_dataset(active_dataset, logger)
+
+        if perform_new_commissioning:
             logger.info("User chose prompt option YES")
             user_response = await prompt_for_commissioning_mode(
                 self, logger, None, self.cancel

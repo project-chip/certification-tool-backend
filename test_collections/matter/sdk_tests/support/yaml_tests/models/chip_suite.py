@@ -241,7 +241,12 @@ class ChipSuite(TestSuite, UserPromptSupport):
     ) -> ThreadBorderRouter:
         border_router = ThreadBorderRouter()
         if await border_router.start_device(config):
-            await border_router.form_thread_topology()
+            configured_dataset = (
+                bytes.fromhex(config.operational_dataset_hex)
+                if config.operational_dataset_hex
+                else None
+            )
+            await border_router.form_thread_topology(configured_dataset)
         else:
             # This is unexpected but should work
             logger.warning("Reusing already running Border Router")

@@ -189,6 +189,7 @@ class SDKContainer(metaclass=Singleton):
         is_stream: bool = False,
         is_socket: bool = False,
         is_detach: bool = False,
+        sensitive: bool = False,
     ) -> ExecResultExtended:
         if self.__container is None:
             raise SDKContainerNotRunning()
@@ -200,15 +201,20 @@ class SDKContainer(metaclass=Singleton):
             full_cmd.append(str(command))
 
         full_cmd_str = " ".join(full_cmd)
-        self.logger.info("Sending command to SDK container: " + full_cmd_str)
+        logged_command = "[REDACTED]" if sensitive else full_cmd_str
+        self.logger.info("Sending command to SDK container: " + logged_command)
 
         # Log equivalent shell command
         if settings.ENABLE_CONTAINER_LOGS:
-            shell_cmd = docker_exec_command(
-                self.container_name,
-                full_cmd_str,
-                stdin=True,
-                detach=is_detach,
+            shell_cmd = (
+                "[REDACTED]"
+                if sensitive
+                else docker_exec_command(
+                    self.container_name,
+                    full_cmd_str,
+                    stdin=True,
+                    detach=is_detach,
+                )
             )
             self.logger.info(f"{SHELL_CMD_LOG_PREFIX}{shell_cmd}")
 

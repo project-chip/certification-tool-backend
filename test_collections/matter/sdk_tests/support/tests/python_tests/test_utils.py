@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import stat
 from unittest import mock
 
 import pytest
 
 from app.constants.shared_constants import DutPairingModeEnum
+from app.core.config import settings
 from app.default_environment_config import default_environment_config
 from app.test_engine.logger import test_engine_logger
 from test_collections.matter.test_environment_config import (
@@ -34,8 +36,12 @@ from ...python_testing.models.utils import (
     capture_admin_storage_file,
     commission_device,
     generate_command_arguments,
+    load_persisted_thread_active_dataset,
+    persist_thread_active_dataset,
+    should_perform_new_commissioning,
 )
 from ...sdk_container import SDKContainer
+from ...utils import PromptOption
 
 # ---------------------------------------------------------------------------
 # Helpers shared by the new json-arg / typed-arg tests
@@ -519,13 +525,19 @@ async def test_commission_device() -> None:
         ".log_test_output_file"
     ) as mock_log_test_output, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=0
+    ), mock.patch.object(
+        target=sdk_container, attribute="copy_file_from_container"
     ):
         await commission_device(
             default_environment_config, test_engine_logger  # type: ignore
         )
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
+        expected_command,
+        prefix=EXECUTABLE,
+        is_stream=True,
+        is_socket=False,
+        sensitive=True,
     )
     mock_handle_logs.assert_called_once()
     mock_log_test_output.assert_called_once()
@@ -559,7 +571,11 @@ async def test_commission_device_failure() -> None:
         )
 
     mock_send_command.assert_called_once_with(
-        expected_command, prefix=EXECUTABLE, is_stream=True, is_socket=False
+        expected_command,
+        prefix=EXECUTABLE,
+        is_stream=True,
+        is_socket=False,
+        sensitive=True,
     )
     mock_handle_logs.assert_called_once()
 
@@ -593,6 +609,151 @@ def test_capture_admin_storage_file_propagates_exceptions() -> None:
         capture_admin_storage_file(
             default_environment_config, test_engine_logger  # type: ignore
         )
+
+
+def test_send_sensitive_sdk_command_redacts_logs() -> None:
+    sdk_container = SDKContainer(test_engine_logger)
+    fake_container = mock.MagicMock()
+    secret = "00112233445566778899aabbccddeeff"
+    mock_result = ExecResultExtended(0, b"", "ID", mock.MagicMock())
+    sdk_container._SDKContainer__container = fake_container
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.sdk_container."
+        "exec_run_in_container",
+        return_value=mock_result,
+    ) as mock_exec_run, mock.patch.object(
+        settings, "ENABLE_CONTAINER_LOGS", True
+    ), mock.patch.object(
+        sdk_container.logger, "info"
+    ) as mock_log:
+        result = sdk_container.send_command(
+            ["pairing", "code", secret], prefix="chip-tool", sensitive=True
+        )
+
+    logged_messages = " ".join(str(call.args[0]) for call in mock_log.call_args_list)
+    assert secret not in logged_messages
+    assert logged_messages.count("[REDACTED]") == 2
+    mock_exec_run.assert_called_once_with(
+        fake_container,
+        f"chip-tool pairing code {secret}",
+        socket=False,
+        stream=False,
+        stdin=True,
+        detach=False,
+    )
+    assert result == mock_result
+
+    sdk_container._SDKContainer__container = None
+
+
+def test_persist_thread_active_dataset_is_private_and_canonical(tmp_path) -> None:
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    dataset = bytes.fromhex("0e0800000000000100000300000f")
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ):
+        persist_thread_active_dataset(dataset, test_engine_logger)
+        restored = load_persisted_thread_active_dataset(test_engine_logger)
+
+    assert restored == dataset
+    assert dataset_path.read_text(encoding="ascii") == dataset.hex() + "\n"
+    assert stat.S_IMODE(dataset_path.stat().st_mode) == 0o600
+
+
+@pytest.mark.asyncio
+async def test_incomplete_thread_reuse_bundle_is_invalidated(tmp_path) -> None:
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("{}", encoding="utf-8")
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ):
+        perform_new = await should_perform_new_commissioning(
+            mock.AsyncMock(), config, test_engine_logger
+        )
+
+    assert perform_new is True
+    assert not admin_storage_path.exists()
+    assert not dataset_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_complete_thread_reuse_bundle_is_restored(tmp_path) -> None:
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("{}", encoding="utf-8")
+    dataset_path.write_text("0e0800000000000100000300000f\n", encoding="ascii")
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    config.network.thread.operational_dataset_hex = None
+    sdk_container = SDKContainer(test_engine_logger)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "prompt_reuse_commissioning",
+        new=mock.AsyncMock(return_value=PromptOption.PASS),
+    ), mock.patch.object(
+        sdk_container, "copy_file_to_container"
+    ) as copy_file:
+        perform_new = await should_perform_new_commissioning(
+            mock.AsyncMock(), config, test_engine_logger
+        )
+
+    assert perform_new is False
+    copy_file.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_declining_thread_reuse_invalidates_entire_bundle(tmp_path) -> None:
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("{}", encoding="utf-8")
+    dataset_path.write_text("0e0800000000000100000300000f\n", encoding="ascii")
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    config.network.thread.operational_dataset_hex = None
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "prompt_reuse_commissioning",
+        new=mock.AsyncMock(return_value=PromptOption.FAIL),
+    ):
+        perform_new = await should_perform_new_commissioning(
+            mock.AsyncMock(), config, test_engine_logger
+        )
+
+    assert perform_new is True
+    assert not admin_storage_path.exists()
+    assert not dataset_path.exists()
 
 
 # ---------------------------------------------------------------------------

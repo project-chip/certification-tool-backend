@@ -567,6 +567,44 @@ async def test_cleanup_still_destroys_container_when_capture_fails() -> None:
 
 
 @pytest.mark.asyncio
+async def test_cleanup_captures_admin_storage_and_live_thread_dataset() -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    suite_instance.matter_config = config
+    dataset = bytes.fromhex("0e0800000000000100000300000f")
+
+    with mock.patch.object(
+        suite_instance.sdk_container, "is_running", return_value=True
+    ), mock.patch.object(suite_instance.sdk_container, "destroy"), mock.patch.object(
+        suite_instance.border_router, "is_running", return_value=True
+    ), mock.patch.object(
+        type(suite_instance.border_router),
+        "active_dataset_bytes",
+        new_callable=mock.PropertyMock,
+        return_value=dataset,
+    ), mock.patch.object(
+        suite_instance.border_router, "destroy_device"
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_admin_storage_file"
+    ) as capture_admin, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".persist_thread_active_dataset"
+    ) as persist_dataset:
+        await suite_instance.cleanup()
+
+    capture_admin.assert_called_once_with(config, test_engine_logger)
+    persist_dataset.assert_called_once_with(dataset, test_engine_logger)
+
+
+@pytest.mark.asyncio
 async def test_should_perform_new_commissioning_no() -> None:
     """Test that when should_perform_new_commissioning returns False,
     the setup process skips the new commissioning.
@@ -618,3 +656,62 @@ async def test_should_perform_new_commissioning_no() -> None:
         python_suite_setup.assert_called_once()
         mock_prompt_commissioning.assert_not_called()
         mock_commission_device.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_thread_reuse_decision_precedes_otbr_restore() -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    config.network.thread.operational_dataset_hex = None
+    suite_instance.matter_config = config
+    dataset = bytes.fromhex("0e0800000000000100000300000f")
+    events = []
+
+    async def decide_reuse(*args, **kwargs):
+        events.append("decide")
+        return False
+
+    async def start_otbr(*args, **kwargs):
+        events.append("start")
+        return True
+
+    async def restore_dataset(*args, **kwargs):
+        events.append("restore")
+        return dataset
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup",
+        new=mock.AsyncMock(),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".should_perform_new_commissioning",
+        side_effect=decide_reuse,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".load_persisted_thread_active_dataset",
+        return_value=dataset,
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "start_device",
+        side_effect=start_otbr,
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "form_thread_topology",
+        side_effect=restore_dataset,
+    ) as form_topology, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device"
+    ) as commission:
+        await suite_instance.setup()
+
+    assert events == ["decide", "start", "restore"]
+    form_topology.assert_awaited_once_with(dataset)
+    commission.assert_not_called()
