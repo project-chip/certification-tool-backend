@@ -18,15 +18,14 @@ from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import JSON, Enum, ForeignKey, func, select
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship, with_parent
+from sqlalchemy.orm import Mapped, mapped_column, relationship, with_parent
 
 from app.db.base_class import Base
-from app.db.pydantic_data_type import PydanticListType
 from app.schemas.pics import PICS
 
 from . import TestStateEnum
+from .test_run_log_entry import TestRunLogEntry
 from .test_suite_execution import TestSuiteExecution
 
 if TYPE_CHECKING:
@@ -36,9 +35,6 @@ if TYPE_CHECKING:
 
 
 class TestRunExecution(Base):
-    # Import pydantic schema here to avoid circular import issues
-    from app.schemas.test_run_log_entry import TestRunLogEntry
-
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -71,12 +67,16 @@ class TestRunExecution(Base):
     test_run_config: Mapped["TestRunConfig"] = relationship(
         "TestRunConfig", back_populates="test_run_executions"
     )
-    log: Mapped[list[TestRunLogEntry]] = deferred(
-        mapped_column(
-            MutableList.as_mutable(PydanticListType(TestRunLogEntry)),
-            default=[],
-            nullable=False,
-        )
+    log: Mapped[list["TestRunLogEntry"]] = relationship(
+        TestRunLogEntry,
+        back_populates="test_run_execution",
+        order_by="TestRunLogEntry.seq",
+        collection_class=ordering_list("seq"),
+        cascade="all, delete-orphan",
+        # A run can have hundreds of thousands of entries; let the FK's ON
+        # DELETE CASCADE remove them in one statement instead of loading the
+        # whole collection to issue a DELETE per row.
+        passive_deletes=True,
     )
 
     test_suite_executions: Mapped[list["TestSuiteExecution"]] = relationship(
