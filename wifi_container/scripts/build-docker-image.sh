@@ -29,10 +29,16 @@ ORG=${DOCKER_BUILD_ORG:-project-chip}
 # Latest commit hash
 GIT_SHA=$(git rev-parse --short HEAD)
 
-# If working copy has changes, append `-local` to hash
-GIT_DIFF=$(git diff -s --exit-code || echo "-local")
-if [[ $GIT_DIFF ]]; then
+# If working copy has changes (staged or unstaged), append `-local` to hash
+if ! DIRTY=$(git status --porcelain --untracked-files=no); then
+  echo "  🔴 Failed to determine git status." >&2
+  exit 1
+fi
+if [[ -n "$DIRTY" ]]; then
+  GIT_DIFF="-local"
   echo "  🔴 Git repo has changes. Please commit all changes before publishing."
+else
+  GIT_DIFF=""
 fi
 GIT_REV=$GIT_SHA$GIT_DIFF
 echo "$GIT_REV"
@@ -42,9 +48,6 @@ IMAGE=${DOCKER_BUILD_IMAGE:-$DEFAULT_IMAGE}
 
 # version
 VERSION=${DOCKER_BUILD_VERSION:-$GIT_REV}
-
-# verify that repo is clean
-DIRTY=`git status --porcelain --untracked-files=no`
 
 
 # help

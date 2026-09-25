@@ -44,4 +44,4 @@ fi
 
 
 python ./app/tests/tests_pre_start.py "$PRE_START_ARG"
-bash ./scripts/test-local.sh "$OTHER_ARGUMENTS"
+bash ./scripts/test-local.sh "${OTHER_ARGUMENTS[@]}"
