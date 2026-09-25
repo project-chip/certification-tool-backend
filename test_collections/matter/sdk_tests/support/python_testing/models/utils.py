@@ -37,7 +37,7 @@ from test_collections.matter.test_environment_config import (
     ThreadExternalConfig,
 )
 
-from ...sdk_container import SDKContainer
+from ...sdk_container import DOCKER_PAA_CERTS_PATH, SDKContainer
 from ...utils import (
     ADMIN_STORAGE_FILE_CONTAINER_DEFAULT_PATH,
     ADMIN_STORAGE_FILE_DEFAULT_NAME,
@@ -55,6 +55,7 @@ EXECUTABLE = "python3"
 TEST_OUTPUT_FILE_PATH = "sdk_checkout/python_testing/test_output.txt"
 
 TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
+TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY = "paa-trust-store-path"
 
 # Typed SDK argument flags that accept NAME:VALUE pairs and require special
 # handling to survive the container shell without mangling.
@@ -81,6 +82,16 @@ async def generate_command_arguments(
     # Increase log level by adding trace log
     if dut_config.trace_log:
         arguments.append("--trace-to json:log")
+
+    # Use the PAA certs mounted in the SDK container, as chip-tool does. Without
+    # this the SDK falls back to the development PAAs only, so DUTs with a
+    # production DAC fail attestation. An explicit test parameter takes precedence.
+    if dut_config.chip_use_paa_certs and not (
+        test_parameters and TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY in test_parameters
+    ):
+        arguments.append(
+            f"--{TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY} {DOCKER_PAA_CERTS_PATH}"
+        )
 
     if dut_config.enhanced_setup_flow:
         arguments.append("--require-tc-acknowledgements 1")
@@ -301,13 +312,15 @@ async def commission_device(
         sdk_container.exec_exit_code, exec_result.exec_id
     )
 
-    if exit_code:
-        raise DUTCommissioningError("Failed to commission DUT")
-
-    # Print all content from test_output.txt file after commissioning
+    # Print all content from test_output.txt file after commissioning. This is
+    # done before checking the exit code, since the reason for a commissioning
+    # failure is only present in this file.
     logger.info("---- Start of commissioning test output ----")
     await asyncio.to_thread(log_test_output_file, logger)
     logger.info("---- End of commissioning test output ----")
+
+    if exit_code:
+        raise DUTCommissioningError("Failed to commission DUT")
 
     # Copy admin_storage.json file from container, in case the user wants to
     # reuse this information in the next execution. This duplicates the capture

@@ -41,7 +41,7 @@ from ...python_testing.models.utils import (
     handle_logs,
     should_perform_new_commissioning,
 )
-from ...sdk_container import SDKContainer
+from ...sdk_container import DOCKER_PAA_CERTS_PATH, SDKContainer
 
 # ---------------------------------------------------------------------------
 # Helpers shared by the new json-arg / typed-arg tests
@@ -607,6 +607,37 @@ async def test_generate_command_arguments_omit_comissioning_method() -> None:
 
 
 @pytest.mark.asyncio
+async def test_generate_command_arguments_use_paa_certs() -> None:
+    mock_config = _on_network_config(test_parameters={})
+    mock_config.dut_config.chip_use_paa_certs = True
+
+    arguments = await generate_command_arguments(config=mock_config)
+
+    assert [
+        "--trace-to json:log",
+        f"--paa-trust-store-path {DOCKER_PAA_CERTS_PATH}",
+        "--commissioning-method on-network",
+        "--discriminator 3840",
+        "--passcode 20202021",
+    ] == arguments
+
+
+@pytest.mark.asyncio
+async def test_generate_command_arguments_use_paa_certs_test_parameter_override() -> (
+    None
+):
+    mock_config = _on_network_config(
+        test_parameters={"paa-trust-store-path": "/custom/paa"}
+    )
+    mock_config.dut_config.chip_use_paa_certs = True
+
+    arguments = await generate_command_arguments(config=mock_config)
+
+    assert f"--paa-trust-store-path {DOCKER_PAA_CERTS_PATH}" not in arguments
+    assert "--paa-trust-store-path /custom/paa" in arguments
+
+
+@pytest.mark.asyncio
 async def test_commission_device() -> None:
     sdk_container: SDKContainer = SDKContainer()
 
@@ -667,7 +698,10 @@ async def test_commission_device_failure() -> None:
     ), mock.patch(
         target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
         ".handle_logs"
-    ) as mock_handle_logs, mock.patch.object(
+    ) as mock_handle_logs, mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".log_test_output_file"
+    ) as mock_log_test_output, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=1
     ), mock.patch(
         target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
@@ -688,6 +722,8 @@ async def test_commission_device_failure() -> None:
         enable_container_logs=False,
     )
     mock_handle_logs.assert_called_once()
+    # The failure reason is only in test_output.txt, so it must still be logged
+    mock_log_test_output.assert_called_once()
 
 
 def test_handle_logs_decodes_and_logs_each_line() -> None:
