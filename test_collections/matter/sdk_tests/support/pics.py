@@ -20,6 +20,11 @@ SHELL_PATH = "/bin/sh"
 SHELL_OPTION = "-c"
 PICS_FILE_PATH = "/var/tmp/pics"
 ECHO_COMMAND = "echo"
+PYTHON_COMMAND = "python3"
+PYTHON_OPTION = "-c"
+PICS_PARSER_DOCKER_PATH = (
+    "python_testing/scripts/sdk/matter_testing_infrastructure/matter/testing/pics"
+)
 # List of default PICS which needs to set specifically in TH are added here.
 # These PICS are applicable for CI / Chip tool testing purposes only.
 # These PICS are unknown / not visible to external users.
@@ -57,4 +62,19 @@ def set_pics_command(pics: PICS) -> tuple[str, str]:
     prefix = f"{SHELL_PATH} {SHELL_OPTION}"
     cmd = f"\"{ECHO_COMMAND} '{pics_codes}' > {PICS_FILE_PATH}\""
 
+    return (prefix, cmd)
+
+
+def parse_pics_command(tmp_file_name: str) -> tuple[str, str]:
+    prefix = f"{PYTHON_COMMAND} {PYTHON_OPTION}"
+    PARSE_PICS_MINI_SCRIPT = f"""
+import importlib
+import json
+pics_util = importlib.import_module('{PICS_PARSER_DOCKER_PATH}'.replace('/','.'))
+
+pics = pics_util.parse_pics_xml(open('{tmp_file_name}').read())
+print(json.dumps(pics))
+"""
+
+    cmd = '"' + PARSE_PICS_MINI_SCRIPT + '"'
     return (prefix, cmd)

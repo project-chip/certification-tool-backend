@@ -236,8 +236,8 @@ def unarchive_project(
     return crud.project.unarchive(db=db, db_obj=__project(db=db, id=id))
 
 
-def __upload_pics(file: UploadFile, db: Session, project: Project) -> Project:
-    cluster = PICSParser.parse(file=file.file)
+async def __upload_pics(file: UploadFile, db: Session, project: Project) -> Project:
+    cluster = await PICSParser.parse(file=file.file)
 
     project.pics.clusters[cluster.name] = cluster
 
@@ -285,7 +285,7 @@ async def upload_pics(
         if file and file.filename and file.filename.startswith(DMP_TEST_SKIP_FILENAME):
             return __persist_dmp_test_skip(file=file, db=db, project=project)
         else:
-            return __upload_pics(file=file, db=db, project=project)
+            return await __upload_pics(file=file, db=db, project=project)
     except PICSError as e:
         raise HTTPException(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
