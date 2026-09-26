@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib.util
 import os
 import stat
+from pathlib import Path
+from types import ModuleType
 from unittest import mock
 
 import pytest
@@ -48,6 +51,19 @@ from ...utils import PromptOption
 # ---------------------------------------------------------------------------
 # Helpers shared by the new json-arg / typed-arg tests
 # ---------------------------------------------------------------------------
+
+
+def _load_sdk_container_module() -> ModuleType:
+    module_path = Path(__file__).parents[2] / "sdk_container.py"
+    spec = importlib.util.spec_from_file_location(
+        "test_collections.matter.sdk_tests.support.sdk_container_under_test",
+        module_path,
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _on_network_config(test_parameters: dict) -> TestEnvironmentConfigMatter:
@@ -620,14 +636,15 @@ def test_capture_admin_storage_file_propagates_exceptions() -> None:
 
 
 def test_send_sensitive_sdk_command_redacts_logs() -> None:
-    sdk_container = SDKContainer(test_engine_logger)
+    sdk_container_module = _load_sdk_container_module()
+    sdk_container = sdk_container_module.SDKContainer(test_engine_logger)
     fake_container = mock.MagicMock()
     secret = "00112233445566778899aabbccddeeff"
     mock_result = ExecResultExtended(0, b"", "ID", mock.MagicMock())
     sdk_container._SDKContainer__container = fake_container
 
-    with mock.patch(
-        "test_collections.matter.sdk_tests.support.sdk_container."
+    with mock.patch.object(
+        sdk_container_module,
         "exec_run_in_container",
         return_value=mock_result,
     ) as mock_exec_run, mock.patch.object(

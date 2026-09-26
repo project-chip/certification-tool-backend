@@ -141,6 +141,9 @@ async def test_suite_setup_log_python_version() -> None:
             ".commission_device",
         ), mock.patch(
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+            ".capture_reusable_commissioning_state",
+        ) as mock_capture, mock.patch(
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
@@ -152,6 +155,10 @@ async def test_suite_setup_log_python_version() -> None:
 
             logger_info.assert_called()
             logger_info.assert_any_call(f"Python Test Version: {python_test_version}")
+            if type == SuiteType.COMMISSIONING:
+                mock_capture.assert_called_once()
+            else:
+                mock_capture.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -190,6 +197,9 @@ async def test_suite_setup_without_pics() -> None:
             ".commission_device",
         ), mock.patch(
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+            ".capture_reusable_commissioning_state",
+        ) as mock_capture, mock.patch(
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
@@ -201,6 +211,10 @@ async def test_suite_setup_without_pics() -> None:
 
         mock_set_pics.assert_not_called()
         mock_reset_pics_state.assert_called_once()
+        if type == SuiteType.COMMISSIONING:
+            mock_capture.assert_called_once()
+        else:
+            mock_capture.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -239,6 +253,9 @@ async def test_suite_setup_with_pics() -> None:
             ".commission_device",
         ), mock.patch(
             target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+            ".capture_reusable_commissioning_state",
+        ) as mock_capture, mock.patch(
+            target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
             ".PythonTestSuite.config",
             new_callable=mock.PropertyMock,
             return_value=default_environment_config.__dict__,
@@ -250,6 +267,10 @@ async def test_suite_setup_with_pics() -> None:
 
         mock_set_pics.assert_called_once()
         mock_reset_pics_state.assert_not_called()
+        if type == SuiteType.COMMISSIONING:
+            mock_capture.assert_called_once()
+        else:
+            mock_capture.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -283,6 +304,9 @@ async def test_commissioning_suite_setup_with_pics() -> None:
         ".commission_device",
     ) as mock_commission_device, mock.patch(
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state",
+    ) as mock_capture, mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
@@ -292,8 +316,9 @@ async def test_commissioning_suite_setup_with_pics() -> None:
     ):
         await suite_instance.setup()
 
-    mock_prompt_for_commissioning_mode.called_once()
-    mock_commission_device.called_once()
+    mock_prompt_for_commissioning_mode.assert_called_once()
+    mock_commission_device.assert_called_once()
+    mock_capture.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -330,6 +355,9 @@ async def test_commissioning_suite_setup() -> None:
         ".commission_device",
     ), mock.patch(
         target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state",
+    ) as mock_capture, mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
@@ -340,6 +368,7 @@ async def test_commissioning_suite_setup() -> None:
         suite_instance.matter_config = mock_matter_config
         await suite_instance.setup()
         python_suite_setup.assert_called_once()
+        mock_capture.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -377,6 +406,9 @@ async def test_commissioning_suite_setup_fail() -> None:
         ".commission_device"
     ) as mock_commission_device, mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state"
+    ) as mock_capture, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value=default_environment_config.__dict__,
@@ -395,6 +427,7 @@ async def test_commissioning_suite_setup_fail() -> None:
 
         mock_prompt_commissioning.assert_called_once()
         mock_commission_device.assert_not_called()
+        mock_capture.assert_not_called()
 
 
 @pytest.mark.asyncio
