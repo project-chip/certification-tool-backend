@@ -23,6 +23,7 @@ from app.crud.base import CRUDBaseDelete, CRUDBaseRead, CRUDBaseUpdate
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate
+from app.thread_default_identity import generate_thread_default_identity
 from app.utils import program_class
 
 
@@ -82,8 +83,15 @@ class CRUDProject(
         json_obj_in = jsonable_encoder(obj_in)
 
         if obj_in.config is None or len(obj_in.config) == 0:
-            obj_in.config = default_environment_config.__dict__
-            json_obj_in = jsonable_encoder(obj_in)
+            if default_environment_config is None:
+                raise ValueError("No default Project configuration is available")
+            default_config = jsonable_encoder(
+                default_environment_config.copy(deep=True)
+            )
+            default_config["network"]["thread"]["dataset"].update(
+                generate_thread_default_identity()
+            )
+            json_obj_in["config"] = default_config
         # Try to instantiate the program class in order to validate the input data
         if program_class:
             program_class(**json_obj_in["config"])
