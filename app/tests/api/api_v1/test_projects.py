@@ -20,6 +20,7 @@ from http import HTTPStatus
 from io import BytesIO
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
@@ -36,6 +37,13 @@ from app.tests.utils.project import (
 from app.tests.utils.test_pics_data import create_random_project_with_pics
 from app.tests.utils.validate_json_response import validate_json_response
 from app.utils import DMP_TEST_SKIP_CONFIG_NODE, DMP_TEST_SKIP_FILENAME
+
+GENERATED_THREAD_IDENTITY = {
+    "panid": "0xabcd",
+    "extpanid": "0123456789abcdef",
+    "networkkey": "fedcba98765432100123456789abcdef",
+    "networkname": "TH-a1b2c3d4e5",
+}
 
 invalid_dut_config = {
     "name": "foo",
@@ -111,15 +119,21 @@ project_json_data = {
 }
 
 
-def test_create_project_default_config(client: TestClient) -> None:
+def test_create_project_default_config(client: TestClient, db: Session) -> None:
     data: dict[str, Any] = {"name": "Foo"}
-    response = client.post(
-        f"{settings.API_V1_STR}/projects/",
-        json=data,
-    )
+    expected_config = default_environment_config.copy(deep=True).dict()  # type: ignore
+    expected_config["network"]["thread"]["dataset"].update(GENERATED_THREAD_IDENTITY)
 
-    expected_data = data
-    expected_data["config"] = default_environment_config
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity",
+        return_value=GENERATED_THREAD_IDENTITY,
+    ):
+        response = client.post(
+            f"{settings.API_V1_STR}/projects/",
+            json=data,
+        )
+
+    expected_data = {**data, "config": expected_config}
 
     validate_json_response(
         response=response,
@@ -127,16 +141,23 @@ def test_create_project_default_config(client: TestClient) -> None:
         expected_content=expected_data,
         expected_keys=["id", "created_at", "updated_at", "config"],
     )
+    stored_project = crud.project.get(db=db, id=response.json()["id"])
+    assert stored_project
+    assert stored_project.config == expected_config
 
 
 def test_create_project_custom_config(client: TestClient) -> None:
     custom_config = default_environment_config.copy(deep=True)  # type: ignore
     data: dict[str, Any] = {"name": "Foo", "config": custom_config.dict()}
-    response = client.post(
-        f"{settings.API_V1_STR}/projects/",
-        json=data,
-    )
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity"
+    ) as generate_identity:
+        response = client.post(
+            f"{settings.API_V1_STR}/projects/",
+            json=data,
+        )
 
+    generate_identity.assert_not_called()
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
@@ -177,17 +198,23 @@ def test_default_project_config(client: TestClient) -> None:
 
 
 def test_read_project(client: TestClient, db: Session) -> None:
-    project = create_random_project(db, config={})
-    response = client.get(
-        f"{settings.API_V1_STR}/projects/{project.id}",
-    )
+    explicit_config = default_environment_config.dict()  # type: ignore
+    project = create_random_project(db, config=explicit_config)
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity"
+    ) as generate_identity:
+        response = client.get(
+            f"{settings.API_V1_STR}/projects/{project.id}",
+        )
 
+    generate_identity.assert_not_called()
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
         expected_content={
             "id": project.id,
             "name": project.name,
+            "config": explicit_config,
         },
         expected_keys=["created_at", "updated_at"],
     )
@@ -229,21 +256,27 @@ def test_read_multiple_project_by_archived(client: TestClient, db: Session) -> N
 
 
 def test_update_project(client: TestClient, db: Session) -> None:
-    project = create_random_project(db, config={})
+    explicit_config = default_environment_config.dict()  # type: ignore
+    project = create_random_project(db, config=explicit_config)
     data = jsonable_encoder(project)
     data["name"] = "Updated Name"
 
-    response = client.put(
-        f"{settings.API_V1_STR}/projects/{project.id}",
-        json=data,
-    )
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity"
+    ) as generate_identity:
+        response = client.put(
+            f"{settings.API_V1_STR}/projects/{project.id}",
+            json=data,
+        )
 
+    generate_identity.assert_not_called()
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,
         expected_content={
             "id": project.id,
             "name": data["name"],
+            "config": explicit_config,
         },
     )
 
@@ -487,8 +520,12 @@ def test_import_project(client: TestClient, db: Session) -> None:
         )
     }
 
-    response = client.post(f"{settings.API_V1_STR}/projects/import", files=files)
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity"
+    ) as generate_identity:
+        response = client.post(f"{settings.API_V1_STR}/projects/import", files=files)
 
+    generate_identity.assert_not_called()
     validate_json_response(
         response=response,
         expected_status_code=HTTPStatus.OK,

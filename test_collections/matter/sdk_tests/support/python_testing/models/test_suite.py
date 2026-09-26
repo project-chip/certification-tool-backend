@@ -127,7 +127,7 @@ class PythonTestSuite(TestSuite):
                 capture_admin_storage_file(self.matter_config, logger)
             except Exception as e:
                 # Deliberately broad Exception.
-                # The ideia is to never block container/border-router teardown below,
+                # The idea is to never block container/border-router teardown below,
                 # so don't narrow this to specific exception types.
                 logger.warning(f"Could not capture admin_storage.json snapshot: {e}")
 

@@ -13,9 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import logging
+from unittest import mock
+
+import pytest
 from sqlalchemy.orm import Session
 
 from app import crud
+from app.default_environment_config import default_environment_config
 from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.tests.utils.project import (
     create_random_project,
@@ -23,6 +28,13 @@ from app.tests.utils.project import (
 )
 from app.tests.utils.test_run_execution import create_random_test_run_execution
 from app.tests.utils.utils import random_lower_string
+
+GENERATED_THREAD_IDENTITY = {
+    "panid": "0xabcd",
+    "extpanid": "0123456789abcdef",
+    "networkkey": "fedcba98765432100123456789abcdef",
+    "networkname": "TH-a1b2c3d4e5",
+}
 
 
 def test_create_project(db: Session) -> None:
@@ -39,9 +51,75 @@ def test_create_project_no_config_informed(db: Session) -> None:
     name = random_lower_string()
     wifi_ssid = random_lower_string()
     project_in = ProjectCreate(name=name, wifi_ssid=wifi_ssid)
+    static_default_config = default_environment_config.dict()  # type: ignore
 
-    project = crud.project.create(db=db, obj_in=project_in)
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity",
+        return_value=GENERATED_THREAD_IDENTITY,
+    ):
+        project = crud.project.create(db=db, obj_in=project_in)
+
     assert project.name == name
+    assert project.config["network"]["thread"]["dataset"] == {
+        **static_default_config["network"]["thread"]["dataset"],
+        **GENERATED_THREAD_IDENTITY,
+    }
+    assert default_environment_config.dict() == static_default_config  # type: ignore
+    assert project_in.config is None
+
+
+def test_two_new_projects_receive_different_thread_identities(db: Session) -> None:
+    second_identity = {
+        "panid": "0x4567",
+        "extpanid": "fedcba9876543210",
+        "networkkey": "0123456789abcdeffedcba9876543210",
+        "networkname": "TH-0123456789",
+    }
+
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity",
+        side_effect=[GENERATED_THREAD_IDENTITY, second_identity],
+    ):
+        first = crud.project.create(
+            db=db, obj_in=ProjectCreate(name=random_lower_string())
+        )
+        second = crud.project.create(
+            db=db, obj_in=ProjectCreate(name=random_lower_string())
+        )
+
+    first_dataset = first.config["network"]["thread"]["dataset"]
+    second_dataset = second.config["network"]["thread"]["dataset"]
+    assert first_dataset["networkkey"] != second_dataset["networkkey"]
+    assert first_dataset["extpanid"] != second_dataset["extpanid"]
+    assert first_dataset["panid"] != second_dataset["panid"]
+    assert first_dataset["networkname"] != second_dataset["networkname"]
+
+
+def test_explicit_project_config_is_preserved(db: Session) -> None:
+    explicit_config = default_environment_config.dict()  # type: ignore
+
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity"
+    ) as generate_identity:
+        project = crud.project.create(
+            db=db,
+            obj_in=ProjectCreate(name=random_lower_string(), config=explicit_config),
+        )
+
+    generate_identity.assert_not_called()
+    assert project.config == explicit_config
+
+
+def test_generated_network_key_is_not_logged(
+    db: Session, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.DEBUG), mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity",
+        return_value=GENERATED_THREAD_IDENTITY,
+    ):
+        crud.project.create(db=db, obj_in=ProjectCreate(name=random_lower_string()))
+
+    assert GENERATED_THREAD_IDENTITY["networkkey"] not in caplog.text
 
 
 def test_get_project(db: Session) -> None:
@@ -105,16 +183,26 @@ def test_get_multi_project_archived(db: Session) -> None:
 
 
 def test_update_project(db: Session) -> None:
-    project = create_random_project(db=db, config={})
+    explicit_config = default_environment_config.dict()  # type: ignore
+    project = create_random_project(db=db, config=explicit_config)
 
     new_name = random_lower_string()
     project_update = ProjectUpdate(name=new_name)
 
-    updated_project = crud.project.update(db=db, db_obj=project, obj_in=project_update)
+    with mock.patch(
+        "app.crud.crud_project.generate_thread_default_identity"
+    ) as generate_identity:
+        updated_project = crud.project.update(
+            db=db, db_obj=project, obj_in=project_update
+        )
+        stored_project = crud.project.get(db=db, id=project.id)
 
+    generate_identity.assert_not_called()
     assert project.id == updated_project.id
-
     assert updated_project.name == new_name
+    assert updated_project.config == explicit_config
+    assert stored_project
+    assert stored_project.config == explicit_config
 
 
 def test_delete_project(db: Session) -> None:
