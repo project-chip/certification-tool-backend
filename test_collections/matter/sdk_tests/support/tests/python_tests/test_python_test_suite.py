@@ -434,7 +434,10 @@ async def test_should_perform_new_commissioning_yes() -> None:
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
         ".should_perform_new_commissioning",
         return_value=True,
-    ) as mock_should_perform_new_commissioning:
+    ) as mock_should_perform_new_commissioning, mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state"
+    ) as mock_capture:
         suite_instance.matter_config = mock_matter_config
         await suite_instance.setup()
 
@@ -442,6 +445,10 @@ async def test_should_perform_new_commissioning_yes() -> None:
         python_suite_setup.assert_called_once()
         mock_prompt_commissioning.assert_called_once()
         mock_commission_device.assert_called_once()
+        mock_capture.assert_called_once_with(
+            mock_matter_config, test_engine_logger, None
+        )
+        assert suite_instance.reusable_commissioning_state_established is True
 
 
 @pytest.mark.asyncio
@@ -458,6 +465,7 @@ async def test_cleanup_captures_admin_storage_before_destroy() -> None:
     )
     suite_instance = suite_class(TestSuiteExecution())
     suite_instance.matter_config = mock.Mock()
+    suite_instance.reusable_commissioning_state_established = True
 
     with mock.patch.object(
         target=suite_instance.sdk_container, attribute="is_running", return_value=True
@@ -467,12 +475,12 @@ async def test_cleanup_captures_admin_storage_before_destroy() -> None:
         target=suite_instance.border_router, attribute="destroy_device"
     ), mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".capture_admin_storage_file"
+        ".capture_reusable_commissioning_state"
     ) as mock_capture:
         await suite_instance.cleanup()
 
     mock_capture.assert_called_once_with(
-        suite_instance.matter_config, test_engine_logger
+        suite_instance.matter_config, test_engine_logger, None
     )
     mock_destroy.assert_called_once()
 
@@ -499,7 +507,7 @@ async def test_cleanup_skips_capture_when_container_not_running() -> None:
         target=suite_instance.border_router, attribute="destroy_device"
     ) as mock_destroy_device, mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".capture_admin_storage_file"
+        ".capture_reusable_commissioning_state"
     ) as mock_capture:
         await suite_instance.cleanup()
 
@@ -527,7 +535,7 @@ async def test_cleanup_skips_capture_when_matter_config_not_set() -> None:
         target=suite_instance.border_router, attribute="destroy_device"
     ) as mock_destroy_device, mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".capture_admin_storage_file"
+        ".capture_reusable_commissioning_state"
     ) as mock_capture:
         await suite_instance.cleanup()
 
@@ -548,6 +556,7 @@ async def test_cleanup_still_destroys_container_when_capture_fails() -> None:
     )
     suite_instance = suite_class(TestSuiteExecution())
     suite_instance.matter_config = mock.Mock()
+    suite_instance.reusable_commissioning_state_established = True
 
     with mock.patch.object(
         target=suite_instance.sdk_container, attribute="is_running", return_value=True
@@ -557,7 +566,7 @@ async def test_cleanup_still_destroys_container_when_capture_fails() -> None:
         target=suite_instance.border_router, attribute="destroy_device"
     ) as mock_destroy_device, mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".capture_admin_storage_file",
+        ".capture_reusable_commissioning_state",
         side_effect=RuntimeError("boom"),
     ):
         await suite_instance.cleanup()
@@ -578,6 +587,7 @@ async def test_cleanup_captures_admin_storage_and_live_thread_dataset() -> None:
     config = default_environment_config.copy(deep=True)  # type: ignore
     config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
     suite_instance.matter_config = config
+    suite_instance.reusable_commissioning_state_established = True
     dataset = bytes.fromhex("0e0800000000000100000300000f")
 
     with mock.patch.object(
@@ -593,15 +603,11 @@ async def test_cleanup_captures_admin_storage_and_live_thread_dataset() -> None:
         suite_instance.border_router, "destroy_device"
     ), mock.patch(
         "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".capture_admin_storage_file"
-    ) as capture_admin, mock.patch(
-        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".persist_thread_active_dataset"
-    ) as persist_dataset:
+        ".capture_reusable_commissioning_state"
+    ) as capture_state:
         await suite_instance.cleanup()
 
-    capture_admin.assert_called_once_with(config, test_engine_logger)
-    persist_dataset.assert_called_once_with(dataset, test_engine_logger)
+    capture_state.assert_called_once_with(config, test_engine_logger, dataset)
 
 
 @pytest.mark.asyncio
@@ -715,3 +721,249 @@ async def test_thread_reuse_decision_precedes_otbr_restore() -> None:
     assert events == ["decide", "start", "restore"]
     form_topology.assert_awaited_once_with(dataset)
     commission.assert_not_called()
+    assert suite_instance.reusable_commissioning_state_established is True
+
+
+@pytest.mark.asyncio
+async def test_failed_new_thread_commissioning_cleanup_does_not_capture(
+    tmp_path,
+) -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    config.network.thread.operational_dataset_hex = None
+    suite_instance.matter_config = config
+    dataset = bytes.fromhex("0e0800000000000100000300000f")
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("old-admin", encoding="utf-8")
+    dataset_path.write_text(dataset.hex() + "\n", encoding="ascii")
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup",
+        new=mock.AsyncMock(),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "prompt_reuse_commissioning",
+        new=mock.AsyncMock(return_value=PromptOption.FAIL),
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "start_device",
+        new=mock.AsyncMock(return_value=True),
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "form_thread_topology",
+        new=mock.AsyncMock(return_value=dataset),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.PASS,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device",
+        side_effect=DUTCommissioningError("commissioning failed"),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state"
+    ) as capture_state, mock.patch.object(
+        suite_instance.sdk_container, "is_running", return_value=True
+    ), mock.patch.object(
+        suite_instance.sdk_container, "destroy"
+    ), mock.patch.object(
+        suite_instance.border_router, "destroy_device"
+    ):
+        with pytest.raises(DUTCommissioningError, match="commissioning failed"):
+            await suite_instance.setup()
+        await suite_instance.cleanup()
+
+    capture_state.assert_not_called()
+    assert suite_instance.reusable_commissioning_state_established is False
+    assert admin_storage_path.read_text(encoding="utf-8") == "old-admin"
+    assert dataset_path.read_text(encoding="ascii") == dataset.hex() + "\n"
+
+
+@pytest.mark.asyncio
+async def test_successful_new_thread_commissioning_promotes_exact_bundle() -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    suite_instance.matter_config = config
+    dataset = bytes.fromhex("0e0800000000000100000300000f")
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup",
+        new=mock.AsyncMock(),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".should_perform_new_commissioning",
+        return_value=True,
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "start_device",
+        new=mock.AsyncMock(return_value=True),
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "form_thread_topology",
+        new=mock.AsyncMock(return_value=dataset),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".prompt_for_commissioning_mode",
+        return_value=PromptOption.PASS,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".commission_device",
+        new=mock.AsyncMock(),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state"
+    ) as capture_state:
+        await suite_instance.setup()
+
+    capture_state.assert_called_once_with(config, test_engine_logger, dataset)
+    assert config.network.thread.operational_dataset_hex == dataset.hex()
+    assert suite_instance.reusable_commissioning_state_established is True
+
+
+@pytest.mark.asyncio
+async def test_failed_thread_restore_cleanup_does_not_capture(tmp_path) -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    config.network.thread.operational_dataset_hex = None
+    suite_instance.matter_config = config
+    dataset = bytes.fromhex("0e0800000000000100000300000f")
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("old-admin", encoding="utf-8")
+    dataset_path.write_text(dataset.hex() + "\n", encoding="ascii")
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup",
+        new=mock.AsyncMock(),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "prompt_reuse_commissioning",
+        new=mock.AsyncMock(return_value=PromptOption.PASS),
+    ), mock.patch.object(
+        suite_instance.sdk_container, "copy_file_to_container"
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "start_device",
+        new=mock.AsyncMock(return_value=True),
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "form_thread_topology",
+        new=mock.AsyncMock(side_effect=DUTCommissioningError("restore mismatch")),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state"
+    ) as capture_state, mock.patch.object(
+        suite_instance.sdk_container, "is_running", return_value=True
+    ), mock.patch.object(
+        suite_instance.sdk_container, "destroy"
+    ), mock.patch.object(
+        suite_instance.border_router, "destroy_device"
+    ):
+        with pytest.raises(DUTCommissioningError, match="restore mismatch"):
+            await suite_instance.setup()
+        await suite_instance.cleanup()
+
+    capture_state.assert_not_called()
+    assert suite_instance.reusable_commissioning_state_established is False
+    assert admin_storage_path.read_text(encoding="utf-8") == "old-admin"
+    assert dataset_path.read_text(encoding="ascii") == dataset.hex() + "\n"
+
+
+@pytest.mark.asyncio
+async def test_successful_thread_reuse_cleanup_refreshes_exact_bundle() -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="Some version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    suite_instance.matter_config = config
+    dataset = bytes.fromhex("0e0800000000000100000300000f")
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.setup",
+        new=mock.AsyncMock(),
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".should_perform_new_commissioning",
+        return_value=False,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".load_persisted_thread_active_dataset",
+        return_value=dataset,
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "start_device",
+        new=mock.AsyncMock(return_value=True),
+    ), mock.patch.object(
+        suite_instance.border_router,
+        "form_thread_topology",
+        new=mock.AsyncMock(return_value=dataset),
+    ), mock.patch.object(
+        suite_instance.sdk_container, "is_running", return_value=True
+    ), mock.patch.object(
+        suite_instance.sdk_container, "destroy"
+    ), mock.patch.object(
+        suite_instance.border_router, "is_running", return_value=True
+    ), mock.patch.object(
+        type(suite_instance.border_router),
+        "active_dataset_bytes",
+        new_callable=mock.PropertyMock,
+        return_value=dataset,
+    ), mock.patch.object(
+        suite_instance.border_router, "destroy_device"
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".capture_reusable_commissioning_state"
+    ) as capture_state:
+        await suite_instance.setup()
+        capture_state.assert_not_called()
+        await suite_instance.cleanup()
+
+    capture_state.assert_called_once_with(config, test_engine_logger, dataset)

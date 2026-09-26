@@ -250,6 +250,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
         else:
             # This is unexpected but should work
             logger.warning("Reusing already running Border Router")
+            if config.operational_dataset_hex:
+                border_router.verify_active_dataset(config.operational_dataset_hex)
 
         self.border_router = border_router
 

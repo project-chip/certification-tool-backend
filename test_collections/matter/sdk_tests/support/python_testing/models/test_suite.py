@@ -30,11 +30,9 @@ from ...sdk_container import SDKContainer
 from ...utils import PromptOption, prompt_for_commissioning_mode
 from .utils import (
     DUTCommissioningError,
-    capture_admin_storage_file,
+    capture_reusable_commissioning_state,
     commission_device,
-    invalidate_reusable_commissioning_state,
     load_persisted_thread_active_dataset,
-    persist_thread_active_dataset,
     should_perform_new_commissioning,
     uses_managed_thread_network,
 )
@@ -63,6 +61,7 @@ class PythonTestSuite(TestSuite):
     sdk_container: SDKContainer = SDKContainer(logger)
     border_router: ThreadBorderRouter = ThreadBorderRouter()
     matter_config: Optional[TestEnvironmentConfigMatter] = None
+    reusable_commissioning_state_established: bool = False
 
     @classmethod
     def class_factory(
@@ -104,6 +103,7 @@ class PythonTestSuite(TestSuite):
 
     async def setup(self) -> None:
         """Override Setup to log Python Test version and set PICS."""
+        self.reusable_commissioning_state_established = False
         logger.info("Suite Setup")
         logger.info(f"Python Test Version: {self.python_test_version}")
 
@@ -123,20 +123,22 @@ class PythonTestSuite(TestSuite):
     async def cleanup(self) -> None:
         logger.info("Suite Cleanup")
 
-        if self.matter_config is not None and self.sdk_container.is_running():
+        if (
+            self.reusable_commissioning_state_established
+            and self.matter_config is not None
+            and self.sdk_container.is_running()
+        ):
             try:
-                logger.info(
-                    "Capturing latest admin_storage.json snapshot from container"
-                )
-                capture_admin_storage_file(self.matter_config, logger)
+                active_dataset = None
                 if uses_managed_thread_network(self.matter_config):
                     if not self.border_router.is_running():
                         raise DUTCommissioningError(
                             "Cannot capture reusable Thread state while OTBR is stopped"
                         )
-                    persist_thread_active_dataset(
-                        self.border_router.active_dataset_bytes, logger
-                    )
+                    active_dataset = self.border_router.active_dataset_bytes
+                capture_reusable_commissioning_state(
+                    self.matter_config, logger, active_dataset
+                )
             except Exception as e:
                 # Deliberately broad Exception.
                 # The idea is to never block container/border-router teardown below,
@@ -144,7 +146,6 @@ class PythonTestSuite(TestSuite):
                 logger.warning(
                     f"Could not capture reusable commissioning state snapshot: {e}"
                 )
-                invalidate_reusable_commissioning_state(self.matter_config, logger)
 
         logger.info("Stopping SDK container")
         self.sdk_container.destroy()
@@ -161,6 +162,7 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         perform_new_commissioning = await should_perform_new_commissioning(
             self, config=self.matter_config, logger=logger
         )
+        active_dataset = None
 
         # If in BLE-Thread, NFC-Thread, or THREAD_MESHCOP mode and a Thread Auto-Config
         # was provided by the user, start a new OTBR container app with the according
@@ -185,20 +187,14 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
                 active_dataset = await self.border_router.form_thread_topology(
                     dataset_to_restore
                 )
+            elif dataset_to_restore is not None:
+                active_dataset = self.border_router.verify_active_dataset(
+                    dataset_to_restore
+                )
             else:
                 active_dataset = self.border_router.active_dataset_bytes
-                if (
-                    dataset_to_restore is not None
-                    and active_dataset != dataset_to_restore
-                ):
-                    raise DUTCommissioningError(
-                        "Running OTBR Thread Active Dataset does not match reusable "
-                        "commissioning state"
-                    )
 
             thread_config.operational_dataset_hex = active_dataset.hex()
-            if perform_new_commissioning:
-                persist_thread_active_dataset(active_dataset, logger)
 
         if perform_new_commissioning:
             logger.info("User chose prompt option YES")
@@ -212,4 +208,13 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
                 )
 
             logger.info("Commission DUT")
-            await commission_device(self.matter_config, logger=logger)
+            await commission_device(
+                self.matter_config,
+                logger=logger,
+                capture_reusable_state=False,
+            )
+            capture_reusable_commissioning_state(
+                self.matter_config, logger, active_dataset
+            )
+
+        self.reusable_commissioning_state_established = True

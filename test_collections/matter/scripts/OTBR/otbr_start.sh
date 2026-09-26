@@ -126,12 +126,13 @@ print_script_step "Setting up Thread Network"
 for i in "${BR_PARAMS[@]}"
 do
   if [[ "$i" == dataset\ networkkey* ]]; then
-    printf "Param: 'dataset networkkey [REDACTED]'"
+    DISPLAY_COMMAND="dataset networkkey [REDACTED]"
   else
-    printf "Param: '$i'"
+    DISPLAY_COMMAND="$i"
   fi
+  printf "Param: '$DISPLAY_COMMAND'"
         if ! sudo docker exec -t otbr-chip ot-ctl $i; then
-                echo "ERROR: 'ot-ctl $i' failed. Dumping 'otbr-chip' container logs for diagnosis:" >&2
+                echo "ERROR: 'ot-ctl $DISPLAY_COMMAND' failed. Dumping 'otbr-chip' container logs for diagnosis:" >&2
                 sudo docker logs otbr-chip
                 exit 1
         fi
@@ -158,4 +159,3 @@ print_script_step "Restarting the Raspi avahi to have it in a clean state"
 sudo service avahi-daemon restart
 
 print_end_of_script
-

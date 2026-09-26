@@ -26,6 +26,7 @@ from app.user_prompt_support.constants import UserResponseStatusEnum
 from app.user_prompt_support.prompt_response import PromptResponse
 from test_collections.matter.sdk_tests.support.otbr_manager.otbr_manager import (
     ThreadBorderRouter,
+    ThreadBorderRouterError,
 )
 from test_collections.matter.test_environment_config import (
     TestEnvironmentConfigMatter,
@@ -295,6 +296,103 @@ async def test_pair_with_dut_thread_with_auto_config_success() -> None:
         ba_host="127.0.0.1",
         ba_port=5684,
     )
+
+
+@pytest.mark.asyncio
+async def test_auto_config_validates_matching_dataset_on_running_otbr() -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    expected_dataset = "0e0800000000000100000300000f"
+    config = TestEnvironmentConfigMatter(
+        network={
+            "fabric_id": "0",
+            "thread": {
+                "operational_dataset_hex": expected_dataset,
+                "dataset": {
+                    "channel": "15",
+                    "panid": "0x1234",
+                    "extpanid": "1111111122222222",
+                    "networkkey": "00112233445566778899aabbccddeeff",
+                    "networkname": "DEMO",
+                },
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::/64",
+                "network_interface": "eth0",
+                "ba_host": "127.0.0.1",
+                "ba_port": 5684,
+            },
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+        },
+        dut_config={
+            "pairing_mode": "thread-meshcop",
+            "setup_code": "20202021",
+            "discriminator": "3840",
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    )
+    border_router = mock.MagicMock(spec=ThreadBorderRouter)
+    border_router.start_device = mock.AsyncMock(return_value=False)
+    border_router.active_dataset = expected_dataset
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite."
+        "ThreadBorderRouter",
+        return_value=border_router,
+    ):
+        actual = await test_suite._ChipSuite__start_border_router(config.network.thread)
+
+    assert actual is border_router
+    border_router.verify_active_dataset.assert_called_once_with(expected_dataset)
+
+
+@pytest.mark.asyncio
+async def test_auto_config_rejects_mismatched_dataset_on_running_otbr() -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    expected_dataset = "0e0800000000000100000300000f"
+    config = TestEnvironmentConfigMatter(
+        network={
+            "fabric_id": "0",
+            "thread": {
+                "operational_dataset_hex": expected_dataset,
+                "dataset": {
+                    "channel": "15",
+                    "panid": "0x1234",
+                    "extpanid": "1111111122222222",
+                    "networkkey": "00112233445566778899aabbccddeeff",
+                    "networkname": "DEMO",
+                },
+                "rcp_serial_path": "/dev/ttyACM0",
+                "rcp_baudrate": 115200,
+                "on_mesh_prefix": "fd11:22::/64",
+                "network_interface": "eth0",
+                "ba_host": "127.0.0.1",
+                "ba_port": 5684,
+            },
+            "wifi": {"ssid": "testharness", "password": "wifi-password"},
+        },
+        dut_config={
+            "pairing_mode": "thread-meshcop",
+            "setup_code": "20202021",
+            "discriminator": "3840",
+            "chip_use_paa_certs": False,
+            "trace_log": True,
+        },
+    )
+    border_router = mock.MagicMock(spec=ThreadBorderRouter)
+    border_router.start_device = mock.AsyncMock(return_value=False)
+    border_router.verify_active_dataset.side_effect = ThreadBorderRouterError(
+        "Running OTBR Thread Active Dataset does not match expected dataset"
+    )
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite."
+        "ThreadBorderRouter",
+        return_value=border_router,
+    ), pytest.raises(ThreadBorderRouterError, match="does not match expected dataset"):
+        await test_suite._ChipSuite__start_border_router(config.network.thread)
+
+    border_router.verify_active_dataset.assert_called_once_with(expected_dataset)
 
 
 @pytest.mark.asyncio

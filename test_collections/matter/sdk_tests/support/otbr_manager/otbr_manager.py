@@ -226,16 +226,27 @@ class ThreadBorderRouter(metaclass=Singleton):
     @staticmethod
     def _normalize_active_dataset(dataset: bytes | str) -> bytes:
         if isinstance(dataset, bytes):
-            return dataset
-
-        try:
-            normalized = bytes.fromhex(dataset.strip())
-        except ValueError as error:
-            raise ThreadBorderRouterError("Invalid Thread Active Dataset") from error
+            normalized = dataset
+        else:
+            try:
+                normalized = bytes.fromhex(dataset.strip())
+            except ValueError as error:
+                raise ThreadBorderRouterError(
+                    "Invalid Thread Active Dataset"
+                ) from error
 
         if not normalized:
             raise ThreadBorderRouterError("Thread Active Dataset is empty")
         return normalized
+
+    def verify_active_dataset(self, expected_dataset: bytes | str) -> bytes:
+        expected = self._normalize_active_dataset(expected_dataset)
+        live_dataset = self.active_dataset_bytes
+        if live_dataset != expected:
+            raise ThreadBorderRouterError(
+                "Running OTBR Thread Active Dataset does not match expected dataset"
+            )
+        return live_dataset
 
     @staticmethod
     def _dataset_fingerprint(dataset: bytes) -> str:
@@ -269,11 +280,11 @@ class ThreadBorderRouter(metaclass=Singleton):
         # Allow OTBR extra time to form the network, before attempting to use.
         await asyncio.sleep(OTBR_READINESS_EXTRA_TIME)
 
-        live_dataset = self.active_dataset_bytes
-        if expected_dataset is not None and live_dataset != expected_dataset:
-            raise ThreadBorderRouterError(
-                "Restored Thread Active Dataset does not match OTBR state"
-            )
+        live_dataset = (
+            self.verify_active_dataset(expected_dataset)
+            if expected_dataset is not None
+            else self.active_dataset_bytes
+        )
 
         logger.info(
             "Thread Active Dataset fingerprint: "

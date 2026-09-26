@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import stat
 from unittest import mock
 
@@ -34,6 +35,7 @@ from ...python_testing.models.utils import (
     RUNNER_CLASS_PATH,
     DUTCommissioningError,
     capture_admin_storage_file,
+    capture_reusable_commissioning_state,
     commission_device,
     generate_command_arguments,
     load_persisted_thread_active_dataset,
@@ -525,9 +527,10 @@ async def test_commission_device() -> None:
         ".log_test_output_file"
     ) as mock_log_test_output, mock.patch.object(
         target=sdk_container, attribute="exec_exit_code", return_value=0
-    ), mock.patch.object(
-        target=sdk_container, attribute="copy_file_from_container"
-    ):
+    ), mock.patch(
+        target="test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".capture_reusable_commissioning_state"
+    ) as mock_capture:
         await commission_device(
             default_environment_config, test_engine_logger  # type: ignore
         )
@@ -541,6 +544,9 @@ async def test_commission_device() -> None:
     )
     mock_handle_logs.assert_called_once()
     mock_log_test_output.assert_called_once()
+    mock_capture.assert_called_once_with(
+        default_environment_config, test_engine_logger, None
+    )
 
 
 @pytest.mark.asyncio
@@ -567,7 +573,9 @@ async def test_commission_device_failure() -> None:
         DUTCommissioningError
     ):
         await commission_device(
-            default_environment_config, test_engine_logger  # type: ignore
+            default_environment_config,  # type: ignore
+            test_engine_logger,
+            capture_reusable_state=False,
         )
 
     mock_send_command.assert_called_once_with(
@@ -725,7 +733,7 @@ async def test_complete_thread_reuse_bundle_is_restored(tmp_path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_declining_thread_reuse_invalidates_entire_bundle(tmp_path) -> None:
+async def test_declining_thread_reuse_retains_previous_bundle(tmp_path) -> None:
     admin_storage_path = tmp_path / "admin_storage.json"
     dataset_path = tmp_path / "thread_active_dataset.hex"
     admin_storage_path.write_text("{}", encoding="utf-8")
@@ -752,8 +760,134 @@ async def test_declining_thread_reuse_invalidates_entire_bundle(tmp_path) -> Non
         )
 
     assert perform_new is True
-    assert not admin_storage_path.exists()
-    assert not dataset_path.exists()
+    assert admin_storage_path.read_text(encoding="utf-8") == "{}"
+    assert dataset_path.read_text(encoding="ascii") == (
+        "0e0800000000000100000300000f\n"
+    )
+
+
+def test_capture_reusable_thread_state_replaces_both_files(tmp_path) -> None:
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("old-admin", encoding="utf-8")
+    dataset_path.write_text("aa\n", encoding="ascii")
+    new_dataset = bytes.fromhex("0e0800000000000100000300000f")
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    sdk_container = SDKContainer(test_engine_logger)
+
+    def copy_candidate(**kwargs) -> None:
+        destination = kwargs["destination_path"] / kwargs["destination_file_name"]
+        destination.write_text("new-admin", encoding="utf-8")
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ), mock.patch.object(
+        sdk_container, "copy_file_from_container", side_effect=copy_candidate
+    ):
+        capture_reusable_commissioning_state(config, test_engine_logger, new_dataset)
+
+    assert admin_storage_path.read_text(encoding="utf-8") == "new-admin"
+    assert dataset_path.read_text(encoding="ascii") == new_dataset.hex() + "\n"
+    assert stat.S_IMODE(admin_storage_path.stat().st_mode) == 0o600
+    assert stat.S_IMODE(dataset_path.stat().st_mode) == 0o600
+
+
+def test_capture_reusable_thread_state_failure_preserves_previous_bundle(
+    tmp_path,
+) -> None:
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("old-admin", encoding="utf-8")
+    dataset_path.write_text("aa\n", encoding="ascii")
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    sdk_container = SDKContainer(test_engine_logger)
+
+    def copy_candidate(**kwargs) -> None:
+        destination = kwargs["destination_path"] / kwargs["destination_file_name"]
+        destination.write_text("partial-admin", encoding="utf-8")
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ), mock.patch.object(
+        sdk_container, "copy_file_from_container", side_effect=copy_candidate
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "_write_thread_active_dataset",
+        side_effect=OSError("dataset write failed"),
+    ), pytest.raises(
+        OSError, match="dataset write failed"
+    ):
+        capture_reusable_commissioning_state(
+            config,
+            test_engine_logger,
+            bytes.fromhex("0e0800000000000100000300000f"),
+        )
+
+    assert admin_storage_path.read_text(encoding="utf-8") == "old-admin"
+    assert dataset_path.read_text(encoding="ascii") == "aa\n"
+    assert not (tmp_path / "admin_storage.json.candidate").exists()
+    assert not (tmp_path / "thread_active_dataset.hex.candidate").exists()
+
+
+def test_capture_reusable_thread_state_promotion_failure_rolls_back_both_files(
+    tmp_path,
+) -> None:
+    admin_storage_path = tmp_path / "admin_storage.json"
+    dataset_path = tmp_path / "thread_active_dataset.hex"
+    admin_storage_path.write_text("old-admin", encoding="utf-8")
+    dataset_path.write_text("aa\n", encoding="ascii")
+    new_dataset = bytes.fromhex("0e0800000000000100000300000f")
+    config = default_environment_config.copy(deep=True)  # type: ignore
+    config.dut_config.pairing_mode = DutPairingModeEnum.BLE_THREAD
+    sdk_container = SDKContainer(test_engine_logger)
+    original_replace = os.replace
+
+    def copy_candidate(**kwargs) -> None:
+        destination = kwargs["destination_path"] / kwargs["destination_file_name"]
+        destination.write_text("new-admin", encoding="utf-8")
+
+    def fail_dataset_promotion(source, destination) -> None:
+        if source == tmp_path / "thread_active_dataset.hex.candidate":
+            raise OSError("dataset promotion failed")
+        original_replace(source, destination)
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "ADMIN_STORAGE_FILE_HOST",
+        admin_storage_path,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "THREAD_ACTIVE_DATASET_FILE_HOST",
+        dataset_path,
+    ), mock.patch.object(
+        sdk_container, "copy_file_from_container", side_effect=copy_candidate
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils."
+        "os.replace",
+        side_effect=fail_dataset_promotion,
+    ), pytest.raises(
+        OSError, match="dataset promotion failed"
+    ):
+        capture_reusable_commissioning_state(config, test_engine_logger, new_dataset)
+
+    assert admin_storage_path.read_text(encoding="utf-8") == "old-admin"
+    assert dataset_path.read_text(encoding="ascii") == "aa\n"
+    assert not list(tmp_path.glob("*.candidate"))
+    assert not list(tmp_path.glob("*.backup"))
 
 
 # ---------------------------------------------------------------------------

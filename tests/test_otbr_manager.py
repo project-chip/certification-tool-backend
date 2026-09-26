@@ -113,7 +113,7 @@ async def test_form_thread_topology_rejects_restored_dataset_mismatch() -> None:
     ), mock.patch.object(otbr_manager.asyncio, "sleep", new=mock.AsyncMock()):
         with pytest.raises(
             ThreadBorderRouterError,
-            match="Restored Thread Active Dataset does not match OTBR state",
+            match="Running OTBR Thread Active Dataset does not match expected dataset",
         ):
             await border_router.form_thread_topology(expected_dataset)
 
@@ -157,3 +157,13 @@ def test_sensitive_otbr_command_and_response_are_not_logged() -> None:
 
     assert output.decode() == secret
     assert all(secret not in str(call) for call in debug.call_args_list)
+
+
+def test_manual_otbr_script_redacts_network_key_on_command_failure() -> None:
+    script_path = (
+        Path(__file__).parents[1] / "test_collections/matter/scripts/OTBR/otbr_start.sh"
+    )
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "echo \"ERROR: 'ot-ctl $DISPLAY_COMMAND' failed." in script
+    assert "echo \"ERROR: 'ot-ctl $i' failed." not in script
