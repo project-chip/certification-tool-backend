@@ -18,6 +18,32 @@ import re
 from app.thread_default_identity import generate_thread_default_identity
 
 
+def test_generate_thread_default_identity_rejects_prohibited_extended_pan_ids() -> None:
+    random_values = iter(
+        [
+            bytes.fromhex("102132435465768798a9bacbdcedfe0f"),
+            bytes.fromhex("0000000000000000"),
+            bytes.fromhex("ffffffffffffffff"),
+            bytes.fromhex("0123456789abcdef"),
+            bytes.fromhex("abcd"),
+            bytes.fromhex("a1b2c3d4e5"),
+        ]
+    )
+    requested_sizes = []
+
+    def random_bytes(size: int) -> bytes:
+        requested_sizes.append(size)
+        value = next(random_values)
+        assert len(value) == size
+        return value
+
+    identity = generate_thread_default_identity(random_bytes)
+
+    assert requested_sizes == [16, 8, 8, 8, 2, 5]
+    assert identity["extpanid"] == "0123456789abcdef"
+    assert re.fullmatch(r"[0-9a-f]{16}", identity["extpanid"])
+
+
 def test_generate_thread_default_identity_uses_valid_thread_values() -> None:
     random_values = iter(
         [
