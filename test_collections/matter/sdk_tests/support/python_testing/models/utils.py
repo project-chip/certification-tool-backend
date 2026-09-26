@@ -16,7 +16,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Generator, cast
 
@@ -39,7 +41,7 @@ from ...utils import (
     ADMIN_STORAGE_FILE_CONTAINER_DEFAULT_PATH,
     ADMIN_STORAGE_FILE_DEFAULT_NAME,
     ADMIN_STORAGE_FILE_HOST,
-    ADMIN_STORAGE_FILE_HOST_PATH,
+    THREAD_ACTIVE_DATASET_FILE_HOST,
     PromptOption,
     prompt_reuse_commissioning,
 )
@@ -56,6 +58,12 @@ TEST_PARAMETER_STORAGE_PATH_KEY = "storage-path"
 NFC_PAIRING_MODES = {
     DutPairingModeEnum.NFC_WIFI.value,
     DutPairingModeEnum.NFC_THREAD.value,
+}
+
+THREAD_PAIRING_MODES = {
+    DutPairingModeEnum.BLE_THREAD,
+    DutPairingModeEnum.NFC_THREAD,
+    DutPairingModeEnum.THREAD_MESHCOP,
 }
 
 # Typed SDK argument flags that accept NAME:VALUE pairs and require special
@@ -194,6 +202,7 @@ def __retrieve_storage_path(config: TestEnvironmentConfigMatter) -> Path:
 def __copy_admin_storage_file(
     config: TestEnvironmentConfigMatter,
     logger: loguru.Logger,
+    destination_file: Path = ADMIN_STORAGE_FILE_HOST,
 ) -> None:
     sdk_container = SDKContainer(logger)
 
@@ -202,9 +211,218 @@ def __copy_admin_storage_file(
     logger.info(f"Copy file '{storage_path}' from container")
     sdk_container.copy_file_from_container(
         container_file_path=Path(storage_path),
-        destination_path=ADMIN_STORAGE_FILE_HOST_PATH,
-        destination_file_name=ADMIN_STORAGE_FILE_DEFAULT_NAME,
+        destination_path=destination_file.parent,
+        destination_file_name=destination_file.name,
     )
+    if destination_file.exists():
+        destination_file.chmod(0o600)
+
+
+def _normalize_thread_active_dataset(dataset: bytes | str) -> bytes:
+    if isinstance(dataset, bytes):
+        normalized = dataset
+    else:
+        try:
+            normalized = bytes.fromhex(dataset.strip())
+        except ValueError as error:
+            raise DUTCommissioningError("Invalid Thread Active Dataset") from error
+
+    if not normalized:
+        raise DUTCommissioningError("Thread Active Dataset is empty")
+    return normalized
+
+
+def _thread_dataset_fingerprint(dataset: bytes) -> str:
+    return hashlib.sha256(dataset).hexdigest()
+
+
+def load_persisted_thread_active_dataset(logger: loguru.Logger) -> bytes:
+    try:
+        dataset = _normalize_thread_active_dataset(
+            THREAD_ACTIVE_DATASET_FILE_HOST.read_text(encoding="ascii")
+        )
+    except OSError as error:
+        raise DUTCommissioningError(
+            "Could not read persisted Thread Active Dataset"
+        ) from error
+
+    logger.info(
+        "Loaded Thread Active Dataset fingerprint: "
+        + _thread_dataset_fingerprint(dataset)
+    )
+    return dataset
+
+
+def _write_thread_active_dataset(dataset: bytes, destination: Path) -> bytes:
+    normalized = _normalize_thread_active_dataset(dataset)
+    temporary_path = destination.with_name(destination.name + ".tmp")
+
+    try:
+        descriptor = os.open(
+            temporary_path,
+            os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+            0o600,
+        )
+        with os.fdopen(descriptor, "w", encoding="ascii") as dataset_file:
+            dataset_file.write(normalized.hex())
+            dataset_file.write("\n")
+        os.replace(temporary_path, destination)
+        destination.chmod(0o600)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+    return normalized
+
+
+def persist_thread_active_dataset(dataset: bytes, logger: loguru.Logger) -> None:
+    normalized = _write_thread_active_dataset(dataset, THREAD_ACTIVE_DATASET_FILE_HOST)
+
+    logger.info(
+        "Persisted Thread Active Dataset fingerprint: "
+        + _thread_dataset_fingerprint(normalized)
+    )
+
+
+def _promote_reusable_commissioning_state(
+    staged_files: list[tuple[Path, Path]],
+) -> None:
+    records = [
+        (staged, final, final.with_name(final.name + ".backup"), final.exists())
+        for staged, final in staged_files
+    ]
+
+    for staged, _, _, _ in records:
+        if not staged.exists():
+            raise DUTCommissioningError(
+                "Reusable commissioning state capture did not produce all files"
+            )
+
+    try:
+        for _, final, backup, had_previous in records:
+            backup.unlink(missing_ok=True)
+            if had_previous:
+                os.replace(final, backup)
+
+        for staged, final, _, _ in records:
+            os.replace(staged, final)
+            final.chmod(0o600)
+    except Exception:
+        for _, final, backup, had_previous in reversed(records):
+            if backup.exists():
+                final.unlink(missing_ok=True)
+                os.replace(backup, final)
+            elif not had_previous:
+                final.unlink(missing_ok=True)
+        raise
+    finally:
+        for staged, _, backup, _ in records:
+            staged.unlink(missing_ok=True)
+            backup.unlink(missing_ok=True)
+
+
+def capture_reusable_commissioning_state(
+    config: TestEnvironmentConfigMatter,
+    logger: loguru.Logger,
+    thread_dataset: bytes | None = None,
+) -> None:
+    staged_admin_storage = ADMIN_STORAGE_FILE_HOST.with_name(
+        ADMIN_STORAGE_FILE_HOST.name + ".candidate"
+    )
+    staged_files = [(staged_admin_storage, ADMIN_STORAGE_FILE_HOST)]
+
+    if uses_managed_thread_network(config):
+        if thread_dataset is None:
+            raise DUTCommissioningError(
+                "Managed Thread reusable state requires an Active Dataset"
+            )
+        staged_thread_dataset = THREAD_ACTIVE_DATASET_FILE_HOST.with_name(
+            THREAD_ACTIVE_DATASET_FILE_HOST.name + ".candidate"
+        )
+        staged_files.append((staged_thread_dataset, THREAD_ACTIVE_DATASET_FILE_HOST))
+
+    normalized_dataset = None
+    try:
+        for staged, _ in staged_files:
+            staged.unlink(missing_ok=True)
+
+        __copy_admin_storage_file(config, logger, staged_admin_storage)
+        if len(staged_files) == 2:
+            assert thread_dataset is not None
+            normalized_dataset = _write_thread_active_dataset(
+                thread_dataset, staged_files[1][0]
+            )
+        _promote_reusable_commissioning_state(staged_files)
+    finally:
+        for staged, _ in staged_files:
+            staged.unlink(missing_ok=True)
+
+    if normalized_dataset is not None:
+        logger.info(
+            "Captured reusable Thread commissioning state fingerprint: "
+            + _thread_dataset_fingerprint(normalized_dataset)
+        )
+
+
+def uses_managed_thread_network(config: TestEnvironmentConfigMatter) -> bool:
+    return config.dut_config.pairing_mode in THREAD_PAIRING_MODES and isinstance(
+        config.network.thread, ThreadAutoConfig
+    )
+
+
+def invalidate_reusable_commissioning_state(
+    config: TestEnvironmentConfigMatter, logger: loguru.Logger
+) -> None:
+    paths = [ADMIN_STORAGE_FILE_HOST]
+    if uses_managed_thread_network(config):
+        paths.append(THREAD_ACTIVE_DATASET_FILE_HOST)
+
+    for path in paths:
+        if path.exists():
+            path.unlink()
+            logger.info(f"Removed stale reusable commissioning state: {path.name}")
+
+
+def _managed_thread_reuse_bundle_is_valid(
+    config: TestEnvironmentConfigMatter, logger: loguru.Logger
+) -> bool:
+    has_admin_storage = ADMIN_STORAGE_FILE_HOST.exists()
+    has_thread_dataset = THREAD_ACTIVE_DATASET_FILE_HOST.exists()
+    if has_admin_storage != has_thread_dataset:
+        logger.warning(
+            "Reusable Thread commissioning state is incomplete; "
+            "new commissioning is required"
+        )
+        invalidate_reusable_commissioning_state(config, logger)
+        return False
+
+    if not has_admin_storage:
+        return False
+
+    try:
+        persisted_dataset = load_persisted_thread_active_dataset(logger)
+    except DUTCommissioningError as error:
+        logger.warning(f"Reusable Thread commissioning state is invalid: {error}")
+        invalidate_reusable_commissioning_state(config, logger)
+        return False
+
+    thread_config = config.network.thread
+    assert isinstance(thread_config, ThreadAutoConfig)
+    if thread_config.operational_dataset_hex is not None:
+        try:
+            configured_dataset = _normalize_thread_active_dataset(
+                thread_config.operational_dataset_hex
+            )
+        except DUTCommissioningError as error:
+            logger.warning(f"Configured Thread Active Dataset is invalid: {error}")
+            return False
+        if persisted_dataset != configured_dataset:
+            logger.warning(
+                "Configured and persisted Thread Active Datasets differ; "
+                "new commissioning is required"
+            )
+            return False
+
+    return True
 
 
 def capture_admin_storage_file(
@@ -246,6 +464,7 @@ def log_test_output_file(logger: loguru.Logger) -> None:
 async def commission_device(
     config: TestEnvironmentConfigMatter,
     logger: loguru.Logger,
+    capture_reusable_state: bool = True,
 ) -> None:
     sdk_container = SDKContainer(logger)
 
@@ -258,6 +477,7 @@ async def commission_device(
         prefix=EXECUTABLE,
         is_stream=True,
         is_socket=False,
+        sensitive=True,
     )
 
     handle_logs(cast(Generator, exec_result.output), logger)
@@ -272,12 +492,13 @@ async def commission_device(
     log_test_output_file(logger)
     logger.info("---- End of commissioning test output ----")
 
-    # Copy admin_storage.json file from container, in case the user wants to
-    # reuse this information in the next execution. This duplicates the capture
-    # PythonTestSuite.cleanup() does unconditionally at the end of the suite run,
-    # but is kept intentionally: if the container is torn down abnormally before
-    # cleanup() runs, this is the only snapshot that survives.
-    __copy_admin_storage_file(config, logger)
+    if capture_reusable_state:
+        active_dataset = (
+            ThreadBorderRouter().active_dataset_bytes
+            if uses_managed_thread_network(config)
+            else None
+        )
+        capture_reusable_commissioning_state(config, logger, active_dataset)
 
 
 async def __thread_dataset_hex(
@@ -288,18 +509,20 @@ async def __thread_dataset_hex(
     if isinstance(thread_config, ThreadExternalConfig):
         hex_dataset = thread_config.operational_dataset_hex
     elif isinstance(thread_config, ThreadAutoConfig):
-        if thread_config.operational_dataset_hex:
-            hex_dataset = thread_config.operational_dataset_hex
-        else:
-            border_router: ThreadBorderRouter = ThreadBorderRouter()
+        border_router: ThreadBorderRouter = ThreadBorderRouter()
 
-            # Expecting false as the OTBR is started in the suite's setup.
-            # Either way, if true, we try to start and configure the container in case
-            # there's no OTBR application running.
-            if await border_router.start_device(thread_config):
-                await border_router.form_thread_topology()
+        # Expecting false as the OTBR is started in the suite's setup. If the
+        # container is unexpectedly absent, restore the configured dataset or form
+        # one and use only the verified live value.
+        if await border_router.start_device(thread_config):
+            configured_dataset = (
+                _normalize_thread_active_dataset(thread_config.operational_dataset_hex)
+                if thread_config.operational_dataset_hex
+                else None
+            )
+            await border_router.form_thread_topology(configured_dataset)
 
-            hex_dataset = border_router.active_dataset
+        hex_dataset = border_router.active_dataset
 
     return hex_dataset
 
@@ -310,6 +533,10 @@ async def should_perform_new_commissioning(
     logger: loguru.Logger,
 ) -> bool:
     sdk_container = SDKContainer(logger)
+
+    if uses_managed_thread_network(config):
+        if not _managed_thread_reuse_bundle_is_valid(config, logger):
+            return True
 
     # If the admin storage file exists, prompt user if the execution should retrieve
     # the previous commissioning information or if it should perform a
@@ -326,5 +553,9 @@ async def should_perform_new_commissioning(
                 destination_container_path=storage_path,
             )
             return False
-
+        else:
+            logger.info(
+                "Retaining previous reusable commissioning state until the new "
+                "commissioning succeeds"
+            )
     return True

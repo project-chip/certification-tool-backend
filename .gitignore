@@ -5,6 +5,7 @@ __pycache__
 app.egg-info
 logs
 admin_storage.json
+thread_active_dataset.hex
 /docker-stack.yml
 .DS_Store
 app/chip-tool/chip-tool

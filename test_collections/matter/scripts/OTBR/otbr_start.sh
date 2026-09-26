@@ -101,7 +101,6 @@ if [ $OTBR_READY -eq 0 ]; then
 	exit 1
 fi
 
-BR_CHANNEL_HEX=$(printf '%02x' $BR_CHANNEL)
 BR_PANID="5b${BR_VARIANT}" # The 2-byte Personal Area Network ID is a unique Thread identifier
 BR_EXTPANID="5b${BR_VARIANT}dead5b${BR_VARIANT}beef" # The 8-byte Extended Personal Area Network ID is a unique Thread identifier
 BR_NETWORKNAME="5b${BR_VARIANT}" # The human-readable Network Name is a unique Thread identifier
@@ -120,27 +119,43 @@ BR_PARAMS=(
 "ifconfig up"
 "thread start"
 "netdata register"
-"dataset active -x"
 )
 
 print_script_step "Setting up Thread Network"
 
 for i in "${BR_PARAMS[@]}"
 do
-        printf "Param: '$i'"
+  if [[ "$i" == dataset\ networkkey* ]]; then
+    DISPLAY_COMMAND="dataset networkkey [REDACTED]"
+  else
+    DISPLAY_COMMAND="$i"
+  fi
+  printf "Param: '$DISPLAY_COMMAND'"
         if ! sudo docker exec -t otbr-chip ot-ctl $i; then
-                echo "ERROR: 'ot-ctl $i' failed. Dumping 'otbr-chip' container logs for diagnosis:" >&2
+                echo "ERROR: 'ot-ctl $DISPLAY_COMMAND' failed. Dumping 'otbr-chip' container logs for diagnosis:" >&2
                 sudo docker logs otbr-chip
                 exit 1
         fi
 done
 
-BR_SIMPLE_DATASET="00030000"${BR_CHANNEL_HEX}"0208"${BR_EXTPANID}"0510"${BR_NETWORKKEY}"0102"${BR_PANID}
-sudo echo ${BR_SIMPLE_DATASET} > /tmp/otbr_simple_dataset.txt
-printf "Simple Dataset: $BR_SIMPLE_DATASET"
+if ! ACTIVE_DATASET_OUTPUT=$(sudo docker exec otbr-chip ot-ctl dataset active -x); then
+  echo "ERROR: Failed to read the OTBR Active Dataset." >&2
+  exit 1
+fi
+
+ACTIVE_DATASET=$(printf '%s\n' "$ACTIVE_DATASET_OUTPUT" | tr -d '\r' | awk '/^[0-9a-fA-F]+$/ { print; exit }')
+if [[ -z "$ACTIVE_DATASET" ]]; then
+  echo "ERROR: OTBR returned an invalid Active Dataset." >&2
+  exit 1
+fi
+
+ACTIVE_DATASET_PATH="/tmp/otbr_simple_dataset.txt"
+printf '%s\n' "$ACTIVE_DATASET" | sudo tee "$ACTIVE_DATASET_PATH" > /dev/null
+sudo chmod 600 "$ACTIVE_DATASET_PATH"
+ACTIVE_DATASET_FINGERPRINT=$(printf '%s' "$ACTIVE_DATASET" | xxd -r -p | sha256sum | awk '{ print $1 }')
+printf "Active Dataset SHA-256: %s\n" "$ACTIVE_DATASET_FINGERPRINT"
 
 print_script_step "Restarting the Raspi avahi to have it in a clean state"
 sudo service avahi-daemon restart
 
 print_end_of_script
-

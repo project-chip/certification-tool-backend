@@ -17,6 +17,7 @@
 """Implementation of Openthread Border Router docker manager."""
 
 import asyncio
+import hashlib
 import os
 import re
 from asyncio.tasks import wait_for
@@ -71,7 +72,6 @@ class ThreadBorderRouter(metaclass=Singleton):
 
     def __load_config(self, config: ThreadAutoConfig) -> None:
         logger.debug("Loading thread network configuration")
-        logger.debug(f"Loaded config: {config}")
 
         if not exists(config.rcp_serial_path):
             raise ThreadBorderRouterError(
@@ -186,22 +186,25 @@ class ThreadBorderRouter(metaclass=Singleton):
         _otbr_status()
 
     @staticmethod
-    def __gather_response(response: Generator) -> bytes:
+    def __gather_response(response: Generator, sensitive: bool = False) -> bytes:
         _SUCCESS_PATTERN = re.compile(r"((?:\r+\n|)Done\r+\n)$".encode())
         output = b""
         for i in response:
             output += i
-            logger.debug("response: " + i.decode().strip())
+            if not sensitive:
+                logger.debug("response: " + i.decode().strip())
         match_success = re.search(_SUCCESS_PATTERN, output)
         if match_success:
             output = output[: -len(match_success.group(1))]
         return output
 
-    def _send_command(self, command: str, prefix: str = "ot-ctl") -> bytes:
+    def _send_command(
+        self, command: str, prefix: str = "ot-ctl", sensitive: bool = False
+    ) -> bytes:
         cmd = f"{prefix} {command}"
-        logger.debug("sent:" + cmd)
+        logger.debug("sent: [REDACTED]" if sensitive else "sent:" + cmd)
         response = self.__otbr_docker.exec_run(cmd, stream=True)  # type: ignore
-        return self.__gather_response(response.output)
+        return self.__gather_response(response.output, sensitive=sensitive)
 
     @property
     def network_id(self) -> str:
@@ -213,16 +216,62 @@ class ThreadBorderRouter(metaclass=Singleton):
 
     @property
     def active_dataset(self) -> str:
-        return self._send_command("dataset active -x").decode()
+        return self.active_dataset_bytes.hex()
 
-    async def form_thread_topology(self) -> None:
-        self._send_command("dataset init new")
-        self._send_command(f"dataset channel {self.__dataset.channel}")
-        self._send_command(f"dataset panid {self.__dataset.panid}")
-        self._send_command(f"dataset extpanid {self.__dataset.extpanid}")
-        self._send_command(f"dataset networkkey {self.__dataset.networkkey}")
-        self._send_command(f"dataset networkname {self.__dataset.networkname}")
-        self._send_command("dataset commit active")
+    @property
+    def active_dataset_bytes(self) -> bytes:
+        dataset = self._send_command("dataset active -x", sensitive=True).decode()
+        return self._normalize_active_dataset(dataset)
+
+    @staticmethod
+    def _normalize_active_dataset(dataset: bytes | str) -> bytes:
+        if isinstance(dataset, bytes):
+            normalized = dataset
+        else:
+            try:
+                normalized = bytes.fromhex(dataset.strip())
+            except ValueError as error:
+                raise ThreadBorderRouterError(
+                    "Invalid Thread Active Dataset"
+                ) from error
+
+        if not normalized:
+            raise ThreadBorderRouterError("Thread Active Dataset is empty")
+        return normalized
+
+    def verify_active_dataset(self, expected_dataset: bytes | str) -> bytes:
+        expected = self._normalize_active_dataset(expected_dataset)
+        live_dataset = self.active_dataset_bytes
+        if live_dataset != expected:
+            raise ThreadBorderRouterError(
+                "Running OTBR Thread Active Dataset does not match expected dataset"
+            )
+        return live_dataset
+
+    @staticmethod
+    def _dataset_fingerprint(dataset: bytes) -> str:
+        return hashlib.sha256(dataset).hexdigest()
+
+    async def form_thread_topology(
+        self, active_dataset: Optional[bytes] = None
+    ) -> bytes:
+        expected_dataset: Optional[bytes] = None
+        if active_dataset is None:
+            self._send_command("dataset init new")
+            self._send_command(f"dataset channel {self.__dataset.channel}")
+            self._send_command(f"dataset panid {self.__dataset.panid}")
+            self._send_command(f"dataset extpanid {self.__dataset.extpanid}")
+            self._send_command(
+                f"dataset networkkey {self.__dataset.networkkey}", sensitive=True
+            )
+            self._send_command(f"dataset networkname {self.__dataset.networkname}")
+            self._send_command("dataset commit active")
+        else:
+            expected_dataset = self._normalize_active_dataset(active_dataset)
+            self._send_command(
+                f"dataset set active {expected_dataset.hex()}", sensitive=True
+            )
+
         self._send_command("ifconfig up")
         self._send_command("thread start")
         self._send_command(f"prefix add {self.__on_mesh_prefix} pasor")
@@ -230,6 +279,18 @@ class ThreadBorderRouter(metaclass=Singleton):
 
         # Allow OTBR extra time to form the network, before attempting to use.
         await asyncio.sleep(OTBR_READINESS_EXTRA_TIME)
+
+        live_dataset = (
+            self.verify_active_dataset(expected_dataset)
+            if expected_dataset is not None
+            else self.active_dataset_bytes
+        )
+
+        logger.info(
+            "Thread Active Dataset fingerprint: "
+            + self._dataset_fingerprint(live_dataset)
+        )
+        return live_dataset
 
     def destroy_device(self) -> None:
         """Destroy the device container and associated rpc client."""
