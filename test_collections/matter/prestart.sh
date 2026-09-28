@@ -15,10 +15,12 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
+set -e
+
  # Paths
 SDK_TESTS_DIR=$(dirname "$0")/sdk_tests
 
-cd $SDK_TESTS_DIR
+cd "$SDK_TESTS_DIR"
 
 # Fetch code from SDK
 ./scripts/fetch_sdk_tests_and_runner.sh

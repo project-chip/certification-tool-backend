@@ -54,7 +54,7 @@ elif [ -f /app/backend/prestart.sh ]; then
 fi
 PRE_START_PATH=${PRE_START_PATH:-$DEFAULT_PRE_START_PATH}
 echo "Checking for script in $PRE_START_PATH"
-if [ -f $PRE_START_PATH ] ; then
+if [ -f "$PRE_START_PATH" ] ; then
     echo "Running script $PRE_START_PATH"
     . "$PRE_START_PATH"
 else 

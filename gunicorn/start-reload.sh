@@ -45,7 +45,7 @@ elif [ -f /app/backend/prestart.sh ]; then
 fi
 PRE_START_PATH=${PRE_START_PATH:-$DEFAULT_PRE_START_PATH}
 echo "Checking for script in $PRE_START_PATH"
-if [ -f $PRE_START_PATH ] ; then
+if [ -f "$PRE_START_PATH" ] ; then
     echo "Running script $PRE_START_PATH"
     . "$PRE_START_PATH"
 else 
@@ -53,4 +53,4 @@ else
 fi
 
 # Start Uvicorn with live reload
-exec uvicorn --reload --reload-dir $RELOAD_PATH --host $HOST --port $PORT --log-level $LOG_LEVEL --ws-ping-timeout 60 "$APP_MODULE"
+exec uvicorn --reload --reload-dir "$RELOAD_PATH" --host "$HOST" --port "$PORT" --log-level "$LOG_LEVEL" --ws-ping-timeout 60 "$APP_MODULE"
