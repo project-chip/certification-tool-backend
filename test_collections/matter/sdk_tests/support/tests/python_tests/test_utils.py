@@ -638,6 +638,37 @@ async def test_generate_command_arguments_use_paa_certs_test_parameter_override(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("paa_value", ["", None])
+async def test_generate_command_arguments_use_paa_certs_empty_test_parameter(
+    paa_value: str | None,
+) -> None:
+    mock_config = _on_network_config(
+        test_parameters={"paa-trust-store-path": paa_value}
+    )
+    mock_config.dut_config.chip_use_paa_certs = True
+
+    arguments = await generate_command_arguments(config=mock_config)
+
+    paa_args = [a for a in arguments if a.startswith("--paa-trust-store-path")]
+    assert paa_args == [f"--paa-trust-store-path {DOCKER_PAA_CERTS_PATH}"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("paa_value", ["", None])
+async def test_generate_command_arguments_empty_paa_test_parameter_without_paa_certs(
+    paa_value: str | None,
+) -> None:
+    mock_config = _on_network_config(
+        test_parameters={"paa-trust-store-path": paa_value}
+    )
+    mock_config.dut_config.chip_use_paa_certs = False
+
+    arguments = await generate_command_arguments(config=mock_config)
+
+    assert not any(a.startswith("--paa-trust-store-path") for a in arguments)
+
+
+@pytest.mark.asyncio
 async def test_commission_device() -> None:
     sdk_container: SDKContainer = SDKContainer()
 

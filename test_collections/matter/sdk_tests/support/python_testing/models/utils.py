@@ -86,9 +86,8 @@ async def generate_command_arguments(
     # Use the PAA certs mounted in the SDK container, as chip-tool does. Without
     # this the SDK falls back to the development PAAs only, so DUTs with a
     # production DAC fail attestation. An explicit test parameter takes precedence.
-    if dut_config.chip_use_paa_certs and not (
-        test_parameters and TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY in test_parameters
-    ):
+    paa_path = (test_parameters or {}).get(TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY)
+    if dut_config.chip_use_paa_certs and not paa_path:
         arguments.append(
             f"--{TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY} {DOCKER_PAA_CERTS_PATH}"
         )
@@ -169,6 +168,10 @@ async def generate_command_arguments(
     # with no spaces, so splitting on spaces is safe for them.
     if test_parameters:
         for name, value in test_parameters.items():
+            # An empty PAA path would emit a flag with no value; it is either
+            # replaced by the default above or omitted.
+            if name == TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY and not paa_path:
+                continue
             if isinstance(value, (dict, list)):
                 arg_value = json.dumps(value, separators=(",", ":"))
             elif value is not None:
