@@ -25,6 +25,7 @@ from app.db.session import get_db
 from app.models import TestStateEnum
 from app.models.test_case_execution import TestCaseExecution
 from app.models.test_run_execution import TestRunExecution
+from app.models.test_run_log_entry import TestRunLogEntry
 from app.models.test_step_execution import TestStepExecution
 from app.models.test_suite_execution import TestSuiteExecution
 from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite
@@ -49,6 +50,14 @@ class TestDBObserver(Observer):
         # object instead of committing the same (increasingly large) object
         # redundantly once per notification.
         self.__pending: dict[int, ExecutionObj] = {}
+        # How many of the run's in-memory log entries have been turned into
+        # rows. Counted here rather than read back from the relationship: this
+        # observer is built per run (see TestRunner.run) and is the only thing
+        # appending, while a PENDING execution can still carry entries from an
+        # earlier attempt that was interrupted before it left PENDING. Taking
+        # the position from the persisted collection would then skip exactly
+        # that many new entries.
+        self.__entries_written = 0
 
     async def apply_updates(self) -> None:
         pending = self.__pending
@@ -77,7 +86,23 @@ class TestDBObserver(Observer):
         logger.debug("Test Run Observer received", observable)
         test_run_execution = observable.test_run_execution
         test_run_execution.state = observable.state
-        test_run_execution.log = observable.log
+
+        # Append only the log entries produced since the last update, as rows on
+        # the related table. This keeps writes O(n) over the run instead of
+        # rewriting the whole log on every flush.
+        new_entries = observable.log[self.__entries_written :]
+        for entry in new_entries:
+            test_run_execution.log.append(
+                TestRunLogEntry(
+                    level=entry.level,
+                    timestamp=entry.timestamp,
+                    message=entry.message,
+                    test_suite_execution_index=entry.test_suite_execution_index,
+                    test_case_execution_index=entry.test_case_execution_index,
+                    test_step_execution_index=entry.test_step_execution_index,
+                )
+            )
+        self.__entries_written += len(new_entries)
 
         if test_run_execution.started_at is None:
             test_run_execution.started_at = datetime.now()

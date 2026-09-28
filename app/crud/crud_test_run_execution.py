@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from datetime import datetime
-from typing import List, Optional, Sequence
+from typing import Iterator, List, Optional, Sequence
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func, or_, select
@@ -26,6 +26,7 @@ from app.crud import test_run_config as crud_test_run_config
 from app.crud.base import CRUDBaseCreate, CRUDBaseDelete, CRUDBaseRead, CRUDBaseUpdate
 from app.models import Project, TestCaseExecution, TestRunExecution, TestSuiteExecution
 from app.models.operator import Operator as OperatorModel
+from app.models.test_run_log_entry import TestRunLogEntry
 from app.schemas import (
     TestRunConfigCreate,
     TestRunExecutionToExport,
@@ -296,6 +297,27 @@ class CRUDTestRunExecution(
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    def iter_log_entries(
+        self, db: Session, run_id: int, batch_size: int = 1000
+    ) -> Iterator[TestRunLogEntry]:
+        """Yield a run's log entries in order without materializing them all.
+
+        Reading `run.log` loads every entry of the run into the session at
+        once, which for a long run is hundreds of thousands of mapped
+        instances. `yield_per` instead sets psycopg2's `stream_results`, so the
+        rows come back through a server-side cursor in batches rather than the
+        whole result set being buffered client side.
+
+        The caller must not issue other queries on `db` while iterating, since
+        the open cursor holds the connection.
+        """
+        statement = (
+            select(TestRunLogEntry)
+            .where(TestRunLogEntry.test_run_execution_id == run_id)
+            .order_by(TestRunLogEntry.seq)
+        )
+        yield from db.execute(statement).yield_per(batch_size).scalars()
 
     def import_execution(
         self,

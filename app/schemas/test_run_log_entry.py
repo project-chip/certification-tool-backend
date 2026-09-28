@@ -27,3 +27,6 @@ class TestRunLogEntry(BaseModel):
     test_suite_execution_index: Optional[int]
     test_case_execution_index: Optional[int]
     test_step_execution_index: Optional[int]
+
+    class Config:
+        orm_mode = True

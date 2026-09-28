@@ -21,6 +21,7 @@ from zipfile import ZipFile
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app import models
 from app.core.config import settings
 from app.tests.utils.project import create_random_project
 from app.tests.utils.test_run_execution import create_random_test_run_execution
@@ -158,3 +159,41 @@ def test_download_project_logs_sanitizes_execution_title(
         names = zf.namelist()
         assert not any("/" in name or ".." in name for name in names)
         assert f"{execution.id}-______etc_passwd.log" in names
+
+
+def test_download_project_logs_flat_contains_the_log_lines(
+    client: TestClient, db: Session
+) -> None:
+    """The flat download must contain each run's entries, in seq order.
+
+    The entries are read with a streaming query rather than through the run's
+    `log` relationship, so this covers that path end to end - the other tests
+    here only ever see executions with an empty log.
+    """
+    project = create_random_project(db, config={})
+    execution = create_random_test_run_execution(db, project_id=project.id)
+    for seq, message in enumerate(["first line", "second line", "third line"]):
+        db.add(
+            models.TestRunLogEntry(
+                test_run_execution_id=execution.id,
+                seq=seq,
+                level="INFO",
+                timestamp=1684878223.0 + seq,
+                message=message,
+            )
+        )
+    db.commit()
+
+    response = client.get(f"{BASE_URL}/{project.id}/logs")
+
+    assert response.status_code == HTTPStatus.OK
+
+    with ZipFile(BytesIO(response.content)) as zf:
+        entry_name = next(
+            name for name in zf.namelist() if name.startswith(f"{execution.id}-")
+        )
+        content = zf.read(entry_name).decode()
+
+    messages = [line.split(" | ")[-1] for line in content.splitlines()]
+    assert messages == ["first line", "second line", "third line"]
+    assert content.splitlines()[0].startswith("INFO")

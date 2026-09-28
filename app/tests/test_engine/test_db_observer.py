@@ -20,6 +20,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.models import TestStateEnum
+from app.models.test_run_log_entry import TestRunLogEntry as TestRunLogEntryModel
 from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.test_engine.test_db_observer import TestDBObserver
 from app.test_engine.test_script_manager import TestScriptManager
@@ -90,7 +91,7 @@ async def test_test_db_observer_test_suite_started_at(db: Session) -> None:
 
     # Wait/sleep and Dispatch again to trigger DB update
     test_run_execution.append_to_log(
-        TestRunLogEntry(message="Wait for 2 seconds", level="Debug", timestamp=0)
+        TestRunLogEntryModel(message="Wait for 2 seconds", level="Debug", timestamp=0)
     )
     await asyncio.sleep(2)
 
@@ -307,3 +308,78 @@ async def test_test_db_observer_dedups_repeated_run_updates(db: Session) -> None
         await test_db_observer.apply_updates()
 
     assert mock_commit.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_appends_only_new_log_entries(db: Session) -> None:
+    """Each run update must persist only the entries added since the previous
+    one. Rewriting the whole log on every update is what made writes O(n^2)
+    over a run (issue #1072)."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+
+    test_run.append_log_entries(
+        [TestRunLogEntry(level="INFO", timestamp=1.0, message="first")]
+    )
+    test_db_observer.dispatch(test_run)
+    await test_db_observer.apply_updates()
+
+    first_row = test_run_execution.log[0]
+
+    test_run.append_log_entries(
+        [TestRunLogEntry(level="INFO", timestamp=2.0, message="second")]
+    )
+    test_db_observer.dispatch(test_run)
+    await test_db_observer.apply_updates()
+
+    # The already-persisted entry is the same row, not a rewritten copy, and
+    # seq reflects the order the entries were produced in.
+    assert test_run_execution.log[0] is first_row
+    assert [(e.seq, e.message) for e in test_run_execution.log] == [
+        (0, "first"),
+        (1, "second"),
+    ]
+
+    # ...and that is what actually landed in the table.
+    persisted = (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
+    assert [(e.seq, e.message) for e in persisted] == [(0, "first"), (1, "second")]
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_keeps_entries_of_a_resumed_run(db: Session) -> None:
+    """A PENDING execution can already carry entries from an attempt that was
+    interrupted before it left PENDING (load_test_run only accepts PENDING, and
+    the observer commits state and entries together). Deriving the append
+    position from the persisted collection skipped exactly that many new
+    entries, losing the start of the new attempt's log."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run_execution.log.append(
+        TestRunLogEntryModel(level="INFO", timestamp=1.0, message="earlier attempt")
+    )
+    db.commit()
+
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+    test_run.append_log_entries(
+        [TestRunLogEntry(level="INFO", timestamp=2.0, message="new attempt")]
+    )
+
+    test_db_observer.dispatch(test_run)
+    await test_db_observer.apply_updates()
+
+    assert [e.message for e in test_run_execution.log] == [
+        "earlier attempt",
+        "new attempt",
+    ]

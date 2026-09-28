@@ -13,17 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import json
 import tempfile
 from datetime import datetime
 from functools import reduce
 from operator import add
-from typing import IO, AsyncGenerator, Generator, List, Optional
+from typing import IO, AsyncGenerator, Generator, Iterable, List, Optional, Union
 from zipfile import ZipFile
 
 from app import models, schemas
 
 LOG_SECTION_TEMPLATE = "--------------------- {} ---------------------\n"
+
+# Log entries reach the formatting helpers either as rows read from the
+# testrunlogentry table or as the pydantic entries that the grouping code and
+# the test engine deal in. Both expose level/timestamp/message.
+LogEntry = Union[schemas.TestRunLogEntry, models.TestRunLogEntry]
 
 
 def iter_and_close(
@@ -47,12 +51,13 @@ def iter_and_close(
         file_obj.close()
 
 
-def log_generator(
-    log_entries: List[schemas.TestRunLogEntry], json_entries: bool
-) -> Generator:
+def log_generator(log_entries: Iterable[LogEntry], json_entries: bool) -> Generator:
     for log_line in log_entries:
         if json_entries:
-            yield log_line.json()
+            # Via the schema rather than log_line.json(), so that either a
+            # pydantic entry or a TestRunLogEntry row can be formatted; the
+            # rows have no .json().
+            yield schemas.TestRunLogEntry.from_orm(log_line).json()
             yield "\n"
         else:
             timestamp = datetime.fromtimestamp(log_line.timestamp).strftime(
@@ -71,7 +76,7 @@ def convert_execution_log_to_list(log: list, json_entries: bool) -> list:
 
     for log_line in log:
         if json_entries:
-            log_entries.append(json.dumps(log_line.__dict__))
+            log_entries.append(schemas.TestRunLogEntry.from_orm(log_line).json())
         else:
             entry = log_line
             timestamp = datetime.fromtimestamp(entry.timestamp).strftime(
@@ -95,7 +100,8 @@ def group_test_run_execution_logs(
     # - For test suite specific logs (not related to any test case), the indexes for
     # test case and test step are None and the test_suite_execution_index is not None;
     # - For test case logs, the indexes for test suite and test case are not None.
-    for entry in test_run_execution.log:
+    for row in test_run_execution.log:
+        entry = schemas.TestRunLogEntry.from_orm(row)
         if test_case := __test_case_execution_for_log_entry(
             test_run_execution=test_run_execution, log_entry=entry
         ):

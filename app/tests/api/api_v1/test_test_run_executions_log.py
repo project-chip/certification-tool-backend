@@ -24,6 +24,7 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.schemas.test_run_log_entry import TestRunLogEntry
 from app.tests.utils.test_runner import load_and_run_tool_unit_tests
 from test_collections.tool_unit_tests.test_suite_expected import TestSuiteExpected
 from test_collections.tool_unit_tests.test_suite_expected.tctr_expected_pass import (
@@ -183,8 +184,8 @@ async def test_test_run_execution_json_log(
     # check response is JSON
     response_first_line = response_log_lines[0]
     parsed_line = json.loads(response_first_line)
-    original_first_line = run_db.log[0]
-    assert parsed_line == original_first_line
+    original_first_line = TestRunLogEntry.from_orm(run_db.log[0])
+    assert parsed_line == json.loads(original_first_line.json())
 
 
 @pytest.mark.asyncio
