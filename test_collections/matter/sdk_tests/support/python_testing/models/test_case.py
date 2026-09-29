@@ -72,11 +72,22 @@ LOG_BATCH_SIZE = 50  # Number of log lines to send per batch
 LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
 
 # Batching configuration for the end-of-run replay path (real-time logging
-# disabled, or catching up on content the per-step path missed). There's no
-# UI pacing need here, just an event-loop yield, so use a much larger batch
-# and a bare `asyncio.sleep(0)` instead of a fixed per-batch delay - avoids
-# turning a large log file into minutes of pure asyncio.sleep.
-REPLAY_LOG_BATCH_SIZE = 2000
+# disabled, or catching up on content the per-step path missed). Each pass
+# of the event loop runs one full batch synchronously, so a large batch
+# holds the loop for as long as that batch takes to log. Other tasks (e.g.
+# TestLogHandler's periodic flush, on a 2s interval) wake up through several
+# call_soon hops - timer fires, a wrapping sleep's Task resumes, a gather()
+# callback fires, the outer task resumes - and each hop costs one pass. With
+# a large batch and a bare `asyncio.sleep(0)` yield, each of those hops costs
+# a full batch's worth of time, so a handful of hops can add up to several
+# multiples of the flush interval before the flush actually lands - which is
+# what produced bursty, several-seconds-late UI updates in practice. A
+# smaller batch makes each pass (and so each hop) cheap, and a tiny real
+# delay - rather than sleep(0) - keeps this task off the ready queue for
+# that instant so the loop can run other tasks' hop chains back to back
+# instead of only ever running this loop's next batch first.
+REPLAY_LOG_BATCH_SIZE = 200
+REPLAY_LOG_YIELD_DELAY = 0.001
 
 # Marker prefix printed by the SDK before each test step's output
 STEP_MARKER_PREFIX = "***** Test Step "
@@ -589,7 +600,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                         for line in batch:
                             logger.log(PYTHON_TEST_LEVEL, line)
                         if i + REPLAY_LOG_BATCH_SIZE < len(remaining_lines):
-                            await sleep(0)
+                            await sleep(REPLAY_LOG_YIELD_DELAY)
                     logger.info("---- End of remaining logs ----")
 
             # Mark as logged to prevent duplicate calls
@@ -639,8 +650,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
                         batch_count = 0
                         # Yield to the event loop between batches, so a
                         # large file doesn't monopolize it for an extended
-                        # stretch in one go.
-                        await sleep(0)
+                        # stretch in one go. A tiny real delay rather than
+                        # sleep(0): see REPLAY_LOG_YIELD_DELAY's definition
+                        # for why sleep(0) isn't enough here.
+                        await sleep(REPLAY_LOG_YIELD_DELAY)
             logger.info("---- End of Python test logs ----")
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")
