@@ -47,6 +47,14 @@ the host's radio. An interface that is missing or is not a wireless device stops
 the container at startup, rather than surfacing later as a confusing test
 failure.
 
+The fixture requires exclusive use of the radios it is given, so before starting
+the container the backend asks NetworkManager, systemd-networkd and the host's
+wpa_supplicant whether any of them manages one of the specified interfaces, and
+refuses to start if that is the case. A radio that is managed by a host service
+will often have settings applied to it that cause hard-to-diagnose failures
+during test execution. Enforcing exclusive use of the radios instead provides a
+clear and actionable TH failure at suite startup.
+
 ## Control interface
 
 Everything the tests do to the fixture goes through the daemons' control
