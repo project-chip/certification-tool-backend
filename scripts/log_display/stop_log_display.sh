@@ -18,7 +18,7 @@ set -e
 
 echo "Stopping Log Display app"
 
-pkill -9 -f LogDisplay.py
+pkill -9 -f LogDisplay.py || echo "LogDisplay.py was not running"
 if [ "$VIRTUAL_ENV" != "" ]; then
     deactivate
 fi
