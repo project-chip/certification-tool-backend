@@ -23,7 +23,7 @@ set -x
 set -e
 
 # Paths
-MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/../..)
+MATTER_PROGRAM_DIR=$(realpath "$(dirname "$0")/../..")
 
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
@@ -52,10 +52,10 @@ CURRENT_SDK_CHECKOUT_VERSION="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/.version"
 install_matter_wheels () {
   local wheel_dir="${TEST_COLLECTIONS_SDK_CHECKOUT_PATH}/sdk_runner"
 
-  pip install ${wheel_dir}/*.whl --force-reinstall --no-deps
+  pip install "${wheel_dir}"/*.whl --force-reinstall --no-deps
 
   # this should pick up any new dependencies added to the wheels that aren't in our pyproject.toml
-  pip install ${wheel_dir}/*.whl --constraint <(pip freeze --exclude chipyaml --exclude matter-idl --exclude matter-yamltests)
+  pip install "${wheel_dir}"/*.whl --constraint <(pip freeze --exclude chipyaml --exclude matter-idl --exclude matter-yamltests)
 }
 
 for arg in "$@"
@@ -82,7 +82,7 @@ then
     SDK_CHECKOUT_VERSION="custom-sdk"
 else
     # Get configured SDK_SHA (will default to value in test_collection/matter/config.py)
-    SDK_SHA=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
+    SDK_SHA=$(cat "$MATTER_PROGRAM_DIR/config.py" | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
     if [[ $FORCE_UPDATE -eq 1 ]]
     then
         echo "Update is forced."
@@ -102,12 +102,12 @@ if [ -z "$SDK_PATH" ]
 then
     # Checkout SDK sparsely
     cd /tmp
-    rm -rf $TMP_SDK_PATH
-    git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $TMP_SDK_FOLDER
-    cd $TMP_SDK_FOLDER
+    rm -rf "$TMP_SDK_PATH"
+    git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git "$TMP_SDK_FOLDER"
+    cd "$TMP_SDK_FOLDER"
     git sparse-checkout init
-    git sparse-checkout set $SDK_YAML_PATH $SDK_SCRIPTS_PATH $SDK_ADAPTER_PATH $SDK_DATA_MODEL_PATH $SDK_PYTHON_SCRIPT_PATH $SDK_PYTHON_DATA_MODEL_PATH
-    git checkout -q $SDK_SHA
+    git sparse-checkout set "$SDK_YAML_PATH" "$SDK_SCRIPTS_PATH" "$SDK_ADAPTER_PATH" "$SDK_DATA_MODEL_PATH" "$SDK_PYTHON_SCRIPT_PATH" "$SDK_PYTHON_DATA_MODEL_PATH"
+    git checkout -q "$SDK_SHA"
     SDK_PATH="$TMP_SDK_PATH"
 fi
 
@@ -118,16 +118,16 @@ then
 fi
 
 # Clear old SDK YAMLs
-if [ -d "$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH" ]; then rm -Rf $SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH; fi
-mkdir -p $SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH
+if [ -d "$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH" ]; then rm -Rf "$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH"; fi
+mkdir -p "$SDK_YAML_DIR_YAML_TEST_COLLECTION_PATH"
 
 # Clear old Python Testing folder
-if [ -d "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH" ]; then rm -Rf $PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH; fi
-mkdir -p $PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH
+if [ -d "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH" ]; then rm -Rf "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH"; fi
+mkdir -p "$PYTHON_TESTING_SCRIPTS_TEST_COLLECTION_PATH"
 
 # Clear old data_model folder
-if [ -d "$PYTHON_TESTING_DATA_MODEL_PATH" ]; then rm -Rf $PYTHON_TESTING_DATA_MODEL_PATH; fi
-mkdir -p $PYTHON_TESTING_DATA_MODEL_PATH
+if [ -d "$PYTHON_TESTING_DATA_MODEL_PATH" ]; then rm -Rf "$PYTHON_TESTING_DATA_MODEL_PATH"; fi
+mkdir -p "$PYTHON_TESTING_DATA_MODEL_PATH"
 
 # Records SDK Version
 echo "$SDK_CHECKOUT_VERSION" > "$CURRENT_SDK_CHECKOUT_VERSION"
@@ -150,7 +150,7 @@ cp -R * "$PYTHON_TESTING_DATA_MODEL_PATH/"
 EXTRACTION_ROOT="$TEST_COLLECTIONS_SDK_CHECKOUT_PATH/sdk_runner"
 
 # Remove existing extraction
-rm -rf ${EXTRACTION_ROOT}
+rm -rf "${EXTRACTION_ROOT}"
 
 # Create python wheels in temp folder and copy to sdk_runner
 # The main code for the runner is made of:
@@ -161,17 +161,17 @@ rm -rf ${EXTRACTION_ROOT}
 #                                 adapter for chip-repl.
 #   4. wrapper code               The code that glues all of that together.
 
-mkdir -p ${EXTRACTION_ROOT}
+mkdir -p "${EXTRACTION_ROOT}"
 
 
 python -m build --outdir "${EXTRACTION_ROOT}" "${SDK_PATH}/scripts/py_matter_idl"
 python -m build --outdir "${EXTRACTION_ROOT}" "${SDK_PATH}/scripts/py_matter_yamltests"
 # Create chipyaml package with the full adapters structure
 mkdir -p "${EXTRACTION_ROOT}/chipyaml_src"
-cp -r ${SDK_PATH}/scripts/tests/chipyaml ${EXTRACTION_ROOT}/chipyaml_src/
+cp -r "${SDK_PATH}/scripts/tests/chipyaml" "${EXTRACTION_ROOT}/chipyaml_src/"
 
 # Create pyproject.toml for chipyaml package at the root level
-cat > ${EXTRACTION_ROOT}/chipyaml_src/pyproject.toml << 'EOF'
+cat > "${EXTRACTION_ROOT}/chipyaml_src/pyproject.toml" << 'EOF'
 [build-system]
 requires = ['setuptools>=45', 'wheel']
 build-backend = 'setuptools.build_meta'
@@ -190,10 +190,10 @@ EOF
 python -m build --outdir "${EXTRACTION_ROOT}" "${EXTRACTION_ROOT}/chipyaml_src"
 
 # Clean up temporary source directory
-rm -rf ${EXTRACTION_ROOT}/chipyaml_src
+rm -rf "${EXTRACTION_ROOT}/chipyaml_src"
 
 # Change to a safe directory before installing wheels
-cd ${EXTRACTION_ROOT}
+cd "${EXTRACTION_ROOT}"
 
 echo "install_matter_wheels"
 install_matter_wheels
@@ -202,5 +202,5 @@ install_matter_wheels
 # commands. For example, it ensure that a string defined in YAML is converted to the right format between a CHAR_STRING or
 # an OCTET_STRING.
 # The default folder where cluster definitions can be found is src/app/zap-templates/zcl/data-model/chip.
-mkdir -p ${EXTRACTION_ROOT}/specifications/
-cp -r ${SDK_PATH}/src/app/zap-templates/zcl/data-model/chip ${EXTRACTION_ROOT}/specifications/
+mkdir -p "${EXTRACTION_ROOT}/specifications/"
+cp -r "${SDK_PATH}/src/app/zap-templates/zcl/data-model/chip" "${EXTRACTION_ROOT}/specifications/"

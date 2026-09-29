@@ -130,10 +130,10 @@ class TestRunnerHooks:
         print("=====> hooks.step_success")
 
     def step_failure(self, logger, logs, duration: int, request: TestStep, received):
-        print("=====> hooks.start")
+        print("=====> hooks.step_failure")
 
     def step_unknown(self):
-        print("=====> hooks.step_failure")
+        print("=====> hooks.step_unknown")
 
     async def step_manual(self):
         print("=====> hooks.step_manual")
@@ -233,11 +233,6 @@ def configure_iterations(args) -> []:
     except ValueError:
         pass
     return result
-
-    try:
-        subprocess.check_call("kill $(pidof  chip-all-clusters-app)", shell=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error while trying to remove rogue simulators: {e}")
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
