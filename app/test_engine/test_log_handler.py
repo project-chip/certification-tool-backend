@@ -29,6 +29,10 @@ from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite
 
 LOG_PROCESSING_INTERVAL = 2.0
 
+# Cap on how many pending entries append_log_entries() is given at once. See
+# __process_pending_entries() for why.
+LOG_PROCESSING_CHUNK_SIZE = 500
+
 
 class TestLogHandler:
     """Responsible for attaching log messages to a Test Run.
@@ -97,7 +101,9 @@ class TestLogHandler:
         self.__process_entries_task.cancel()
         await self.__process_entries_task
 
-        await self.__process_pending_entries()
+        # No spreading here: the run is over, so flush whatever's left
+        # immediately rather than trickling it out.
+        await self.__process_pending_entries(spread=False)
 
     def __subscribe_to_test_run_log_messages(self) -> int:
         """Add a logger sink for log messages, logged via the test_engine_logger.
@@ -148,7 +154,7 @@ class TestLogHandler:
         except CancelledError:
             pass
 
-    async def __process_pending_entries(self) -> None:
+    async def __process_pending_entries(self, spread: bool = True) -> None:
         # test_run.append_log_entries will cause updating UI/DB so there's a risk
         # that new log entries are added during this call, causing entries to be
         # missed. Thus, using a copy and resetting pending under a lock: entries
@@ -160,4 +166,33 @@ class TestLogHandler:
             entries = self.__pending_log_entries
             self.__pending_log_entries = []
 
-        self.__test_run.append_log_entries(entries)
+        # Chunked, with a real delay between chunks, instead of one
+        # append_log_entries() call for the whole backlog: a quiet run only
+        # ever accumulates a handful of entries per tick, but a log replay
+        # (test_case.py's display_batch_logs) can produce tens of thousands
+        # within a single interval. Flushing all of them in one call fires a
+        # single burst of DB/UI updates, then goes silent until the next
+        # tick, instead of the log viewer showing a steady trickle. The
+        # per-chunk delay is spread across this tick's interval rather than
+        # fixed, so a huge backlog doesn't multiply into a tick that runs
+        # far longer than normal.
+        chunks = [
+            entries[i : i + LOG_PROCESSING_CHUNK_SIZE]
+            for i in range(0, len(entries), LOG_PROCESSING_CHUNK_SIZE)
+        ]
+        delay = self.__process_interval_in_sec / len(chunks) if spread else 0
+        for i, chunk in enumerate(chunks):
+            self.__test_run.append_log_entries(chunk)
+            if i + 1 < len(chunks) and delay:
+                try:
+                    await asyncio.sleep(delay)
+                except CancelledError:
+                    # finish() cancels this task to stop future ticks, not
+                    # to abandon this one: without flushing what's left,
+                    # every chunk after the one in flight when cancellation
+                    # landed would be dropped instead of reaching run.log,
+                    # since finish()'s own flush afterwards only sees
+                    # entries logged after this method already claimed them.
+                    remaining = [entry for c in chunks[i + 1 :] for entry in c]
+                    self.__test_run.append_log_entries(remaining)
+                    raise
