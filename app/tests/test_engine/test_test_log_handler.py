@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from asyncio import sleep
+from unittest import mock
 
 import pytest
 from sqlalchemy.orm import Session
@@ -209,3 +210,62 @@ async def test_test_log_handler_metadata_value(db: Session) -> None:
     assert (
         expected_test_step_execution_index == actualLogEntry.test_step_execution_index
     )
+
+
+@pytest.mark.asyncio
+async def test_test_log_handler_spreads_large_backlog_across_tick() -> None:
+    """A backlog bigger than one chunk must reach run.log incrementally, not
+    as a single append_log_entries() call, so a burst of thousands of lines
+    (e.g. end-of-run log replay) doesn't appear in the UI/DB as one lump
+    followed by silence until the next tick (issue #1119)."""
+    with mock.patch(
+        "app.test_engine.test_log_handler.LOG_PROCESSING_CHUNK_SIZE", 10
+    ), mock.patch("app.test_engine.test_log_handler.LOG_PROCESSING_INTERVAL", 0.2):
+        run = TestRun(test_run_execution=TestRunExecution())
+        log_handler = TestLogHandler(run)
+
+        for i in range(35):
+            test_engine_logger.info(f"log message {i}")
+
+        seen_partial = False
+        for _ in range(500):
+            await sleep(0.01)
+            if 0 < len(run.log) < 35:
+                seen_partial = True
+            if len(run.log) == 35:
+                break
+
+        assert seen_partial, "backlog was not flushed incrementally"
+        assert len(run.log) == 35
+
+        await log_handler.finish()
+
+
+@pytest.mark.asyncio
+async def test_test_log_handler_finish_during_spread_does_not_drop_entries() -> None:
+    """finish() cancels the periodic task to stop future ticks, not to
+    abandon the tick in progress: calling it while a large backlog is still
+    being spread out must not drop the chunks that hadn't been flushed yet
+    (regression test for issue #1119's spread-flush fix, where cancelling
+    mid-spread silently dropped every chunk after the one in flight)."""
+    with mock.patch(
+        "app.test_engine.test_log_handler.LOG_PROCESSING_CHUNK_SIZE", 10
+    ), mock.patch("app.test_engine.test_log_handler.LOG_PROCESSING_INTERVAL", 0.2):
+        run = TestRun(test_run_execution=TestRunExecution())
+        log_handler = TestLogHandler(run)
+
+        for i in range(35):
+            test_engine_logger.info(f"log message {i}")
+
+        # Wait until the spread is underway but not finished, then cut it
+        # off with finish() instead of letting it complete on its own.
+        for _ in range(500):
+            await sleep(0.01)
+            if 0 < len(run.log) < 35:
+                break
+        else:
+            pytest.fail("backlog never reached a partial state before timeout")
+
+        await log_handler.finish()
+
+    assert len(run.log) == 35
