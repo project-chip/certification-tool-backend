@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
+
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -22,8 +25,24 @@ from app.core.config import settings
 from app.test_engine.test_script_manager import test_script_manager
 from app.uvicorn_worker import WS_PING_TIMEOUT_S
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """
+    Initialize Python test collections during application startup.
+
+    This ensures that Python test collections are properly initialized
+    with optimized container usage after the main application has started,
+    preventing blocking operations during module imports.
+    """
+    await test_script_manager.initialize_python_tests()
+    yield
+
+
 app = FastAPI(
-    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 # Set all CORS enabled origins
@@ -37,18 +56,6 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    """
-    Initialize Python test collections during application startup.
-
-    This ensures that Python test collections are properly initialized
-    with optimized container usage after the main application has started,
-    preventing blocking operations during module imports.
-    """
-    await test_script_manager.initialize_python_tests()
 
 
 if __name__ == "__main__":

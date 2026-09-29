@@ -15,6 +15,8 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
+set -e
+
 # Let the DB start
 python ./app/backend_pre_start.py
 
@@ -27,13 +29,13 @@ python ./app/initial_data.py
 # Run Prestart scripts in test collections
 for dir in ./test_collections/*
 do
-    if [ -d $dir ]; then 
-        prestart=$dir/prestart.sh
+    if [ -d "$dir" ]; then
+        prestart="$dir/prestart.sh"
 
         # Only run prestart.sh if present and it's executable
-        if [ -x $prestart ]; then 
+        if [ -x "$prestart" ]; then
             echo "Running prestart script: $prestart"
-            $prestart
+            "$prestart"
         fi
     fi
 done
