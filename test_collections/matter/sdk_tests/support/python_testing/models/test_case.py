@@ -66,9 +66,17 @@ from .utils import (
 # Timeout for user prompts in seconds.
 USER_PROMPT_TIMEOUT = 120
 
-# Log batching configuration
+# Log batching configuration for the real-time per-step streaming path
+# (ENABLE_REALTIME_PYTHON_TEST_LOGS=True), where the delay paces UI updates.
 LOG_BATCH_SIZE = 50  # Number of log lines to send per batch
 LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
+
+# Batching configuration for the end-of-run replay path (real-time logging
+# disabled, or catching up on content the per-step path missed). There's no
+# UI pacing need here, just an event-loop yield, so use a much larger batch
+# and a bare `asyncio.sleep(0)` instead of a fixed per-batch delay - avoids
+# turning a large log file into minutes of pure asyncio.sleep.
+REPLAY_LOG_BATCH_SIZE = 2000
 
 # Marker prefix printed by the SDK before each test step's output
 STEP_MARKER_PREFIX = "***** Test Step "
@@ -576,12 +584,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     # unbroken call, so a large backlog doesn't monopolize the
                     # event loop for an extended stretch in one go.
                     remaining_lines = remaining_content.split("\n")
-                    for i in range(0, len(remaining_lines), LOG_BATCH_SIZE):
-                        batch = remaining_lines[i : i + LOG_BATCH_SIZE]
+                    for i in range(0, len(remaining_lines), REPLAY_LOG_BATCH_SIZE):
+                        batch = remaining_lines[i : i + REPLAY_LOG_BATCH_SIZE]
                         for line in batch:
                             logger.log(PYTHON_TEST_LEVEL, line)
-                        if i + LOG_BATCH_SIZE < len(remaining_lines):
-                            await sleep(LOG_BATCH_DELAY)
+                        if i + REPLAY_LOG_BATCH_SIZE < len(remaining_lines):
+                            await sleep(0)
                     logger.info("---- End of remaining logs ----")
 
             # Mark as logged to prevent duplicate calls
@@ -627,12 +635,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 for line in f:
                     logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
                     batch_count += 1
-                    if batch_count >= LOG_BATCH_SIZE:
+                    if batch_count >= REPLAY_LOG_BATCH_SIZE:
                         batch_count = 0
                         # Yield to the event loop between batches, so a
                         # large file doesn't monopolize it for an extended
                         # stretch in one go.
-                        await sleep(LOG_BATCH_DELAY)
+                        await sleep(0)
             logger.info("---- End of Python test logs ----")
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")

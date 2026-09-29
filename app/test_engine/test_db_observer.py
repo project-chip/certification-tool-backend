@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 import asyncio
+from asyncio import Task
 from datetime import datetime
-from typing import Callable, Generator, Union
+from typing import Callable, Generator, Optional, Union
 
 from loguru import logger
 from sqlalchemy import inspect
@@ -34,6 +35,10 @@ from app.test_engine.test_observer import Observer
 ExecutionObj = Union[
     TestCaseExecution, TestStepExecution, TestSuiteExecution, TestRunExecution
 ]
+
+# How often pending updates are flushed to the DB while a run is in progress,
+# instead of only once at the very end of the run.
+DB_FLUSH_INTERVAL = 2.0
 
 
 class TestDBObserver(Observer):
@@ -58,6 +63,43 @@ class TestDBObserver(Observer):
         # the position from the persisted collection would then skip exactly
         # that many new entries.
         self.__entries_written = 0
+        self.__flush_task: Optional[Task] = None
+        self.__stop_flushing = asyncio.Event()
+
+    def start(self) -> None:
+        """Start periodically flushing pending updates to the DB.
+
+        Without this, __pending only ever drains in the single apply_updates()
+        call made after the run finishes, so a run's full log/state is written
+        to the DB in one large commit at the end instead of incrementally.
+        Not started automatically in __init__ so unit tests that only
+        exercise dispatch()/apply_updates() directly aren't left with a
+        dangling background task.
+        """
+        self.__flush_task = asyncio.create_task(self.__periodically_apply_updates())
+
+    async def __periodically_apply_updates(self) -> None:
+        # Only wait on the stop event between flushes, never cancel a flush
+        # itself: dispatch() can still be mutating ORM objects that a
+        # half-finished apply_updates() removed from __pending but hasn't
+        # saved yet, so cutting it off mid-save would drop or corrupt that
+        # update instead of just deferring it to the next tick.
+        while not self.__stop_flushing.is_set():
+            try:
+                await asyncio.wait_for(
+                    self.__stop_flushing.wait(), timeout=DB_FLUSH_INTERVAL
+                )
+            except asyncio.TimeoutError:
+                pass
+            await self.apply_updates()
+
+    async def finish(self) -> None:
+        """Stop periodic flushing and apply any updates still pending."""
+        if self.__flush_task is not None:
+            self.__stop_flushing.set()
+            await self.__flush_task
+            self.__flush_task = None
+        await self.apply_updates()
 
     async def apply_updates(self) -> None:
         pending = self.__pending
@@ -170,11 +212,16 @@ class TestDBObserver(Observer):
             session = next(self.__db_generator())
             session.add(execution_obj)
         session.expire_on_commit = False
-        # session.commit() is a blocking, synchronous SQLAlchemy call. It can
-        # be a large write (e.g. a run's full log), so keep it off the event
-        # loop rather than stalling every other coroutine (websocket pings,
-        # other requests) for however long it takes.
-        await asyncio.to_thread(session.commit)
+        # session.commit() runs synchronously on the caller (the event loop
+        # thread), not offloaded via asyncio.to_thread: dispatch() can mutate
+        # this same Session's ORM objects at any point while the periodic
+        # flush task is running, and SQLAlchemy Sessions aren't thread-safe,
+        # so committing from a worker thread while the loop keeps mutating
+        # objects on it is a real race, not just a theoretical one. Each
+        # periodic flush's commit is small (updates since the last tick), so
+        # this doesn't reintroduce the O(n) end-of-run stall the periodic
+        # flush loop exists to avoid.
+        session.commit()
         logger.debug(
             f"Saved {execution_obj.__class__} {execution_obj.id}"
             f" with state {execution_obj.state}"
