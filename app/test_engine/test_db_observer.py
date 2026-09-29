@@ -19,7 +19,7 @@ from datetime import datetime
 from typing import Callable, Generator, Optional, Union
 
 from loguru import logger
-from sqlalchemy import inspect
+from sqlalchemy import func, insert, inspect, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -63,6 +63,20 @@ class TestDBObserver(Observer):
         # the position from the persisted collection would then skip exactly
         # that many new entries.
         self.__entries_written = 0
+        # Next seq value to assign to a new TestRunLogEntry row. None until
+        # the first flush, when it's initialized from MAX(seq)+1 for this
+        # run (0 if there are no existing rows) - a resumed PENDING run can
+        # already have rows from an interrupted earlier attempt (see
+        # __entries_written's comment above), so seq must continue from
+        # whatever is actually persisted, not from 0. A single indexed
+        # query at first use, then tracked in Python from there, rather than
+        # reading len(test_run_execution.log) each time: that ORM
+        # relationship can hold hundreds of thousands of rows, and touching
+        # it would force-load the whole collection.
+        self.__next_seq: Optional[int] = None
+        # New TestRunLogEntry rows waiting to be bulk-inserted, as plain
+        # column dicts rather than ORM objects - see __onTestRunUpdate.
+        self.__pending_log_rows: list[dict] = []
         self.__flush_task: Optional[Task] = None
         self.__stop_flushing = asyncio.Event()
 
@@ -104,8 +118,34 @@ class TestDBObserver(Observer):
     async def apply_updates(self) -> None:
         pending = self.__pending
         self.__pending = {}
+        log_rows = self.__pending_log_rows
+        self.__pending_log_rows = []
+
+        if log_rows:
+            # Same session/transaction as the state save below, so a run's
+            # log rows and its state move together: either both land in
+            # this commit or neither does.
+            session = self.__session_for(pending)
+            session.execute(insert(TestRunLogEntry), log_rows)
+
         for data in pending.values():
             await self.__save(data)
+
+        # Safety net, not an expected path: __onTestRunUpdate always
+        # enqueues test_run_execution itself alongside any new log rows, so
+        # pending is never actually empty here today. Kept in case that
+        # invariant ever changes - without it, the insert above would sit
+        # uncommitted until some future tick's __save() happens to commit
+        # the same session.
+        if log_rows and not pending:
+            session.commit()
+
+    def __session_for(self, pending: dict[int, ExecutionObj]) -> Session:
+        for execution_obj in pending.values():
+            insp = inspect(execution_obj)
+            if insp is not None and insp.session is not None:
+                return insp.session
+        return next(self.__db_generator())
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -129,21 +169,33 @@ class TestDBObserver(Observer):
         test_run_execution = observable.test_run_execution
         test_run_execution.state = observable.state
 
-        # Append only the log entries produced since the last update, as rows on
-        # the related table. This keeps writes O(n) over the run instead of
-        # rewriting the whole log on every flush.
+        # New log entries are staged as plain rows here rather than appended
+        # to test_run_execution.log (the ORM relationship): appending puts
+        # each entry under the unit-of-work's per-object tracking, which is
+        # the dominant cost of a flush during a fast replay (thousands of
+        # entries per tick). __save() below inserts __pending_log_rows via a
+        # Core bulk insert instead, skipping that tracking for this
+        # high-volume path. seq is assigned here (mirroring what the ORM's
+        # ordering_list("seq") relationship would have done on append) since
+        # nothing else assigns it for rows taking this path.
         new_entries = observable.log[self.__entries_written :]
-        for entry in new_entries:
-            test_run_execution.log.append(
-                TestRunLogEntry(
-                    level=entry.level,
-                    timestamp=entry.timestamp,
-                    message=entry.message,
-                    test_suite_execution_index=entry.test_suite_execution_index,
-                    test_case_execution_index=entry.test_case_execution_index,
-                    test_step_execution_index=entry.test_step_execution_index,
-                )
+        if new_entries:
+            if self.__next_seq is None:
+                self.__next_seq = self.__initial_seq(test_run_execution)
+            self.__pending_log_rows.extend(
+                {
+                    "test_run_execution_id": test_run_execution.id,
+                    "seq": self.__next_seq + i,
+                    "level": entry.level,
+                    "timestamp": entry.timestamp,
+                    "message": entry.message,
+                    "test_suite_execution_index": entry.test_suite_execution_index,
+                    "test_case_execution_index": entry.test_case_execution_index,
+                    "test_step_execution_index": entry.test_step_execution_index,
+                }
+                for i, entry in enumerate(new_entries)
             )
+            self.__next_seq += len(new_entries)
         self.__entries_written += len(new_entries)
 
         if test_run_execution.started_at is None:
@@ -153,6 +205,20 @@ class TestDBObserver(Observer):
             test_run_execution.completed_at = datetime.now()
 
         self.__enqueue(test_run_execution)
+
+    def __initial_seq(self, test_run_execution: TestRunExecution) -> int:
+        # Match __save()'s pattern: prefer the session the object is already
+        # attached to over opening a new one via __db_generator.
+        insp = inspect(test_run_execution)
+        session = (insp.session if insp is not None else None) or next(
+            self.__db_generator()
+        )
+        max_seq = session.execute(
+            select(func.max(TestRunLogEntry.seq)).where(
+                TestRunLogEntry.test_run_execution_id == test_run_execution.id
+            )
+        ).scalar_one()
+        return 0 if max_seq is None else max_seq + 1
 
     def __onTestSuiteUpdate(self, observable: "TestSuite") -> None:
         logger.debug("Test Suite Observer received", observable)
