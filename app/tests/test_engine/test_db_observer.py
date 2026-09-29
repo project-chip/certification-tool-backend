@@ -58,7 +58,7 @@ async def test_test_db_observer_test_run_started_at(db: Session) -> None:
 
     test_db_observer.dispatch(test_run)
     assert TestStateEnum.EXECUTING == test_run_execution.state
-    assert len(test_run_execution.log) == 1
+    assert len(test_db_observer._TestDBObserver__pending_log_rows) == 1  # type: ignore
     assert test_run_execution.started_at == start_time
     assert test_run_execution.completed_at is None
     assert len(test_run.log) == 1
@@ -328,7 +328,14 @@ async def test_test_db_observer_appends_only_new_log_entries(db: Session) -> Non
     test_db_observer.dispatch(test_run)
     await test_db_observer.apply_updates()
 
-    first_row = test_run_execution.log[0]
+    first_persisted = (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
+    assert [(e.seq, e.message) for e in first_persisted] == [(0, "first")]
+    first_row_id = first_persisted[0].id
 
     test_run.append_log_entries(
         [TestRunLogEntry(level="INFO", timestamp=2.0, message="second")]
@@ -336,15 +343,8 @@ async def test_test_db_observer_appends_only_new_log_entries(db: Session) -> Non
     test_db_observer.dispatch(test_run)
     await test_db_observer.apply_updates()
 
-    # The already-persisted entry is the same row, not a rewritten copy, and
-    # seq reflects the order the entries were produced in.
-    assert test_run_execution.log[0] is first_row
-    assert [(e.seq, e.message) for e in test_run_execution.log] == [
-        (0, "first"),
-        (1, "second"),
-    ]
-
-    # ...and that is what actually landed in the table.
+    # The already-persisted entry is the same row (same primary key), not a
+    # rewritten copy, and seq reflects the order the entries were produced in.
     persisted = (
         db.query(TestRunLogEntryModel)
         .filter_by(test_run_execution_id=test_run_execution.id)
@@ -352,6 +352,7 @@ async def test_test_db_observer_appends_only_new_log_entries(db: Session) -> Non
         .all()
     )
     assert [(e.seq, e.message) for e in persisted] == [(0, "first"), (1, "second")]
+    assert persisted[0].id == first_row_id
 
 
 @pytest.mark.asyncio
@@ -379,9 +380,15 @@ async def test_test_db_observer_keeps_entries_of_a_resumed_run(db: Session) -> N
     test_db_observer.dispatch(test_run)
     await test_db_observer.apply_updates()
 
-    assert [e.message for e in test_run_execution.log] == [
-        "earlier attempt",
-        "new attempt",
+    persisted = (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
+    assert [(e.seq, e.message) for e in persisted] == [
+        (0, "earlier attempt"),
+        (1, "new attempt"),
     ]
 
 
