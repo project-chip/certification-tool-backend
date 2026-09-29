@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
 import uvicorn
 from fastapi import FastAPI
@@ -26,7 +27,7 @@ from app.uvicorn_worker import WS_PING_TIMEOUT_S
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     Initialize Python test collections during application startup.
 
