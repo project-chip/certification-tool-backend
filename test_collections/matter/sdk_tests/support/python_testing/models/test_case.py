@@ -87,6 +87,14 @@ LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
 # that instant so the loop can run other tasks' hop chains back to back
 # instead of only ever running this loop's next batch first.
 REPLAY_LOG_BATCH_SIZE = 200
+# 1ms, not lower: uvicorn[standard] (this app's ASGI server, see Dockerfile)
+# pulls in uvloop, which rounds asyncio.sleep()'s delay to whole libuv
+# milliseconds - anything that rounds to 0ms (i.e. under ~0.5ms) falls back
+# to a bare call_soon, degenerating into the same sleep(0) behavior this
+# constant exists to avoid (see the comment above). 1ms is the smallest
+# delay that's guaranteed to still be a real, timer-based sleep under
+# uvloop, which is what actually lets other tasks' hop chains run promptly
+# between batches instead of losing the race to this loop's next batch.
 REPLAY_LOG_YIELD_DELAY = 0.001
 
 # Marker prefix printed by the SDK before each test step's output
