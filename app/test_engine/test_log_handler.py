@@ -132,7 +132,15 @@ class TestLogHandler:
         Args:
             message (Message): log message from loguru
         """
-        log_entry = TestRunLogEntry(
+        # .construct() rather than TestRunLogEntry(...): skips pydantic's
+        # field validation, which isn't needed here since every value
+        # already has the right type (loguru guarantees record["level"],
+        # ["time"], ["message"]; the three indices come from typed
+        # properties above). This runs once per test_engine_logger call
+        # across the whole run, and during a log replay that's tens of
+        # thousands of calls in quick succession, so validation overhead
+        # here is worth skipping for data that's already known-good.
+        log_entry = TestRunLogEntry.construct(
             level=message.record["level"].name,
             timestamp=message.record["time"].timestamp(),
             message=message.record["message"],
