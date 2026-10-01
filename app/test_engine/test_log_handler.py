@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import threading
-from asyncio import CancelledError, Task
+from asyncio import Task
 from typing import Optional
 
 import loguru  # this is needed (with __future__ annotations)
@@ -95,7 +95,15 @@ class TestLogHandler:
         self.__unsubscribe_to_test_run_log_messages()
 
         self.__process_entries_task.cancel()
-        await self.__process_entries_task
+        # gather() collects the task's own cancellation as a result instead of
+        # re-raising it here (awaiting the task directly would), while still
+        # propagating a cancellation of this caller. A real error from the
+        # processing loop is still raised.
+        (result,) = await asyncio.gather(
+            self.__process_entries_task, return_exceptions=True
+        )
+        if isinstance(result, Exception):
+            raise result
 
         await self.__process_pending_entries()
 
@@ -139,14 +147,11 @@ class TestLogHandler:
 
     async def __periodically_process_entries(self) -> None:
         """This will process the pending entries at a pre-defined interval."""
-        try:
-            while True:
-                await asyncio.gather(
-                    self.__process_pending_entries(),
-                    asyncio.sleep(self.__process_interval_in_sec),
-                )
-        except CancelledError:
-            pass
+        while True:
+            await asyncio.gather(
+                self.__process_pending_entries(),
+                asyncio.sleep(self.__process_interval_in_sec),
+            )
 
     async def __process_pending_entries(self) -> None:
         # test_run.append_log_entries will cause updating UI/DB so there's a risk
