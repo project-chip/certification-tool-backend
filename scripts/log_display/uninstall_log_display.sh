@@ -33,16 +33,16 @@ uninstall_python_dependencies() {
     if [ "$VIRTUAL_ENV" != "" ]; then
         deactivate
     fi
-    rm -rf $VIRTUAL_ENV
+    rm -rf "$VIRTUAL_ENV"
     sudo apt remove uvicorn
     echo "Packages uninstall Done"
 
 }
 
 remove_matter_qa_repo() {
-    if [ -d $MATTER_QA_PATH ]; then
+    if [ -d "$MATTER_QA_PATH" ]; then
         echo "Deleting Matter QA repository..."
-        sudo rm -rf $MATTER_QA_PATH
+        sudo rm -rf "$MATTER_QA_PATH"
         echo "Matter_QA repository removal Done"
     else
         echo "Matter QA repository not in the default location. Please, remove it manually"

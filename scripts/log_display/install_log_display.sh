@@ -15,15 +15,16 @@
 # limitations under the License.
 
 set -e
+set -o pipefail
 
 MATTER_QA_PATH="$HOME/matter-qa"
 VIRTUAL_ENV="$MATTER_QA_PATH/log_display_venv"
 
 clone_matter_qa() {
-    if [ ! -d $MATTER_QA_PATH ]; then
+    if [ ! -d "$MATTER_QA_PATH" ]; then
         cd
         git clone --no-checkout git@github.com:CHIP-Specifications/matter-qa.git
-        cd $MATTER_QA_PATH
+        cd "$MATTER_QA_PATH"
         git sparse-checkout set --cone
         git checkout main
         git sparse-checkout set tools src
@@ -46,10 +47,10 @@ install_mongodb() {
 install_python_dependencies() {
     sudo apt install uvicorn
     sudo apt install python-is-python3
-    python -m venv $VIRTUAL_ENV
-    source $VIRTUAL_ENV/bin/activate
+    python -m venv "$VIRTUAL_ENV"
+    source "$VIRTUAL_ENV/bin/activate"
     pip install setuptools
-    pip install $MATTER_QA_PATH/src/
+    pip install "$MATTER_QA_PATH/src/"
     deactivate
 }
 

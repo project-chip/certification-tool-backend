@@ -26,7 +26,7 @@ set -e
 # - SDK_SHA 
 
 # Paths
-MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/..)
+MATTER_PROGRAM_DIR=$(realpath "$(dirname "$0")/..")
 TH_SCRIPTS_DIR="$MATTER_PROGRAM_DIR/../../../scripts"
 TMP_SDK_FOLDER="sdk-sparse"
 TMP_SDK_PATH="/tmp/$TMP_SDK_FOLDER"
@@ -62,25 +62,25 @@ then
     if [ -z "$SDK_SHA" ]
     then
         print_script_step "Read SDK_SHA from $MATTER_PROGRAM_DIR/config.py file"
-        SDK_SHA=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
+        SDK_SHA=$(cat "$MATTER_PROGRAM_DIR/config.py" | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
     fi
-    printf "SDK_SHA: $SDK_SHA\n"
+    printf "SDK_SHA: %s\n" "$SDK_SHA"
 
     print_script_step "Checkout SDK sparsely"
-    rm -rf $TMP_SDK_PATH
+    rm -rf "$TMP_SDK_PATH"
     cd /tmp
-    git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $TMP_SDK_FOLDER
-    cd $TMP_SDK_FOLDER
+    git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git "$TMP_SDK_FOLDER"
+    cd "$TMP_SDK_FOLDER"
     git sparse-checkout init
-    git sparse-checkout set $SDK_CERT_PATH $SDK_CERT_DEVELOPMENT_PATH
-    git checkout -q $SDK_SHA
+    git sparse-checkout set "$SDK_CERT_PATH" "$SDK_CERT_DEVELOPMENT_PATH"
+    git checkout -q "$SDK_SHA"
     SDK_PATH="$TMP_SDK_PATH"
 fi
 
-printf "\nSDK_PATH: $SDK_PATH\n"
+printf "\nSDK_PATH: %s\n" "$SDK_PATH"
 
 # Back to execution dir
-cd $CURRENT_DIR
+cd "$CURRENT_DIR"
 
 # Recreate certification folders to avoid permission issues
 recreate_dir_with_ownership "$CERT_PATH" "certification"
@@ -88,10 +88,10 @@ recreate_dir_with_ownership "$DEVELOPMENT_PATH" "development certification"
 
 print_script_step "Copying Certificates from SDK"
 echo "Running copy command: cp "$SDK_PATH/$SDK_CERT_PATH/"* $CERT_PATH/"
-cp "$SDK_PATH/$SDK_CERT_PATH/"* $CERT_PATH/
+cp "$SDK_PATH/$SDK_CERT_PATH/"* "$CERT_PATH/"
 
 print_script_step "Copying Developer Certificates from SDK"
 echo "Running copy command: cp -R "$SDK_PATH/$SDK_CERT_DEVELOPMENT_PATH/"** $DEVELOPMENT_PATH/"
-cp -R "$SDK_PATH/$SDK_CERT_DEVELOPMENT_PATH/"** $DEVELOPMENT_PATH/
+cp -R "$SDK_PATH/$SDK_CERT_DEVELOPMENT_PATH/"** "$DEVELOPMENT_PATH/"
 
 print_end_of_script
