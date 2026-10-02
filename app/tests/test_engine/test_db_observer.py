@@ -58,7 +58,7 @@ async def test_test_db_observer_test_run_started_at(db: Session) -> None:
 
     test_db_observer.dispatch(test_run)
     assert TestStateEnum.EXECUTING == test_run_execution.state
-    assert len(test_run_execution.log) == 1
+    assert len(test_db_observer._TestDBObserver__pending_log_rows) == 1  # type: ignore
     assert test_run_execution.started_at == start_time
     assert test_run_execution.completed_at is None
     assert len(test_run.log) == 1
@@ -328,7 +328,14 @@ async def test_test_db_observer_appends_only_new_log_entries(db: Session) -> Non
     test_db_observer.dispatch(test_run)
     await test_db_observer.apply_updates()
 
-    first_row = test_run_execution.log[0]
+    first_persisted = (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
+    assert [(e.seq, e.message) for e in first_persisted] == [(0, "first")]
+    first_row_id = first_persisted[0].id
 
     test_run.append_log_entries(
         [TestRunLogEntry(level="INFO", timestamp=2.0, message="second")]
@@ -336,15 +343,8 @@ async def test_test_db_observer_appends_only_new_log_entries(db: Session) -> Non
     test_db_observer.dispatch(test_run)
     await test_db_observer.apply_updates()
 
-    # The already-persisted entry is the same row, not a rewritten copy, and
-    # seq reflects the order the entries were produced in.
-    assert test_run_execution.log[0] is first_row
-    assert [(e.seq, e.message) for e in test_run_execution.log] == [
-        (0, "first"),
-        (1, "second"),
-    ]
-
-    # ...and that is what actually landed in the table.
+    # The already-persisted entry is the same row (same primary key), not a
+    # rewritten copy, and seq reflects the order the entries were produced in.
     persisted = (
         db.query(TestRunLogEntryModel)
         .filter_by(test_run_execution_id=test_run_execution.id)
@@ -352,6 +352,7 @@ async def test_test_db_observer_appends_only_new_log_entries(db: Session) -> Non
         .all()
     )
     assert [(e.seq, e.message) for e in persisted] == [(0, "first"), (1, "second")]
+    assert persisted[0].id == first_row_id
 
 
 @pytest.mark.asyncio
@@ -379,7 +380,90 @@ async def test_test_db_observer_keeps_entries_of_a_resumed_run(db: Session) -> N
     test_db_observer.dispatch(test_run)
     await test_db_observer.apply_updates()
 
-    assert [e.message for e in test_run_execution.log] == [
-        "earlier attempt",
-        "new attempt",
+    persisted = (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
+    assert [(e.seq, e.message) for e in persisted] == [
+        (0, "earlier attempt"),
+        (1, "new attempt"),
     ]
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_start_flushes_periodically(db: Session) -> None:
+    """start() must apply pending updates on its own, on an interval, instead
+    of leaving everything for the single end-of-run apply_updates() call
+    (issue #1119: a run's full log/state was committed in one large write at
+    the very end instead of incrementally)."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+    test_db_observer.dispatch(test_run)
+
+    with mock.patch(
+        "app.test_engine.test_db_observer.DB_FLUSH_INTERVAL", 0.01
+    ), mock.patch.object(Session, "commit") as mock_commit:
+        test_db_observer.start()
+        for _ in range(50):
+            if mock_commit.call_count > 0:
+                break
+            await asyncio.sleep(0.01)
+
+        # Assert before finish(): finish() also calls apply_updates(), so
+        # asserting only after it returns would pass even if the periodic
+        # loop never flushed anything on its own.
+        assert mock_commit.call_count >= 1, "periodic flush never committed"
+
+        # A second dispatch + wait proves the loop keeps flushing on its own
+        # rather than firing once and stopping.
+        first_flush_count = mock_commit.call_count
+        test_db_observer.dispatch(test_run)
+        for _ in range(50):
+            if mock_commit.call_count > first_flush_count:
+                break
+            await asyncio.sleep(0.01)
+        assert mock_commit.call_count > first_flush_count, "flush did not repeat"
+
+        await test_db_observer.finish()
+
+    assert mock_commit.call_count >= 1
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_finish_without_start_is_a_noop(db: Session) -> None:
+    """finish() must be safe to call even when start() was never called."""
+    test_db_observer = TestDBObserver()
+    await test_db_observer.finish()
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_finish_stops_further_periodic_flushes(
+    db: Session,
+) -> None:
+    """finish() must stop the periodic loop, not just flush once more:
+    dispatch()ing after finish() must not be picked up by a flush that
+    somehow keeps running in the background."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+
+    with mock.patch(
+        "app.test_engine.test_db_observer.DB_FLUSH_INTERVAL", 0.01
+    ), mock.patch.object(Session, "commit") as mock_commit:
+        test_db_observer.start()
+        await test_db_observer.finish()
+        call_count_after_finish = mock_commit.call_count
+
+        test_db_observer.dispatch(test_run)
+        await asyncio.sleep(0.05)
+
+        assert mock_commit.call_count == call_count_after_finish

@@ -170,18 +170,24 @@ class TestRunner(object, metaclass=Singleton):
             # Init new observers
             ui_observer = TestUIObserver()
             db_observer = TestDBObserver(self.__db_generator)
+            db_observer.start()
 
             self.test_run.subscribe([ui_observer, db_observer])
 
-            await self.test_run.run()
+            try:
+                await self.test_run.run()
 
-            # Ensure all log messages are sent out
-            await log_handler.finish()
+                # Ensure all log messages are sent out
+                await log_handler.finish()
+            finally:
+                self.test_run.unsubscribe([ui_observer, db_observer])
 
-            self.test_run.unsubscribe([ui_observer, db_observer])
-
-            # Flush all pending DB updates
-            await db_observer.apply_updates()
+                # Stop periodic flushing and apply any updates still pending,
+                # even if the run raised: otherwise the flush task never
+                # gets cancelled and keeps running against a Session the
+                # next run's __reset_db_session() will close out from
+                # under it.
+                await db_observer.finish()
 
             # Ensure all state updates are sent to the frontend
             await ui_observer.complete_tasks()

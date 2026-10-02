@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 import asyncio
+from asyncio import Task
 from datetime import datetime
-from typing import Callable, Generator, Union
+from typing import Callable, Generator, Optional, Union
 
 from loguru import logger
-from sqlalchemy import inspect
+from sqlalchemy import func, insert, inspect, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -34,6 +35,10 @@ from app.test_engine.test_observer import Observer
 ExecutionObj = Union[
     TestCaseExecution, TestStepExecution, TestSuiteExecution, TestRunExecution
 ]
+
+# How often pending updates are flushed to the DB while a run is in progress,
+# instead of only once at the very end of the run.
+DB_FLUSH_INTERVAL = 2.0
 
 
 class TestDBObserver(Observer):
@@ -58,12 +63,89 @@ class TestDBObserver(Observer):
         # the position from the persisted collection would then skip exactly
         # that many new entries.
         self.__entries_written = 0
+        # Next seq value to assign to a new TestRunLogEntry row. None until
+        # the first flush, when it's initialized from MAX(seq)+1 for this
+        # run (0 if there are no existing rows) - a resumed PENDING run can
+        # already have rows from an interrupted earlier attempt (see
+        # __entries_written's comment above), so seq must continue from
+        # whatever is actually persisted, not from 0. A single indexed
+        # query at first use, then tracked in Python from there, rather than
+        # reading len(test_run_execution.log) each time: that ORM
+        # relationship can hold hundreds of thousands of rows, and touching
+        # it would force-load the whole collection.
+        self.__next_seq: Optional[int] = None
+        # New TestRunLogEntry rows waiting to be bulk-inserted, as plain
+        # column dicts rather than ORM objects - see __onTestRunUpdate.
+        self.__pending_log_rows: list[dict] = []
+        self.__flush_task: Optional[Task] = None
+        self.__stop_flushing = asyncio.Event()
+
+    def start(self) -> None:
+        """Start periodically flushing pending updates to the DB.
+
+        Without this, __pending only ever drains in the single apply_updates()
+        call made after the run finishes, so a run's full log/state is written
+        to the DB in one large commit at the end instead of incrementally.
+        Not started automatically in __init__ so unit tests that only
+        exercise dispatch()/apply_updates() directly aren't left with a
+        dangling background task.
+        """
+        self.__flush_task = asyncio.create_task(self.__periodically_apply_updates())
+
+    async def __periodically_apply_updates(self) -> None:
+        # Only wait on the stop event between flushes, never cancel a flush
+        # itself: dispatch() can still be mutating ORM objects that a
+        # half-finished apply_updates() removed from __pending but hasn't
+        # saved yet, so cutting it off mid-save would drop or corrupt that
+        # update instead of just deferring it to the next tick.
+        while not self.__stop_flushing.is_set():
+            try:
+                await asyncio.wait_for(
+                    self.__stop_flushing.wait(), timeout=DB_FLUSH_INTERVAL
+                )
+            except asyncio.TimeoutError:
+                pass
+            await self.apply_updates()
+
+    async def finish(self) -> None:
+        """Stop periodic flushing and apply any updates still pending."""
+        if self.__flush_task is not None:
+            self.__stop_flushing.set()
+            await self.__flush_task
+            self.__flush_task = None
+        await self.apply_updates()
 
     async def apply_updates(self) -> None:
         pending = self.__pending
         self.__pending = {}
+        log_rows = self.__pending_log_rows
+        self.__pending_log_rows = []
+
+        if log_rows:
+            # Same session/transaction as the state save below, so a run's
+            # log rows and its state move together: either both land in
+            # this commit or neither does.
+            session = self.__session_for(pending)
+            session.execute(insert(TestRunLogEntry), log_rows)
+
         for data in pending.values():
             await self.__save(data)
+
+        # Safety net, not an expected path: __onTestRunUpdate always
+        # enqueues test_run_execution itself alongside any new log rows, so
+        # pending is never actually empty here today. Kept in case that
+        # invariant ever changes - without it, the insert above would sit
+        # uncommitted until some future tick's __save() happens to commit
+        # the same session.
+        if log_rows and not pending:
+            session.commit()
+
+    def __session_for(self, pending: dict[int, ExecutionObj]) -> Session:
+        for execution_obj in pending.values():
+            insp = inspect(execution_obj)
+            if insp is not None and insp.session is not None:
+                return insp.session
+        return next(self.__db_generator())
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -87,21 +169,33 @@ class TestDBObserver(Observer):
         test_run_execution = observable.test_run_execution
         test_run_execution.state = observable.state
 
-        # Append only the log entries produced since the last update, as rows on
-        # the related table. This keeps writes O(n) over the run instead of
-        # rewriting the whole log on every flush.
+        # New log entries are staged as plain rows here rather than appended
+        # to test_run_execution.log (the ORM relationship): appending puts
+        # each entry under the unit-of-work's per-object tracking, which is
+        # the dominant cost of a flush during a fast replay (thousands of
+        # entries per tick). __save() below inserts __pending_log_rows via a
+        # Core bulk insert instead, skipping that tracking for this
+        # high-volume path. seq is assigned here (mirroring what the ORM's
+        # ordering_list("seq") relationship would have done on append) since
+        # nothing else assigns it for rows taking this path.
         new_entries = observable.log[self.__entries_written :]
-        for entry in new_entries:
-            test_run_execution.log.append(
-                TestRunLogEntry(
-                    level=entry.level,
-                    timestamp=entry.timestamp,
-                    message=entry.message,
-                    test_suite_execution_index=entry.test_suite_execution_index,
-                    test_case_execution_index=entry.test_case_execution_index,
-                    test_step_execution_index=entry.test_step_execution_index,
-                )
+        if new_entries:
+            if self.__next_seq is None:
+                self.__next_seq = self.__initial_seq(test_run_execution)
+            self.__pending_log_rows.extend(
+                {
+                    "test_run_execution_id": test_run_execution.id,
+                    "seq": self.__next_seq + i,
+                    "level": entry.level,
+                    "timestamp": entry.timestamp,
+                    "message": entry.message,
+                    "test_suite_execution_index": entry.test_suite_execution_index,
+                    "test_case_execution_index": entry.test_case_execution_index,
+                    "test_step_execution_index": entry.test_step_execution_index,
+                }
+                for i, entry in enumerate(new_entries)
             )
+            self.__next_seq += len(new_entries)
         self.__entries_written += len(new_entries)
 
         if test_run_execution.started_at is None:
@@ -111,6 +205,20 @@ class TestDBObserver(Observer):
             test_run_execution.completed_at = datetime.now()
 
         self.__enqueue(test_run_execution)
+
+    def __initial_seq(self, test_run_execution: TestRunExecution) -> int:
+        # Match __save()'s pattern: prefer the session the object is already
+        # attached to over opening a new one via __db_generator.
+        insp = inspect(test_run_execution)
+        session = (insp.session if insp is not None else None) or next(
+            self.__db_generator()
+        )
+        max_seq = session.execute(
+            select(func.max(TestRunLogEntry.seq)).where(
+                TestRunLogEntry.test_run_execution_id == test_run_execution.id
+            )
+        ).scalar_one()
+        return 0 if max_seq is None else max_seq + 1
 
     def __onTestSuiteUpdate(self, observable: "TestSuite") -> None:
         logger.debug("Test Suite Observer received", observable)
@@ -170,11 +278,16 @@ class TestDBObserver(Observer):
             session = next(self.__db_generator())
             session.add(execution_obj)
         session.expire_on_commit = False
-        # session.commit() is a blocking, synchronous SQLAlchemy call. It can
-        # be a large write (e.g. a run's full log), so keep it off the event
-        # loop rather than stalling every other coroutine (websocket pings,
-        # other requests) for however long it takes.
-        await asyncio.to_thread(session.commit)
+        # session.commit() runs synchronously on the caller (the event loop
+        # thread), not offloaded via asyncio.to_thread: dispatch() can mutate
+        # this same Session's ORM objects at any point while the periodic
+        # flush task is running, and SQLAlchemy Sessions aren't thread-safe,
+        # so committing from a worker thread while the loop keeps mutating
+        # objects on it is a real race, not just a theoretical one. Each
+        # periodic flush's commit is small (updates since the last tick), so
+        # this doesn't reintroduce the O(n) end-of-run stall the periodic
+        # flush loop exists to avoid.
+        session.commit()
         logger.debug(
             f"Saved {execution_obj.__class__} {execution_obj.id}"
             f" with state {execution_obj.state}"
