@@ -426,3 +426,70 @@ async def test_test_db_observer_bulk_inserts_in_chunks(db: Session) -> None:
     assert [(e.seq, e.message) for e in persisted] == [
         (i, f"m{i}") for i in range(total)
     ]
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_flushes_periodically_during_run(db: Session) -> None:
+    """With start(), entries reach the table without any apply_updates() call,
+    so a crash mid-run doesn't lose everything (issue #1149)."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+    test_run.subscribe([test_db_observer])
+
+    with mock.patch("app.test_engine.test_db_observer.DB_FLUSH_INTERVAL", 0.05):
+        test_db_observer.start()
+        test_run.append_log_entries(
+            [TestRunLogEntry(level="INFO", timestamp=1.0, message="mid-run")]
+        )
+        await asyncio.sleep(0.3)
+
+        persisted = (
+            db.query(TestRunLogEntryModel)
+            .filter_by(test_run_execution_id=test_run_execution.id)
+            .all()
+        )
+        assert [e.message for e in persisted] == ["mid-run"]
+
+        await test_db_observer.finish()
+
+
+@pytest.mark.asyncio
+async def test_test_run_log_trimmed_only_after_all_consumers_release(
+    db: Session,
+) -> None:
+    """Entries are dropped from memory only once every log-consuming observer
+    has moved past them, and never when no consumer has registered."""
+    test_script_manager = TestScriptManager()
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+
+    def entries(n: int, start: int = 0) -> list[TestRunLogEntry]:
+        return [
+            TestRunLogEntry(level="INFO", timestamp=float(i), message=f"m{i}")
+            for i in range(start, start + n)
+        ]
+
+    # No consumer registered: nothing is trimmed.
+    test_run.append_log_entries(entries(3))
+    assert len(test_run.log) == 3 and test_run.log_count == 3
+
+    fast, slow = object(), object()
+    test_run.release_log(fast, 3)
+    test_run.release_log(slow, 1)
+    test_run.append_log_entries(entries(2, start=3))
+    # Trimmed up to the slowest consumer (position 1), not the fastest.
+    assert test_run.log_count == 5
+    assert [e.message for e in test_run.log_entries_since(1)] == [
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+    ]
+
+    test_run.release_log(slow, 5)
+    test_run.append_log_entries([])
+    assert len(test_run.log) == 0 and test_run.log_count == 5

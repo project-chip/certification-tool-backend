@@ -97,15 +97,18 @@ class TestUIObserver(Observer):
 
     def __handle_test_run_log(self, test_run: TestRun) -> None:
         """Send update to UI with the latest log lines."""
-        log_len = len(test_run.log)
+        log_len = test_run.log_count
         if log_len > self.__last_seen_run_log_len:
-            new_entries = test_run.log[self.__last_seen_run_log_len :]
+            new_entries = test_run.log_entries_since(self.__last_seen_run_log_len)
             chunks = [
                 new_entries[i : i + LOG_RECORDS_BROADCAST_CHUNK_SIZE]
                 for i in range(0, len(new_entries), LOG_RECORDS_BROADCAST_CHUNK_SIZE)
             ]
             self.__send_log_records_messages_in_order(chunks)
             self.__last_seen_run_log_len = log_len
+        # Always report the position (even with nothing new), so TestRun knows
+        # this observer consumes the log before it trims anything.
+        test_run.release_log(self, self.__last_seen_run_log_len)
 
     def __onTestSuiteUpdate(self, observable: TestSuite) -> None:
         logger.debug("Test Suite Observer received", observable)
