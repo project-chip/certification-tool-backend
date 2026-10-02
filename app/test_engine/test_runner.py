@@ -161,6 +161,7 @@ class TestRunner(object, metaclass=Singleton):
         logs_complete = False
         try:
             log_handler = TestLogHandler(self.test_run)
+            db_observer.start()
             self.test_run.subscribe([ui_observer, db_observer])
 
             test_engine_logger.info("Run Test Runner is Ready")
@@ -219,12 +220,15 @@ class TestRunner(object, metaclass=Singleton):
         ui_observer: TestUIObserver,
         db_observer: TestDBObserver,
     ) -> None:
-        """Detach the run's observers and save its pending DB updates."""
+        """Detach the run's observers, stop the periodic DB flush and save the
+        pending DB updates."""
         test_run.unsubscribe([ui_observer, db_observer])
 
-        # Flush all pending DB updates
+        # Stop periodic flushing and apply what is still pending, even if the
+        # run raised: otherwise the flush task keeps running against a Session
+        # the next run's __reset_db_session() closes.
         try:
-            await db_observer.apply_updates()
+            await db_observer.finish()
         except Exception as e:
             logger.error(e)
 
