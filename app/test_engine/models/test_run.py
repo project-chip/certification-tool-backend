@@ -41,7 +41,15 @@ class TestRun(TestObservable, UserPromptSupport):
         self.test_suites: list[TestSuite] = []
         self.__state = TestStateEnum.PENDING
         self.__current_testing_task: Task | None = None
+        # Window of log entries not yet released by every log-consuming
+        # observer, not the whole run's log: a run can produce millions of
+        # entries, so keeping all of them in memory until the run ends is what
+        # made the backend get OOM-killed on large runs. __log_offset is the
+        # absolute index of log[0]; observers address entries by absolute
+        # position (see log_count / log_entries_since / release_log).
         self.log: list[TestRunLogEntry] = []
+        self.__log_offset = 0
+        self.__log_consumed: dict[int, int] = {}
 
     @property
     def project(self) -> Project:
@@ -179,9 +187,37 @@ class TestRun(TestObservable, UserPromptSupport):
             # Note: cancel on a completed test_suite is a No-op
             test_suite.cancel()
 
+    @property
+    def log_count(self) -> int:
+        """Total number of entries appended so far, including trimmed ones."""
+        return self.__log_offset + len(self.log)
+
+    def log_entries_since(self, position: int) -> list[TestRunLogEntry]:
+        """Entries from absolute `position` on. Observers must release
+        entries only after consuming them, as released ones are dropped."""
+        return self.log[max(position - self.__log_offset, 0) :]
+
+    def release_log(self, consumer: Observer, position: int) -> None:
+        """Record that `consumer` has consumed entries below absolute `position`.
+
+        Entries are dropped once every consumer that has called this has moved
+        past them (see append_log_entries). With no consumer registered,
+        nothing is ever dropped.
+        """
+        self.__log_consumed[id(consumer)] = position
+
     def append_log_entries(self, entries: list[TestRunLogEntry]) -> None:
         self.log.extend(entries)
         self.notify()
+        # notify() is synchronous, so every subscribed observer has had its
+        # chance to consume (and release) the new entries by now. Trimming
+        # anywhere earlier, e.g. inside release_log(), could drop entries a
+        # second observer hasn't read yet.
+        if self.__log_consumed:
+            drop = min(self.__log_consumed.values()) - self.__log_offset
+            if drop > 0:
+                del self.log[:drop]
+                self.__log_offset += drop
 
     def subscribe(self, observers: list[Observer]) -> None:
         """Subscribe a list of observers to test run changes, and changes on sub-models
@@ -209,6 +245,8 @@ class TestRun(TestObservable, UserPromptSupport):
         Args:
             observers (List[Observer]): Observers to be unsubscribed
         """
+        for observer in observers:
+            self.__log_consumed.pop(id(observer), None)
         super().unsubscribe(observers)
         self.__unsubscribe_test_suites(observers)
 
