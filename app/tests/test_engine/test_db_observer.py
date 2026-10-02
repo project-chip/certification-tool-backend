@@ -467,4 +467,3 @@ async def test_test_db_observer_finish_stops_further_periodic_flushes(
         await asyncio.sleep(0.05)
 
         assert mock_commit.call_count == call_count_after_finish
-
