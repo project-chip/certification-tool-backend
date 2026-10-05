@@ -109,7 +109,8 @@ class PythonTestSuite(TestSuite):
 
         logger.info("Setting up SDK container")
         await self.sdk_container.start(
-            enable_container_logs=self._container_logs_enabled()
+            enable_container_logs=self._container_logs_enabled(),
+            apps_dir=self._sdk_container_apps_dir(),
         )
 
         self.matter_config = TestEnvironmentConfigMatter(**self.config)
@@ -152,6 +153,15 @@ class PythonTestSuite(TestSuite):
         if override is not None:
             return bool(override)
         return settings.ENABLE_CONTAINER_LOGS
+
+    def _sdk_container_apps_dir(self) -> Optional[str]:
+        """Host folder of app binaries to mount into the SDK container.
+
+        The project's th_config.sdk_container_apps_dir, when set, overrides the
+        instance-wide SDK_CONTAINER_APPS_DIR env var.
+        """
+        override = get_th_config_value(self._safe_config(), "sdk_container_apps_dir")
+        return override or settings.SDK_CONTAINER_APPS_DIR or None
 
     async def cleanup(self) -> None:
         logger.info("Suite Cleanup")

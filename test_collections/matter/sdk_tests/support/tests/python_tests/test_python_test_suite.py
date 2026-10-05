@@ -17,7 +17,7 @@
 # Ignore flake8 check for this file
 import asyncio
 import time
-from typing import Optional, Type
+from typing import Any, Optional, Type
 from unittest import mock
 
 import pytest
@@ -758,3 +758,36 @@ def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
     ) as mock_settings:
         mock_settings.ENABLE_CONTAINER_LOGS = True
         assert suite_instance._container_logs_enabled() is True
+
+
+@pytest.mark.parametrize(
+    "config, env_value, expected",
+    [
+        ({"th_config": {"sdk_container_apps_dir": "/opt/apps"}}, "/env", "/opt/apps"),
+        ({"th_config": {"sdk_container_apps_dir": None}}, "/env", "/env"),
+        ({"th_config": None}, "/env", "/env"),
+        ({}, "/env", "/env"),
+        ({}, None, None),
+        ({"th_config": {"sdk_container_apps_dir": ""}}, None, None),
+    ],
+)
+def test_sdk_container_apps_dir(config: dict, env_value: Any, expected: Any) -> None:
+    suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
+        suite_type=SuiteType.NO_COMMISSIONING,
+        name="SomeSuite",
+        python_test_version="some_version",
+        mandatory=False,
+    )
+    suite_instance = suite_class(TestSuiteExecution())
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".PythonTestSuite.config",
+        new_callable=mock.PropertyMock,
+        return_value=config,
+    ), mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
+        ".settings"
+    ) as mock_settings:
+        mock_settings.SDK_CONTAINER_APPS_DIR = env_value
+        assert suite_instance._sdk_container_apps_dir() == expected
