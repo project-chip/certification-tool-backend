@@ -63,7 +63,7 @@ do
     python_scripts+=("$script")
 done
 
-DRY_RUN=1 python "$VALIDATION_SCRIPT" "$LOG_FILE" "${python_scripts[@]}"
-
 printf "Please check the log file: %s/%s\n" "$CHECKOUT_DIR" "$LOG_FILE"
+
+DRY_RUN=1 python "$VALIDATION_SCRIPT" "$LOG_FILE" "${python_scripts[@]}"
 
