@@ -58,6 +58,10 @@ class THConfig(BaseModel):
     # None means "not set at project level", deferring to the
     # ENABLE_CONTAINER_LOGS environment variable.
     enable_container_logs: Optional[bool] = None
+    # Host folder with helper app binaries (e.g. chip-ota-provider-app), mounted
+    # read-only into the SDK container. None means "not set at project level",
+    # deferring to the SDK_CONTAINER_APPS_DIR environment variable.
+    sdk_container_apps_dir: Optional[str] = None
 
 
 class TestEnvironmentConfig(BaseModel):

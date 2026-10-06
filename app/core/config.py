@@ -74,6 +74,9 @@ class Settings(BaseSettings):
     # Container Logging
     ENABLE_CONTAINER_LOGS: bool = False
 
+    # Host folder with helper app binaries mounted read-only into the SDK container
+    SDK_CONTAINER_APPS_DIR: Optional[str] = None
+
     class Config:
         case_sensitive = True
 

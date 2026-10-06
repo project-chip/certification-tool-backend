@@ -48,6 +48,10 @@ DOCKER_PAA_CERTS_PATH = "/paa-root-certs"
 LOCAL_CREDENTIALS_DEVELOPMENT_PATH = Path("/var/credentials/development")
 DOCKER_CREDENTIALS_DEVELOPMENT_PATH = "/credentials/development"
 
+# Helper app binaries mount (e.g. chip-ota-provider-app), matches the path used when
+# running the tests from the SDK docker image directly.
+DOCKER_APPS_PATH = "/launch_dir/apps"
+
 # wpa_supplicant mount (required for CNET tests to manage Wi-Fi networks)
 LOCAL_WPA_SUPPLICANT_PATH = Path("/var/run/wpa_supplicant")
 DOCKER_WPA_SUPPLICANT_PATH = "/var/run/wpa_supplicant"
@@ -170,7 +174,7 @@ class SDKContainer(metaclass=Singleton):
             return container_manager.is_running(self.__container)
 
     @staticmethod
-    def __optional_volumes() -> Dict[Any, Any]:
+    def __optional_volumes(apps_dir: Optional[str] = None) -> Dict[Any, Any]:
         # Only mount paths that exist on the host, so hosts without them
         # (no Wi-Fi hardware, Docker Desktop for Mac, rootless Docker) can
         # still start the SDK container.
@@ -182,10 +186,22 @@ class SDKContainer(metaclass=Singleton):
                 "mode": "rw",
             }
 
+        # The path is resolved by the Docker host, so it can't be verified here.
+        if apps_dir:
+            volumes[apps_dir] = {"bind": DOCKER_APPS_PATH, "mode": "ro"}
+
         return volumes
 
-    async def start(self, enable_container_logs: Optional[bool] = None) -> None:
+    async def start(
+        self,
+        enable_container_logs: Optional[bool] = None,
+        apps_dir: Optional[str] = None,
+    ) -> None:
         """Creates the SDK container.
+
+        Args:
+            enable_container_logs: Per-project container logging override.
+            apps_dir: Host folder mounted read-only at DOCKER_APPS_PATH.
 
         Returns only when the container is created.
         """
@@ -203,7 +219,7 @@ class SDKContainer(metaclass=Singleton):
             **self.run_parameters,
             "volumes": {
                 **self.run_parameters["volumes"],
-                **self.__optional_volumes(),
+                **self.__optional_volumes(apps_dir),
             },
         }
 

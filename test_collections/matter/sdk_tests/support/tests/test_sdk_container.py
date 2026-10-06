@@ -265,3 +265,26 @@ async def test_send_command_custom_prefix(real_sdk_container) -> None:  # noqa
     # clean up:
     real_sdk_container._SDKContainer__last_exec_id = None
     real_sdk_container._SDKContainer__container = None
+
+
+@pytest.mark.asyncio
+async def test_start_mounts_apps_dir_read_only(real_sdk_container) -> None:  # noqa
+    with mock.patch.object(
+        target=real_sdk_container, attribute="is_running", return_value=False
+    ), mock.patch.object(
+        target=container_manager, attribute="get_container", return_value=None
+    ), mock.patch.object(
+        target=container_manager, attribute="create_container"
+    ) as mock_create_container:
+        await real_sdk_container.start(apps_dir="/opt/apps")
+
+    run_parameters = mock_create_container.call_args.args[1]
+    assert run_parameters["volumes"]["/opt/apps"] == {
+        "bind": "/launch_dir/apps",
+        "mode": "ro",
+    }
+    # The shared class-level parameters must not be mutated
+    assert "/opt/apps" not in real_sdk_container.run_parameters["volumes"]
+
+    # clean up:
+    real_sdk_container._SDKContainer__container = None
