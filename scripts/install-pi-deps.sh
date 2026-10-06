@@ -1,3 +1,4 @@
+#! /usr/bin/env bash
 
  #
  # Copyright (c) 2023 Project CHIP Authors
@@ -67,6 +68,6 @@ else
 fi
 
 # Add user to docker group
-sudo gpasswd -a $USER docker
+sudo gpasswd -a "$USER" docker
 
 echo "*** Please reboot the machine ***"

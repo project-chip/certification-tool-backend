@@ -29,9 +29,6 @@ RUN apt-get update -y && apt-get install -y python3-pip python3-venv libpq-dev c
 
 RUN ln -s /usr/bin/python3.10 /usr/local/bin/python
 
-# Configure Gunicorn
-RUN pip install --no-cache-dir "uvicorn[standard]==0.15.0" gunicorn
-
 COPY ./gunicorn/start.sh /start.sh
 RUN chmod +x /start.sh
 
@@ -65,7 +62,7 @@ RUN curl -sSL https://get.docker.com/ | sh
 # Copy poetry dependecy files and install dependencies
 # We copy install dependencies before copying all app source to reuse the dependency install step in docker.
 COPY ./pyproject.toml ./poetry.lock* /app/
-# ARG INSTALL_DEV=false
+ARG INSTALL_DEV=false
 RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --without dev ; fi"
 
 # # Copy Source files
