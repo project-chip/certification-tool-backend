@@ -62,6 +62,10 @@ class TestUIObserver(Observer):
         self.__async_updates: list[Task] = []
         self.__last_seen_run_state: Optional[TestStateEnum] = None
         self.__last_seen_run_log_len = 0
+        # The terminal test run state update, held back until
+        # send_final_run_state() so it reaches clients after the run's last
+        # log records instead of racing them.
+        self.__pending_final_run_state: Optional[dict] = None
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -92,7 +96,10 @@ class TestUIObserver(Observer):
                     "state": test_run.state,
                 },
             }
-            self.__send_test_update_message(message)
+            if test_run.completed():
+                self.__pending_final_run_state = message
+            else:
+                self.__send_test_update_message(message)
             self.__last_seen_run_state = test_run.state
 
     def __handle_test_run_log(self, test_run: TestRun) -> None:
@@ -195,6 +202,36 @@ class TestUIObserver(Observer):
         self.__async_updates.append(task)
 
     async def complete_tasks(self) -> None:
+        """Wait for every queued update, logging the ones that failed.
+
+        A failed update doesn't stop the wait early: the terminal run state
+        must still be sent, and only after every update queued before it.
+        """
         pending_updates = self.__async_updates
         self.__async_updates = []
-        await gather(*pending_updates)
+        results = await gather(*pending_updates, return_exceptions=True)
+        for result in results:
+            if isinstance(result, Exception):
+                logger.error(f"Failed to send test update: {result}")
+
+    async def send_final_run_state(self, logs_complete: bool) -> None:
+        """Broadcast the held-back terminal test run state update.
+
+        Waits for every update already queued (including the final log flush)
+        to be sent first, so the terminal state is the last message of the run.
+
+        Args:
+            logs_complete (bool): Whether all of the run's log records were
+                flushed and broadcast. Sent with the update so clients can stop
+                listening as soon as it arrives, instead of waiting for
+                trailing log records.
+        """
+        await self.complete_tasks()
+
+        message, self.__pending_final_run_state = self.__pending_final_run_state, None
+        if message is None:
+            return
+
+        message["body"]["logs_complete"] = logs_complete
+        self.__send_test_update_message(message)
+        await self.complete_tasks()

@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import asyncio
+from unittest import mock
 
 import pytest
 from sqlalchemy.orm import Session
@@ -21,6 +22,9 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.models import TestStateEnum
 from app.schemas.test_run_execution import TestRunExecutionCreate
+from app.test_engine.models import TestRun
+from app.test_engine.test_db_observer import TestDBObserver
+from app.test_engine.test_log_handler import TestLogHandler
 from app.test_engine.test_runner import (
     AbortError,
     LoadingError,
@@ -28,6 +32,7 @@ from app.test_engine.test_runner import (
     TestRunnerState,
 )
 from app.test_engine.test_script_manager import TestCaseNotFound
+from app.tests.utils.broadcast import assert_final_run_state_sent_last, logged_messages
 from app.tests.utils.test_run_execution import create_random_test_run_execution
 from app.tests.utils.test_runner import (
     get_test_case_for_public_id,
@@ -261,6 +266,160 @@ async def test_runner_test_state_pass(db: Session) -> None:
     assert run.state == TestStateEnum.PASSED
     assert suite.state == TestStateEnum.PASSED
     assert case.state == TestStateEnum.PASSED
+
+
+def _assert_db_run_state(db: Session, run: TestRun, state: TestStateEnum) -> None:
+    """Assert the run's saved test run execution has the given state.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+        run (TestRun): The test run whose saved state to check.
+        state (TestStateEnum): The expected state.
+    """
+    db_test_run_execution = crud.test_run_execution.get(
+        db=db, id=run.test_run_execution.id
+    )
+    assert db_test_run_execution is not None
+    db.refresh(db_test_run_execution)
+    assert db_test_run_execution.state == state
+
+
+@pytest.mark.asyncio
+async def test_runner_sends_final_run_state_after_all_logs(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
+    """The terminal run state must be the run's last websocket message, sent
+    after the final log flush and flagged logs_complete, so clients can stop
+    listening as soon as it arrives.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+        broadcast_mock (mock.AsyncMock): The patched websocket broadcast.
+    """
+    await load_and_run_tool_unit_tests(db, TestSuiteExpected, TCTRExpectedPass)
+
+    assert_final_run_state_sent_last(
+        broadcast_mock, TestStateEnum.PASSED, logs_complete=True
+    )
+    # The "Test Run Completed" line is logged after the run state turns
+    # terminal; it must still be delivered before the final state update.
+    assert "Test Run Completed [PASSED]" in logged_messages(broadcast_mock)
+
+
+@pytest.mark.asyncio
+async def test_runner_tears_down_run_that_raises(
+    db: Session, broadcast_mock: mock.AsyncMock, finish_spy: mock.AsyncMock
+) -> None:
+    """A run that raises must still be torn down: the log handler finished (so
+    its log sink doesn't capture later runs' records), its last log records and
+    DB updates flushed, and the final run state sent with logs_complete.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+        broadcast_mock (mock.AsyncMock): The patched websocket broadcast.
+        finish_spy (mock.AsyncMock): Spy on TestLogHandler.finish().
+    """
+    run_suite = TestSuiteExpected.run
+
+    async def _run_then_raise(suite: TestSuiteExpected) -> None:
+        await run_suite(suite)
+        raise RuntimeError("Test suite failed")
+
+    with mock.patch.object(TestSuiteExpected, "run", _run_then_raise):
+        runner, run, _, _ = await load_and_run_tool_unit_tests(
+            db, TestSuiteExpected, TCTRExpectedPass
+        )
+
+    finish_spy.assert_awaited_once()
+    assert runner.state == TestRunnerState.IDLE
+    assert run.state == TestStateEnum.PASSED
+    _assert_db_run_state(db, run, TestStateEnum.PASSED)
+
+    assert_final_run_state_sent_last(
+        broadcast_mock, TestStateEnum.PASSED, logs_complete=True
+    )
+    assert "Test Run Completed [PASSED]" in logged_messages(broadcast_mock)
+
+
+@pytest.mark.asyncio
+async def test_runner_teardown_continues_after_log_flush_fails(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
+    """A failing final log flush must not skip the rest of the teardown: the
+    observers are still detached, the DB still saved with the run's final
+    state, and the final run state still sent - flagged logs incomplete.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+        broadcast_mock (mock.AsyncMock): The patched websocket broadcast.
+    """
+    real_finish = TestLogHandler.finish
+
+    async def _finish_then_raise(log_handler: TestLogHandler) -> None:
+        # Really finish first, so the log sink doesn't leak into later tests.
+        await real_finish(log_handler)
+        raise RuntimeError("Log flush failed")
+
+    with mock.patch.object(TestLogHandler, "finish", _finish_then_raise):
+        runner, run, _, _ = await load_and_run_tool_unit_tests(
+            db, TestSuiteExpected, TCTRExpectedPass
+        )
+
+    assert runner.state == TestRunnerState.IDLE
+    assert len(run.observers) == 0
+    _assert_db_run_state(db, run, TestStateEnum.PASSED)
+    assert_final_run_state_sent_last(
+        broadcast_mock, TestStateEnum.PASSED, logs_complete=False
+    )
+
+
+@pytest.mark.asyncio
+async def test_runner_sends_final_run_state_when_cancelled_during_teardown(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
+    """Cancelling the run task (e.g. on server shutdown) mid-teardown must
+    still send the final run state and free the runner for the next run.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+        broadcast_mock (mock.AsyncMock): The patched websocket broadcast.
+    """
+    with mock.patch.object(
+        TestDBObserver, "apply_updates", side_effect=asyncio.CancelledError
+    ), pytest.raises(asyncio.CancelledError):
+        await load_and_run_tool_unit_tests(db, TestSuiteExpected, TCTRExpectedPass)
+
+    runner = TestRunner()
+    assert runner.state == TestRunnerState.IDLE
+    assert runner.test_run is None
+    # The teardown was cancelled before it could report its outcome, so the
+    # logs are conservatively flagged incomplete.
+    assert_final_run_state_sent_last(
+        broadcast_mock, TestStateEnum.PASSED, logs_complete=False
+    )
+
+
+@pytest.mark.asyncio
+async def test_runner_finishes_log_handler_when_subscribe_fails(
+    db: Session, finish_spy: mock.AsyncMock
+) -> None:
+    """If subscribing the observers fails, the log handler created just before
+    must still be finished, so its log sink doesn't capture later runs' log
+    records.
+
+    Args:
+        db (Session): Database fixture for creating test models.
+        finish_spy (mock.AsyncMock): Spy on TestLogHandler.finish().
+    """
+    with mock.patch.object(
+        TestRun, "subscribe", side_effect=RuntimeError("Subscribe failed")
+    ):
+        runner, _, _, _ = await load_and_run_tool_unit_tests(
+            db, TestSuiteExpected, TCTRExpectedPass
+        )
+
+    finish_spy.assert_awaited_once()
+    assert runner.state == TestRunnerState.IDLE
 
 
 @pytest.mark.asyncio

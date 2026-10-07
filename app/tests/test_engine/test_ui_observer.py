@@ -34,92 +34,81 @@ from app.test_engine.test_ui_observer import (
     TestUIObserver,
     TestUpdateTypeEnum,
 )
-
-
-def _log_record_payloads(broadcast_mock: mock.AsyncMock) -> list[list[TestRunLogEntry]]:
-    """Extract only the TEST_LOG_RECORDS payloads from a mocked broadcast()'s
-    calls, ignoring the TEST_UPDATE state-change message that notify() also
-    fires on the first call (when state differs from the observer's
-    initial/None last-seen state)."""
-    return [
-        call.args[0][MessageKeysEnum.PAYLOAD]
-        for call in broadcast_mock.call_args_list
-        if call.args[0][MessageKeysEnum.TYPE] == MessageTypeEnum.TEST_LOG_RECORDS
-    ]
+from app.tests.utils.broadcast import (
+    assert_final_run_state_sent_last,
+    log_record_payloads,
+    run_states,
+)
 
 
 @pytest.mark.asyncio
-async def test_test_ui_observer_test_run_log(db: Session) -> None:
+async def test_test_ui_observer_test_run_log(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
     ui_observer = TestUIObserver()
-    with mock.patch(
-        "app.test_engine.test_ui_observer.socket_connection_manager.broadcast",
-        new_callable=mock.AsyncMock,
-    ) as broadcast_mock:
-        run = TestRun(test_run_execution=TestRunExecution())
-        run.subscribe([ui_observer])
+    run = TestRun(test_run_execution=TestRunExecution())
+    run.subscribe([ui_observer])
 
-        # Assert send is called with all all messages appended
-        log_entries = [
-            TestRunLogEntry(level="info", timestamp=0.0, message="Message1"),
-            TestRunLogEntry(level="info", timestamp=1.0, message="Message2"),
-        ]
-        run.log = log_entries
-        run.notify()
-        await ui_observer.complete_tasks()
-        assert _log_record_payloads(broadcast_mock) == [log_entries]
-        broadcast_mock.reset_mock()
+    # Assert send is called with all all messages appended
+    log_entries = [
+        TestRunLogEntry(level="info", timestamp=0.0, message="Message1"),
+        TestRunLogEntry(level="info", timestamp=1.0, message="Message2"),
+    ]
+    run.log = log_entries
+    run.notify()
+    await ui_observer.complete_tasks()
+    assert log_record_payloads(broadcast_mock) == [log_entries]
+    broadcast_mock.reset_mock()
 
-        # Assert send_log is not called when no new logs are added
-        run.notify()
-        await ui_observer.complete_tasks()
-        assert _log_record_payloads(broadcast_mock) == []
-        broadcast_mock.reset_mock()
+    # Assert send_log is not called when no new logs are added
+    run.notify()
+    await ui_observer.complete_tasks()
+    assert log_record_payloads(broadcast_mock) == []
+    broadcast_mock.reset_mock()
 
-        # Assert only new log events are in call
-        additional_log_entries = [
-            TestRunLogEntry(level="info", timestamp=2.0, message="Message3"),
-            TestRunLogEntry(level="info", timestamp=3.0, message="Message4"),
-        ]
-        run.log.extend(additional_log_entries)
-        assert len(run.log) == 4
-        run.notify()
-        await ui_observer.complete_tasks()
-        assert _log_record_payloads(broadcast_mock) == [additional_log_entries]
+    # Assert only new log events are in call
+    additional_log_entries = [
+        TestRunLogEntry(level="info", timestamp=2.0, message="Message3"),
+        TestRunLogEntry(level="info", timestamp=3.0, message="Message4"),
+    ]
+    run.log.extend(additional_log_entries)
+    assert len(run.log) == 4
+    run.notify()
+    await ui_observer.complete_tasks()
+    assert log_record_payloads(broadcast_mock) == [additional_log_entries]
 
 
 @pytest.mark.asyncio
-async def test_test_ui_observer_test_run_log_chunks_large_batches(db: Session) -> None:
+async def test_test_ui_observer_test_run_log_chunks_large_batches(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
     """A single flush containing more entries than the broadcast chunk size
     must be split into multiple smaller messages instead of one large one
     (regression test for issue #1072's unbounded-broadcast-batch bug, where
     a dense burst of log lines could become a single multi-MB websocket
     message with no yield point during serialization)."""
     ui_observer = TestUIObserver()
-    with mock.patch(
-        "app.test_engine.test_ui_observer.socket_connection_manager.broadcast",
-        new_callable=mock.AsyncMock,
-    ) as broadcast_mock:
-        run = TestRun(test_run_execution=TestRunExecution())
-        run.subscribe([ui_observer])
+    run = TestRun(test_run_execution=TestRunExecution())
+    run.subscribe([ui_observer])
 
-        extra = 50
-        log_entries = [
-            TestRunLogEntry(level="info", timestamp=float(i), message=f"Message{i}")
-            for i in range(LOG_RECORDS_BROADCAST_CHUNK_SIZE + extra)
-        ]
-        run.log = log_entries
-        run.notify()
-        await ui_observer.complete_tasks()
+    extra = 50
+    log_entries = [
+        TestRunLogEntry(level="info", timestamp=float(i), message=f"Message{i}")
+        for i in range(LOG_RECORDS_BROADCAST_CHUNK_SIZE + extra)
+    ]
+    run.log = log_entries
+    run.notify()
+    await ui_observer.complete_tasks()
 
-        chunks = _log_record_payloads(broadcast_mock)
-        assert len(chunks) == 2
-        assert chunks[0] == log_entries[:LOG_RECORDS_BROADCAST_CHUNK_SIZE]
-        assert chunks[1] == log_entries[LOG_RECORDS_BROADCAST_CHUNK_SIZE:]
+    chunks = log_record_payloads(broadcast_mock)
+    assert len(chunks) == 2
+    assert chunks[0] == log_entries[:LOG_RECORDS_BROADCAST_CHUNK_SIZE]
+    assert chunks[1] == log_entries[LOG_RECORDS_BROADCAST_CHUNK_SIZE:]
 
 
 @pytest.mark.asyncio
 async def test_test_ui_observer_test_run_log_chunks_delivered_in_order(
-    db: Session,
+    db: Session, broadcast_mock: mock.AsyncMock
 ) -> None:
     """Chunks of one flush must be broadcast in order, even though the
     actual sends happen inside an awaited task rather than synchronously
@@ -142,23 +131,156 @@ async def test_test_ui_observer_test_run_log_chunks_delivered_in_order(
         await asyncio.sleep(0)
         send_order.append(first_entry_index)
 
-    with mock.patch(
-        "app.test_engine.test_ui_observer.socket_connection_manager.broadcast",
-        side_effect=_recording_broadcast,
-    ):
-        run = TestRun(test_run_execution=TestRunExecution())
-        run.subscribe([ui_observer])
+    broadcast_mock.side_effect = _recording_broadcast
 
-        extra = 50
-        log_entries = [
-            TestRunLogEntry(level="info", timestamp=float(i), message=f"Message{i}")
-            for i in range(LOG_RECORDS_BROADCAST_CHUNK_SIZE + extra)
-        ]
-        run.log = log_entries
-        run.notify()
-        await ui_observer.complete_tasks()
+    run = TestRun(test_run_execution=TestRunExecution())
+    run.subscribe([ui_observer])
+
+    extra = 50
+    log_entries = [
+        TestRunLogEntry(level="info", timestamp=float(i), message=f"Message{i}")
+        for i in range(LOG_RECORDS_BROADCAST_CHUNK_SIZE + extra)
+    ]
+    run.log = log_entries
+    run.notify()
+    await ui_observer.complete_tasks()
 
     assert send_order == [0, LOG_RECORDS_BROADCAST_CHUNK_SIZE]
+
+
+def _completed_run(ui_observer: TestUIObserver) -> TestRun:
+    """A test run observed by ui_observer that has executed and completed."""
+    run = TestRun(test_run_execution=TestRunExecution())
+    run.subscribe([ui_observer])
+    run.mark_as_executing()
+    run.mark_as_completed()
+    return run
+
+
+@pytest.mark.asyncio
+async def test_test_ui_observer_sends_non_terminal_run_state_immediately(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
+    ui_observer = TestUIObserver()
+    run = TestRun(test_run_execution=TestRunExecution())
+    run.subscribe([ui_observer])
+
+    run.mark_as_executing()
+    await ui_observer.complete_tasks()
+
+    assert run_states(broadcast_mock) == [TestStateEnum.EXECUTING]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("logs_complete", [True, False])
+async def test_test_ui_observer_holds_terminal_run_state_until_final_send(
+    db: Session, broadcast_mock: mock.AsyncMock, logs_complete: bool
+) -> None:
+    """The terminal run state must not be broadcast when the run completes, but
+    only from send_final_run_state(), after the log records flushed in between
+    - so clients can treat it as the run's last message."""
+    ui_observer = TestUIObserver()
+    run = _completed_run(ui_observer)
+    await ui_observer.complete_tasks()
+
+    # Not sent yet
+    assert run_states(broadcast_mock) == [TestStateEnum.EXECUTING]
+
+    # Final log flush, after the run completed
+    final_logs = [TestRunLogEntry(level="info", timestamp=0.0, message="Last")]
+    run.append_log_entries(final_logs)
+
+    await ui_observer.send_final_run_state(logs_complete=logs_complete)
+
+    last_message = broadcast_mock.call_args_list[-1].args[0]
+    assert last_message[MessageKeysEnum.TYPE] == MessageTypeEnum.TEST_UPDATE
+    assert last_message[MessageKeysEnum.PAYLOAD] == {
+        "test_type": TestUpdateTypeEnum.TEST_RUN,
+        "body": {
+            "test_run_execution_id": None,
+            "state": run.state,
+            "logs_complete": logs_complete,
+        },
+    }
+    assert log_record_payloads(broadcast_mock) == [final_logs]
+
+
+@pytest.mark.asyncio
+async def test_test_ui_observer_final_run_state_waits_for_queued_log_records(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
+    """The terminal run state must go out after log records that were queued
+    before it, even if sending those records yields (e.g. backpressure)."""
+    ui_observer = TestUIObserver()
+    send_order: list[str] = []
+
+    async def _recording_broadcast(message: dict) -> None:
+        await asyncio.sleep(0)
+        send_order.append(message[MessageKeysEnum.TYPE])
+
+    broadcast_mock.side_effect = _recording_broadcast
+
+    run = _completed_run(ui_observer)
+    run.append_log_entries(
+        [TestRunLogEntry(level="info", timestamp=0.0, message="Last")]
+    )
+
+    await ui_observer.send_final_run_state(logs_complete=True)
+
+    assert send_order[-2:] == [
+        MessageTypeEnum.TEST_LOG_RECORDS,
+        MessageTypeEnum.TEST_UPDATE,
+    ]
+
+
+@pytest.mark.asyncio
+async def test_test_ui_observer_final_run_state_sent_when_queued_update_fails(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
+    """A queued update that fails to send must not stop the terminal run state
+    from going out, nor let it overtake updates queued before it."""
+    ui_observer = TestUIObserver()
+
+    async def _failing_log_broadcast(message: dict) -> None:
+        await asyncio.sleep(0)
+        if message[MessageKeysEnum.TYPE] == MessageTypeEnum.TEST_LOG_RECORDS:
+            raise RuntimeError("Send failed")
+
+    broadcast_mock.side_effect = _failing_log_broadcast
+
+    run = _completed_run(ui_observer)
+    run.append_log_entries(
+        [TestRunLogEntry(level="info", timestamp=0.0, message="Last")]
+    )
+
+    await ui_observer.send_final_run_state(logs_complete=True)
+
+    assert run_states(broadcast_mock) == [
+        TestStateEnum.EXECUTING,
+        run.state,
+    ]
+    assert_final_run_state_sent_last(broadcast_mock, run.state, logs_complete=True)
+
+
+@pytest.mark.asyncio
+async def test_test_ui_observer_final_run_state_sent_once(
+    db: Session, broadcast_mock: mock.AsyncMock
+) -> None:
+    ui_observer = TestUIObserver()
+
+    # Nothing held back: no-op
+    await ui_observer.send_final_run_state(logs_complete=True)
+    assert broadcast_mock.call_count == 0
+
+    run = _completed_run(ui_observer)
+
+    await ui_observer.send_final_run_state(logs_complete=True)
+    await ui_observer.send_final_run_state(logs_complete=True)
+
+    assert run_states(broadcast_mock) == [
+        TestStateEnum.EXECUTING,
+        run.state,
+    ]
 
 
 def __expected_test_run_log_dict() -> Dict[str, Any]:
