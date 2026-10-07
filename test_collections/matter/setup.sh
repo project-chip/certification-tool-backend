@@ -34,9 +34,9 @@ done
 IFS=$SAVEIFS 
 
 print_script_step "Fetching sample apps"
-$MATTER_PROGRAM_DIR/scripts/update-sample-apps.sh
+"$MATTER_PROGRAM_DIR/scripts/update-sample-apps.sh"
 
 print_script_step "Fetching PAA Certs from SDK"
-$MATTER_PROGRAM_DIR/scripts/update-paa-certs.sh
+"$MATTER_PROGRAM_DIR/scripts/update-paa-certs.sh"
 
 print_end_of_script

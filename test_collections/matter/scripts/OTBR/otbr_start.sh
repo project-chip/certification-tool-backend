@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ROOT_DIR=$(realpath $(dirname "$0")/../../../../..)
+ROOT_DIR=$(realpath "$(dirname "$0")/../../../../..")
 TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 BR_INTERFACE="eth0"
@@ -62,12 +62,12 @@ if [ -n "$STALE_OTBR_CONTAINERS" ]; then
 	echo "$STALE_OTBR_CONTAINERS" | xargs -r sudo docker rm -f > /dev/null 2>&1
 fi
 
-if docker image inspect $BR_IMAGE > /dev/null 2>&1;
+if docker image inspect "$BR_IMAGE" > /dev/null 2>&1;
 then
-	echo "otbr image "$BR_IMAGE" already installed"
+	echo "otbr image $BR_IMAGE already installed"
 else
 	print_script_step "Pulling $BR_IMAGE image"
-	docker pull $BR_IMAGE || exit 1
+	docker pull "$BR_IMAGE" || exit 1
 fi
 
 print_script_step "Checking Thread RCP device"
@@ -81,7 +81,7 @@ fi
 print_script_step "Starting 'otbr-chip' container"
 AVAHI_PATH=$ROOT_DIR/backend/app/otbr_manager/avahi
 sudo modprobe ip6table_filter || exit 1
-sudo docker run --privileged -d --network host --name otbr-chip -e NAT64=1 -e DNS64=0 -e WEB_GUI=0 -v $AVAHI_PATH:/etc/avahi -v $RCP_DEVICE:/dev/radio $BR_IMAGE --radio-url spinel+hdlc+uart:///dev/radio?uart-baudrate=115200 -B $BR_INTERFACE || exit 1
+sudo docker run --privileged -d --network host --name otbr-chip -e NAT64=1 -e DNS64=0 -e WEB_GUI=0 -v "$AVAHI_PATH:/etc/avahi" -v "$RCP_DEVICE:/dev/radio" "$BR_IMAGE" --radio-url spinel+hdlc+uart:///dev/radio?uart-baudrate=115200 -B "$BR_INTERFACE" || exit 1
 
 print_script_step "Waiting for the OTBR agent to become ready..."
 OTBR_READY_TIMEOUT=30
@@ -101,7 +101,7 @@ if [ $OTBR_READY -eq 0 ]; then
 	exit 1
 fi
 
-BR_CHANNEL_HEX=$(printf '%02x' $BR_CHANNEL)
+BR_CHANNEL_HEX=$(printf '%02x' "$BR_CHANNEL")
 BR_PANID="5b${BR_VARIANT}" # The 2-byte Personal Area Network ID is a unique Thread identifier
 BR_EXTPANID="5b${BR_VARIANT}dead5b${BR_VARIANT}beef" # The 8-byte Extended Personal Area Network ID is a unique Thread identifier
 BR_NETWORKNAME="5b${BR_VARIANT}" # The human-readable Network Name is a unique Thread identifier
@@ -128,7 +128,7 @@ print_script_step "Setting up Thread Network"
 
 for i in "${BR_PARAMS[@]}"
 do
-        printf "Param: '$i'"
+        printf "Param: '%s'\n" "$i"
         if ! sudo docker exec -t otbr-chip ot-ctl $i; then
                 echo "ERROR: 'ot-ctl $i' failed. Dumping 'otbr-chip' container logs for diagnosis:" >&2
                 sudo docker logs otbr-chip
@@ -137,8 +137,8 @@ do
 done
 
 BR_SIMPLE_DATASET="00030000"${BR_CHANNEL_HEX}"0208"${BR_EXTPANID}"0510"${BR_NETWORKKEY}"0102"${BR_PANID}
-sudo echo ${BR_SIMPLE_DATASET} > /tmp/otbr_simple_dataset.txt
-printf "Simple Dataset: $BR_SIMPLE_DATASET"
+echo "$BR_SIMPLE_DATASET" > /tmp/otbr_simple_dataset.txt
+printf "Simple Dataset: %s\n" "$BR_SIMPLE_DATASET"
 
 print_script_step "Restarting the Raspi avahi to have it in a clean state"
 sudo service avahi-daemon restart

@@ -14,14 +14,14 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
-ROOT_DIR=$(realpath $(dirname "$0")/../../../../..)
+ROOT_DIR=$(realpath "$(dirname "$0")/../../../../..")
 TH_SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 source "$TH_SCRIPTS_DIR/utils.sh"
 
 print_start_of_script
 
-print_script_step "Stoping OTBR service"
+print_script_step "Stopping OTBR service"
 sudo docker exec -t otbr-chip ot-ctl srp server disable
 sleep 2
 # Use a graceful stop (SIGTERM, falling back to SIGKILL after the timeout) rather

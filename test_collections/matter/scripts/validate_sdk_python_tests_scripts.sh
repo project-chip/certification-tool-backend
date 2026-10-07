@@ -15,13 +15,15 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
-MATTER_PROGRAM_DIR=$(realpath $(dirname "$0")/..)
+set -e
+
+MATTER_PROGRAM_DIR=$(realpath "$(dirname "$0")/..")
 
 if [ $# == 1 ]; then
     SDK_SHA=$1
 elif [ $# == 0 ]; then
     # Get configured SDK_SHA (will default to value in test_collection/matter/config.py)
-    SDK_SHA=$(cat $MATTER_PROGRAM_DIR/config.py | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
+    SDK_SHA=$(cat "$MATTER_PROGRAM_DIR/config.py" | grep SDK_SHA | cut -d'"' -f 2 | cut -d"'" -f 2)
 else
     echo "Usage:"
     echo "./scripts/validate_sdk_python_tests_scripts.sh [sdk_sha]"
@@ -29,15 +31,15 @@ else
     exit 1
 fi
 
-printf "Using SDK SHA: $SDK_SHA\n"
+printf "Using SDK SHA: %s\n" "$SDK_SHA"
 
 create_checkout_dir()
 {
     temp_dir="/tmp/SDKPythonTestValidation-$SDK_SHA"
     if [ -d "$temp_dir" ]; then
-        rm -rf $temp_dir
+        rm -rf "$temp_dir"
     fi
-    
+
     mkdir "$temp_dir"
     echo "$temp_dir"
 }
@@ -48,20 +50,20 @@ PYTHON_SCRIPT_PATH="$CHECKOUT_DIR/$SDK_PYTHON_SCRIPT_PATH"
 VALIDATION_SCRIPT="$MATTER_PROGRAM_DIR/sdk_tests/support/python_testing/validate_python_test_scripts.py"
 LOG_FILE="Log-$SDK_SHA.txt"
 
-# Checkout SDK sparsely 
-cd $CHECKOUT_DIR
-git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git $CHECKOUT_DIR
+# Checkout SDK sparsely
+cd "$CHECKOUT_DIR"
+git clone --filter=blob:none --no-checkout --depth 1 --sparse https://github.com/project-chip/connectedhomeip.git "$CHECKOUT_DIR"
 git sparse-checkout init
-git sparse-checkout set $SDK_PYTHON_SCRIPT_PATH
-git checkout -q $SDK_SHA
+git sparse-checkout set "$SDK_PYTHON_SCRIPT_PATH"
+git checkout -q "$SDK_SHA"
 
 python_scripts=()
-for script in $PYTHON_SCRIPT_PATH/*.py
+for script in "$PYTHON_SCRIPT_PATH"/*.py
 do
     python_scripts+=("$script")
 done
 
-DRY_RUN=1 python $VALIDATION_SCRIPT "$LOG_FILE" "${python_scripts[@]}"
+printf "Please check the log file: %s/%s\n" "$CHECKOUT_DIR" "$LOG_FILE"
 
-printf "Please check the log file: $CHECKOUT_DIR/$LOG_FILE\n"
+DRY_RUN=1 python "$VALIDATION_SCRIPT" "$LOG_FILE" "${python_scripts[@]}"
 
