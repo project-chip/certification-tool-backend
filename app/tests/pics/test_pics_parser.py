@@ -19,11 +19,11 @@ from app.pics.pics_parser import PICSParser
 from app.schemas.pics import PICSError
 
 
-def test_pics_parser() -> None:
+async def test_pics_parser() -> None:
     pics_file = (
         Path(__file__).parent.parent.parent / "tests" / "utils" / "test_pics.xml"
     )
-    cluster = PICSParser.parse(file=pics_file.open())
+    cluster = await PICSParser.parse(file=pics_file.open())
 
     assert cluster is not None
     assert cluster.name == "On/Off"
@@ -35,7 +35,7 @@ def test_pics_parser() -> None:
     assert cluster.items["OO.S.C00"].enabled is True
 
 
-def test_pics_parser_with_errors() -> None:
+async def test_pics_parser_with_errors() -> None:
     # test pics parse with invalid root tag
     pics_file = (
         Path(__file__).parent.parent.parent
@@ -45,7 +45,7 @@ def test_pics_parser_with_errors() -> None:
     )
 
     try:
-        PICSParser.parse(file=pics_file.open())
+        await PICSParser.parse(file=pics_file.open())
 
     except Exception as e:
         assert isinstance(e, PICSError)
@@ -59,7 +59,7 @@ def test_pics_parser_with_errors() -> None:
     )
 
     try:
-        PICSParser.parse(file=pics_file.open())
+        await PICSParser.parse(file=pics_file.open())
 
     except Exception as e:
         assert isinstance(e, PICSError)
@@ -73,7 +73,7 @@ def test_pics_parser_with_errors() -> None:
     )
 
     try:
-        PICSParser.parse(file=pics_file.open())
+        await PICSParser.parse(file=pics_file.open())
 
     except Exception as e:
         assert isinstance(e, PICSError)
