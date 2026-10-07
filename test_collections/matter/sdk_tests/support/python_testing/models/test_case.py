@@ -66,9 +66,36 @@ from .utils import (
 # Timeout for user prompts in seconds.
 USER_PROMPT_TIMEOUT = 120
 
-# Log batching configuration
+# Log batching configuration for the real-time per-step streaming path
+# (ENABLE_REALTIME_PYTHON_TEST_LOGS=True), where the delay paces UI updates.
 LOG_BATCH_SIZE = 50  # Number of log lines to send per batch
 LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
+
+# Batching configuration for the end-of-run replay path (real-time logging
+# disabled, or catching up on content the per-step path missed). Each pass
+# of the event loop runs one full batch synchronously, so a large batch
+# holds the loop for as long as that batch takes to log. Other tasks (e.g.
+# TestLogHandler's periodic flush, on a 2s interval) wake up through several
+# call_soon hops - timer fires, a wrapping sleep's Task resumes, a gather()
+# callback fires, the outer task resumes - and each hop costs one pass. With
+# a large batch and a bare `asyncio.sleep(0)` yield, each of those hops costs
+# a full batch's worth of time, so a handful of hops can add up to several
+# multiples of the flush interval before the flush actually lands - which is
+# what produced bursty, several-seconds-late UI updates in practice. A
+# smaller batch makes each pass (and so each hop) cheap, and a tiny real
+# delay - rather than sleep(0) - keeps this task off the ready queue for
+# that instant so the loop can run other tasks' hop chains back to back
+# instead of only ever running this loop's next batch first.
+REPLAY_LOG_BATCH_SIZE = 200
+# 1ms, not lower: uvicorn[standard] (this app's ASGI server, see Dockerfile)
+# pulls in uvloop, which rounds asyncio.sleep()'s delay to whole libuv
+# milliseconds - anything that rounds to 0ms (i.e. under ~0.5ms) falls back
+# to a bare call_soon, degenerating into the same sleep(0) behavior this
+# constant exists to avoid (see the comment above). 1ms is the smallest
+# delay that's guaranteed to still be a real, timer-based sleep under
+# uvloop, which is what actually lets other tasks' hop chains run promptly
+# between batches instead of losing the race to this loop's next batch.
+REPLAY_LOG_YIELD_DELAY = 0.001
 
 # Marker prefix printed by the SDK before each test step's output
 STEP_MARKER_PREFIX = "***** Test Step "
@@ -576,12 +603,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     # unbroken call, so a large backlog doesn't monopolize the
                     # event loop for an extended stretch in one go.
                     remaining_lines = remaining_content.split("\n")
-                    for i in range(0, len(remaining_lines), LOG_BATCH_SIZE):
-                        batch = remaining_lines[i : i + LOG_BATCH_SIZE]
+                    for i in range(0, len(remaining_lines), REPLAY_LOG_BATCH_SIZE):
+                        batch = remaining_lines[i : i + REPLAY_LOG_BATCH_SIZE]
                         for line in batch:
                             logger.log(PYTHON_TEST_LEVEL, line)
-                        if i + LOG_BATCH_SIZE < len(remaining_lines):
-                            await sleep(LOG_BATCH_DELAY)
+                        if i + REPLAY_LOG_BATCH_SIZE < len(remaining_lines):
+                            await sleep(REPLAY_LOG_YIELD_DELAY)
                     logger.info("---- End of remaining logs ----")
 
             # Mark as logged to prevent duplicate calls
@@ -627,12 +654,14 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 for line in f:
                     logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
                     batch_count += 1
-                    if batch_count >= LOG_BATCH_SIZE:
+                    if batch_count >= REPLAY_LOG_BATCH_SIZE:
                         batch_count = 0
                         # Yield to the event loop between batches, so a
                         # large file doesn't monopolize it for an extended
-                        # stretch in one go.
-                        await sleep(LOG_BATCH_DELAY)
+                        # stretch in one go. A tiny real delay rather than
+                        # sleep(0): see REPLAY_LOG_YIELD_DELAY's definition
+                        # for why sleep(0) isn't enough here.
+                        await sleep(REPLAY_LOG_YIELD_DELAY)
             logger.info("---- End of Python test logs ----")
         except (IOError, OSError) as e:
             logger.warning(f"Failed to read test output file: {e}")
