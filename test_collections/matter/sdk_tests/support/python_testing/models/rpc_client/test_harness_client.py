@@ -145,9 +145,7 @@ def main() -> None:
     sys.path.append("/root/python_testing/scripts")
     sys.path.append("/root/python_testing/scripts/sdk")
 
-    test_args1 = sys.argv[1:]
-
-    test_args = configure_iterations(test_args1)
+    test_args = sys.argv[1:]
 
     # Parse TH-specific arguments using argparse
     remaining_args, th_args = parse_th_arguments(test_args)
@@ -222,17 +220,6 @@ def get_test_info_support(script_path: str, class_name: str, config: MatterTestC
     TestClassReference = getattr(module, class_name)
     test_info = get_test_info(TestClassReference, config)
     return json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
-
-
-def configure_iterations(args) -> []:
-    result = args
-    try:
-        position = sys.argv.index("--iterations")
-        iterations_value = sys.argv[position + 1]
-        result = args + ["--int-arg", f"iterations:{iterations_value}"]
-    except ValueError:
-        pass
-    return result
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
