@@ -66,26 +66,26 @@ from .utils import (
 # Timeout for user prompts in seconds.
 USER_PROMPT_TIMEOUT = 120
 
-# Log batching configuration for the real-time per-step streaming path
-# (ENABLE_REALTIME_PYTHON_TEST_LOGS=True), where the delay paces UI updates.
-LOG_BATCH_SIZE = 50  # Number of log lines to send per batch
-LOG_BATCH_DELAY = 0.01  # Delay in seconds between batches (10ms)
-
-# Batching configuration for the end-of-run replay path (real-time logging
-# disabled, or catching up on content the per-step path missed). Each pass
-# of the event loop runs one full batch synchronously, so a large batch
-# holds the loop for as long as that batch takes to log. Other tasks (e.g.
-# TestLogHandler's periodic flush, on a 2s interval) wake up through several
-# call_soon hops - timer fires, a wrapping sleep's Task resumes, a gather()
-# callback fires, the outer task resumes - and each hop costs one pass. With
-# a large batch and a bare `asyncio.sleep(0)` yield, each of those hops costs
-# a full batch's worth of time, so a handful of hops can add up to several
-# multiples of the flush interval before the flush actually lands - which is
-# what produced bursty, several-seconds-late UI updates in practice. A
-# smaller batch makes each pass (and so each hop) cheap, and a tiny real
-# delay - rather than sleep(0) - keeps this task off the ready queue for
-# that instant so the loop can run other tasks' hop chains back to back
-# instead of only ever running this loop's next batch first.
+# Log batching configuration, shared by every path that replays SDK output
+# through the logger: the real-time per-step display, the end-of-run replay
+# (real-time logging disabled) and the catch-up for content the per-step path
+# missed. The UI is not paced by this: log entries reach it through
+# TestLogHandler's periodic flush, so a fixed delay between batches only slows
+# the test case down (10ms per 50 lines was ~10.5s for a 52k-line test case).
+#
+# Each pass of the event loop runs one full batch synchronously, so a large
+# batch holds the loop for as long as that batch takes to log. Other tasks
+# (e.g. TestLogHandler's periodic flush, on a 2s interval) wake up through
+# several call_soon hops - timer fires, a wrapping sleep's Task resumes, a
+# gather() callback fires, the outer task resumes - and each hop costs one
+# pass. With a large batch and a bare `asyncio.sleep(0)` yield, each of those
+# hops costs a full batch's worth of time, so a handful of hops can add up to
+# several multiples of the flush interval before the flush actually lands -
+# which is what produced bursty, several-seconds-late UI updates in practice.
+# A smaller batch makes each pass (and so each hop) cheap, and a tiny real
+# delay - rather than sleep(0) - keeps this task off the ready queue for that
+# instant so the loop can run other tasks' hop chains back to back instead of
+# only ever running this loop's next batch first.
 REPLAY_LOG_BATCH_SIZE = 200
 # 1ms, not lower: uvicorn[standard] (this app's ASGI server, see Dockerfile)
 # pulls in uvloop, which rounds asyncio.sleep()'s delay to whole libuv
@@ -248,13 +248,13 @@ class PythonTestCase(TestCase, UserPromptSupport):
 
             if step_logs:
                 # Send logs in batches to avoid overwhelming the UI
-                for i in range(0, len(step_logs), LOG_BATCH_SIZE):
-                    batch = step_logs[i : i + LOG_BATCH_SIZE]
+                for i in range(0, len(step_logs), REPLAY_LOG_BATCH_SIZE):
+                    batch = step_logs[i : i + REPLAY_LOG_BATCH_SIZE]
                     for line in batch:
                         logger.log(PYTHON_TEST_LEVEL, line)
-                    # Small delay between batches to allow UI to process
-                    if i + LOG_BATCH_SIZE < len(step_logs):
-                        await sleep(LOG_BATCH_DELAY)
+                    # Brief yield between batches so other tasks can run
+                    if i + REPLAY_LOG_BATCH_SIZE < len(step_logs):
+                        await sleep(REPLAY_LOG_YIELD_DELAY)
 
                 # Update last logged position with the end position from extraction
                 if end_pos > self._last_logged_position:
