@@ -19,6 +19,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.models import TestRunExecution
+from app.models.test_run_log_entry import TestRunLogEntry as TestRunLogEntryModel
 from app.test_engine.logger import test_engine_logger
 from app.test_engine.models import TestRun
 from app.test_engine.test_log_handler import LOG_PROCESSING_INTERVAL, TestLogHandler
@@ -27,6 +28,20 @@ from test_collections.tool_unit_tests.test_suite_expected import TestSuiteExpect
 from test_collections.tool_unit_tests.test_suite_expected.tctr_expected_pass import (
     TCTRExpectedPass,
 )
+
+
+def _persisted_log(db: Session, run: TestRun) -> list[TestRunLogEntryModel]:
+    """The run's log as persisted in the DB.
+
+    TestRun.log only holds the entries that are not yet released by every
+    observer, so once a run has finished it no longer holds the whole log.
+    """
+    return (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=run.test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
 
 
 @pytest.mark.asyncio
@@ -142,23 +157,25 @@ async def test_test_log_handler_metadata_exists(db: Session) -> None:
     )
     log_handler = TestLogHandler(run)
     assert len(log_handler._TestLogHandler__pending_log_entries) == 0  # type: ignore
+    persisted_log = _persisted_log(db, run)
+    assert len(persisted_log) > 0
     # assert if there is a test suite execution index in the logs
     assert any(
         log_entry.test_suite_execution_index is not None
         and log_entry.test_suite_execution_index >= 0
-        for log_entry in run.log
+        for log_entry in persisted_log
     )
     # assert if there is a test case execution index in the logs
     assert any(
         log_entry.test_case_execution_index is not None
         and log_entry.test_case_execution_index >= 0
-        for log_entry in run.log
+        for log_entry in persisted_log
     )
     # assert if there is a test step execution index in the logs
     assert any(
         log_entry.test_step_execution_index is not None
         and log_entry.test_step_execution_index >= 0
-        for log_entry in run.log
+        for log_entry in persisted_log
     )
 
 
@@ -196,7 +213,9 @@ async def test_test_log_handler_metadata_value(db: Session) -> None:
     # Capture execution id of Test step 2 from log entry.
     # Test step 2 in TCTRExpectedPass test case logs "Executing Test Step: Test Step 2"
     actualLogEntry = next(
-        (log for log in run.log if log.message == "Executing Test Step: Test Step 2")
+        log
+        for log in _persisted_log(db, run)
+        if log.message == "Executing Test Step: Test Step 2"
     )
 
     # verify all execution ID's match as expected from the test run v/s log entry.
