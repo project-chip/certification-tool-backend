@@ -116,7 +116,7 @@ def __configure_logging(
     colorize = sys.stdout.isatty()
     logger.add(
         sys.stdout,
-        enqueue=True,
+        enqueue=settings.LOGGING_ENQUEUE,
         level=level.upper(),
         format=format,
         colorize=colorize,
@@ -127,7 +127,7 @@ def __configure_logging(
         str(filepath),
         rotation=rotation,
         retention=retention,
-        enqueue=True,
+        enqueue=settings.LOGGING_ENQUEUE,
         level=level.upper(),
         format=format,
     )
