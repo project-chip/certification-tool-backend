@@ -1,1 +1,5 @@
 test_collections
+logs
+.mypy_cache
+.pytest_cache
+.coverage
