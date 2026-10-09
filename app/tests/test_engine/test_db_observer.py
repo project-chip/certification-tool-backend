@@ -490,6 +490,13 @@ async def test_test_run_log_trimmed_only_after_all_consumers_release(
         "m4",
     ]
 
+    # Only the slow consumer has caught up: still held for the fast one (at 3).
     test_run.release_log(slow, 5)
+    test_run.append_log_entries([])
+    assert [e.message for e in test_run.log_entries_since(3)] == ["m3", "m4"]
+    assert test_run.log_count == 5
+
+    # Once every consumer has released everything, nothing is held.
+    test_run.release_log(fast, 5)
     test_run.append_log_entries([])
     assert len(test_run.log) == 0 and test_run.log_count == 5
