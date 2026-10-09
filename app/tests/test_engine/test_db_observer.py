@@ -477,7 +477,7 @@ async def test_test_run_log_trimmed_only_after_all_consumers_release(
     test_run.append_log_entries(entries(3))
     assert len(test_run.log) == 3 and test_run.log_count == 3
 
-    fast, slow = object(), object()
+    fast, slow = mock.MagicMock(), mock.MagicMock()
     test_run.release_log(fast, 3)
     test_run.release_log(slow, 1)
     test_run.append_log_entries(entries(2, start=3))
