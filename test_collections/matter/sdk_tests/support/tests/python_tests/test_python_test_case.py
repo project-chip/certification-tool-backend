@@ -930,6 +930,89 @@ def test_extract_logs_for_step_uses_cursor_not_first_occurrence() -> None:
     assert second_end == len(content)
 
 
+def test_extract_logs_for_step_includes_output_before_first_marker() -> None:
+    """Regression test: output produced before the first step's marker (test
+    setup, e.g. a device attribute dump) must be included in the first step's
+    logs. It used to be dropped for good, so real-time logging showed far
+    fewer lines than batch logging for the same test."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    content = (
+        "setup line 1\n"
+        "setup line 2\n"
+        "***** Test Step 1 : first description\n"
+        "line1\n"
+        "***** Test Step 2 : second description\n"
+        "line2\n"
+    )
+
+    step_logs, end_pos = instance._extract_logs_for_step(
+        content, "1 : first description"
+    )
+
+    assert step_logs[:2] == ["setup line 1", "setup line 2"]
+    assert "line1" in step_logs
+    assert not any("line2" in line for line in step_logs)
+    assert end_pos == content.index("***** Test Step 2 : second description")
+
+
+def test_extract_logs_for_step_includes_output_of_skipped_step() -> None:
+    """Output of a step that never displayed its own logs (e.g. it was
+    skipped) must not be lost when the cursor moves on to a later step."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    content = (
+        "***** Test Step 1 : first\n"
+        "line1\n"
+        "***** Test Step 2 : skipped\n"
+        "skipped line\n"
+        "***** Test Step 3 : third\n"
+        "line3\n"
+    )
+    _, first_end = instance._extract_logs_for_step(content, "1 : first")
+    instance._last_logged_position = first_end
+
+    step_logs, end_pos = instance._extract_logs_for_step(content, "3 : third")
+
+    assert "skipped line" in step_logs
+    assert "line3" in step_logs
+    assert end_pos == len(content)
+
+
+def test_extract_logs_for_step_covers_whole_file_exactly_once() -> None:
+    """Extracting every step in order must reproduce the file exactly: no
+    line dropped, none duplicated."""
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    content = (
+        "pre 1\npre 2\n"
+        "***** Test Step 1 : a\nl1\n"
+        "***** Test Step 2 : b\nl2\nl2b\n"
+        "***** Test Step 3 : c\nl3\n"
+    )
+    logged: list[str] = []
+    for name in ("1 : a", "2 : b", "3 : c"):
+        logs, end_pos = instance._extract_logs_for_step(content, name)
+        logged.extend(logs)
+        instance._last_logged_position = end_pos
+
+    assert instance._last_logged_position == len(content)
+    for expected in ("pre 1", "pre 2", "l1", "l2", "l2b", "l3"):
+        assert logged.count(expected) == 1
+
+
 def test_step_start_stores_step_name() -> None:
     """step_start must keep the actual SDK step label (used for marker
     matching), not a synthetic incrementing counter."""

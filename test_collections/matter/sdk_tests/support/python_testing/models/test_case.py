@@ -290,6 +290,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
     ) -> tuple[list[str], int]:
         """Extract logs for a specific test step from the full log content.
 
+        Includes any output between the last logged position and this step's
+        marker (pre-step setup output, skipped steps), so nothing is dropped.
+
         Args:
             content: Full content of the test output file
             step_name: The step name (as passed to step_start) to extract logs for
@@ -316,13 +319,21 @@ class PythonTestCase(TestCase, UserPromptSupport):
             STEP_MARKER_PREFIX, start_idx + len(current_step_marker)
         )
 
-        # Extract the section between current and next step
+        # Extract from the cursor (not from this step's marker) up to the next
+        # step's marker. Starting at the marker dropped everything between the
+        # cursor and the marker for good: the output the test produces before
+        # its first step (e.g. the setup/device attribute dump, tens of
+        # thousands of lines on large DUTs) and the output of any step that
+        # was skipped, since the cursor then jumps past it and
+        # _log_remaining_content() only recovers what follows the last step.
+        # When the marker sits at the cursor (the usual case) this is the same
+        # section as before.
         if next_idx != -1:
-            step_content = content[start_idx:next_idx]
+            step_content = content[self._last_logged_position : next_idx]
             end_pos = next_idx
         else:
             # Last step, extract until end of content
-            step_content = content[start_idx:]
+            step_content = content[self._last_logged_position :]
             end_pos = len(content)
 
         # Split into lines and return with end position
