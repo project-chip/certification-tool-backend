@@ -20,6 +20,7 @@ from typing import Callable, Generator, Optional, Union
 
 from loguru import logger
 from sqlalchemy import func, insert, inspect, select
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -43,6 +44,21 @@ LOG_INSERT_CHUNK_SIZE = 5000
 # How often pending updates are flushed to the DB while a run is in progress,
 # instead of only once at the very end of the run.
 DB_FLUSH_INTERVAL = 2.0
+
+
+def _insert_log_rows(engine: Engine, rows: list[dict]) -> None:
+    """Insert log rows in their own transaction, on their own connection.
+
+    Runs in a worker thread. It never touches the ORM Session (which belongs to
+    the event loop thread), so writing thousands of rows does not block the loop
+    and a failure leaves the Session alone. If it raises, nothing was committed:
+    the caller keeps the rows and retries them on the next flush.
+    """
+    with engine.begin() as connection:
+        for i in range(0, len(rows), LOG_INSERT_CHUNK_SIZE):
+            connection.execute(
+                insert(TestRunLogEntry), rows[i : i + LOG_INSERT_CHUNK_SIZE]
+            )
 
 
 class TestDBObserver(Observer):
@@ -102,7 +118,13 @@ class TestDBObserver(Observer):
                 )
             except asyncio.TimeoutError:
                 pass
-            await self.apply_updates()
+            try:
+                await self.apply_updates()
+            except Exception:
+                # A transient DB error must not end incremental persistence for
+                # the rest of the run: log rows of a failed insert were kept and
+                # are retried on the next tick.
+                logger.exception("Failed to flush test run updates; will retry")
 
     async def finish(self) -> None:
         """Stop periodic flushing and apply any updates still pending."""
@@ -119,12 +141,21 @@ class TestDBObserver(Observer):
         self.__pending_log_rows = []
 
         if log_rows:
-            # Same session as the state save below, so the rows commit together
-            # with the run's state. test_run_execution is always enqueued
-            # alongside new rows, so there is always a pending object to
-            # commit through.
-            session = self.__session_for(pending)
-            await self.__bulk_insert_log_rows(session, log_rows)
+            # Own connection and transaction, in a worker thread (see
+            # _insert_log_rows). test_run_execution is always enqueued alongside
+            # new rows, so there is always a pending object to find the engine
+            # through.
+            engine = self.__session_for(pending).get_bind().engine
+            try:
+                await asyncio.to_thread(_insert_log_rows, engine, log_rows)
+            except Exception:
+                # Nothing was committed: keep the rows (before any staged since,
+                # which have higher seq values) and the pending objects, and
+                # retry on the next flush.
+                self.__pending_log_rows[:0] = log_rows
+                for key, execution_obj in pending.items():
+                    self.__pending.setdefault(key, execution_obj)
+                raise
 
         for data in pending.values():
             await self.__save(data)
@@ -135,17 +166,6 @@ class TestDBObserver(Observer):
             if insp is not None and insp.session is not None:
                 return insp.session
         return next(self.__db_generator())
-
-    @staticmethod
-    async def __bulk_insert_log_rows(session: Session, rows: list[dict]) -> None:
-        # Runs on the event loop thread, not a worker: with periodic flushes
-        # dispatch() keeps mutating this same Session's ORM objects while a
-        # flush is in flight, and Sessions aren't thread-safe. Each chunk is
-        # small, and the yield between chunks keeps the loop responsive.
-        for i in range(0, len(rows), LOG_INSERT_CHUNK_SIZE):
-            chunk = rows[i : i + LOG_INSERT_CHUNK_SIZE]
-            session.execute(insert(TestRunLogEntry), chunk)
-            await asyncio.sleep(0)
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -281,7 +301,13 @@ class TestDBObserver(Observer):
         # rather than asyncio.to_thread: dispatch() mutates this Session's ORM
         # objects at any point while a flush is running, and Sessions aren't
         # thread-safe, so committing from a worker would be a real race.
-        session.commit()
+        try:
+            session.commit()
+        except Exception:
+            # A failed commit leaves the Session unusable until it is rolled
+            # back; without this, every later flush would fail as well.
+            session.rollback()
+            raise
         logger.debug(
             f"Saved {execution_obj.__class__} {execution_obj.id}"
             f" with state {execution_obj.state}"
