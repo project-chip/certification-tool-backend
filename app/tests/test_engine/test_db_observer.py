@@ -14,14 +14,17 @@
 # limitations under the License.
 #
 import asyncio
+from typing import Callable
 from unittest import mock
 
 import pytest
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from app.models import TestStateEnum
 from app.models.test_run_log_entry import TestRunLogEntry as TestRunLogEntryModel
 from app.schemas.test_run_log_entry import TestRunLogEntry
+from app.test_engine import test_db_observer as db_observer_module
 from app.test_engine.test_db_observer import LOG_INSERT_CHUNK_SIZE, TestDBObserver
 from app.test_engine.test_script_manager import TestScriptManager
 from app.tests.utils.test_run_execution import (
@@ -500,3 +503,101 @@ async def test_test_run_log_trimmed_only_after_all_consumers_release(
     test_run.release_log(fast, 5)
     test_run.append_log_entries([])
     assert len(test_run.log) == 0 and test_run.log_count == 5
+
+
+def _flaky_insert(failures: int) -> Callable[[Engine, list[dict]], None]:
+    """Wrap the real bulk insert so its first `failures` calls raise."""
+    real_insert = db_observer_module._insert_log_rows
+    calls = {"count": 0}
+
+    def flaky(engine: Engine, rows: list[dict]) -> None:
+        calls["count"] += 1
+        if calls["count"] <= failures:
+            raise RuntimeError("db down")
+        real_insert(engine, rows)
+
+    return flaky
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_failed_insert_keeps_rows_for_retry(
+    db: Session,
+) -> None:
+    """A failed bulk insert must neither lose rows nor reorder them: they stay
+    staged and the next flush writes them, in order, before newer ones."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+
+    test_run.append_log_entries(
+        [
+            TestRunLogEntry(level="INFO", timestamp=1.0, message="a"),
+            TestRunLogEntry(level="INFO", timestamp=2.0, message="b"),
+        ]
+    )
+    with mock.patch(
+        "app.test_engine.test_db_observer._insert_log_rows",
+        side_effect=_flaky_insert(failures=1),
+    ):
+        test_db_observer.dispatch(test_run)
+        with pytest.raises(RuntimeError):
+            await test_db_observer.apply_updates()
+
+        # Nothing was committed, and more entries arrive before the retry.
+        assert (
+            db.query(TestRunLogEntryModel)
+            .filter_by(test_run_execution_id=test_run_execution.id)
+            .count()
+            == 0
+        )
+        test_run.append_log_entries(
+            [TestRunLogEntry(level="INFO", timestamp=3.0, message="c")]
+        )
+        test_db_observer.dispatch(test_run)
+        await test_db_observer.apply_updates()
+
+    persisted = (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
+    assert [(e.seq, e.message) for e in persisted] == [(0, "a"), (1, "b"), (2, "c")]
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_periodic_flush_survives_a_failed_flush(
+    db: Session,
+) -> None:
+    """One failing flush must not end incremental persistence for the run."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+    test_run.subscribe([test_db_observer])
+
+    with mock.patch("app.test_engine.test_db_observer.DB_FLUSH_INTERVAL", 0.05):
+        with mock.patch(
+            "app.test_engine.test_db_observer._insert_log_rows",
+            side_effect=_flaky_insert(failures=1),
+        ):
+            test_db_observer.start()
+            test_run.append_log_entries(
+                [TestRunLogEntry(level="INFO", timestamp=1.0, message="survivor")]
+            )
+            await asyncio.sleep(0.4)
+
+            persisted = (
+                db.query(TestRunLogEntryModel)
+                .filter_by(test_run_execution_id=test_run_execution.id)
+                .all()
+            )
+            assert [e.message for e in persisted] == ["survivor"]
+
+            # The flush task is still alive, so finish() has nothing to re-raise.
+            await test_db_observer.finish()
