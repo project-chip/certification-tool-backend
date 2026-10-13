@@ -510,11 +510,11 @@ def _flaky_insert(failures: int) -> Callable[[Engine, list[dict]], None]:
     real_insert = db_observer_module._insert_log_rows
     calls = {"count": 0}
 
-    def flaky(engine: Engine, rows: list[dict]) -> None:
+    def flaky(engine: Engine, rows: list[dict], skip_persisted: bool = False) -> None:
         calls["count"] += 1
         if calls["count"] <= failures:
             raise RuntimeError("db down")
-        real_insert(engine, rows)
+        real_insert(engine, rows, skip_persisted)
 
     return flaky
 
@@ -601,3 +601,94 @@ async def test_test_db_observer_periodic_flush_survives_a_failed_flush(
 
             # The flush task is still alive, so finish() has nothing to re-raise.
             await test_db_observer.finish()
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_retry_after_ambiguous_commit_does_not_duplicate(
+    db: Session,
+) -> None:
+    """An insert can fail after the server already committed it (e.g. the
+    connection drops while the COMMIT is acknowledged). Retrying the same rows
+    must not write them a second time."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_run.state = TestStateEnum.EXECUTING
+
+    real_insert = db_observer_module._insert_log_rows
+    calls = {"count": 0}
+
+    def commit_then_fail(
+        engine: Engine, rows: list[dict], skip_persisted: bool = False
+    ) -> None:
+        calls["count"] += 1
+        real_insert(engine, rows, skip_persisted)
+        if calls["count"] == 1:
+            raise RuntimeError("connection lost while acknowledging the COMMIT")
+
+    test_run.append_log_entries(
+        [
+            TestRunLogEntry(level="INFO", timestamp=1.0, message="a"),
+            TestRunLogEntry(level="INFO", timestamp=2.0, message="b"),
+        ]
+    )
+    with mock.patch(
+        "app.test_engine.test_db_observer._insert_log_rows",
+        side_effect=commit_then_fail,
+    ):
+        test_db_observer.dispatch(test_run)
+        with pytest.raises(RuntimeError):
+            await test_db_observer.apply_updates()
+
+        test_run.append_log_entries(
+            [TestRunLogEntry(level="INFO", timestamp=3.0, message="c")]
+        )
+        test_db_observer.dispatch(test_run)
+        await test_db_observer.apply_updates()
+
+    persisted = (
+        db.query(TestRunLogEntryModel)
+        .filter_by(test_run_execution_id=test_run_execution.id)
+        .order_by(TestRunLogEntryModel.seq)
+        .all()
+    )
+    assert [(e.seq, e.message) for e in persisted] == [(0, "a"), (1, "b"), (2, "c")]
+
+
+@pytest.mark.asyncio
+async def test_test_db_observer_reapplies_state_after_failed_commit(
+    db: Session,
+) -> None:
+    """A failed state commit rolls the Session back, which discards the changes
+    dispatch() had made. They must be applied again: a test case that is never
+    dispatched again would otherwise keep a stale state in the DB."""
+    test_script_manager = TestScriptManager()
+    test_db_observer = TestDBObserver()
+
+    test_run_execution = create_test_run_execution_with_some_test_cases(db=db)
+    test_run = test_script_manager.get_test_run(db, test_run_execution)
+    test_case = test_run.test_suites[0].test_cases[0]
+    test_case.state = TestStateEnum.PASSED
+    test_db_observer.dispatch(test_case)
+
+    real_commit = Session.commit
+    calls = {"count": 0}
+
+    def flaky_commit(self: Session) -> None:
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise RuntimeError("db down")
+        real_commit(self)
+
+    with mock.patch.object(Session, "commit", flaky_commit):
+        with pytest.raises(RuntimeError):
+            await test_db_observer.apply_updates()
+        # Nothing dispatches the test case again before the next flush.
+        await test_db_observer.apply_updates()
+
+    # Read the state back from the DB, not from the in-memory object.
+    db.expire_all()
+    assert test_case.test_case_execution.state == TestStateEnum.PASSED
+    assert calls["count"] == 2

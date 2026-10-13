@@ -36,6 +36,7 @@ from app.test_engine.test_observer import Observer
 ExecutionObj = Union[
     TestCaseExecution, TestStepExecution, TestSuiteExecution, TestRunExecution
 ]
+Dispatched = Union[TestRun, TestSuite, TestCase, TestStep]
 
 # Max rows per bulk INSERT, to bound statement/memory size when a run flushes a
 # very large backlog (hundreds of thousands of entries) in one go.
@@ -46,15 +47,31 @@ LOG_INSERT_CHUNK_SIZE = 5000
 DB_FLUSH_INTERVAL = 2.0
 
 
-def _insert_log_rows(engine: Engine, rows: list[dict]) -> None:
+def _insert_log_rows(
+    engine: Engine, rows: list[dict], skip_persisted: bool = False
+) -> None:
     """Insert log rows in their own transaction, on their own connection.
 
     Runs in a worker thread. It never touches the ORM Session (which belongs to
     the event loop thread), so writing thousands of rows does not block the loop
-    and a failure leaves the Session alone. If it raises, nothing was committed:
-    the caller keeps the rows and retries them on the next flush.
+    and a failure leaves the Session alone.
+
+    A failure normally means nothing was committed, but not always: the commit
+    itself can fail after the server applied it (e.g. the connection drops while
+    the COMMIT is acknowledged). The rows of a run are inserted in seq order in
+    one transaction, so after a failed attempt the caller sets `skip_persisted`
+    and the highest persisted seq of the run tells which rows are already there.
     """
     with engine.begin() as connection:
+        if skip_persisted:
+            persisted_up_to = connection.execute(
+                select(func.max(TestRunLogEntry.seq)).where(
+                    TestRunLogEntry.test_run_execution_id
+                    == rows[0]["test_run_execution_id"]
+                )
+            ).scalar_one()
+            if persisted_up_to is not None:
+                rows = [row for row in rows if row["seq"] > persisted_up_to]
         for i in range(0, len(rows), LOG_INSERT_CHUNK_SIZE):
             connection.execute(
                 insert(TestRunLogEntry), rows[i : i + LOG_INSERT_CHUNK_SIZE]
@@ -92,6 +109,16 @@ class TestDBObserver(Observer):
         # instead of ORM objects: building and unit-of-work-tracking one
         # TestRunLogEntry per line is the dominant cost for large logs.
         self.__pending_log_rows: list[dict] = []
+        # Set when a log insert failed: it may still have been committed, so the
+        # next attempt checks what is persisted before inserting (see
+        # _insert_log_rows).
+        self.__verify_persisted = False
+        # Observables dispatched since the last successful flush. A failed state
+        # commit rolls the Session back, which discards the ORM changes that
+        # dispatch() made; they are re-applied from these objects (the test
+        # engine is the source of truth) before the next attempt.
+        self.__dirty_observables: dict[int, Dispatched] = {}
+        self.__reapply_observables = False
         self.__flush_task: Optional[Task] = None
         self.__stop_flushing = asyncio.Event()
 
@@ -135,8 +162,19 @@ class TestDBObserver(Observer):
         await self.apply_updates()
 
     async def apply_updates(self) -> None:
+        if self.__reapply_observables:
+            # A previous state commit failed and rolled the Session back,
+            # discarding the ORM changes dispatch() had made: apply them again.
+            # The flag is only cleared once that worked, so a failure here (e.g.
+            # the DB is still down) is retried on the next flush.
+            for observable in list(self.__dirty_observables.values()):
+                self.dispatch(observable)
+            self.__reapply_observables = False
+
         pending = self.__pending
         self.__pending = {}
+        observables = self.__dirty_observables
+        self.__dirty_observables = {}
         log_rows = self.__pending_log_rows
         self.__pending_log_rows = []
 
@@ -147,18 +185,30 @@ class TestDBObserver(Observer):
             # through.
             engine = self.__session_for(pending).get_bind().engine
             try:
-                await asyncio.to_thread(_insert_log_rows, engine, log_rows)
+                await asyncio.to_thread(
+                    _insert_log_rows, engine, log_rows, self.__verify_persisted
+                )
             except Exception:
-                # Nothing was committed: keep the rows (before any staged since,
-                # which have higher seq values) and the pending objects, and
-                # retry on the next flush.
+                # Keep the rows (before any staged since, which have higher seq
+                # values) and the pending objects for the next flush. The insert
+                # may have been committed anyway, so that flush checks first.
                 self.__pending_log_rows[:0] = log_rows
+                self.__verify_persisted = True
                 for key, execution_obj in pending.items():
                     self.__pending.setdefault(key, execution_obj)
+                self.__dirty_observables = {**observables, **self.__dirty_observables}
                 raise
+            self.__verify_persisted = False
 
-        for data in pending.values():
-            await self.__save(data)
+        try:
+            for data in pending.values():
+                await self.__save(data)
+        except Exception:
+            # __save rolled the Session back, so the changes of the objects in
+            # this batch are gone: re-apply them from their observables.
+            self.__dirty_observables = {**observables, **self.__dirty_observables}
+            self.__reapply_observables = True
+            raise
 
     def __session_for(self, pending: dict[int, ExecutionObj]) -> Session:
         for execution_obj in pending.values():
@@ -180,6 +230,7 @@ class TestDBObserver(Observer):
                 self.__onTestCaseUpdate(observable)
             elif isinstance(observable, TestStep):
                 self.__onTestStepUpdate(observable)
+            self.__dirty_observables[id(observable)] = observable
 
     def __enqueue(self, execution_obj: ExecutionObj) -> None:
         self.__pending[id(execution_obj)] = execution_obj
