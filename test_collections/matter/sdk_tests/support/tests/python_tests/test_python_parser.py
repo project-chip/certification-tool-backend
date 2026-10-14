@@ -58,6 +58,10 @@ def test_python_parser_device_requirement() -> None:
         "TC_No_Marker_Flagged": PythonTestType.COMMISSIONING,
         "TC_Old_Json_Flagged": PythonTestType.COMMISSIONING,
         "TC_Old_Json_Unflagged": PythonTestType.NO_COMMISSIONING,
+        # A step without the is_commissioning key counts as unflagged
+        "TC_No_Step_Flag_Key": PythonTestType.NO_COMMISSIONING,
+        # A marker the TH doesn't know: the step flag decides
+        "TC_Unknown_Marker": PythonTestType.COMMISSIONING,
         # The marker wins over a contradicting step flag
         "TC_Contradiction": PythonTestType.NO_COMMISSIONING,
         # LEGACY and MANDATORY still take precedence over the marker
@@ -70,5 +74,10 @@ def test_python_parser_device_requirement() -> None:
 
     assert all(step.is_commissioning for step in tests["TC_Marker_Commissioned"].steps)
 
-    mock_logger.warning.assert_called_once()
-    assert "TC_Contradiction" in mock_logger.warning.call_args.args[0]
+    warnings = [call.args[0] for call in mock_logger.warning.call_args_list]
+    assert len(warnings) == 2
+    assert any("TC_Contradiction" in warning for warning in warnings)
+    assert any(
+        "TC_Unknown_Marker" in warning and "MatterTestFutureDevice" in warning
+        for warning in warnings
+    )

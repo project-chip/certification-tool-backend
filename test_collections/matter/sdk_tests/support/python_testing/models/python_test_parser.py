@@ -217,7 +217,7 @@ def __needs_commissioning(script_info: dict[str, Any], test_name: str) -> bool:
         bool: True if the DUT must be commissioned before the test runs.
     """
     steps = script_info["steps"]
-    step_flag = bool(steps[0]["is_commissioning"]) if steps else False
+    step_flag = bool(steps[0].get("is_commissioning", False)) if steps else False
 
     marker = script_info.get("device_requirement")
     if marker is None:
