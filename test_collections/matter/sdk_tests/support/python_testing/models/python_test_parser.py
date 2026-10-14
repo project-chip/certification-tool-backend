@@ -42,8 +42,9 @@ mandatory_python_tcs_public_id = [
 ]
 
 # Whether each SDK device-requirement marker (matter.testing.matter_testing) needs the
-# DUT commissioned before the test runs. Tests without a marker, or from SDKs that
-# predate the markers, fall back to the first step's is_commissioning flag.
+# DUT commissioned before the test runs. Tests without a marker, from SDKs that
+# predate the markers, or with a marker missing here, fall back to the first step's
+# is_commissioning flag.
 device_requirement_needs_commissioning = {
     "MatterTestCommissionedDevice": True,
     "MatterTestUncommissionedDevice": False,
@@ -205,7 +206,8 @@ def __needs_commissioning(script_info: dict[str, Any], test_name: str) -> bool:
 
     The test class's device-requirement marker decides when present. Otherwise the
     first step's is_commissioning flag decides, as for SDKs without markers and for
-    tests that declare no marker.
+    tests that declare no marker. A marker this TH doesn't know also falls back to
+    the flag, with a warning.
 
     Args:
         script_info (dict[str, Any]): Test info entry from the parsed JSON file.
@@ -218,7 +220,13 @@ def __needs_commissioning(script_info: dict[str, Any], test_name: str) -> bool:
     step_flag = bool(steps[0]["is_commissioning"]) if steps else False
 
     marker = script_info.get("device_requirement")
+    if marker is None:
+        return step_flag
     if marker not in device_requirement_needs_commissioning:
+        logger.warning(
+            f"{test_name}: unknown device-requirement marker {marker}. Using the "
+            "first step's is_commissioning flag."
+        )
         return step_flag
 
     needs_commissioning = device_requirement_needs_commissioning[marker]
