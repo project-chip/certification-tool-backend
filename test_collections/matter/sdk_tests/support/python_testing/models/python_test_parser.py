@@ -92,7 +92,7 @@ def parse_python_script(path: Path) -> list[PythonTest]:
             test_class_name = script_info["class_name"]
             parsed_steps = script_info["steps"]
 
-            is_commssioning = __needs_commissioning(script_info, test_name)
+            is_commissioning = __needs_commissioning(script_info, test_name)
             test_steps: list[MatterTestStep] = []
             for step in parsed_steps:
                 step_description = step["description"]
@@ -100,7 +100,7 @@ def parse_python_script(path: Path) -> list[PythonTest]:
                 test_steps.append(
                     MatterTestStep(
                         label=step_description,
-                        is_commissioning=is_commssioning,
+                        is_commissioning=is_commissioning,
                     )
                 )
 
@@ -114,7 +114,7 @@ def parse_python_script(path: Path) -> list[PythonTest]:
                 python_test_type = PythonTestType.MANDATORY
             elif len(test_steps) == 1 and test_steps[0].label == "Run entire test":
                 python_test_type = PythonTestType.LEGACY
-            elif is_commssioning:
+            elif is_commissioning:
                 python_test_type = PythonTestType.COMMISSIONING
             else:
                 python_test_type = PythonTestType.NO_COMMISSIONING
