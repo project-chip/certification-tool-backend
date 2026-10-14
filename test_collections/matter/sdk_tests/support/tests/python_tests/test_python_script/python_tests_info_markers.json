@@ -1,0 +1,153 @@
+{
+    "sdk_sha": "aabbccddeeff11223344556677889900",
+    "tests": [
+        {
+            "class_name": "TC_Marker_Commissioned",
+            "desc": "Commissioned marker without a step flag",
+            "device_requirement": "MatterTestCommissionedDevice",
+            "function": "test_TC_Marker_Commissioned",
+            "path": "sdk/TC_Marker_Commissioned",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                },
+                {
+                    "description": "Second step",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 2
+                }
+            ]
+        },
+        {
+            "class_name": "TC_Marker_Commissioner",
+            "desc": "Commissioner marker",
+            "device_requirement": "MatterTestCommissioner",
+            "function": "test_TC_Marker_Commissioner",
+            "path": "sdk/TC_Marker_Commissioner",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "TH commissions the DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_Marker_Uncommissioned",
+            "desc": "Uncommissioned marker",
+            "device_requirement": "MatterTestUncommissionedDevice",
+            "function": "test_TC_Marker_Uncommissioned",
+            "path": "sdk/TC_Marker_Uncommissioned",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "TH discovers the commissionable DUT",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_No_Marker_Flagged",
+            "desc": "No marker, first step flagged",
+            "device_requirement": null,
+            "function": "test_TC_No_Marker_Flagged",
+            "path": "sdk/TC_No_Marker_Flagged",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_Old_Json_Flagged",
+            "desc": "No device_requirement key, first step flagged",
+            "function": "test_TC_Old_Json_Flagged",
+            "path": "sdk/TC_Old_Json_Flagged",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_Old_Json_Unflagged",
+            "desc": "No device_requirement key, first step not flagged",
+            "function": "test_TC_Old_Json_Unflagged",
+            "path": "sdk/TC_Old_Json_Unflagged",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "First step",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_Contradiction",
+            "desc": "Commissioner marker but first step flagged",
+            "device_requirement": "MatterTestCommissioner",
+            "function": "test_TC_Contradiction",
+            "path": "sdk/TC_Contradiction",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_Marker_Legacy",
+            "desc": "Commissioned marker without defined steps",
+            "device_requirement": "MatterTestCommissionedDevice",
+            "function": "test_TC_Marker_Legacy",
+            "path": "sdk/TC_Marker_Legacy",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Run entire test",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
+            "class_name": "TC_IDM_12_1",
+            "desc": "Mandatory test with a commissioned marker",
+            "device_requirement": "MatterTestCommissionedDevice",
+            "function": "test_TC_IDM_12_1",
+            "path": "sdk/TC_DeviceBasicComposition",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": false,
+                    "test_plan_number": 1
+                }
+            ]
+        }
+    ]
+}

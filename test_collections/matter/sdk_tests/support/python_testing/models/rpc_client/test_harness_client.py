@@ -33,6 +33,11 @@ from matter.testing.runner import (
     run_tests,
 )
 
+try:
+    from matter.testing.matter_testing import device_requirement
+except ImportError:  # SDKs before project-chip/connectedhomeip#73214 have no markers
+    device_requirement = None
+
 # TH-specific argument keys
 TH_ARG_GET_TEST_INFO = "get-test-info"
 TH_ARG_TH_CLIENT_TEST = "th-client-test"
@@ -215,11 +220,31 @@ def main() -> None:
                     )
 
 
+def _device_requirement_name(test_class) -> str | None:
+    """Name of the SDK device-requirement marker the test class inherits, if any.
+
+    None when the SDK predates the markers, the class declares no marker (e.g.
+    BasicCompositionTests-based tests), or it declares conflicting markers. The
+    parser then falls back to the first step's is_commissioning flag.
+    """
+    if device_requirement is None:
+        return None
+    try:
+        marker = device_requirement(test_class)
+    except ValueError:
+        return None
+    return marker.__name__ if marker is not None else None
+
+
 def get_test_info_support(script_path: str, class_name: str, config: MatterTestConfig):
     module = importlib.import_module(script_path.replace("/", "."))
     TestClassReference = getattr(module, class_name)
     test_info = get_test_info(TestClassReference, config)
-    return json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
+    info = json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
+    requirement = _device_requirement_name(TestClassReference)
+    for test in info:
+        test["device_requirement"] = requirement
+    return info
 
 
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:

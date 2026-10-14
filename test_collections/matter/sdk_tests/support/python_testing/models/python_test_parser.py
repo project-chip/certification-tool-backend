@@ -41,6 +41,16 @@ mandatory_python_tcs_public_id = [
     "TC_IDM_12_1",
 ]
 
+# Whether each SDK device-requirement marker (matter.testing.matter_testing) needs the
+# DUT commissioned before the test runs. Tests without a marker, or from SDKs that
+# predate the markers, fall back to the first step's is_commissioning flag.
+device_requirement_needs_commissioning = {
+    "MatterTestCommissionedDevice": True,
+    "MatterTestUncommissionedDevice": False,
+    "MatterTestCommissioner": False,
+    "CertificationUnitTestNoDevice": False,
+}
+
 
 def parse_python_script(path: Path) -> list[PythonTest]:
     """Parse a python file into a list of PythonTest models.
@@ -82,13 +92,10 @@ def parse_python_script(path: Path) -> list[PythonTest]:
             test_class_name = script_info["class_name"]
             parsed_steps = script_info["steps"]
 
-            is_commssioning = False
+            is_commssioning = __needs_commissioning(script_info, test_name)
             test_steps: list[MatterTestStep] = []
-            for index, step in enumerate(parsed_steps):
+            for step in parsed_steps:
                 step_description = step["description"]
-
-                if index == 0:
-                    is_commssioning = step["is_commissioning"]
 
                 test_steps.append(
                     MatterTestStep(
@@ -100,8 +107,9 @@ def parse_python_script(path: Path) -> list[PythonTest]:
             # - PythonTestType.MANDATORY: Mandatory test cases
             # - PythonTestType.LEGACY: Tests that have only one step and with this
             #   name: "Run entire test"
-            # - PythonTestType.COMMISSIONING: Test cases flagged as commissioning
-            # - PythonTestType.NO_COMMISSIONING: Test cases flagged as no commissioning
+            # - PythonTestType.COMMISSIONING: Test cases whose device-requirement
+            #   marker, or first step's is_commissioning flag, needs a commissioned DUT
+            # - PythonTestType.NO_COMMISSIONING: All other test cases
             if test_name in mandatory_python_tcs_public_id:
                 python_test_type = PythonTestType.MANDATORY
             elif len(test_steps) == 1 and test_steps[0].label == "Run entire test":
@@ -190,6 +198,36 @@ def __test_case_name(function_name: str) -> Optional[str]:
             return name
 
     return None
+
+
+def __needs_commissioning(script_info: dict[str, Any], test_name: str) -> bool:
+    """Whether the DUT must be commissioned before the test runs.
+
+    The test class's device-requirement marker decides when present. Otherwise the
+    first step's is_commissioning flag decides, as for SDKs without markers and for
+    tests that declare no marker.
+
+    Args:
+        script_info (dict[str, Any]): Test info entry from the parsed JSON file.
+        test_name (str): Test case name, used for logging.
+
+    Returns:
+        bool: True if the DUT must be commissioned before the test runs.
+    """
+    steps = script_info["steps"]
+    step_flag = bool(steps[0]["is_commissioning"]) if steps else False
+
+    marker = script_info.get("device_requirement")
+    if marker not in device_requirement_needs_commissioning:
+        return step_flag
+
+    needs_commissioning = device_requirement_needs_commissioning[marker]
+    if step_flag and not needs_commissioning:
+        logger.warning(
+            f"{test_name}: first step sets is_commissioning but the test class is "
+            f"{marker}. Using {marker}."
+        )
+    return needs_commissioning
 
 
 def __parse_test_case(
