@@ -206,8 +206,9 @@ def __needs_commissioning(script_info: dict[str, Any], test_name: str) -> bool:
 
     The test class's device-requirement marker decides when present. Otherwise the
     first step's is_commissioning flag decides, as for SDKs without markers and for
-    tests that declare no marker. A marker this TH doesn't know also falls back to
-    the flag, with a warning.
+    tests that declare no marker. A marker this TH doesn't know, or conflicting
+    markers (reported in device_requirement_error), also fall back to the flag,
+    with a warning.
 
     Args:
         script_info (dict[str, Any]): Test info entry from the parsed JSON file.
@@ -221,6 +222,11 @@ def __needs_commissioning(script_info: dict[str, Any], test_name: str) -> bool:
 
     marker = script_info.get("device_requirement")
     if marker is None:
+        error = script_info.get("device_requirement_error")
+        if error:
+            logger.warning(
+                f"{test_name}: {error}. Using the first step's is_commissioning flag."
+            )
         return step_flag
     if marker not in device_requirement_needs_commissioning:
         logger.warning(

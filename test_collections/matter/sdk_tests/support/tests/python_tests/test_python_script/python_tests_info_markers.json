@@ -117,6 +117,23 @@
             ]
         },
         {
+            "class_name": "TC_Conflicting_Markers",
+            "desc": "Conflicting markers reported by the client, first step flagged",
+            "device_requirement": null,
+            "device_requirement_error": "TC_Conflicting_Markers declares conflicting device-requirement markers: MatterTestCommissionedDevice, MatterTestCommissioner",
+            "function": "test_TC_Conflicting_Markers",
+            "path": "sdk/TC_Conflicting_Markers",
+            "pics": [],
+            "steps": [
+                {
+                    "description": "Commissioning, already done",
+                    "expectation": "",
+                    "is_commissioning": true,
+                    "test_plan_number": 1
+                }
+            ]
+        },
+        {
             "class_name": "TC_Unknown_Marker",
             "desc": "Marker unknown to the TH, first step flagged",
             "device_requirement": "MatterTestFutureDevice",

@@ -223,16 +223,14 @@ def main() -> None:
 def _device_requirement_name(test_class) -> str | None:
     """Name of the SDK device-requirement marker the test class inherits, if any.
 
-    None when the SDK predates the markers, the class declares no marker (e.g.
-    BasicCompositionTests-based tests), or it declares conflicting markers. The
-    parser then falls back to the first step's is_commissioning flag.
+    None when the SDK predates the markers or the class declares no marker (e.g.
+    BasicCompositionTests-based tests). The parser then falls back to the first
+    step's is_commissioning flag. Raises ValueError, from the SDK's
+    device_requirement(), when the class declares conflicting markers.
     """
     if device_requirement is None:
         return None
-    try:
-        marker = device_requirement(test_class)
-    except ValueError:
-        return None
+    marker = device_requirement(test_class)
     return marker.__name__ if marker is not None else None
 
 
@@ -241,9 +239,17 @@ def get_test_info_support(script_path: str, class_name: str, config: MatterTestC
     TestClassReference = getattr(module, class_name)
     test_info = get_test_info(TestClassReference, config)
     info = json.loads(json.dumps(test_info, default=lambda o: o.__dict__))
-    requirement = _device_requirement_name(TestClassReference)
+    try:
+        requirement = _device_requirement_name(TestClassReference)
+        requirement_error = None
+    except ValueError as e:
+        # The TH discards this client's output, so the parser logs the error
+        requirement = None
+        requirement_error = str(e)
     for test in info:
         test["device_requirement"] = requirement
+        if requirement_error is not None:
+            test["device_requirement_error"] = requirement_error
     return info
 
 
