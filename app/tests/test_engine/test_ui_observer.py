@@ -238,7 +238,8 @@ async def test_test_ui_observer_final_run_state_sent_when_queued_update_fails(
     db: Session, broadcast_mock: mock.AsyncMock
 ) -> None:
     """A queued update that fails to send must not stop the terminal run state
-    from going out, nor let it overtake updates queued before it."""
+    from going out, nor let it overtake updates queued before it. A failed log
+    records send flags the logs incomplete."""
     ui_observer = TestUIObserver()
 
     async def _failing_log_broadcast(message: dict) -> None:
@@ -259,7 +260,7 @@ async def test_test_ui_observer_final_run_state_sent_when_queued_update_fails(
         TestStateEnum.EXECUTING,
         run.state,
     ]
-    assert_final_run_state_sent_last(broadcast_mock, run.state, logs_complete=True)
+    assert_final_run_state_sent_last(broadcast_mock, run.state, logs_complete=False)
 
 
 @pytest.mark.asyncio

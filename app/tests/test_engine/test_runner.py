@@ -32,7 +32,11 @@ from app.test_engine.test_runner import (
     TestRunnerState,
 )
 from app.test_engine.test_script_manager import TestCaseNotFound
-from app.tests.utils.broadcast import assert_final_run_state_sent_last, logged_messages
+from app.tests.utils.broadcast import (
+    assert_final_run_state_sent_last,
+    logged_messages,
+    run_states,
+)
 from app.tests.utils.test_run_execution import create_random_test_run_execution
 from app.tests.utils.test_runner import (
     get_test_case_for_public_id,
@@ -392,23 +396,23 @@ async def test_runner_sends_final_run_state_when_cancelled_during_teardown(
     runner = TestRunner()
     assert runner.state == TestRunnerState.IDLE
     assert runner.test_run is None
-    # The teardown was cancelled before it could report its outcome, so the
-    # logs are conservatively flagged incomplete.
+    # The log flush finished before the teardown was cancelled.
     assert_final_run_state_sent_last(
-        broadcast_mock, TestStateEnum.PASSED, logs_complete=False
+        broadcast_mock, TestStateEnum.PASSED, logs_complete=True
     )
 
 
 @pytest.mark.asyncio
 async def test_runner_finishes_log_handler_when_subscribe_fails(
-    db: Session, finish_spy: mock.AsyncMock
+    db: Session, broadcast_mock: mock.AsyncMock, finish_spy: mock.AsyncMock
 ) -> None:
     """If subscribing the observers fails, the log handler created just before
     must still be finished, so its log sink doesn't capture later runs' log
-    records.
+    records. The run never started, so clients get no run state update.
 
     Args:
         db (Session): Database fixture for creating test models.
+        broadcast_mock (mock.AsyncMock): The patched websocket broadcast.
         finish_spy (mock.AsyncMock): Spy on TestLogHandler.finish().
     """
     with mock.patch.object(
@@ -420,6 +424,7 @@ async def test_runner_finishes_log_handler_when_subscribe_fails(
 
     finish_spy.assert_awaited_once()
     assert runner.state == TestRunnerState.IDLE
+    assert run_states(broadcast_mock) == []
 
 
 @pytest.mark.asyncio

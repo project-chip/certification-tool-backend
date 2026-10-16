@@ -66,6 +66,9 @@ class TestUIObserver(Observer):
         # send_final_run_state() so it reaches clients after the run's last
         # log records instead of racing them.
         self.__pending_final_run_state: Optional[dict] = None
+        # Set when a TEST_LOG_RECORDS broadcast fails, so the final run state
+        # isn't sent flagged logs_complete.
+        self.__log_records_send_failed = False
 
     def dispatch(
         self, observable: Union[TestRun, TestSuite, TestCase, TestStep]
@@ -185,13 +188,17 @@ class TestUIObserver(Observer):
         """
 
         async def _send_in_order() -> None:
-            for chunk in chunks:
-                await socket_connection_manager.broadcast(
-                    {
-                        MessageKeysEnum.TYPE: MessageTypeEnum.TEST_LOG_RECORDS,
-                        MessageKeysEnum.PAYLOAD: chunk,
-                    }
-                )
+            try:
+                for chunk in chunks:
+                    await socket_connection_manager.broadcast(
+                        {
+                            MessageKeysEnum.TYPE: MessageTypeEnum.TEST_LOG_RECORDS,
+                            MessageKeysEnum.PAYLOAD: chunk,
+                        }
+                    )
+            except Exception:
+                self.__log_records_send_failed = True
+                raise
 
         task = create_task(_send_in_order())
         self.__async_updates.append(task)
@@ -222,9 +229,9 @@ class TestUIObserver(Observer):
 
         Args:
             logs_complete (bool): Whether all of the run's log records were
-                flushed and broadcast. Sent with the update so clients can stop
-                listening as soon as it arrives, instead of waiting for
-                trailing log records.
+                flushed. Sent with the update, cleared if any log records
+                failed to broadcast, so clients can stop listening as soon as
+                it arrives, instead of waiting for trailing log records.
         """
         await self.complete_tasks()
 
@@ -232,6 +239,8 @@ class TestUIObserver(Observer):
         if message is None:
             return
 
-        message["body"]["logs_complete"] = logs_complete
+        message["body"]["logs_complete"] = (
+            logs_complete and not self.__log_records_send_failed
+        )
         self.__send_test_update_message(message)
         await self.complete_tasks()
