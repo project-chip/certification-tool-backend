@@ -147,16 +147,22 @@ class TestRunner(object, metaclass=Singleton):
             )
 
     async def run(self) -> None:
+        if self.state != TestRunnerState.READY:
+            logger.error("Test Runner not ready to run")
+            return
+
+        if self.test_run is None:
+            logger.error("Test Run is not loaded")
+            return
+
+        ui_observer = TestUIObserver()
+        db_observer = TestDBObserver(self.__db_generator)
+        log_handler: Optional[TestLogHandler] = None
+        logs_complete = False
         try:
-            if self.state != TestRunnerState.READY:
-                logger.error("Test Runner not ready to run")
-                return
-
-            if self.test_run is None:
-                logger.error("Test Run is not loaded")
-                return
-
             log_handler = TestLogHandler(self.test_run)
+            self.test_run.subscribe([ui_observer, db_observer])
+
             test_engine_logger.info("Run Test Runner is Ready")
             test_engine_logger.info(f"TH Version: {version_information.version}")
             test_engine_logger.info(f"TH SHA: {version_information.sha}")
@@ -167,28 +173,72 @@ class TestRunner(object, metaclass=Singleton):
             # Execute each test suite asynchronously
             self.__state = TestRunnerState.RUNNING
 
-            # Init new observers
-            ui_observer = TestUIObserver()
-            db_observer = TestDBObserver(self.__db_generator)
-
-            self.test_run.subscribe([ui_observer, db_observer])
-
             await self.test_run.run()
+        except Exception as e:
+            # Logged here, before the teardown, so an error during the
+            # teardown can't hide it.
+            logger.error(e)
+        finally:
+            # Everything below also runs when the run task is cancelled (e.g.
+            # on server shutdown): CancelledError isn't an Exception, so it
+            # skips the handler above. A cancellation inside the teardown
+            # still lets clients learn the run has ended, and still frees the
+            # runner for the next run.
+            try:
+                # Tear down even if the run (or its setup) failed: otherwise
+                # the log handler's sink and processing task outlive the run,
+                # and capture later runs' log records. logs_complete is set
+                # before the rest of the teardown, so it stays accurate if the
+                # teardown is cancelled.
+                logs_complete = await self.__finish_log_handler(log_handler)
+                await self.__teardown_run(self.test_run, ui_observer, db_observer)
+            finally:
+                # If the setup failed before the run started, the run never
+                # reached a terminal state, so there is no final run state to
+                # send and clients get no terminal update.
+                await self.__end_run(ui_observer, logs_complete)
 
-            # Ensure all log messages are sent out
+    async def __finish_log_handler(self, log_handler: Optional[TestLogHandler]) -> bool:
+        """Flush the run's last log records.
+
+        Returns:
+            bool: Whether all of the run's log records were flushed.
+        """
+        if log_handler is None:
+            return False
+        try:
             await log_handler.finish()
+        except Exception as e:
+            logger.error(e)
+            return False
+        return True
 
-            self.test_run.unsubscribe([ui_observer, db_observer])
+    async def __teardown_run(
+        self,
+        test_run: TestRun,
+        ui_observer: TestUIObserver,
+        db_observer: TestDBObserver,
+    ) -> None:
+        """Detach the run's observers and save its pending DB updates."""
+        test_run.unsubscribe([ui_observer, db_observer])
 
-            # Flush all pending DB updates
+        # Flush all pending DB updates
+        try:
             await db_observer.apply_updates()
-
-            # Ensure all state updates are sent to the frontend
-            await ui_observer.complete_tasks()
         except Exception as e:
             logger.error(e)
 
-        self.__cleanup_run()
+    async def __end_run(self, ui_observer: TestUIObserver, logs_complete: bool) -> None:
+        """Send the run's final state to clients, then free the runner for the
+        next run, even if sending fails or is cancelled."""
+        try:
+            # The UI observer holds back the terminal run state until now, so
+            # it reaches clients after the run's last log records.
+            await ui_observer.send_final_run_state(logs_complete=logs_complete)
+        except Exception as e:
+            logger.error(e)
+        finally:
+            self.__cleanup_run()
 
     def __cleanup_run(self) -> None:
         self.test_run = None
