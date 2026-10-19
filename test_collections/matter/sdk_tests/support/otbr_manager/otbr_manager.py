@@ -27,7 +27,12 @@ from typing import Any, Generator, Optional
 import docker
 from docker.models.containers import Container
 from loguru import logger
-from retry import retry
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from app.container_manager import container_manager
 from app.schemas.test_environment_config import ThreadAutoConfig
@@ -167,12 +172,16 @@ class ThreadBorderRouter(metaclass=Singleton):
 
     async def __is_border_router_running(self) -> None:
         @retry(
-            (ThreadBorderRouterError, docker.errors.APIError),
-            tries=4,
-            delay=3,
-            backoff=2,
-            max_delay=10,
-            logger=logger,
+            retry=retry_if_exception_type(
+                (ThreadBorderRouterError, docker.errors.APIError)
+            ),
+            stop=stop_after_attempt(4),
+            wait=wait_exponential(multiplier=3, max=10),
+            before_sleep=lambda retry_state: logger.warning(
+                f"{retry_state.outcome.exception()}, retrying in "
+                f"{retry_state.next_action.sleep} seconds..."
+            ),
+            reraise=True,
         )
         def _otbr_status() -> None:
             service_status = self._send_command(
