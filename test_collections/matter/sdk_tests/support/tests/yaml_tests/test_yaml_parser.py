@@ -71,7 +71,7 @@ def test_yaml_file_parser_throws_validationexception() -> None:
         return_value="error",
     ), mock.patch.object(
         target=YamlTest,
-        attribute="parse_raw",
+        attribute="parse_obj",
         side_effect=mock_validation,
     ), pytest.raises(
         YamlParserException

@@ -15,6 +15,7 @@
 #
 from pathlib import Path
 
+import yaml
 from loguru import logger
 from pydantic import ValidationError
 
@@ -68,10 +69,10 @@ def parse_yaml_test(path: Path) -> YamlTest:
     with open(path, "r") as file:
         try:
             yaml_str = file.read()
-            test = YamlTest.parse_raw(yaml_str, proto="yaml")
+            test = YamlTest.parse_obj(yaml.safe_load(yaml_str))
             test.path = path
             test.type = _test_type(test)
-        except ValidationError as e:
+        except (ValidationError, yaml.YAMLError) as e:
             logger.error(str(e))
             raise YamlParserException(f"The YAML file {path} is invalid") from e
 
