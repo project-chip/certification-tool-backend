@@ -15,8 +15,6 @@
 #
 from typing import Any
 
-from pydantic_yaml import YamlModelMixin
-
 from ...models.matter_test_models import MatterTest
 
 ###
@@ -24,6 +22,6 @@ from ...models.matter_test_models import MatterTest
 ###
 
 
-class YamlTest(YamlModelMixin, MatterTest):
+class YamlTest(MatterTest):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(steps=kwargs["tests"], **kwargs)
