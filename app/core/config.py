@@ -62,11 +62,11 @@ class Settings(BaseSettings):
     LOGGING_ROTATION: str = "20 days"
     LOGGING_RETENTION: str = "1 months"
     # Whether the stdout and file log sinks hand records to a worker thread
-    # (loguru enqueue=True) instead of writing in the calling thread. True keeps
-    # a slow pipe or disk from blocking the caller, but pickling every record
-    # costs ~100us per sink per line, which dominates replaying large test
-    # outputs (issue #1119). Set LOGGING_ENQUEUE=False to avoid that cost.
-    LOGGING_ENQUEUE: bool = True
+    # (loguru enqueue=True) instead of writing in the calling thread. False (the
+    # default) avoids pickling every record, which costs ~100us per sink per
+    # line and dominated replaying large test outputs (issue #1119). Set
+    # LOGGING_ENQUEUE=True to keep a slow pipe or disk from blocking the caller.
+    LOGGING_ENQUEUE: bool = False
     LOGGING_FORMAT: str = (
         "<level>{level: <8}</level> | "
         "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
