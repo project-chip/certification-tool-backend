@@ -14,14 +14,14 @@
 # limitations under the License.
 #
 
-from enum import Enum
+from enum import StrEnum
 
 """
     Shared constants across the application.
 """
 
 
-class TestStateEnum(str, Enum):
+class TestStateEnum(StrEnum):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
     PENDING = "pending"
     EXECUTING = "executing"
@@ -34,7 +34,7 @@ class TestStateEnum(str, Enum):
 
 
 # Enum Keys for different types of messages currently supported by the tool
-class MessageTypeEnum(str, Enum):
+class MessageTypeEnum(StrEnum):
     PROMPT_REQUEST = "prompt_request"
     PROMPT_RESPONSE = "prompt_response"
     OPTIONS_REQUEST = "options_request"
@@ -51,13 +51,13 @@ class MessageTypeEnum(str, Enum):
 
 
 # Enum keys used with messages at the top level
-class MessageKeysEnum(str, Enum):
+class MessageKeysEnum(StrEnum):
     TYPE = "type"
     PAYLOAD = "payload"
 
 
 # Enum for DUT Pairing Modes
-class DutPairingModeEnum(str, Enum):
+class DutPairingModeEnum(StrEnum):
     ON_NETWORK = "onnetwork"
     BLE_WIFI = "ble-wifi"
     NFC_WIFI = "nfc-wifi"

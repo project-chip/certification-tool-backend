@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from enum import Enum
+from enum import StrEnum
 from queue import Empty, Queue
 from typing import Any, Optional
 
@@ -21,7 +21,7 @@ from matter.yamltests.hooks import TestRunnerHooks
 from pydantic import BaseModel
 
 
-class SDKPythonTestResultEnum(str, Enum):
+class SDKPythonTestResultEnum(StrEnum):
     START = "start"
     STOP = "stop"
     TEST_START = "test_start"

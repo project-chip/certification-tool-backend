@@ -13,7 +13,7 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -21,13 +21,16 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+# Allows pip to install into the system Python (PEP 668)
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
 # Sets timezone so the container build is not waiting for a prompt
 ENV TZ=America/Los_Angeles
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get update -y && apt-get install -y python3-pip python3-venv libpq-dev curl git 
+RUN apt-get update -y && apt-get install -y python3-pip python3-venv libpq-dev curl git
 
-RUN ln -s /usr/bin/python3.10 /usr/local/bin/python
+RUN ln -s /usr/bin/python3.12 /usr/local/bin/python
 
 COPY ./gunicorn/start.sh /start.sh
 RUN chmod +x /start.sh
@@ -42,7 +45,7 @@ WORKDIR /app/
 ENV PYTHONPATH=/app
 
 # Workaround poetry wheel issue by pre-installing the psycopg package
-RUN pip install psycopg2_binary==2.9.1
+RUN pip install psycopg2_binary==2.9.10
 
 # Lark is needed for Matter IDL parser
 RUN pip install build lark stringcase

@@ -32,12 +32,12 @@ from app.tests.utils.docker import FAKE_ID, Container, make_fake_container
 
 # `app/container_manager/__init__.py` does `from .container_manager import
 # container_manager`, which shadows the submodule name with the singleton
-# instance in the package's own namespace. That means any attribute-chain
-# resolution of "app.container_manager.container_manager" (whether via a
-# mock.patch string, or via `import app.container_manager.container_manager as
-# x`, which also resolves by attribute traversal) lands on the *instance*, not
-# the module. importlib.import_module() does a genuine sys.modules lookup
-# instead, so it reliably returns the actual module object.
+# instance in the package's own namespace. `import
+# app.container_manager.container_manager as x` resolves by attribute traversal
+# and lands on the *instance*, while mock.patch("app.container_manager.
+# container_manager.<name>") resolves to the *module*. Instance methods are
+# therefore patched with mock.patch.object(container_manager, ...), and
+# importlib.import_module() does a genuine sys.modules lookup for the module.
 container_manager_module = importlib.import_module(
     "app.container_manager.container_manager"
 )
@@ -102,8 +102,9 @@ async def test_create_container_no_logs_when_disabled() -> None:
 async def test_create_container() -> None:
     with mock.patch(
         "docker.models.containers.ContainerCollection.run"
-    ) as docker_run, mock.patch(
-        "app.container_manager.container_manager.is_running",
+    ) as docker_run, mock.patch.object(
+        container_manager,
+        "is_running",
         return_value=True,
     ):
         await container_manager.create_container(docker_image_tag="org/image:tag")
@@ -112,8 +113,11 @@ async def test_create_container() -> None:
 
 @pytest.mark.asyncio
 async def test_create_container_timeout() -> None:
-    with mock.patch("docker.models.containers.ContainerCollection.run"), mock.patch(
-        "app.container_manager.container_manager.is_running",
+    with mock.patch(
+        "docker.models.containers.ContainerCollection.run"
+    ), mock.patch.object(
+        container_manager,
+        "is_running",
         return_value=False,
     ):
         with pytest.raises(AsyncioTimeoutError):
@@ -162,8 +166,9 @@ async def test_create_container_cancelled_destroys_orphaned_container() -> None:
         side_effect=slow_run_new_container,
     ), mock.patch.object(container, "kill") as kill, mock.patch.object(
         container, "remove"
-    ) as remove, mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ) as remove, mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=container,
     ):
         task = asyncio.ensure_future(
@@ -195,8 +200,9 @@ async def test_create_container_cancelled_destroy_failure_does_not_mask_it() -> 
         side_effect=slow_run_new_container,
     ), mock.patch.object(
         container_manager, "destroy", side_effect=DockerException("boom")
-    ), mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ), mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=container,
     ):
         task = asyncio.ensure_future(
@@ -254,16 +260,18 @@ def test_get_container_not_found() -> None:
 
 
 def test_container_is_running() -> None:
-    with mock.patch(
-        "app.container_manager.container_manager.get_container",
+    with mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=make_fake_container({"State": {"Status": "running"}}),
     ):
         assert container_manager.is_running(Container()) is True
 
 
 def test_container_is_not_running() -> None:
-    with mock.patch(
-        "app.container_manager.container_manager.get_container",
+    with mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=make_fake_container({"State": {"Status": "stopped"}}),
     ):
         assert container_manager.is_running(Container()) is False
@@ -273,8 +281,9 @@ def test_destroy_kills_by_default() -> None:
     container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
     with mock.patch.object(container, "kill") as kill, mock.patch.object(
         container, "stop"
-    ) as stop, mock.patch.object(container, "remove") as remove, mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ) as stop, mock.patch.object(container, "remove") as remove, mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=container,
     ):
         container_manager.destroy(container)
@@ -287,8 +296,9 @@ def test_destroy_graceful_stops_instead_of_kill() -> None:
     container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
     with mock.patch.object(container, "kill") as kill, mock.patch.object(
         container, "stop"
-    ) as stop, mock.patch.object(container, "remove") as remove, mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ) as stop, mock.patch.object(container, "remove") as remove, mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=container,
     ):
         container_manager.destroy(container, graceful=True)
@@ -305,8 +315,9 @@ def test_destroy_graceful_falls_back_to_kill_on_stop_failure() -> None:
         container, "stop", side_effect=APIError("stop failed")
     ), mock.patch.object(container, "kill") as kill, mock.patch.object(
         container, "remove"
-    ) as remove, mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ) as remove, mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=container,
     ):
         container_manager.destroy(container, graceful=True)
@@ -318,8 +329,9 @@ def test_destroy_logs_shell_commands_when_enabled() -> None:
     container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
     with mock.patch.object(container, "kill"), mock.patch.object(
         container, "remove"
-    ), mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ), mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=container,
     ), mock.patch.object(
         container_manager_module, "logger"
@@ -334,8 +346,9 @@ def test_destroy_no_logs_when_disabled() -> None:
     container = make_fake_container({"Id": FAKE_ID, "State": {"Status": "running"}})
     with mock.patch.object(container, "kill"), mock.patch.object(
         container, "remove"
-    ), mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ), mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=container,
     ), mock.patch.object(
         container_manager_module, "logger"
@@ -354,8 +367,9 @@ def test_remove_containers_for_image_removes_stale_containers() -> None:
     ) as remove, mock.patch(
         "docker.models.containers.ContainerCollection.list",
         return_value=[stale_container],
-    ), mock.patch(
-        "app.container_manager.container_manager.get_container",
+    ), mock.patch.object(
+        container_manager,
+        "get_container",
         return_value=stale_container,
     ):
         container_manager.remove_containers_for_image("org/image:tag")

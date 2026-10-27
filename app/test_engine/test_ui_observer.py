@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from asyncio import Task, create_task, gather
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Optional, Union
 
 from loguru import logger
@@ -30,7 +30,7 @@ from app.test_engine.models import TestCase, TestRun, TestStep, TestSuite
 from app.test_engine.test_observer import Observer
 
 
-class TestUpdateTypeEnum(str, Enum):
+class TestUpdateTypeEnum(StrEnum):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
     TEST_RUN = "Test Run"
     TEST_SUITE = "Test Suite"

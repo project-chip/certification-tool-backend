@@ -22,13 +22,13 @@ requires-python = ">=3.10,<4.0"
 dynamic = ["dependencies"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-uvicorn = {version = "^0.15.0", extras = ["standard"]}
+python = "^3.12"
+uvicorn = {version = "^0.29.0", extras = ["standard"]}
 fastapi = "^0.95.1"
 python-multipart = "^0.0.5"
 tenacity = "^6.1.0"
 pydantic = "^1.10.11"
-gunicorn = "^20.0.4"
+gunicorn = "^23.0.0"
 # jinja2/click/coloredlogs: not imported anywhere in this repo's own source - they're
 # runtime dependencies of matter-idl
 jinja2 = "^3.1.2"
@@ -39,7 +39,7 @@ alembic = "^1.4.2"
 sqlalchemy = "^2.0"
 faker = "^4.14.0"
 loguru = "^0.5.3"
-docker = "^6.1.2"
+docker = "^7.1.0"
 SQLAlchemy-Utils = "^0.41.1"
 types-filelock = "^3.2.5"
 PyYAML = "^6.0"
@@ -55,7 +55,7 @@ autoflake = "^2.1.1"
 flake8 = "^6.0.0"
 pytest-cov = "^4.0.0"
 pytest = "^7.3.1"
-pytest-xdist = "^2.5.0"
+pytest-xdist = "^3.8.0"
 pytest-asyncio = "^0.21.0"
 httpx = "^0.23.0"
 asgi-lifespan = "^1.0.1"

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 import asyncio
-from enum import Enum, IntEnum
+from enum import IntEnum, StrEnum
 from typing import Any, Optional
 
 from chipyaml.adapters.chiptool.decoder import MatterLog
@@ -45,7 +45,7 @@ OUTCOME_TIMEOUT_S = 60 * 10  # Seconds
 EXTENDED_PROMPT_TIMEOUT_S = 300
 
 
-class ChipPromptTypeEnum(str, Enum):
+class ChipPromptTypeEnum(StrEnum):
     CHIP_APP_WAIT_FOR_PROMPT = "Wait for"
     CHIP_APP_QUERY_PROMPT = "Query"
     CHIP_APP_USER_PROMPT = "USER_PROMPT"
