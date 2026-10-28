@@ -332,3 +332,16 @@ async def test_start_does_not_block_event_loop() -> None:
     chip_server._ChipServer__chip_server_id = None
     chip_server._ChipServer__server_started = False
     matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
+
+
+def test_is_started_reflects_server_state() -> None:
+    chip_server: ChipServer = ChipServer()
+
+    chip_server._ChipServer__server_started = False
+    assert chip_server.is_started is False
+
+    chip_server._ChipServer__server_started = True
+    assert chip_server.is_started is True
+
+    # clean up:
+    chip_server._ChipServer__server_started = False

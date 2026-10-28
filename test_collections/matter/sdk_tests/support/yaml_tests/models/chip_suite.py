@@ -362,8 +362,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
             case _:
                 raise ValueError(
-                    f"Received unknown prompt option for \
-                        commissioning step: {prompt_response.response}"
+                    prompt_response.unexpected_response_message("commissioning step")
                 )
 
     async def __prompt_user_to_perform_commission(self) -> None:
@@ -394,8 +393,7 @@ class ChipSuite(TestSuite, UserPromptSupport):
 
             case _:
                 raise ValueError(
-                    f"Received unknown prompt option for \
-                        commissioning step: {prompt_response.response}"
+                    prompt_response.unexpected_response_message("commissioning step")
                 )
 
     async def __prompt_user_to_perform_decommission(self) -> None:

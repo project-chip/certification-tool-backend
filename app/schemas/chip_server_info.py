@@ -21,6 +21,9 @@ class ChipServerInfo(BaseModel):
 
     node_id: int
     node_id_hex: str
+    # `node_id` is regenerated every time the chip server starts, so it is only
+    # meaningful once the server is running.
+    server_started: bool = False
     manual_pairing_code: str | None = None
 
     class Config:
@@ -28,6 +31,7 @@ class ChipServerInfo(BaseModel):
             "example": {
                 "node_id": 1234567890,
                 "node_id_hex": "0x499602d2",
+                "server_started": True,
                 "manual_pairing_code": "34970112332",
             }
         }
