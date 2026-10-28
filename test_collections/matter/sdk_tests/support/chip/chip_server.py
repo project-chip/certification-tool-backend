@@ -93,6 +93,11 @@ class ChipServer(metaclass=Singleton):
 
         return self.__node_id
 
+    @property
+    def is_started(self) -> bool:
+        """True once the server is up, i.e. `node_id` is the one in use for the DUT."""
+        return self.__server_started
+
     def generate_manual_pairing_code_with_chip_tool(
         self,
         discriminator: str,

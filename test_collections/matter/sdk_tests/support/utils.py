@@ -66,8 +66,7 @@ async def __prompt_pass_fail_options(
 
         case _:
             raise ValueError(
-                f"Received unknown prompt option for \
-                        commissioning step: {prompt_response.response}"
+                prompt_response.unexpected_response_message("commissioning step")
             )
     return prompt_response.response
 

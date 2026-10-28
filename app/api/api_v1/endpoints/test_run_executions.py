@@ -258,8 +258,9 @@ def get_chip_server_info(
     """
     Retrieve ChipServer node ID information and generate manual pairing code.
 
-    Note: Manual pairing code generation requires the SDK container to be running.
-    If called before the SDK container starts, manual_pairing_code will be None.
+    The node ID is regenerated whenever the chip server starts, so it only matches
+    the one used for the DUT once server_started is True. Manual pairing code
+    generation also requires the SDK container, so it is only attempted then.
 
     Args:
         discriminator: Device discriminator (optional)
@@ -269,13 +270,15 @@ def get_chip_server_info(
         product_id: Product ID (default: 0)
 
     Returns:
-        ChipServerInfo: Contains node_id, node_id_hex, and optional manual_pairing_code.
+        ChipServerInfo: Contains node_id, node_id_hex, server_started, and optional
+        manual_pairing_code.
     """
     chip_server = ChipServer()
     node_id = chip_server.node_id
+    server_started = chip_server.is_started
 
     manual_pairing_code = None
-    if discriminator and setup_pin_code:
+    if server_started and discriminator and setup_pin_code:
         manual_pairing_code = chip_server.generate_manual_pairing_code_with_chip_tool(
             discriminator=discriminator,
             setup_pin_code=setup_pin_code,
@@ -287,6 +290,7 @@ def get_chip_server_info(
     return schemas.ChipServerInfo(
         node_id=node_id,
         node_id_hex=hex(node_id),
+        server_started=server_started,
         manual_pairing_code=manual_pairing_code or None,
     )
 
