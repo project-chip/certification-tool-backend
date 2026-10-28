@@ -38,3 +38,13 @@ class PromptResponse(BaseModel):
             self.response_str = (
                 str(kwargs["response"]) if kwargs["response"] is not None else None
             )
+
+    def unexpected_response_message(self, context: str) -> str:
+        """Describe a response that doesn't match any expected prompt option.
+
+        A prompt that expired has no response value, so report the timeout instead of
+        a misleading "unknown prompt option: None".
+        """
+        if self.status_code == UserResponseStatusEnum.TIMEOUT:
+            return f"Timed out waiting for user response during {context}."
+        return f"Received unknown prompt option for {context}: {self.response}"
