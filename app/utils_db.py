@@ -25,7 +25,7 @@ def get_db_url() -> str:
     password = os.getenv("POSTGRES_PASSWORD", "")
     server = os.getenv("POSTGRES_SERVER", "db")
     db = os.getenv("POSTGRES_DB", "app")
-    return f"postgresql://{user}:{password}@{server}/{db}"
+    return f"postgresql+psycopg2://{user}:{password}@{server}/{db}"
 
 
 def get_db_revision() -> str:

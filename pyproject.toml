@@ -18,7 +18,7 @@ name = "app"
 version = "0.1.0"
 description = ""
 authors = [{name = "Admin", email = "admin@example.com"}]
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.12,<4.0"
 dynamic = ["dependencies"]
 
 [tool.poetry.dependencies]
@@ -40,7 +40,7 @@ sqlalchemy = "^2.0"
 faker = "^4.14.0"
 loguru = "^0.5.3"
 docker = "^7.1.0"
-SQLAlchemy-Utils = "^0.41.1"
+SQLAlchemy-Utils = "^0.43.0"
 types-filelock = "^3.2.5"
 PyYAML = "^6.0"
 types-pyyaml = "^6.0.12.9"
