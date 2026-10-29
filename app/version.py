@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import importlib
+import importlib.util
 from pathlib import Path
 from typing import Any, Optional
 
@@ -61,7 +62,7 @@ def _get_matter_settings() -> Optional[Any]:
     Helper function to import and return matter_settings module.
     Returns None if the module is not found.
     """
-    if importlib.find_loader(MATTER_CONFIG_MODULE) is None:
+    if importlib.util.find_spec(MATTER_CONFIG_MODULE) is None:
         return None
 
     matter_config_module = importlib.import_module(MATTER_CONFIG_MODULE)

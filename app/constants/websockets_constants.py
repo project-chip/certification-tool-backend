@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from enum import Enum
+from enum import StrEnum
 
 from fastapi import WebSocket
 
@@ -27,7 +27,7 @@ UDP_SOCKET_PORT = 5000
 UDP_SOCKET_INTERFACE = "0.0.0.0"
 
 
-class WebSocketTypeEnum(str, Enum):
+class WebSocketTypeEnum(StrEnum):
     MAIN = "main"
     VIDEO = "video"
     WEBRTC_PEER = "webrtc_peer"

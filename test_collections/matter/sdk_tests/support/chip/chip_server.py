@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import re
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from random import randrange
 from time import time
@@ -55,7 +55,7 @@ class ChipServerExitError(Exception):
     """Raised when a timout happens while trying to exit the chip server"""
 
 
-class ChipServerType(str, Enum):
+class ChipServerType(StrEnum):
     CHIP_TOOL = "chip-tool"
     CHIP_APP = "chip-app"
 

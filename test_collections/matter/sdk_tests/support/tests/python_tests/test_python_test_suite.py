@@ -339,8 +339,8 @@ async def test_commissioning_suite_setup_with_pics() -> None:
     ):
         await suite_instance.setup()
 
-    mock_prompt_for_commissioning_mode.called_once()
-    mock_commission_device.called_once()
+    mock_prompt_for_commissioning_mode.assert_called_once()
+    mock_commission_device.assert_called_once()
 
 
 @pytest.mark.asyncio
