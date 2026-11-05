@@ -27,6 +27,7 @@ from app.models import (
     TestSuiteExecution,
     TestSuiteMetadata,
 )
+from app.schemas.test_collections import RescanChanges, ScriptError
 from app.schemas.test_selection import (
     TestCaseSelection,
     TestSelection,
@@ -41,6 +42,7 @@ from .models.test_declarations import (
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
+from .test_collection_diff import diff_test_collections
 from .test_collection_discovery import discover_test_collections
 
 # Type alias:
@@ -112,7 +114,7 @@ class TestScriptManager(object, metaclass=Singleton):
             logging.error(f"Failed to initialize Python tests: {e}")
             raise
 
-    async def rescan(self) -> None:
+    async def rescan(self) -> RescanChanges:
         """
         Re-run test collection discovery/registration in-process.
 
@@ -123,8 +125,13 @@ class TestScriptManager(object, metaclass=Singleton):
         If rescanning fails, the previously loaded test collections are kept
         so the backend remains usable, and the error is re-raised for the
         caller to report.
+
+        Returns the test cases added, modified and removed by the rescan, plus
+        any test scripts that could not be parsed (those are skipped, they do
+        not fail the rescan).
         """
         previous_test_collections = self.test_collections
+        script_errors: list[ScriptError] = []
 
         try:
             # This import only fails with ImportError when the python_testing
@@ -141,10 +148,12 @@ class TestScriptManager(object, metaclass=Singleton):
         except ImportError as e:
             logging.warning(f"Python testing module not available: {e}")
             self.test_collections = self._discover_test_collections()
-            return
+            return diff_test_collections(
+                previous_test_collections, self.test_collections
+            )
 
         try:
-            await initialize_python_tests()
+            await initialize_python_tests(script_errors=script_errors)
             self.test_collections = self._discover_test_collections()
             self._python_tests_initialized = True
 
@@ -152,6 +161,10 @@ class TestScriptManager(object, metaclass=Singleton):
             logging.error(f"Failed to rescan test collections: {e}")
             self.test_collections = previous_test_collections
             raise
+
+        return diff_test_collections(
+            previous_test_collections, self.test_collections, script_errors
+        )
 
     def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:
         if "pytest" in sys.modules:

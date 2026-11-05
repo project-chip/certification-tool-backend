@@ -23,6 +23,7 @@ from typing import Optional
 
 from loguru import logger
 
+from app.schemas.test_collections import ScriptError
 from test_collections.matter.config import matter_settings
 from test_collections.matter.sdk_tests.support.exec_run_in_container import (
     ExecResultExtended,
@@ -329,7 +330,9 @@ def base_test_classes(
     ]
 
 
-def get_command_list(test_folder: SDKTestFolder) -> list:
+def get_command_list(
+    test_folder: SDKTestFolder, script_errors: Optional[list[ScriptError]] = None
+) -> list:
     python_script_commands = []
     python_test_files = test_folder.file_paths(extension=".py")
     python_test_files.sort()
@@ -361,11 +364,18 @@ def get_command_list(test_folder: SDKTestFolder) -> list:
         try:
             with open(python_test_file, "r") as python_file:
                 parsed_python_file = ast.parse(python_file.read())
-        except SyntaxError:
+        except SyntaxError as e:
             # Skip files with syntax errors (e.g., unterminated strings)
             logger.warning(
                 f"Warning: Skipping {python_test_file.name} due to syntax error"
             )
+            if script_errors is not None:
+                script_errors.append(
+                    ScriptError(
+                        script=python_test_file.name,
+                        reason=f"Syntax error: {e.msg} (line {e.lineno})",
+                    )
+                )
             continue
 
         test_classes = base_test_classes(
@@ -445,6 +455,7 @@ async def __process_grouped_commands(
     complete_json: list,
     errors_found: list[str],
     warnings_found: list[str],
+    script_errors: Optional[list[ScriptError]] = None,
 ) -> tuple[int, int]:
     test_function_count: int = 0
     invalid_test_function_count: int = 0
@@ -466,12 +477,18 @@ async def __process_grouped_commands(
             f"Failed running command: {command_string}.\n"
             f"Error message: {error_message}"
         )
+        if script_errors is not None:
+            script_errors.append(ScriptError(reason=error_message))
         return test_function_count, invalid_test_function_count
 
     if not JSON_OUTPUT_FILE_PATH.exists():
         errors_found.append(
             f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"  # noqa
         )
+        if script_errors is not None:
+            script_errors.append(
+                ScriptError(reason="No test info was produced for the scripts")
+            )
         return test_function_count, invalid_test_function_count
 
     with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
@@ -488,6 +505,13 @@ async def __process_grouped_commands(
                     "Error message script_path: "
                     f"{json_dict.get('script_path', 'No script path provided')}\n"
                 )
+                if script_errors is not None:
+                    script_errors.append(
+                        ScriptError(
+                            script=json_dict.get("script_path"),
+                            reason=json_dict.get("detail", "No detail provided"),
+                        )
+                    )
                 invalid_test_function_count += 1
                 continue
 
@@ -513,6 +537,7 @@ async def __process_individual_commands(
     complete_json: list,
     errors_found: list[str],
     warnings_found: list[str],
+    script_errors: Optional[list[ScriptError]] = None,
 ) -> tuple[int, int]:
     test_function_count: int = 0
     invalid_test_function_count: int = 0
@@ -531,12 +556,23 @@ async def __process_individual_commands(
                 f"Failed running command: {command}.\n"
                 f"Error message: {error_message}"
             )
+            if script_errors is not None:
+                script_errors.append(
+                    ScriptError(script=command[0], reason=error_message)
+                )
             continue
 
         if not JSON_OUTPUT_FILE_PATH.exists():
             errors_found.append(
                 f"Command succeeded but expected JSON output file not found: {JSON_OUTPUT_FILE_PATH}"  # noqa
             )
+            if script_errors is not None:
+                script_errors.append(
+                    ScriptError(
+                        script=command[0],
+                        reason="No test info was produced for the script",
+                    )
+                )
             continue
 
         with open(JSON_OUTPUT_FILE_PATH, "r") as json_file:
@@ -616,6 +652,7 @@ async def process_test_commands_with_container(
     commands: list,
     json_output_file: Path,
     grouped_commands: bool = False,
+    script_errors: Optional[list[ScriptError]] = None,
 ) -> None:
     """Process test commands using an existing SDK container session.
 
@@ -627,6 +664,8 @@ async def process_test_commands_with_container(
         commands: List of test commands to process
         json_output_file: Path where JSON output should be written
         grouped_commands: Whether to process commands in grouped mode
+        script_errors: Optional list that scripts that failed to parse are
+            appended to, so callers can report them
     """
     test_function_count: int = 0
     invalid_test_function_count: int = 0
@@ -644,6 +683,7 @@ async def process_test_commands_with_container(
             complete_json,
             errors_found,
             warnings_found,
+            script_errors,
         )
     else:
         (
@@ -655,6 +695,7 @@ async def process_test_commands_with_container(
             complete_json,
             errors_found,
             warnings_found,
+            script_errors,
         )
 
     # Create a wrapper object with sdk_sha at root level

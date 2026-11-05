@@ -19,7 +19,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from loguru import logger
 
-from app.schemas import TestCollections
+from app.schemas import RescanTestCollections, TestCollections
 from app.schemas.test_runner_status import TestRunnerState
 from app.test_engine import TEST_ENGINE_BUSY_MESSAGE
 from app.test_engine.test_runner import TestRunner
@@ -41,14 +41,15 @@ def read_test_collections() -> Any:
     }
 
 
-@router.post("/rescan", response_model=TestCollections)
+@router.post("/rescan", response_model=RescanTestCollections)
 async def rescan_test_collections() -> Any:
     """
     Re-run test collection discovery/registration in-process.
 
     This picks up newly added or edited side-loaded test scripts without
     requiring a backend restart. Returns the refreshed list of test
-    collections.
+    collections, plus the test cases added, modified and removed by the
+    rescan and any scripts that could not be parsed.
     """
     if TestRunner().state != TestRunnerState.IDLE:
         raise HTTPException(
@@ -56,7 +57,7 @@ async def rescan_test_collections() -> Any:
         )
 
     try:
-        await test_script_manager.rescan()
+        changes = await test_script_manager.rescan()
     except Exception as e:
         logger.error(f"Failed to rescan test collections: {e}")
         raise HTTPException(
@@ -67,5 +68,6 @@ async def rescan_test_collections() -> Any:
     return {
         "test_collections": {
             k: v.as_dict() for k, v in test_script_manager.test_collections.items()
-        }
+        },
+        "changes": changes,
     }

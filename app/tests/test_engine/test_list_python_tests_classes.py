@@ -27,6 +27,7 @@ import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from app.schemas.test_collections import ScriptError
 from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa
     MATTER_BASE_TEST_CLASS_NAME,
     _is_matter_base_test_class,
@@ -466,6 +467,23 @@ class TestGetCommandList:
         )
         result = get_command_list(folder)
         assert result == []
+
+    def test_reports_files_with_syntax_errors(self, tmp_path: Path) -> None:
+        folder = _make_sdk_folder(
+            tmp_path,
+            {
+                "TC_BROKEN_1_1.py": "def broken(:\n",
+            },
+        )
+        script_errors: list[ScriptError] = []
+
+        result = get_command_list(folder, script_errors=script_errors)
+
+        assert result == []
+        assert len(script_errors) == 1
+        assert script_errors[0].script == "TC_BROKEN_1_1.py"
+        assert script_errors[0].reason.startswith("Syntax error")
+        assert "line 1" in script_errors[0].reason
 
     def test_skips_tc_file_with_no_base_test_subclass(self, tmp_path: Path) -> None:
         folder = _make_sdk_folder(

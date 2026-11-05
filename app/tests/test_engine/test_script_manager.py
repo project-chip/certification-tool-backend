@@ -18,6 +18,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.schemas.test_collections import ScriptError
+from app.test_engine.models.test_declarations import (
+    TestCaseDeclaration,
+    TestCollectionDeclaration,
+    TestSuiteDeclaration,
+)
 from app.test_engine.test_script_manager import (
     TestCaseNotFound,
     TestCollectionNotFound,
@@ -145,6 +151,49 @@ async def test_rescan_refreshes_test_collections(
     mock_init.assert_awaited_once()
     assert test_script_manager.test_collections == expected_collections
     assert test_script_manager._python_tests_initialized is True
+
+
+@pytest.mark.asyncio
+async def test_rescan_reports_changes_and_script_errors(
+    restore_test_collections: None,
+) -> None:
+    def make_collection(case_ids: list[str]) -> TestCollectionDeclaration:
+        collection = TestCollectionDeclaration(path="", name="custom")
+        suite = TestSuiteDeclaration(MagicMock())
+        suite.class_ref.public_id.return_value = "suite"
+        for case_id in case_ids:
+            case_ref = MagicMock()
+            case_ref.metadata = {"public_id": case_id, "description": "d"}
+            case_ref.public_id.return_value = case_id
+            case_ref.pics.return_value = set()
+            case_ref.python_test = None
+            suite.add_test_case(TestCaseDeclaration(case_ref))
+        collection.add_test_suite(suite)
+        return collection
+
+    before = {"custom": make_collection(["TC-OLD-1.1-custom", "TC-KEEP-1.1"])}
+    after = {"custom": make_collection(["TC-KEEP-1.1", "TC-NEW-1.1-custom"])}
+
+    async def fake_initialize(script_errors: list[ScriptError]) -> None:
+        script_errors.append(ScriptError(script="TC_BAD_1_1.py", reason="boom"))
+
+    with (
+        patch.object(test_script_manager, "test_collections", before),
+        patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "initialize_python_tests",
+            side_effect=fake_initialize,
+        ),
+        patch.object(
+            test_script_manager, "_discover_test_collections", return_value=after
+        ),
+    ):
+        changes = await test_script_manager.rescan()
+
+    assert [c.test_case for c in changes.added] == ["TC-NEW-1.1-custom"]
+    assert [c.test_case for c in changes.removed] == ["TC-OLD-1.1-custom"]
+    assert changes.modified == []
+    assert changes.errors == [ScriptError(script="TC_BAD_1_1.py", reason="boom")]
 
 
 @pytest.mark.asyncio

@@ -22,6 +22,7 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.schemas import RescanChanges, ScriptError, TestCaseChange
 from app.test_engine import TEST_ENGINE_BUSY_MESSAGE
 from app.test_engine.test_runner import TestRunner
 from app.test_engine.test_script_manager import test_script_manager
@@ -49,8 +50,20 @@ def test_read_available_test_collections(client: TestClient) -> None:
 
 
 def test_rescan_test_collections(client: TestClient) -> None:
+    rescan_changes = RescanChanges(
+        added=[
+            TestCaseChange(
+                collection="custom", test_suite="suite", test_case="TC-FAKE-1.1-custom"
+            )
+        ],
+        errors=[ScriptError(script="TC_BAD_1_1.py", reason="Syntax error")],
+        collections=["custom"],
+    )
     with patch.object(
-        test_script_manager, "rescan", new_callable=AsyncMock
+        test_script_manager,
+        "rescan",
+        new_callable=AsyncMock,
+        return_value=rescan_changes,
     ) as mock_rescan:
         response = client.post(
             f"{settings.API_V1_STR}/test_collections/rescan",
@@ -62,6 +75,19 @@ def test_rescan_test_collections(client: TestClient) -> None:
     content = response.json()
     assert "test_collections" in content
     assert "tool_unit_tests" in content["test_collections"]
+
+    # The change report is additive: it sits next to test_collections.
+    changes = content["changes"]
+    assert changes["added"] == [
+        {
+            "collection": "custom",
+            "test_suite": "suite",
+            "test_case": "TC-FAKE-1.1-custom",
+        }
+    ]
+    assert changes["modified"] == []
+    assert changes["removed"] == []
+    assert changes["errors"] == [{"script": "TC_BAD_1_1.py", "reason": "Syntax error"}]
 
 
 @pytest.mark.asyncio
