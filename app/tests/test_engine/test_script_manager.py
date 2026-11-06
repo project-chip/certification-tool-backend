@@ -187,13 +187,45 @@ async def test_rescan_reports_changes_and_script_errors(
         patch.object(
             test_script_manager, "_discover_test_collections", return_value=after
         ),
+        patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.find_custom_overrides",
+            return_value=(["TC_SUTestBase.py"], ["TC_ACE_1_3.py"]),
+        ),
     ):
         changes = await test_script_manager.rescan()
 
+    assert changes.custom_overrides.overriding == ["TC_SUTestBase.py"]
+    assert changes.custom_overrides.unused_copies == ["TC_ACE_1_3.py"]
     assert [c.test_case for c in changes.added] == ["TC-NEW-1.1-custom"]
     assert [c.test_case for c in changes.removed] == ["TC-OLD-1.1-custom"]
     assert changes.modified == []
     assert changes.errors == [ScriptError(script="TC_BAD_1_1.py", reason="boom")]
+
+
+@pytest.mark.asyncio
+async def test_rescan_reports_no_overrides_when_check_fails(
+    restore_test_collections: None,
+) -> None:
+    """An unreadable custom/ folder must not fail the rescan."""
+    with (
+        patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "initialize_python_tests",
+        ),
+        patch.object(
+            test_script_manager, "_discover_test_collections", return_value={}
+        ),
+        patch(
+            "test_collections.matter.sdk_tests.support.python_testing."
+            "list_python_tests_classes.find_custom_overrides",
+            side_effect=OSError("permission denied"),
+        ),
+    ):
+        changes = await test_script_manager.rescan()
+
+    assert changes.custom_overrides.overriding == []
+    assert changes.custom_overrides.unused_copies == []
 
 
 @pytest.mark.asyncio

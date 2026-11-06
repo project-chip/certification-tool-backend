@@ -15,7 +15,12 @@
 #
 from typing import Optional
 
-from app.schemas.test_collections import RescanChanges, ScriptError, TestCaseChange
+from app.schemas.test_collections import (
+    CustomOverrides,
+    RescanChanges,
+    ScriptError,
+    TestCaseChange,
+)
 
 from .models.test_declarations import TestCaseDeclaration, TestCollectionDeclaration
 
@@ -58,6 +63,7 @@ def diff_test_collections(
     before: dict[str, TestCollectionDeclaration],
     after: dict[str, TestCollectionDeclaration],
     errors: Optional[list[ScriptError]] = None,
+    custom_overrides: Optional[CustomOverrides] = None,
 ) -> RescanChanges:
     """Compare the test cases of two sets of test collections."""
     before_snapshot = _snapshot(before)
@@ -76,4 +82,5 @@ def diff_test_collections(
         removed=[change(k) for k in before_snapshot if k not in after_snapshot],
         errors=errors or [],
         collections=list(after.keys()),
+        custom_overrides=custom_overrides or CustomOverrides(),
     )

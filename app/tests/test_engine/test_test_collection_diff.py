@@ -18,7 +18,7 @@ from unittest.mock import MagicMock
 
 from pydantic import BaseModel
 
-from app.schemas.test_collections import ScriptError
+from app.schemas.test_collections import CustomOverrides, ScriptError
 from app.test_engine.models.test_declarations import (
     TestCaseDeclaration,
     TestCollectionDeclaration,
@@ -204,3 +204,22 @@ def test_errors_are_passed_through() -> None:
     changes = diff_test_collections(collections, collections, errors)
 
     assert changes.errors == errors
+
+
+def test_custom_overrides_are_passed_through() -> None:
+    collections = _collections({"c": {"s": [_case("TC-A-1.1")]}})
+    overrides = CustomOverrides(
+        overriding=["TC_SUTestBase.py"], unused_copies=["TC_ACE_1_3.py"]
+    )
+
+    changes = diff_test_collections(collections, collections, None, overrides)
+
+    assert changes.custom_overrides == overrides
+
+
+def test_custom_overrides_default_to_empty() -> None:
+    collections = _collections({"c": {"s": [_case("TC-A-1.1")]}})
+
+    changes = diff_test_collections(collections, collections)
+
+    assert changes.custom_overrides == CustomOverrides(overriding=[], unused_copies=[])

@@ -22,7 +22,7 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.schemas import RescanChanges, ScriptError, TestCaseChange
+from app.schemas import CustomOverrides, RescanChanges, ScriptError, TestCaseChange
 from app.test_engine import TEST_ENGINE_BUSY_MESSAGE
 from app.test_engine.test_runner import TestRunner
 from app.test_engine.test_script_manager import test_script_manager
@@ -60,6 +60,9 @@ def test_rescan_test_collections(client: TestClient) -> None:
         removed=[],
         errors=[ScriptError(script="TC_BAD_1_1.py", reason="Syntax error")],
         collections=["custom"],
+        custom_overrides=CustomOverrides(
+            overriding=["TC_SUTestBase.py"], unused_copies=["TC_ACE_1_3.py"]
+        ),
     )
     with patch.object(
         test_script_manager,
@@ -90,6 +93,10 @@ def test_rescan_test_collections(client: TestClient) -> None:
     assert changes["modified"] == []
     assert changes["removed"] == []
     assert changes["errors"] == [{"script": "TC_BAD_1_1.py", "reason": "Syntax error"}]
+    assert changes["custom_overrides"] == {
+        "overriding": ["TC_SUTestBase.py"],
+        "unused_copies": ["TC_ACE_1_3.py"],
+    }
 
 
 @pytest.mark.asyncio

@@ -32,6 +32,7 @@ from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_
     MATTER_BASE_TEST_CLASS_NAME,
     _is_matter_base_test_class,
     base_test_classes,
+    find_custom_overrides,
     get_command_list,
     load_ignore_list,
     load_include_list,
@@ -954,3 +955,66 @@ class TestSdkTestsResolveCustomOverrides:
             patch(f"{_MODULE}.CUSTOM_PYTHON_SCRIPTS_PATH", custom_dir),
         ):
             assert _is_matter_base_test_class("TC_FOO_1_1", module, other_dir) is False
+
+
+# ---------------------------------------------------------------------------
+# find_custom_overrides
+# ---------------------------------------------------------------------------
+
+
+class TestFindCustomOverrides:
+    def _dirs(self, tmp_path: Path) -> tuple[Path, Path]:
+        custom_dir = tmp_path / "custom"
+        sdk_dir = tmp_path / "sdk"
+        custom_dir.mkdir()
+        sdk_dir.mkdir()
+        return custom_dir, sdk_dir
+
+    def test_reports_imported_same_name_file_as_overriding(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (sdk_dir / "TC_Base.py").write_text("X = 1\n")
+        (custom_dir / "TC_Base.py").write_text("X = 2\n")
+        (sdk_dir / "TC_FOO_1_1.py").write_text("from TC_Base import X\n")
+
+        assert find_custom_overrides(custom_dir, sdk_dir) == (["TC_Base.py"], [])
+
+    def test_same_name_file_imported_only_by_a_custom_script_is_overriding(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (sdk_dir / "Helper.py").write_text("X = 1\n")
+        (custom_dir / "Helper.py").write_text("X = 2\n")
+        (custom_dir / "TC_BAR_1_1.py").write_text("import Helper\n")
+
+        assert find_custom_overrides(custom_dir, sdk_dir) == (["Helper.py"], [])
+
+    def test_test_copy_not_imported_by_anything_is_not_overriding(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (sdk_dir / "TC_ACE_1_3.py").write_text("class TC_ACE_1_3: pass\n")
+        (custom_dir / "TC_ACE_1_3.py").write_text("class TC_ACE_1_3: pass\n")
+
+        assert find_custom_overrides(custom_dir, sdk_dir) == ([], ["TC_ACE_1_3.py"])
+
+    def test_custom_only_file_is_not_reported(self, tmp_path: Path) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (custom_dir / "OnlyCustom.py").write_text("X = 1\n")
+        (sdk_dir / "TC_FOO_1_1.py").write_text("import OnlyCustom\n")
+
+        assert find_custom_overrides(custom_dir, sdk_dir) == ([], [])
+
+    def test_ignores_init_file(self, tmp_path: Path) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (custom_dir / "__init__.py").write_text("")
+        (sdk_dir / "__init__.py").write_text("")
+
+        assert find_custom_overrides(custom_dir, sdk_dir) == ([], [])
+
+    def test_missing_folders_return_empty(self, tmp_path: Path) -> None:
+        assert find_custom_overrides(tmp_path / "no_custom", tmp_path / "no_sdk") == (
+            [],
+            [],
+        )

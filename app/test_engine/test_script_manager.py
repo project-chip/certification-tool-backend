@@ -27,7 +27,7 @@ from app.models import (
     TestSuiteExecution,
     TestSuiteMetadata,
 )
-from app.schemas.test_collections import RescanChanges, ScriptError
+from app.schemas.test_collections import CustomOverrides, RescanChanges, ScriptError
 from app.schemas.test_selection import (
     TestCaseSelection,
     TestSelection,
@@ -48,6 +48,26 @@ from .test_collection_discovery import discover_test_collections
 # Type alias:
 TestSuiteClassType = Type[TestSuite]
 TestCaseClassType = Type[TestCase]
+
+
+def _custom_overrides() -> CustomOverrides:
+    """custom/ Python scripts that replace an SDK module of the same name.
+
+    Empty when the Python testing module is not available (e.g. DRY_RUN mode).
+    """
+    try:
+        from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa: E501
+            find_custom_overrides,
+        )
+    except ImportError:
+        return CustomOverrides()
+
+    try:
+        overriding, unused_copies = find_custom_overrides()
+    except OSError as e:
+        logging.warning(f"Could not check custom/ for SDK overrides: {e}")
+        return CustomOverrides()
+    return CustomOverrides(overriding=overriding, unused_copies=unused_copies)
 
 
 class TestNotFound(Exception):
@@ -163,7 +183,10 @@ class TestScriptManager(object, metaclass=Singleton):
             raise
 
         return diff_test_collections(
-            previous_test_collections, self.test_collections, script_errors
+            previous_test_collections,
+            self.test_collections,
+            script_errors,
+            _custom_overrides(),
         )
 
     def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:

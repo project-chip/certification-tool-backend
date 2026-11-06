@@ -330,6 +330,47 @@ def base_test_classes(
     ]
 
 
+# Matches the top-level module name of "import X" and "from X import ..." lines.
+_IMPORTED_MODULE_PATTERN = re.compile(r"^\s*(?:from|import)\s+([A-Za-z_]\w*)", re.M)
+
+
+def find_custom_overrides(
+    custom_dir: Path = CUSTOM_PYTHON_SCRIPTS_PATH,
+    sdk_dir: Path = PYTHON_SCRIPTS_PATH,
+) -> tuple[list[str], list[str]]:
+    """Find custom/*.py files that share a file name with an sdk/*.py file.
+
+    Such a file replaces the SDK module for every test that imports it (custom/ is
+    ahead of sdk/ on sys.path), so a stale copy left behind is easy to forget.
+
+    Returns:
+        (overriding, not_imported): sorted file names. `overriding` are imported by
+        name from another script in custom/ or sdk/, so they take effect.
+        `not_imported` are not imported by anything, typically a side-loaded copy of
+        an SDK test, so they override nothing.
+    """
+    if not custom_dir.is_dir() or not sdk_dir.is_dir():
+        return [], []
+
+    same_name = sorted(
+        path.name
+        for path in custom_dir.glob("*.py")
+        if path.name != "__init__.py" and (sdk_dir / path.name).is_file()
+    )
+    if not same_name:
+        return [], []
+
+    imported_modules: set[str] = set()
+    for folder in (sdk_dir, custom_dir):
+        for path in folder.glob("*.py"):
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            imported_modules.update(_IMPORTED_MODULE_PATTERN.findall(text))
+
+    overriding = [name for name in same_name if Path(name).stem in imported_modules]
+    not_imported = [name for name in same_name if name not in overriding]
+    return overriding, not_imported
+
+
 def get_command_list(
     test_folder: SDKTestFolder, script_errors: Optional[list[ScriptError]] = None
 ) -> list:

@@ -61,6 +61,17 @@ class ScriptError(BaseModel):
     reason: str
 
 
+class CustomOverrides(BaseModel):
+    """Python scripts in custom/ that share a file name with a script in sdk/."""
+
+    # Imported by name from another script, so they are used instead of the SDK
+    # module (custom/ comes first on sys.path) by every test that imports them.
+    overriding: list[str] = []
+    # Not imported by anything, typically a side-loaded copy of an SDK test, so
+    # they override nothing.
+    unused_copies: list[str] = []
+
+
 class RescanChanges(BaseModel):
     """Difference between the test cases known before and after a rescan."""
 
@@ -71,6 +82,7 @@ class RescanChanges(BaseModel):
     # Names of all collections present after the rescan, so clients can report
     # the ones that did not change.
     collections: list[str]
+    custom_overrides: CustomOverrides = CustomOverrides()
 
 
 class TestCollections(BaseModel):

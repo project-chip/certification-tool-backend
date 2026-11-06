@@ -28,6 +28,7 @@ from .project import Project, ProjectCreate, ProjectInDB, ProjectUpdate
 from .test_case_execution import TestCaseExecution, TestCaseExecutionToExport
 from .test_case_metadata import TestCaseMetadata, TestCaseMetadataBase
 from .test_collections import (
+    CustomOverrides,
     RescanChanges,
     ScriptError,
     TestCaseChange,
