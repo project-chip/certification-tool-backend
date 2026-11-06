@@ -851,3 +851,88 @@ class TestGetCommandListCustomFolder:
 
         assert len(result) == 1
         assert result[0][1] == "TC_FOO_1_1"
+
+
+# ---------------------------------------------------------------------------
+# SDK tests are scanned against custom helpers that override SDK ones
+# ---------------------------------------------------------------------------
+
+_MODULE = (
+    "test_collections.matter.sdk_tests.support.python_testing"
+    ".list_python_tests_classes"
+)
+
+
+class TestSdkTestsResolveCustomOverrides:
+    def _dirs(self, tmp_path: Path) -> tuple[Path, Path]:
+        sdk_dir = tmp_path / "sdk"
+        custom_dir = tmp_path / "custom"
+        sdk_dir.mkdir()
+        custom_dir.mkdir()
+        return sdk_dir, custom_dir
+
+    def test_custom_helper_is_used_to_scan_sdk_test(self, tmp_path: Path) -> None:
+        sdk_dir, custom_dir = self._dirs(tmp_path)
+        # SDK helper is NOT a Matter test base, the custom override is.
+        (sdk_dir / "MyBase.py").write_text("class MyBase:\n    pass\n")
+        (custom_dir / "MyBase.py").write_text(
+            f"class MyBase({MATTER_BASE_TEST_CLASS_NAME}):\n    pass\n"
+        )
+        module = _parse(
+            """
+            from MyBase import MyBase
+
+            class TC_FOO_1_1(MyBase):
+                pass
+        """
+        )
+
+        with (
+            patch(f"{_MODULE}.PYTHON_SCRIPTS_PATH", sdk_dir),
+            patch(f"{_MODULE}.CUSTOM_PYTHON_SCRIPTS_PATH", custom_dir),
+        ):
+            assert _is_matter_base_test_class("TC_FOO_1_1", module, sdk_dir) is True
+
+    def test_sdk_helper_is_used_without_custom_override(self, tmp_path: Path) -> None:
+        sdk_dir, custom_dir = self._dirs(tmp_path)
+        (sdk_dir / "MyBase.py").write_text(
+            f"class MyBase({MATTER_BASE_TEST_CLASS_NAME}):\n    pass\n"
+        )
+        module = _parse(
+            """
+            from MyBase import MyBase
+
+            class TC_FOO_1_1(MyBase):
+                pass
+        """
+        )
+
+        with (
+            patch(f"{_MODULE}.PYTHON_SCRIPTS_PATH", sdk_dir),
+            patch(f"{_MODULE}.CUSTOM_PYTHON_SCRIPTS_PATH", custom_dir),
+        ):
+            assert _is_matter_base_test_class("TC_FOO_1_1", module, sdk_dir) is True
+
+    def test_custom_dir_not_added_for_folders_outside_sdk_scripts(
+        self, tmp_path: Path
+    ) -> None:
+        sdk_dir, custom_dir = self._dirs(tmp_path)
+        other_dir = tmp_path / "other"
+        other_dir.mkdir()
+        (custom_dir / "MyBase.py").write_text(
+            f"class MyBase({MATTER_BASE_TEST_CLASS_NAME}):\n    pass\n"
+        )
+        module = _parse(
+            """
+            from MyBase import MyBase
+
+            class TC_FOO_1_1(MyBase):
+                pass
+        """
+        )
+
+        with (
+            patch(f"{_MODULE}.PYTHON_SCRIPTS_PATH", sdk_dir),
+            patch(f"{_MODULE}.CUSTOM_PYTHON_SCRIPTS_PATH", custom_dir),
+        ):
+            assert _is_matter_base_test_class("TC_FOO_1_1", module, other_dir) is False

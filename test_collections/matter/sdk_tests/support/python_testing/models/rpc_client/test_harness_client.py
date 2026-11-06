@@ -22,6 +22,7 @@ import json
 import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
+from pathlib import Path
 
 from matter.testing.CommissioningPreTest import CommissionDeviceTest
 from matter.testing.matter_testing import MatterTestConfig
@@ -144,11 +145,49 @@ class TestRunnerHooks:
         print("=====> hooks.step_manual")
 
 
+def configure_sys_path(scripts_root: str = "/root/python_testing/scripts") -> None:
+    # `scripts` makes `custom.TC_XYZ` / `sdk.TC_XYZ` importable as packages.
+    sys.path.append(scripts_root)
+    # `custom` must come before `sdk` so a side-loaded helper (e.g. TC_SUTestBase.py)
+    # shadows the SDK module of the same name when a test does a flat import. This
+    # mirrors the discovery order in list_python_tests_classes.py (custom/, then sdk/).
+    sys.path.append(f"{scripts_root}/custom")
+    sys.path.append(f"{scripts_root}/sdk")
+
+
+def print_custom_overrides(scripts_root: str = "/root/python_testing/scripts") -> None:
+    """Print the helper modules loaded from `custom/`, so a run's log shows them.
+
+    A file left in `custom/` silently replaces the SDK module with the same name for
+    every test, so list each flat-imported module that came from `custom/` and say
+    whether it overrides an SDK file. Prints nothing when `custom/` was not used.
+    """
+    custom_dir = Path(scripts_root, "custom").resolve()
+    sdk_dir = Path(scripts_root, "sdk").resolve()
+    for name, module in sorted(sys.modules.items()):
+        # Dotted names (custom.TC_XYZ) are the side-loaded tests themselves.
+        module_file = getattr(module, "__file__", None)
+        if "." in name or not module_file:
+            continue
+        path = Path(module_file).resolve()
+        if path.parent != custom_dir:
+            continue
+        if (sdk_dir / path.name).exists():
+            print(
+                f"SIDELOAD: {name} loaded from custom/{path.name}, "
+                f"overriding sdk/{path.name}"
+            )
+        else:
+            print(
+                f"SIDELOAD: {name} loaded from custom/{path.name} "
+                "(no sdk/ counterpart)"
+            )
+
+
 def main() -> None:
     # Load python_testing/scripts as a module. This folder is where all python scripts
     # are located
-    sys.path.append("/root/python_testing/scripts")
-    sys.path.append("/root/python_testing/scripts/sdk")
+    configure_sys_path()
 
     test_args = sys.argv[1:]
 
@@ -275,6 +314,7 @@ def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> Non
         # For a script_path like 'custom/TC_XYZ' the module is 'custom.TC_XYZ'
         module = importlib.import_module(script_path.replace("/", "."))
         TestClassReference = getattr(module, class_name)
+        print_custom_overrides()
 
         run_tests(TestClassReference, config, test_runner_hooks)
     except Exception as e:

@@ -132,6 +132,25 @@ def load_include_list() -> set[str]:
     return __load_file_list(PYTHON_TESTS_INCLUDE_FILE)
 
 
+def _resolution_dirs(
+    search_dir: Optional[Path], extra_search_dirs: list[Path]
+) -> list[Path]:
+    """Directories searched, in order, to resolve a locally-imported module.
+
+    At run time `scripts/custom` is ahead of `scripts/sdk` for every test (see
+    configure_sys_path() in test_harness_client.py), so an SDK test is scanned
+    against a custom helper that overrides one of its SDK helpers as well.
+    """
+    dirs = ([search_dir] if search_dir else []) + extra_search_dirs
+    if (
+        search_dir is not None
+        and search_dir.is_relative_to(PYTHON_SCRIPTS_PATH)
+        and CUSTOM_PYTHON_SCRIPTS_PATH not in dirs
+    ):
+        dirs.insert(0, CUSTOM_PYTHON_SCRIPTS_PATH)
+    return dirs
+
+
 def _is_matter_base_test_class(
     class_name: str,
     module: ast.Module,
@@ -216,7 +235,7 @@ def _is_matter_base_test_class(
             # Also search _extra_search_dirs for modules that live outside search_dir
             # (e.g. support_modules/ under sdk/ when resolving imports from custom/).
             module_rel_path = f"{node.module.replace('.', '/')}.py"
-            all_search_dirs = ([search_dir] if search_dir else []) + _extra_search_dirs
+            all_search_dirs = _resolution_dirs(search_dir, _extra_search_dirs)
             candidate = next(
                 (p for d in all_search_dirs if (p := d / module_rel_path).exists()),
                 None,

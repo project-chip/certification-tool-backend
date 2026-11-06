@@ -131,13 +131,11 @@ async def _generate_all_test_files() -> None:
         logger.info("SDK container destroyed after test file generation")
 
 
-def _create_collections() -> (
-    tuple[
-        TestCollectionDeclaration,
-        TestCollectionDeclaration,
-        TestCollectionDeclaration | None,
-    ]
-):
+def _create_collections() -> tuple[
+    TestCollectionDeclaration,
+    TestCollectionDeclaration,
+    TestCollectionDeclaration | None,
+]:
     """Create and return all Python test collection declarations."""
     return (
         sdk_python_test_collection(),
@@ -146,13 +144,11 @@ def _create_collections() -> (
     )
 
 
-def initialize_python_tests_sync() -> (
-    tuple[
-        TestCollectionDeclaration,
-        TestCollectionDeclaration,
-        TestCollectionDeclaration | None,
-    ]
-):
+def initialize_python_tests_sync() -> tuple[
+    TestCollectionDeclaration,
+    TestCollectionDeclaration,
+    TestCollectionDeclaration | None,
+]:
     """
     Synchronous version for test environments.
 
