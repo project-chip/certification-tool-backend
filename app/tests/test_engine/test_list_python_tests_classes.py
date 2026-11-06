@@ -481,7 +481,7 @@ class TestGetCommandList:
 
         assert result == []
         assert len(script_errors) == 1
-        assert script_errors[0].script == "TC_BROKEN_1_1.py"
+        assert script_errors[0].script == f"{tmp_path.name}/TC_BROKEN_1_1.py"
         assert script_errors[0].reason.startswith("Syntax error")
         assert "line 1" in script_errors[0].reason
 

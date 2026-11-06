@@ -16,6 +16,8 @@
 from typing import Any, Optional
 from unittest.mock import MagicMock
 
+from pydantic import BaseModel
+
 from app.schemas.test_collections import ScriptError
 from app.test_engine.models.test_declarations import (
     TestCaseDeclaration,
@@ -23,6 +25,14 @@ from app.test_engine.models.test_declarations import (
     TestSuiteDeclaration,
 )
 from app.test_engine.test_collection_diff import diff_test_collections
+
+
+class FakePythonTest(BaseModel):
+    """Stand-in for PythonTest: a pydantic model with a PICS set and steps."""
+
+    name: str = "TC-A-1.1"
+    PICS: set[str] = set()
+    steps: list[str] = []
 
 
 def _case(
@@ -146,12 +156,38 @@ def test_modified_when_pics_change() -> None:
 
 
 def test_modified_when_parsed_python_test_changes() -> None:
-    before = _collections({"c": {"s": [_case("TC-A-1.1", python_test="steps=[1]")]}})
-    after = _collections({"c": {"s": [_case("TC-A-1.1", python_test="steps=[1, 2]")]}})
+    before = _collections(
+        {"c": {"s": [_case("TC-A-1.1", python_test=FakePythonTest(steps=["1"]))]}}
+    )
+    after = _collections(
+        {"c": {"s": [_case("TC-A-1.1", python_test=FakePythonTest(steps=["1", "2"]))]}}
+    )
 
     changes = diff_test_collections(before, after)
 
     assert _keys(changes.modified) == [("c", "s", "TC-A-1.1")]
+
+
+def test_python_test_pics_order_does_not_count_as_modification() -> None:
+    pics = [f"X{i}.S" for i in range(50)]
+    # Sets built from the same values in a different order may repr differently
+    before = _collections(
+        {"c": {"s": [_case("TC-A-1.1", python_test=FakePythonTest(PICS=set(pics)))]}}
+    )
+    after = _collections(
+        {
+            "c": {
+                "s": [
+                    _case(
+                        "TC-A-1.1",
+                        python_test=FakePythonTest(PICS=set(reversed(pics))),
+                    )
+                ]
+            }
+        }
+    )
+
+    assert diff_test_collections(before, after).modified == []
 
 
 def test_pics_order_does_not_count_as_modification() -> None:

@@ -372,7 +372,7 @@ def get_command_list(
             if script_errors is not None:
                 script_errors.append(
                     ScriptError(
-                        script=python_test_file.name,
+                        script=f"{parent_folder}/{python_test_file.name}",
                         reason=f"Syntax error: {e.msg} (line {e.lineno})",
                     )
                 )

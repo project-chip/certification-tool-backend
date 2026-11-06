@@ -37,7 +37,9 @@ def _fingerprint(test_case: TestCaseDeclaration) -> str:
     ]
     python_test = getattr(test_case.class_ref, "python_test", None)
     if python_test is not None:
-        parts.append(repr(python_test))
+        # PICS is a set whose repr order depends on insertion history, so sort it.
+        parts.append(repr(python_test.dict(exclude={"PICS"})))
+        parts.append(repr(sorted(python_test.PICS)))
     return "\n".join(parts)
 
 
