@@ -19,7 +19,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from loguru import logger
 
-from app.schemas import RescanTestCollections, TestCollections
+from app.schemas import TestCollections
 from app.schemas.test_runner_status import TestRunnerState
 from app.test_engine import TEST_ENGINE_BUSY_MESSAGE
 from app.test_engine.test_runner import TestRunner
@@ -41,7 +41,7 @@ def read_test_collections() -> Any:
     }
 
 
-@router.post("/rescan", response_model=RescanTestCollections)
+@router.post("/rescan", response_model=TestCollections)
 async def rescan_test_collections() -> Any:
     """
     Re-run test collection discovery/registration in-process.

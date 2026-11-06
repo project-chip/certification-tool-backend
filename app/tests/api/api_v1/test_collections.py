@@ -56,6 +56,8 @@ def test_rescan_test_collections(client: TestClient) -> None:
                 collection="custom", test_suite="suite", test_case="TC-FAKE-1.1-custom"
             )
         ],
+        modified=[],
+        removed=[],
         errors=[ScriptError(script="TC_BAD_1_1.py", reason="Syntax error")],
         collections=["custom"],
     )

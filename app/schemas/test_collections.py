@@ -44,10 +44,6 @@ class TestCollection(BaseModel):
     test_suites: Dict[str, TestSuite]
 
 
-class TestCollections(BaseModel):
-    test_collections: Dict[str, TestCollection]
-
-
 class TestCaseChange(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
     collection: str
@@ -68,16 +64,19 @@ class ScriptError(BaseModel):
 class RescanChanges(BaseModel):
     """Difference between the test cases known before and after a rescan."""
 
-    added: list[TestCaseChange] = []
-    modified: list[TestCaseChange] = []
-    removed: list[TestCaseChange] = []
-    errors: list[ScriptError] = []
+    added: list[TestCaseChange]
+    modified: list[TestCaseChange]
+    removed: list[TestCaseChange]
+    errors: list[ScriptError]
     # Names of all collections present after the rescan, so clients can report
     # the ones that did not change.
-    collections: list[str] = []
+    collections: list[str]
 
 
-class RescanTestCollections(TestCollections):
-    # Additive on top of the plain TestCollections response, so clients that
-    # only read test_collections keep working.
-    changes: RescanChanges
+class TestCollections(BaseModel):
+    test_collections: Dict[str, TestCollection]
+    # Only set in the rescan response; additive, so clients that only read
+    # test_collections keep working. Kept on this model, rather than on a
+    # separate response model sharing test_collections, because the CLI's
+    # OpenAPI client generator mis-names two such models.
+    changes: Optional[RescanChanges] = None
