@@ -278,8 +278,9 @@ def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> Non
 
         run_tests(TestClassReference, config, test_runner_hooks)
     except Exception as e:
+        msg = f"{type(e).__name__}: {e}" if str(e) else type(e).__name__
         test_runner_hooks.step_failure(
-            logger=None, logs=str(e), duration=0, request=None, received=None
+            logger=None, logs=msg, duration=0, request=None, received=None
         )
         test_runner_hooks.stop(duration=0)
 
