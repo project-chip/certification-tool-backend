@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Optional
+from typing import Collection, Optional
 
 from app.schemas.test_collections import (
-    CustomOverrides,
+    CustomFileChange,
+    CustomFileChanges,
     RescanChanges,
     ScriptError,
     TestCaseChange,
@@ -63,7 +64,7 @@ def diff_test_collections(
     before: dict[str, TestCollectionDeclaration],
     after: dict[str, TestCollectionDeclaration],
     errors: Optional[list[ScriptError]] = None,
-    custom_overrides: Optional[CustomOverrides] = None,
+    custom_files: Optional[CustomFileChanges] = None,
 ) -> RescanChanges:
     """Compare the test cases of two sets of test collections."""
     before_snapshot = _snapshot(before)
@@ -82,5 +83,28 @@ def diff_test_collections(
         removed=[change(k) for k in before_snapshot if k not in after_snapshot],
         errors=errors or [],
         collections=list(after.keys()),
-        custom_overrides=custom_overrides or CustomOverrides(),
+        custom_files=custom_files or CustomFileChanges(),
+    )
+
+
+def diff_custom_files(
+    before: dict[str, str],
+    after: dict[str, str],
+    replacing_sdk: Collection[str] = (),
+) -> CustomFileChanges:
+    """Compare two snapshots (file name -> content hash) of the custom/ folder.
+
+    `replacing_sdk` are the file names a custom/ file of that name would replace
+    an SDK module for; they are flagged on the entries.
+    """
+
+    def change(name: str) -> CustomFileChange:
+        return CustomFileChange(name=name, replaces_sdk=name in replacing_sdk)
+
+    return CustomFileChanges(
+        added=[change(n) for n in sorted(after) if n not in before],
+        modified=[
+            change(n) for n in sorted(after) if n in before and before[n] != after[n]
+        ],
+        removed=[change(n) for n in sorted(before) if n not in after],
     )

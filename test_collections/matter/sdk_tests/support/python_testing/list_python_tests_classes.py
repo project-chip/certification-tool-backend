@@ -16,10 +16,11 @@
 
 import ast
 import asyncio
+import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Collection, Optional
 
 from loguru import logger
 
@@ -334,41 +335,51 @@ def base_test_classes(
 _IMPORTED_MODULE_PATTERN = re.compile(r"^\s*(?:from|import)\s+([A-Za-z_]\w*)", re.M)
 
 
-def find_custom_overrides(
+def snapshot_custom_files(
+    custom_dir: Path = CUSTOM_PYTHON_SCRIPTS_PATH,
+) -> dict[str, str]:
+    """Map the name of each custom/*.py file to a SHA-256 of its content.
+
+    Used to tell, between two rescans, which custom files were added, modified or
+    removed, whether or not discovery reads what changed.
+    """
+    if not custom_dir.is_dir():
+        return {}
+    return {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(custom_dir.glob("*.py"))
+        if path.name != "__init__.py"
+    }
+
+
+def sdk_modules_replaced_by_name(
+    names: Collection[str],
     custom_dir: Path = CUSTOM_PYTHON_SCRIPTS_PATH,
     sdk_dir: Path = PYTHON_SCRIPTS_PATH,
-) -> tuple[list[str], list[str]]:
-    """Find custom/*.py files that share a file name with an sdk/*.py file.
+) -> set[str]:
+    """Of the given file names, those a custom/ file of that name would replace.
 
-    Such a file replaces the SDK module for every test that imports it (custom/ is
-    ahead of sdk/ on sys.path), so a stale copy left behind is easy to forget.
-
-    Returns:
-        (overriding, not_imported): sorted file names. `overriding` are imported by
-        name from another script in custom/ or sdk/, so they take effect.
-        `not_imported` are not imported by anything, typically a side-loaded copy of
-        an SDK test, so they override nothing.
+    That is the names that match an sdk/*.py file and whose module is imported by
+    name from another script in sdk/ or custom/ (custom/ is ahead of sdk/ on
+    sys.path). A same-name copy of an SDK test is not imported by anything, so it
+    replaces nothing.
     """
-    if not custom_dir.is_dir() or not sdk_dir.is_dir():
-        return [], []
+    if not sdk_dir.is_dir():
+        return set()
 
-    same_name = sorted(
-        path.name
-        for path in custom_dir.glob("*.py")
-        if path.name != "__init__.py" and (sdk_dir / path.name).is_file()
-    )
+    same_name = {name for name in names if (sdk_dir / name).is_file()}
     if not same_name:
-        return [], []
+        return set()
 
     imported_modules: set[str] = set()
     for folder in (sdk_dir, custom_dir):
+        if not folder.is_dir():
+            continue
         for path in folder.glob("*.py"):
             text = path.read_text(encoding="utf-8", errors="ignore")
             imported_modules.update(_IMPORTED_MODULE_PATTERN.findall(text))
 
-    overriding = [name for name in same_name if Path(name).stem in imported_modules]
-    not_imported = [name for name in same_name if name not in overriding]
-    return overriding, not_imported
+    return {name for name in same_name if Path(name).stem in imported_modules}
 
 
 def get_command_list(

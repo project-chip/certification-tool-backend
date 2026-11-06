@@ -61,15 +61,22 @@ class ScriptError(BaseModel):
     reason: str
 
 
-class CustomOverrides(BaseModel):
-    """Python scripts in custom/ that share a file name with a script in sdk/."""
+class CustomFileChange(BaseModel):
+    """A file in custom/ that was added, modified or removed by a rescan."""
 
-    # Imported by name from another script, so they are used instead of the SDK
-    # module (custom/ comes first on sys.path) by every test that imports them.
-    overriding: list[str] = []
-    # Not imported by anything, typically a side-loaded copy of an SDK test, so
-    # they override nothing.
-    unused_copies: list[str] = []
+    name: str
+    # A custom/ file of this name replaces an SDK module: it matches an sdk/ file
+    # and another script imports it by name, so every test importing it gets the
+    # custom copy.
+    replaces_sdk: bool = False
+
+
+class CustomFileChanges(BaseModel):
+    """Python files in custom/ added, modified or removed since the last rescan."""
+
+    added: list[CustomFileChange] = []
+    modified: list[CustomFileChange] = []
+    removed: list[CustomFileChange] = []
 
 
 class RescanChanges(BaseModel):
@@ -82,7 +89,7 @@ class RescanChanges(BaseModel):
     # Names of all collections present after the rescan, so clients can report
     # the ones that did not change.
     collections: list[str]
-    custom_overrides: CustomOverrides = CustomOverrides()
+    custom_files: CustomFileChanges = CustomFileChanges()
 
 
 class TestCollections(BaseModel):

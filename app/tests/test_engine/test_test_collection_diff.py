@@ -18,13 +18,20 @@ from unittest.mock import MagicMock
 
 from pydantic import BaseModel
 
-from app.schemas.test_collections import CustomOverrides, ScriptError
+from app.schemas.test_collections import (
+    CustomFileChange,
+    CustomFileChanges,
+    ScriptError,
+)
 from app.test_engine.models.test_declarations import (
     TestCaseDeclaration,
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
-from app.test_engine.test_collection_diff import diff_test_collections
+from app.test_engine.test_collection_diff import (
+    diff_custom_files,
+    diff_test_collections,
+)
 
 
 class FakePythonTest(BaseModel):
@@ -206,20 +213,52 @@ def test_errors_are_passed_through() -> None:
     assert changes.errors == errors
 
 
-def test_custom_overrides_are_passed_through() -> None:
+def test_custom_files_are_passed_through() -> None:
     collections = _collections({"c": {"s": [_case("TC-A-1.1")]}})
-    overrides = CustomOverrides(
-        overriding=["TC_SUTestBase.py"], unused_copies=["TC_ACE_1_3.py"]
-    )
+    custom_files = CustomFileChanges(added=[CustomFileChange(name="TC_Base.py")])
 
-    changes = diff_test_collections(collections, collections, None, overrides)
+    changes = diff_test_collections(collections, collections, None, custom_files)
 
-    assert changes.custom_overrides == overrides
+    assert changes.custom_files == custom_files
 
 
-def test_custom_overrides_default_to_empty() -> None:
+def test_custom_files_default_to_empty() -> None:
     collections = _collections({"c": {"s": [_case("TC-A-1.1")]}})
 
     changes = diff_test_collections(collections, collections)
 
-    assert changes.custom_overrides == CustomOverrides(overriding=[], unused_copies=[])
+    assert changes.custom_files == CustomFileChanges()
+
+
+def test_diff_custom_files_added_modified_removed() -> None:
+    before = {"Keep.py": "1", "Edit.py": "1", "Gone.py": "1"}
+    after = {"Keep.py": "1", "Edit.py": "2", "New.py": "1"}
+
+    changes = diff_custom_files(before, after)
+
+    assert [c.name for c in changes.added] == ["New.py"]
+    assert [c.name for c in changes.modified] == ["Edit.py"]
+    assert [c.name for c in changes.removed] == ["Gone.py"]
+
+
+def test_diff_custom_files_no_changes() -> None:
+    snapshot = {"Keep.py": "1"}
+
+    assert diff_custom_files(snapshot, dict(snapshot)) == CustomFileChanges()
+
+
+def test_diff_custom_files_flags_files_replacing_an_sdk_module() -> None:
+    changes = diff_custom_files(
+        {"Helper.py": "1", "TC_ACE_1_3.py": "1"},
+        {"Helper.py": "2", "TC_ACE_1_3.py": "2"},
+        replacing_sdk={"Helper.py"},
+    )
+
+    by_name = {c.name: c.replaces_sdk for c in changes.modified}
+    assert by_name == {"Helper.py": True, "TC_ACE_1_3.py": False}
+
+
+def test_diff_custom_files_flags_a_removed_file_that_replaced_an_sdk_module() -> None:
+    changes = diff_custom_files({"Helper.py": "1"}, {}, replacing_sdk={"Helper.py"})
+
+    assert changes.removed == [CustomFileChange(name="Helper.py", replaces_sdk=True)]
