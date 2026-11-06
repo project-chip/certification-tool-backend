@@ -13,6 +13,7 @@
         "behaviour",
         "bothify",
         "buildx",
+        "capsys",
         "chip",
         "commissionee",
         "connectedhomeip",
