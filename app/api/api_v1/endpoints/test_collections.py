@@ -48,7 +48,8 @@ async def rescan_test_collections() -> Any:
 
     This picks up newly added or edited side-loaded test scripts without
     requiring a backend restart. Returns the refreshed list of test
-    collections.
+    collections, plus the test cases added, modified and removed by the
+    rescan and any scripts that could not be parsed.
     """
     if TestRunner().state != TestRunnerState.IDLE:
         raise HTTPException(
@@ -56,7 +57,7 @@ async def rescan_test_collections() -> Any:
         )
 
     try:
-        await test_script_manager.rescan()
+        changes = await test_script_manager.rescan()
     except Exception as e:
         logger.error(f"Failed to rescan test collections: {e}")
         raise HTTPException(
@@ -67,5 +68,6 @@ async def rescan_test_collections() -> Any:
     return {
         "test_collections": {
             k: v.as_dict() for k, v in test_script_manager.test_collections.items()
-        }
+        },
+        "changes": changes,
     }

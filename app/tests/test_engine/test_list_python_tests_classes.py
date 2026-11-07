@@ -27,6 +27,7 @@ import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from app.schemas.test_collections import ScriptError
 from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa
     MATTER_BASE_TEST_CLASS_NAME,
     _is_matter_base_test_class,
@@ -34,6 +35,8 @@ from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_
     get_command_list,
     load_ignore_list,
     load_include_list,
+    sdk_modules_replaced_by_name,
+    snapshot_custom_files,
 )
 
 # ---------------------------------------------------------------------------
@@ -466,6 +469,23 @@ class TestGetCommandList:
         )
         result = get_command_list(folder)
         assert result == []
+
+    def test_reports_files_with_syntax_errors(self, tmp_path: Path) -> None:
+        folder = _make_sdk_folder(
+            tmp_path,
+            {
+                "TC_BROKEN_1_1.py": "def broken(:\n",
+            },
+        )
+        script_errors: list[ScriptError] = []
+
+        result = get_command_list(folder, script_errors=script_errors)
+
+        assert result == []
+        assert len(script_errors) == 1
+        assert script_errors[0].script == f"{tmp_path.name}/TC_BROKEN_1_1.py"
+        assert script_errors[0].reason.startswith("Syntax error")
+        assert "line 1" in script_errors[0].reason
 
     def test_skips_tc_file_with_no_base_test_subclass(self, tmp_path: Path) -> None:
         folder = _make_sdk_folder(
@@ -936,3 +956,107 @@ class TestSdkTestsResolveCustomOverrides:
             patch(f"{_MODULE}.CUSTOM_PYTHON_SCRIPTS_PATH", custom_dir),
         ):
             assert _is_matter_base_test_class("TC_FOO_1_1", module, other_dir) is False
+
+
+# ---------------------------------------------------------------------------
+# sdk_modules_replaced_by_name / snapshot_custom_files
+# ---------------------------------------------------------------------------
+
+
+class TestSdkModulesReplacedByName:
+    def _dirs(self, tmp_path: Path) -> tuple[Path, Path]:
+        custom_dir = tmp_path / "custom"
+        sdk_dir = tmp_path / "sdk"
+        custom_dir.mkdir()
+        sdk_dir.mkdir()
+        return custom_dir, sdk_dir
+
+    def test_same_name_file_imported_by_an_sdk_script_replaces_the_sdk_module(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (sdk_dir / "TC_Base.py").write_text("X = 1\n")
+        (custom_dir / "TC_Base.py").write_text("X = 2\n")
+        (sdk_dir / "TC_FOO_1_1.py").write_text("from TC_Base import X\n")
+
+        names = ["TC_Base.py"]
+        assert sdk_modules_replaced_by_name(names, custom_dir, sdk_dir) == {
+            "TC_Base.py"
+        }
+
+    def test_same_name_file_imported_only_by_a_custom_script_replaces_it(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (sdk_dir / "Helper.py").write_text("X = 1\n")
+        (custom_dir / "Helper.py").write_text("X = 2\n")
+        (custom_dir / "TC_BAR_1_1.py").write_text("import Helper\n")
+
+        assert sdk_modules_replaced_by_name(["Helper.py"], custom_dir, sdk_dir) == {
+            "Helper.py"
+        }
+
+    def test_test_copy_not_imported_by_anything_replaces_nothing(
+        self, tmp_path: Path
+    ) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (sdk_dir / "TC_ACE_1_3.py").write_text("class TC_ACE_1_3: pass\n")
+        (custom_dir / "TC_ACE_1_3.py").write_text("class TC_ACE_1_3: pass\n")
+
+        names = ["TC_ACE_1_3.py"]
+        assert sdk_modules_replaced_by_name(names, custom_dir, sdk_dir) == set()
+
+    def test_custom_only_file_replaces_nothing(self, tmp_path: Path) -> None:
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (custom_dir / "OnlyCustom.py").write_text("X = 1\n")
+        (sdk_dir / "TC_FOO_1_1.py").write_text("import OnlyCustom\n")
+
+        names = ["OnlyCustom.py"]
+        assert sdk_modules_replaced_by_name(names, custom_dir, sdk_dir) == set()
+
+    def test_name_no_longer_in_custom_is_still_matched(self, tmp_path: Path) -> None:
+        """A removed custom file is flagged by the sdk file and the imports alone."""
+        custom_dir, sdk_dir = self._dirs(tmp_path)
+        (sdk_dir / "Helper.py").write_text("X = 1\n")
+        (sdk_dir / "TC_FOO_1_1.py").write_text("import Helper\n")
+
+        assert sdk_modules_replaced_by_name(["Helper.py"], custom_dir, sdk_dir) == {
+            "Helper.py"
+        }
+
+    def test_missing_folders_return_empty(self, tmp_path: Path) -> None:
+        assert (
+            sdk_modules_replaced_by_name(
+                ["Helper.py"], tmp_path / "no_custom", tmp_path / "no_sdk"
+            )
+            == set()
+        )
+
+
+class TestSnapshotCustomFiles:
+    def test_hashes_each_python_file_and_ignores_the_rest(self, tmp_path: Path) -> None:
+        (tmp_path / "TC_A_1_1.py").write_text("a = 1\n")
+        (tmp_path / "Helper.py").write_text("b = 1\n")
+        (tmp_path / "__init__.py").write_text("")
+        (tmp_path / "notes.txt").write_text("x")
+
+        snapshot = snapshot_custom_files(tmp_path)
+
+        assert sorted(snapshot) == ["Helper.py", "TC_A_1_1.py"]
+
+    def test_hash_changes_when_content_changes(self, tmp_path: Path) -> None:
+        script = tmp_path / "TC_A_1_1.py"
+        script.write_text("a = 1\n")
+        before = snapshot_custom_files(tmp_path)
+
+        script.write_text("a = 2\n")
+
+        assert snapshot_custom_files(tmp_path)["TC_A_1_1.py"] != before["TC_A_1_1.py"]
+
+    def test_same_content_gives_the_same_hash(self, tmp_path: Path) -> None:
+        (tmp_path / "TC_A_1_1.py").write_text("a = 1\n")
+
+        assert snapshot_custom_files(tmp_path) == snapshot_custom_files(tmp_path)
+
+    def test_missing_folder_gives_empty_snapshot(self, tmp_path: Path) -> None:
+        assert snapshot_custom_files(tmp_path / "no_custom") == {}

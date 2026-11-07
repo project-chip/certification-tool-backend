@@ -15,7 +15,7 @@
 #
 import logging
 import sys
-from typing import Type
+from typing import Optional, Type
 
 from sqlalchemy.orm import Session
 
@@ -26,6 +26,11 @@ from app.models import (
     TestStepExecution,
     TestSuiteExecution,
     TestSuiteMetadata,
+)
+from app.schemas.test_collections import (
+    CustomFileChanges,
+    RescanChanges,
+    ScriptError,
 )
 from app.schemas.test_selection import (
     TestCaseSelection,
@@ -41,11 +46,54 @@ from .models.test_declarations import (
     TestCollectionDeclaration,
     TestSuiteDeclaration,
 )
+from .test_collection_diff import diff_custom_files, diff_test_collections
 from .test_collection_discovery import discover_test_collections
 
 # Type alias:
 TestSuiteClassType = Type[TestSuite]
 TestCaseClassType = Type[TestCase]
+
+
+def _snapshot_custom_files() -> Optional[dict[str, str]]:
+    """Content hashes of the custom/ Python files, None if they cannot be read.
+
+    None as well when the Python testing module is not available (DRY_RUN mode).
+    """
+    try:
+        from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa: E501
+            snapshot_custom_files,
+        )
+    except ImportError:
+        return None
+
+    try:
+        return snapshot_custom_files()
+    except OSError as e:
+        logging.warning(f"Could not read the custom/ folder: {e}")
+        return None
+
+
+def _custom_file_changes(
+    before: Optional[dict[str, str]], after: Optional[dict[str, str]]
+) -> CustomFileChanges:
+    """Files added, modified or removed in custom/ between two snapshots.
+
+    Empty when either snapshot is missing: without a baseline, nothing can be said
+    about what changed.
+    """
+    if before is None or after is None:
+        return CustomFileChanges()
+
+    try:
+        from test_collections.matter.sdk_tests.support.python_testing.list_python_tests_classes import (  # noqa: E501
+            sdk_modules_replaced_by_name,
+        )
+
+        replacing_sdk = sdk_modules_replaced_by_name(set(before) | set(after))
+    except (ImportError, OSError) as e:
+        logging.warning(f"Could not check custom/ for SDK modules it replaces: {e}")
+        replacing_sdk = set()
+    return diff_custom_files(before, after, replacing_sdk)
 
 
 class TestNotFound(Exception):
@@ -78,6 +126,9 @@ class TestScriptManager(object, metaclass=Singleton):
         - In tests: via conftest.py initialization
         """
         self._python_tests_initialized = False
+        # Content hashes of custom/*.py as of the last (re)scan, to report what a
+        # rescan changed there. None until Python tests have been initialized.
+        self._custom_files_snapshot: Optional[dict[str, str]] = None
         self.test_collections = self._discover_test_collections()
 
     async def initialize_python_tests(self) -> None:
@@ -97,6 +148,7 @@ class TestScriptManager(object, metaclass=Singleton):
             # Always run initialization during FastAPI startup to ensure collections
             # are available
             await initialize_python_tests()
+            self._custom_files_snapshot = _snapshot_custom_files()
 
             # Refresh test collections to include the initialized Python collections
             # Use same discovery logic as constructor
@@ -112,7 +164,7 @@ class TestScriptManager(object, metaclass=Singleton):
             logging.error(f"Failed to initialize Python tests: {e}")
             raise
 
-    async def rescan(self) -> None:
+    async def rescan(self) -> RescanChanges:
         """
         Re-run test collection discovery/registration in-process.
 
@@ -123,8 +175,13 @@ class TestScriptManager(object, metaclass=Singleton):
         If rescanning fails, the previously loaded test collections are kept
         so the backend remains usable, and the error is re-raised for the
         caller to report.
+
+        Returns the test cases added, modified and removed by the rescan, plus
+        any test scripts that could not be parsed (those are skipped, they do
+        not fail the rescan).
         """
         previous_test_collections = self.test_collections
+        script_errors: list[ScriptError] = []
 
         try:
             # This import only fails with ImportError when the python_testing
@@ -141,17 +198,32 @@ class TestScriptManager(object, metaclass=Singleton):
         except ImportError as e:
             logging.warning(f"Python testing module not available: {e}")
             self.test_collections = self._discover_test_collections()
-            return
+            return diff_test_collections(
+                previous_test_collections, self.test_collections
+            )
 
         try:
-            await initialize_python_tests()
+            await initialize_python_tests(script_errors=script_errors)
             self.test_collections = self._discover_test_collections()
             self._python_tests_initialized = True
+            custom_files_after = _snapshot_custom_files()
 
         except Exception as e:
             logging.error(f"Failed to rescan test collections: {e}")
             self.test_collections = previous_test_collections
             raise
+
+        custom_files = _custom_file_changes(
+            self._custom_files_snapshot, custom_files_after
+        )
+        self._custom_files_snapshot = custom_files_after
+
+        return diff_test_collections(
+            previous_test_collections,
+            self.test_collections,
+            script_errors,
+            custom_files,
+        )
 
     def _discover_test_collections(self) -> dict[str, TestCollectionDeclaration]:
         if "pytest" in sys.modules:

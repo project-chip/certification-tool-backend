@@ -17,7 +17,9 @@
 import asyncio
 import logging
 import sys
+from typing import Optional
 
+from app.schemas.test_collections import ScriptError
 from app.test_engine.models.test_declarations import TestCollectionDeclaration
 from test_collections.matter.sdk_tests.support.sdk_container import SDKContainer
 
@@ -85,8 +87,12 @@ def _update_module_collections(
             matter_module.__dict__[name] = collection
 
 
-async def _generate_all_test_files() -> None:
-    """Generate standard and custom test JSON files in a single container session."""
+async def _generate_all_test_files(
+    script_errors: Optional[list[ScriptError]] = None,
+) -> None:
+    """Generate standard and custom test JSON files in a single container session.
+
+    Scripts that fail to parse are appended to script_errors, if given."""
     logger.info("Starting test file generation with shared container session")
 
     try:
@@ -96,24 +102,30 @@ async def _generate_all_test_files() -> None:
 
         # Generate standard SDK tests
         logger.info("Generating standard SDK tests...")
-        standard_commands = get_command_list(test_folder=PYTHON_SCRIPTS_FOLDER)
+        standard_commands = get_command_list(
+            test_folder=PYTHON_SCRIPTS_FOLDER, script_errors=script_errors
+        )
         await process_test_commands_with_container(
             sdk_container=sdk_container,
             commands=standard_commands,
             json_output_file=PYTHON_TESTS_PARSED_FILE,
             grouped_commands=True,
+            script_errors=script_errors,
         )
         logger.info("Standard SDK tests generated successfully")
 
         # Generate custom tests if custom folder has test files
         if _has_custom_tests():
             logger.info("Generating custom tests...")
-            custom_commands = get_command_list(test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER)
+            custom_commands = get_command_list(
+                test_folder=CUSTOM_PYTHON_SCRIPTS_FOLDER, script_errors=script_errors
+            )
             await process_test_commands_with_container(
                 sdk_container=sdk_container,
                 commands=custom_commands,
                 json_output_file=CUSTOM_PYTHON_TESTS_PARSED_FILE,
                 grouped_commands=True,
+                script_errors=script_errors,
             )
             logger.info("Custom tests generated successfully")
         else:
@@ -177,7 +189,9 @@ def initialize_python_tests_sync() -> tuple[
         raise
 
 
-async def initialize_python_tests() -> tuple[
+async def initialize_python_tests(
+    script_errors: Optional[list[ScriptError]] = None,
+) -> tuple[
     TestCollectionDeclaration,
     TestCollectionDeclaration,
     TestCollectionDeclaration | None,
@@ -188,6 +202,10 @@ async def initialize_python_tests() -> tuple[
     Generates test JSON files using a single container session and creates
     test collection declarations for use in the application.
 
+    Args:
+        script_errors: Optional list that scripts that failed to parse are
+            appended to, so callers (e.g. rescan) can report them.
+
     Returns:
         Tuple of (sdk_collection, mandatory_collection, custom_collection)
     """
@@ -195,7 +213,7 @@ async def initialize_python_tests() -> tuple[
 
     try:
         # Generate test files and create collections
-        await _generate_all_test_files()
+        await _generate_all_test_files(script_errors)
         sdk_collection, mandatory_collection, custom_collection = _create_collections()
 
         # Update module references

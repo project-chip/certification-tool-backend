@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Dict
+from typing import Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TestMetadata(BaseModel):
@@ -44,5 +44,62 @@ class TestCollection(BaseModel):
     test_suites: Dict[str, TestSuite]
 
 
+class TestCaseChange(BaseModel):
+    __test__ = False  # Needed to indicate to PyTest that this is not a "test"
+    collection: str
+    # Explicit titles: the default ones ("Test Suite", "Test Case") turn into the
+    # names of the TestSuite and TestCase schemas. The CLI's client generator
+    # (datamodel-codegen --use-title-as-name) then reserves that name for the
+    # property and renames the real schema, e.g. TestSuite -> TestSuiteModel.
+    test_suite: str = Field(..., title="Test Suite Id")
+    test_case: str = Field(..., title="Test Case Id")
+
+
+class ScriptError(BaseModel):
+    """A test script that could not be parsed or loaded during a rescan."""
+
+    # Path or name of the offending script, when it can be determined. Some
+    # failures (e.g. a whole batch failing in the SDK container) are not
+    # attributable to a single script.
+    script: Optional[str] = None
+    reason: str
+
+
+class CustomFileChange(BaseModel):
+    """A file in custom/ that was added, modified or removed by a rescan."""
+
+    name: str
+    # A custom/ file of this name replaces an SDK module: it matches an sdk/ file
+    # and another script imports it by name, so every test importing it gets the
+    # custom copy.
+    replaces_sdk: bool = False
+
+
+class CustomFileChanges(BaseModel):
+    """Python files in custom/ added, modified or removed since the last rescan."""
+
+    added: list[CustomFileChange] = []
+    modified: list[CustomFileChange] = []
+    removed: list[CustomFileChange] = []
+
+
+class RescanChanges(BaseModel):
+    """Difference between the test cases known before and after a rescan."""
+
+    added: list[TestCaseChange]
+    modified: list[TestCaseChange]
+    removed: list[TestCaseChange]
+    errors: list[ScriptError]
+    # Names of all collections present after the rescan, so clients can report
+    # the ones that did not change.
+    collections: list[str]
+    custom_files: CustomFileChanges = CustomFileChanges()
+
+
 class TestCollections(BaseModel):
     test_collections: Dict[str, TestCollection]
+    # Only set in the rescan response; additive, so clients that only read
+    # test_collections keep working. Kept on this model, rather than on a
+    # separate response model sharing test_collections, because the CLI's
+    # OpenAPI client generator mis-names two such models.
+    changes: Optional[RescanChanges] = None

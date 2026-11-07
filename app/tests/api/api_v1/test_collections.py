@@ -22,6 +22,13 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.schemas import (
+    CustomFileChange,
+    CustomFileChanges,
+    RescanChanges,
+    ScriptError,
+    TestCaseChange,
+)
 from app.test_engine import TEST_ENGINE_BUSY_MESSAGE
 from app.test_engine.test_runner import TestRunner
 from app.test_engine.test_script_manager import test_script_manager
@@ -49,8 +56,26 @@ def test_read_available_test_collections(client: TestClient) -> None:
 
 
 def test_rescan_test_collections(client: TestClient) -> None:
+    rescan_changes = RescanChanges(
+        added=[
+            TestCaseChange(
+                collection="custom", test_suite="suite", test_case="TC-FAKE-1.1-custom"
+            )
+        ],
+        modified=[],
+        removed=[],
+        errors=[ScriptError(script="TC_BAD_1_1.py", reason="Syntax error")],
+        collections=["custom"],
+        custom_files=CustomFileChanges(
+            added=[CustomFileChange(name="TC_SUTestBase.py", replaces_sdk=True)],
+            modified=[CustomFileChange(name="TC_ACE_1_3.py")],
+        ),
+    )
     with patch.object(
-        test_script_manager, "rescan", new_callable=AsyncMock
+        test_script_manager,
+        "rescan",
+        new_callable=AsyncMock,
+        return_value=rescan_changes,
     ) as mock_rescan:
         response = client.post(
             f"{settings.API_V1_STR}/test_collections/rescan",
@@ -62,6 +87,35 @@ def test_rescan_test_collections(client: TestClient) -> None:
     content = response.json()
     assert "test_collections" in content
     assert "tool_unit_tests" in content["test_collections"]
+
+    # The change report is additive: it sits next to test_collections.
+    changes = content["changes"]
+    assert changes["added"] == [
+        {
+            "collection": "custom",
+            "test_suite": "suite",
+            "test_case": "TC-FAKE-1.1-custom",
+        }
+    ]
+    assert changes["modified"] == []
+    assert changes["removed"] == []
+    assert changes["errors"] == [{"script": "TC_BAD_1_1.py", "reason": "Syntax error"}]
+    assert changes["custom_files"] == {
+        "added": [{"name": "TC_SUTestBase.py", "replaces_sdk": True}],
+        "modified": [{"name": "TC_ACE_1_3.py", "replaces_sdk": False}],
+        "removed": [],
+    }
+
+
+def test_test_case_change_titles_do_not_clash_with_schema_names() -> None:
+    """A property title that reads as the name of another schema makes the CLI's
+    client generator (--use-title-as-name) rename that schema, e.g. TestSuite ->
+    TestSuiteModel."""
+    properties = TestCaseChange.schema()["properties"]
+
+    normalized_titles = {p["title"].replace(" ", "") for p in properties.values()}
+
+    assert not normalized_titles & {"TestSuite", "TestCase"}
 
 
 @pytest.mark.asyncio
