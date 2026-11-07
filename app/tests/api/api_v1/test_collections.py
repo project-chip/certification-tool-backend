@@ -107,6 +107,17 @@ def test_rescan_test_collections(client: TestClient) -> None:
     }
 
 
+def test_test_case_change_titles_do_not_clash_with_schema_names() -> None:
+    """A property title that reads as the name of another schema makes the CLI's
+    client generator (--use-title-as-name) rename that schema, e.g. TestSuite ->
+    TestSuiteModel."""
+    properties = TestCaseChange.schema()["properties"]
+
+    normalized_titles = {p["title"].replace(" ", "") for p in properties.values()}
+
+    assert not normalized_titles & {"TestSuite", "TestCase"}
+
+
 @pytest.mark.asyncio
 async def test_rescan_test_collections_busy(
     async_client: AsyncClient, db: Session

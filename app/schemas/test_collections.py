@@ -15,7 +15,7 @@
 #
 from typing import Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TestMetadata(BaseModel):
@@ -47,8 +47,12 @@ class TestCollection(BaseModel):
 class TestCaseChange(BaseModel):
     __test__ = False  # Needed to indicate to PyTest that this is not a "test"
     collection: str
-    test_suite: str
-    test_case: str
+    # Explicit titles: the default ones ("Test Suite", "Test Case") turn into the
+    # names of the TestSuite and TestCase schemas. The CLI's client generator
+    # (datamodel-codegen --use-title-as-name) then reserves that name for the
+    # property and renames the real schema, e.g. TestSuite -> TestSuiteModel.
+    test_suite: str = Field(..., title="Test Suite Id")
+    test_case: str = Field(..., title="Test Case Id")
 
 
 class ScriptError(BaseModel):
