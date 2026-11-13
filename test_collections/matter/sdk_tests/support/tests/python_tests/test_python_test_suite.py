@@ -748,7 +748,7 @@ def test_container_logs_enabled_defaults_to_false_when_th_config_absent() -> Non
         new_callable=mock.PropertyMock,
         return_value={},
     ):
-        assert suite_instance._container_logs_enabled() is True
+        assert suite_instance._container_logs_enabled() is False
 
 
 @pytest.mark.parametrize(
