@@ -52,11 +52,9 @@ class THConfig(BaseModel):
     """Test-Harness-specific settings, independent of any particular DUT/program."""
 
     prompt_timeout_seconds: int = 60
-    # None means "not set at project level", deferring to the
-    # ENABLE_REALTIME_PYTHON_TEST_LOGS environment variable.
+    # None means "not set at project level", which enables real-time logs.
     enable_realtime_python_test_logs: Optional[bool] = None
-    # None means "not set at project level", deferring to the
-    # ENABLE_CONTAINER_LOGS environment variable.
+    # None means "not set at project level", which disables container logs.
     enable_container_logs: Optional[bool] = None
     # Host folder with helper app binaries (e.g. chip-ota-provider-app), mounted
     # read-only into the SDK container. None means "not set at project level",

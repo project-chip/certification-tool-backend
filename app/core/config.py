@@ -74,16 +74,6 @@ class Settings(BaseSettings):
         "<level>{message}</level>"
     )
 
-    # Python Test Logging
-    # Real-time (per step) logging is the default: it spreads log output across
-    # the test's execution, instead of replaying the whole SDK output file at the
-    # end of the test case. Projects can still override this via
-    # th_config.enable_realtime_python_test_logs.
-    ENABLE_REALTIME_PYTHON_TEST_LOGS: bool = True
-
-    # Container Logging
-    ENABLE_CONTAINER_LOGS: bool = False
-
     # Host folder with helper app binaries mounted read-only into the SDK container
     SDK_CONTAINER_APPS_DIR: Optional[str] = None
 
