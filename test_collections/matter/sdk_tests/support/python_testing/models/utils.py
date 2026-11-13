@@ -24,7 +24,6 @@ from typing import Generator, Iterable, cast
 import loguru
 
 from app.constants.shared_constants import NFC_PAIRING_MODES, DutPairingModeEnum
-from app.core.config import settings
 from app.schemas.test_environment_config import ThreadAutoConfig
 from app.test_engine.logger import PYTHON_TEST_LEVEL
 from app.test_engine.logger import test_engine_logger as logger
@@ -222,13 +221,11 @@ def __retrieve_storage_path(config: TestEnvironmentConfigMatter) -> Path:
 def _container_logs_enabled(config: TestEnvironmentConfigMatter) -> bool:
     """Whether container-operation logging is enabled.
 
-    The project's th_config.enable_container_logs, when explicitly set,
-    overrides the instance-wide ENABLE_CONTAINER_LOGS env var.
+    Controlled by the project's th_config.enable_container_logs; when not set,
+    container logs are disabled.
     """
     override = config.th_config.enable_container_logs if config.th_config else None
-    if override is not None:
-        return bool(override)
-    return settings.ENABLE_CONTAINER_LOGS
+    return bool(override)
 
 
 def __copy_admin_storage_file(

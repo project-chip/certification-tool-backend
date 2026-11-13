@@ -34,7 +34,6 @@ from app.container_manager.docker_shell_commands import (
     docker_run_command,
     docker_stop_command,
 )
-from app.core.config import settings
 from app.singleton import Singleton
 from app.test_engine.logger import test_engine_logger as logger
 
@@ -46,11 +45,10 @@ container_bring_up_timeout = 5  # Seconds
 def resolve_container_logs_enabled(override: Optional[bool] = None) -> bool:
     """Resolve whether container-operation logging is enabled.
 
-    A per-project `th_config.enable_container_logs` override, when explicitly
-    resolved by a caller and passed in here, takes precedence over the
-    instance-wide ENABLE_CONTAINER_LOGS environment variable default.
+    Controlled only by `th_config.enable_container_logs`, resolved by the caller
+    and passed in here. None (not set) means disabled.
     """
-    return settings.ENABLE_CONTAINER_LOGS if override is None else override
+    return False if override is None else override
 
 
 class ContainerManager(object, metaclass=Singleton):

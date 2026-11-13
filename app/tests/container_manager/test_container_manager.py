@@ -27,7 +27,6 @@ from app.container_manager.container_manager import (
     container_manager,
     resolve_container_logs_enabled,
 )
-from app.core.config import settings
 from app.tests.utils.docker import FAKE_ID, Container, make_fake_container
 
 # `app/container_manager/__init__.py` does `from .container_manager import
@@ -46,22 +45,16 @@ DEFAULT_MOUNT_SRC = "/test/path/chip-cert-tool/backend"
 DEFAULT_MOUNT_WORKING_DIR = "/app"
 
 
-def test_resolve_container_logs_enabled_explicit_true_wins() -> None:
-    with mock.patch.object(settings, "ENABLE_CONTAINER_LOGS", False):
-        assert resolve_container_logs_enabled(True) is True
+def test_resolve_container_logs_enabled_explicit_true() -> None:
+    assert resolve_container_logs_enabled(True) is True
 
 
-def test_resolve_container_logs_enabled_explicit_false_wins() -> None:
-    with mock.patch.object(settings, "ENABLE_CONTAINER_LOGS", True):
-        assert resolve_container_logs_enabled(False) is False
+def test_resolve_container_logs_enabled_explicit_false() -> None:
+    assert resolve_container_logs_enabled(False) is False
 
 
-def test_resolve_container_logs_enabled_defers_to_settings_when_none() -> None:
-    with mock.patch.object(settings, "ENABLE_CONTAINER_LOGS", True):
-        assert resolve_container_logs_enabled(None) is True
-
-    with mock.patch.object(settings, "ENABLE_CONTAINER_LOGS", False):
-        assert resolve_container_logs_enabled(None) is False
+def test_resolve_container_logs_enabled_defaults_to_false_when_none() -> None:
+    assert resolve_container_logs_enabled(None) is False
 
 
 @pytest.mark.asyncio

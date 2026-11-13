@@ -17,7 +17,6 @@ import asyncio
 from typing import Optional
 
 from app.constants.shared_constants import DutPairingModeEnum
-from app.core.config import settings
 from app.models import TestSuiteExecution
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestSuite
@@ -72,17 +71,15 @@ class ChipSuite(TestSuite, UserPromptSupport):
     def _container_logs_enabled(self) -> bool:
         """Whether container-operation logging is enabled.
 
-        The project's th_config.enable_container_logs, when explicitly set,
-        overrides the instance-wide ENABLE_CONTAINER_LOGS env var.
+        Controlled by the project's th_config.enable_container_logs; when not
+        set, container logs are disabled.
         """
         try:
             th_config = self.config_matter.th_config
         except Exception:
             th_config = None
         override = th_config.enable_container_logs if th_config else None
-        if override is not None:
-            return bool(override)
-        return settings.ENABLE_CONTAINER_LOGS
+        return bool(override)
 
     async def setup(self) -> None:
         logger.info("Setting up SDK container")

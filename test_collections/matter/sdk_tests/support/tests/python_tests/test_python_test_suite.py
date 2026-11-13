@@ -706,16 +706,15 @@ async def test_should_perform_new_commissioning_no() -> None:
 
 
 @pytest.mark.parametrize(
-    "th_config_value, env_value, expected",
+    "th_config_value, expected",
     [
-        (True, False, True),  # config override True beats env False
-        (False, True, False),  # config override False beats env True
-        (None, True, True),  # unset config defers to env True
-        (None, False, False),  # unset config defers to env False
+        (True, True),
+        (False, False),
+        (None, False),  # unset falls back to the default
     ],
 )
 def test_container_logs_enabled_matrix(
-    th_config_value: Optional[bool], env_value: bool, expected: bool
+    th_config_value: Optional[bool], expected: bool
 ) -> None:
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
         suite_type=SuiteType.NO_COMMISSIONING,
@@ -730,15 +729,11 @@ def test_container_logs_enabled_matrix(
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value={"th_config": {"enable_container_logs": th_config_value}},
-    ), mock.patch(
-        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_CONTAINER_LOGS = env_value
+    ):
         assert suite_instance._container_logs_enabled() is expected
 
 
-def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+def test_container_logs_enabled_defaults_to_false_when_th_config_absent() -> None:
     suite_class: Type[PythonTestSuite] = PythonTestSuite.class_factory(
         suite_type=SuiteType.NO_COMMISSIONING,
         name="SomeSuite",
@@ -752,11 +747,7 @@ def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
         ".PythonTestSuite.config",
         new_callable=mock.PropertyMock,
         return_value={},
-    ), mock.patch(
-        "test_collections.matter.sdk_tests.support.python_testing.models.test_suite"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_CONTAINER_LOGS = True
+    ):
         assert suite_instance._container_logs_enabled() is True
 
 

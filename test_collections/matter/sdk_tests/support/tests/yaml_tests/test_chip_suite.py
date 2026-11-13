@@ -204,11 +204,7 @@ async def test_pair_with_dut_thread_with_external_config_success() -> None:
         target=test_suite.runner,
         attribute="pairing_thread",
         return_value=True,
-    ) as mock_pairing_thread, mock.patch(
-        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
-        ".settings.ENABLE_CONTAINER_LOGS",
-        False,
-    ):
+    ) as mock_pairing_thread:
         result = await test_suite._ChipSuite__pair_with_dut_thread()
 
     assert result is True
@@ -284,11 +280,7 @@ async def test_pair_with_dut_thread_with_auto_config_success() -> None:
         target=test_suite.runner,
         attribute="pairing_thread",
         return_value=True,
-    ) as mock_pairing_thread, mock.patch(
-        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
-        ".settings.ENABLE_CONTAINER_LOGS",
-        False,
-    ):
+    ) as mock_pairing_thread:
         result = await test_suite._ChipSuite__pair_with_dut_thread()
 
     assert result is True
@@ -461,38 +453,27 @@ def _config_dict_with_th_config(th_config: dict) -> dict:
 
 
 @pytest.mark.parametrize(
-    "th_config_value, env_value, expected",
+    "th_config_value, expected",
     [
-        (True, False, True),  # config override True beats env False
-        (False, True, False),  # config override False beats env True
-        (None, True, True),  # unset config defers to env True
-        (None, False, False),  # unset config defers to env False
+        (True, True),
+        (False, False),
+        (None, False),  # unset falls back to the default
     ],
 )
-def test_container_logs_enabled_matrix(th_config_value, env_value, expected) -> None:
+def test_container_logs_enabled_matrix(th_config_value, expected) -> None:
     test_suite = ChipSuite(TestSuiteExecution())
     config_dict = _config_dict_with_th_config(
         {"enable_container_logs": th_config_value}
     )
     test_suite._ChipSuite__config_matter = TestEnvironmentConfigMatter(**config_dict)
 
-    with mock.patch(
-        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_CONTAINER_LOGS = env_value
-        assert test_suite._container_logs_enabled() is expected
+    assert test_suite._container_logs_enabled() is expected
 
 
-def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+def test_container_logs_enabled_defaults_to_false_when_th_config_absent() -> None:
     test_suite = ChipSuite(TestSuiteExecution())
     config_dict = _config_dict_with_th_config({})
     del config_dict["th_config"]
     test_suite._ChipSuite__config_matter = TestEnvironmentConfigMatter(**config_dict)
 
-    with mock.patch(
-        "test_collections.matter.sdk_tests.support.yaml_tests.models.chip_suite"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_CONTAINER_LOGS = True
-        assert test_suite._container_logs_enabled() is True
+    assert test_suite._container_logs_enabled() is False

@@ -23,7 +23,6 @@ from socket import SocketIO
 from typing import Any, Optional, Type, TypeVar
 
 from app.constants.shared_constants import NFC_PAIRING_MODES
-from app.core.config import settings
 from app.models import TestCaseExecution
 from app.schemas.test_environment_config import get_th_config_value
 from app.test_engine.logger import PYTHON_TEST_LEVEL
@@ -202,26 +201,22 @@ class PythonTestCase(TestCase, UserPromptSupport):
     def _realtime_logs_enabled(self) -> bool:
         """Whether Python test logs should be displayed incrementally per step.
 
-        The project's th_config.enable_realtime_python_test_logs, when explicitly
-        set, overrides the instance-wide ENABLE_REALTIME_PYTHON_TEST_LOGS env var.
+        Controlled by the project's th_config.enable_realtime_python_test_logs;
+        when not set, real-time logging is enabled.
         """
         override = get_th_config_value(
             self._safe_config(), "enable_realtime_python_test_logs"
         )
-        if override is not None:
-            return bool(override)
-        return settings.ENABLE_REALTIME_PYTHON_TEST_LOGS
+        return True if override is None else bool(override)
 
     def _container_logs_enabled(self) -> bool:
         """Whether container-operation logging is enabled.
 
-        The project's th_config.enable_container_logs, when explicitly set,
-        overrides the instance-wide ENABLE_CONTAINER_LOGS env var.
+        Controlled by the project's th_config.enable_container_logs; when not
+        set, container logs are disabled.
         """
         override = get_th_config_value(self._safe_config(), "enable_container_logs")
-        if override is not None:
-            return bool(override)
-        return settings.ENABLE_CONTAINER_LOGS
+        return bool(override)
 
     async def _display_step_logs(self) -> None:
         """Display logs that were captured during the current step."""

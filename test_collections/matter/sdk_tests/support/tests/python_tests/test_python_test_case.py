@@ -784,73 +784,51 @@ def _instance_with_project_config(project_config: dict) -> PythonTestCase:
 
 
 @pytest.mark.parametrize(
-    "th_config_value, env_value, expected",
+    "th_config_value, expected",
     [
-        (True, False, True),  # config override True beats env False
-        (False, True, False),  # config override False beats env True
-        (None, True, True),  # unset config defers to env True
-        (None, False, False),  # unset config defers to env False
+        (True, True),
+        (False, False),
+        (None, True),  # unset falls back to the default
     ],
 )
 def test_realtime_logs_enabled_matrix(
-    th_config_value: Optional[bool], env_value: bool, expected: bool
+    th_config_value: Optional[bool], expected: bool
 ) -> None:
     instance = _instance_with_project_config(
         {"th_config": {"enable_realtime_python_test_logs": th_config_value}}
     )
 
-    with mock.patch(
-        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_REALTIME_PYTHON_TEST_LOGS = env_value
-        assert instance._realtime_logs_enabled() is expected
+    assert instance._realtime_logs_enabled() is expected
 
 
-def test_realtime_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+def test_realtime_logs_enabled_defaults_to_true_when_th_config_absent() -> None:
     instance = _instance_with_project_config({})
 
-    with mock.patch(
-        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_REALTIME_PYTHON_TEST_LOGS = True
-        assert instance._realtime_logs_enabled() is True
+    assert instance._realtime_logs_enabled() is True
 
 
 @pytest.mark.parametrize(
-    "th_config_value, env_value, expected",
+    "th_config_value, expected",
     [
-        (True, False, True),  # config override True beats env False
-        (False, True, False),  # config override False beats env True
-        (None, True, True),  # unset config defers to env True
-        (None, False, False),  # unset config defers to env False
+        (True, True),
+        (False, False),
+        (None, False),  # unset falls back to the default
     ],
 )
 def test_container_logs_enabled_matrix(
-    th_config_value: Optional[bool], env_value: bool, expected: bool
+    th_config_value: Optional[bool], expected: bool
 ) -> None:
     instance = _instance_with_project_config(
         {"th_config": {"enable_container_logs": th_config_value}}
     )
 
-    with mock.patch(
-        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_CONTAINER_LOGS = env_value
-        assert instance._container_logs_enabled() is expected
+    assert instance._container_logs_enabled() is expected
 
 
-def test_container_logs_enabled_defers_to_env_when_th_config_absent() -> None:
+def test_container_logs_enabled_defaults_to_false_when_th_config_absent() -> None:
     instance = _instance_with_project_config({})
 
-    with mock.patch(
-        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
-        ".settings"
-    ) as mock_settings:
-        mock_settings.ENABLE_CONTAINER_LOGS = True
-        assert instance._container_logs_enabled() is True
+    assert instance._container_logs_enabled() is False
 
 
 def test_extract_logs_for_step_matches_composite_label() -> None:
