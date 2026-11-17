@@ -161,8 +161,12 @@ class PythonTestCase(TestCase, UserPromptSupport):
     ) -> None:
         pass
 
-    def test_stop(self, exception: Exception, duration: int) -> None:
+    def test_stop(self, exception: Optional[str], duration: int) -> None:
+        # `exception` is sent as a string by the SDK-side client, because the
+        # mobly exception object cannot be unpickled in the backend.
         self.test_stop_called = True
+        if exception:
+            logger.warning(f"Python test failure reason: {exception}")
 
     def test_skipped(self, filename: str, name: str) -> None:
         self.mark_as_not_applicable()
