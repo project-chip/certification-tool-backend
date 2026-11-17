@@ -66,7 +66,7 @@ _SPLIT_ARGS = {"json-arg", "string-arg", "int-arg", "float-arg", "bool-arg", "he
 # Native SDK log line: "\x1b[0;32m[1794955401.307] [35:44] [EM] <message>\x1b[0m"
 _NATIVE_LOG_LINE = re.compile(
     r"^\x1b\[(?P<color>[0-9;]+)m\[(?P<seconds>\d+)\.(?P<millis>\d{3})\] "
-    r"\[\d+:\d+\] \[\w+\] (?P<message>.*?)(?:\x1b\[0m)?$"
+    r"\[\d+:\d+\] \[[^\]]*\] (?P<message>.*?)(?:\x1b\[0m)?$"
 )
 # Python log level of each native SDK log color, as mapped by the SDK's
 # redirect of native logs to Python logging
