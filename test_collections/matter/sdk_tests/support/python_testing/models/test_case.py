@@ -204,10 +204,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
         Controlled by the project's th_config.enable_realtime_python_test_logs;
         when not set, real-time logging is enabled.
         """
-        override = get_th_config_value(
+        enable_realtime_logs = get_th_config_value(
             self._safe_config(), "enable_realtime_python_test_logs"
         )
-        return True if override is None else bool(override)
+        return True if enable_realtime_logs is None else bool(enable_realtime_logs)
 
     def _container_logs_enabled(self) -> bool:
         """Whether container-operation logging is enabled.
@@ -215,8 +215,10 @@ class PythonTestCase(TestCase, UserPromptSupport):
         Controlled by the project's th_config.enable_container_logs; when not
         set, container logs are disabled.
         """
-        override = get_th_config_value(self._safe_config(), "enable_container_logs")
-        return bool(override)
+        enable_container_logs = get_th_config_value(
+            self._safe_config(), "enable_container_logs"
+        )
+        return bool(enable_container_logs)
 
     async def _display_step_logs(self) -> None:
         """Display logs that were captured during the current step."""

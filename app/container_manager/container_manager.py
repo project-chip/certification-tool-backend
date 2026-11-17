@@ -42,13 +42,15 @@ from app.test_engine.logger import test_engine_logger as logger
 container_bring_up_timeout = 5  # Seconds
 
 
-def resolve_container_logs_enabled(override: Optional[bool] = None) -> bool:
+def resolve_container_logs_enabled(
+    enable_container_logs: Optional[bool] = None,
+) -> bool:
     """Resolve whether container-operation logging is enabled.
 
     Controlled only by `th_config.enable_container_logs`, resolved by the caller
     and passed in here. None (not set) means disabled.
     """
-    return False if override is None else override
+    return False if enable_container_logs is None else enable_container_logs
 
 
 class ContainerManager(object, metaclass=Singleton):

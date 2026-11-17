@@ -149,8 +149,10 @@ class PythonTestSuite(TestSuite):
         Controlled by the project's th_config.enable_container_logs; when not
         set, container logs are disabled.
         """
-        override = get_th_config_value(self._safe_config(), "enable_container_logs")
-        return bool(override)
+        enable_container_logs = get_th_config_value(
+            self._safe_config(), "enable_container_logs"
+        )
+        return bool(enable_container_logs)
 
     def _sdk_container_apps_dir(self) -> Optional[str]:
         """Host folder of app binaries to mount into the SDK container.

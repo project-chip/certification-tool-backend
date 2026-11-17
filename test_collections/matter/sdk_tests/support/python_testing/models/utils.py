@@ -224,8 +224,10 @@ def _container_logs_enabled(config: TestEnvironmentConfigMatter) -> bool:
     Controlled by the project's th_config.enable_container_logs; when not set,
     container logs are disabled.
     """
-    override = config.th_config.enable_container_logs if config.th_config else None
-    return bool(override)
+    enable_container_logs = (
+        config.th_config.enable_container_logs if config.th_config else None
+    )
+    return bool(enable_container_logs)
 
 
 def __copy_admin_storage_file(

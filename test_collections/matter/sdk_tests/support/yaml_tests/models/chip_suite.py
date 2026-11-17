@@ -78,8 +78,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
             th_config = self.config_matter.th_config
         except Exception:
             th_config = None
-        override = th_config.enable_container_logs if th_config else None
-        return bool(override)
+        enable_container_logs = th_config.enable_container_logs if th_config else None
+        return bool(enable_container_logs)
 
     async def setup(self) -> None:
         logger.info("Setting up SDK container")
