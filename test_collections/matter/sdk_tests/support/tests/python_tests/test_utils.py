@@ -1251,6 +1251,13 @@ def test_format_native_log_line() -> None:
         format_native_log_line("\x1b[0;34m[1794955387.001] [22:22] [DL] detail\x1b[0m")
         == "[MatterTest] 11-17 22:43:07.001 DEBUG detail"
     )
+    # Lines logged without a module
+    assert (
+        format_native_log_line(
+            "\x1b[0;32m[1794955387.239] [22:30] [-] -----BEGIN CERTIFICATE-----\x1b[0m"
+        )
+        == "[MatterTest] 11-17 22:43:07.239 INFO -----BEGIN CERTIFICATE-----"
+    )
     # JSON trace lines keep their indentation
     assert (
         format_native_log_line(
