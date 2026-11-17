@@ -1204,6 +1204,7 @@ def test_picklable_exception_hooks_sends_string_and_forwards_other_calls() -> No
         name: mock.MagicMock()
         for name in (
             "matter",
+            "matter.logging",
             "matter.testing",
             "matter.testing.CommissioningPreTest",
             "matter.testing.matter_testing",
@@ -1241,3 +1242,58 @@ def test_picklable_exception_hooks_sends_string_and_forwards_other_calls() -> No
 
     hooks.step_start("step")
     proxy.step_start.assert_called_once_with("step")
+
+
+NATIVE_LINE = "\x1b[0;32m[1794955401.307] [35:44] [EM] >>> message\x1b[0m"
+FORMATTED_LINE = "[MatterTest] 11-17 22:43:21.307 INFO >>> message"
+TEST_CASE_LOGGER = (
+    "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+    ".logger"
+)
+
+
+def _test_case_instance(output_file: Path) -> PythonTestCase:
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+    instance.file_output_path = output_file
+    return instance
+
+
+@pytest.mark.asyncio
+async def test_display_step_logs_formats_native_log_lines(tmp_path: Path) -> None:
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text(f"***** Test Step 1 : first\n{NATIVE_LINE}")
+    instance = _test_case_instance(output_file)
+    instance.current_python_step_name = "1"
+
+    with mock.patch(TEST_CASE_LOGGER) as mock_logger:
+        await instance._display_step_logs()
+
+    mock_logger.log.assert_any_call(PYTHON_TEST_LEVEL, FORMATTED_LINE)
+
+
+@pytest.mark.asyncio
+async def test_log_remaining_content_formats_native_log_lines(tmp_path: Path) -> None:
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text(NATIVE_LINE)
+    instance = _test_case_instance(output_file)
+
+    with mock.patch(TEST_CASE_LOGGER) as mock_logger:
+        await instance._log_remaining_content()
+
+    mock_logger.log.assert_called_once_with(PYTHON_TEST_LEVEL, FORMATTED_LINE)
+
+
+@pytest.mark.asyncio
+async def test_display_batch_logs_formats_native_log_lines(tmp_path: Path) -> None:
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text(f"{NATIVE_LINE}\n")
+    instance = _test_case_instance(output_file)
+
+    with mock.patch(TEST_CASE_LOGGER) as mock_logger:
+        await instance.display_batch_logs()
+
+    mock_logger.log.assert_called_once_with(PYTHON_TEST_LEVEL, FORMATTED_LINE)
