@@ -1283,7 +1283,7 @@ RUNNER_HELP = (
 
 
 def _runner_help_container(output: bytes = RUNNER_HELP.encode(), exit_code: int = 0):
-    sdk_container = mock.MagicMock(spec=SDKContainer)
+    sdk_container = mock.MagicMock()
     sdk_container.send_command.return_value = ExecResultExtended(
         exit_code, output, "ID", None
     )
@@ -1340,14 +1340,14 @@ async def test_validate_test_parameters_suggests_close_match() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "sdk_container",
-    [
-        _runner_help_container(exit_code=1),
-        _runner_help_container(output=b"no options here"),
-    ],
+    "help_kwargs",
+    [{"exit_code": 1}, {"output": b"no options here"}],
+    ids=["help-failed", "no-options-listed"],
 )
 async def test_validate_test_parameters_skips_when_help_unavailable(
-    sdk_container,
+    help_kwargs: dict,
 ) -> None:
     """If the runner options can't be read, don't block the run on a guess."""
+    sdk_container = _runner_help_container(**help_kwargs)
+
     await validate_test_parameters(sdk_container, {"anything": "1"})
