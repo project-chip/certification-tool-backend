@@ -1176,3 +1176,90 @@ def test_read_file_incrementally_handles_split_utf8_character(tmp_path: Path) ->
     output_file.write_bytes(full_bytes)
     second_read = instance._read_file_incrementally()
     assert second_read == full_text
+
+
+def test_test_stop_logs_failure_reason() -> None:
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".logger"
+    ) as mock_logger:
+        instance.test_stop(exception="TestFailure: PQCDA not set", duration=1)
+
+    assert instance.test_stop_called
+    mock_logger.warning.assert_called_once_with(
+        "Python test failure reason: TestFailure: PQCDA not set"
+    )
+
+
+def test_test_stop_without_exception_does_not_log_failure() -> None:
+    test = python_test_instance()
+    case_class: Type[PythonTestCase] = PythonTestCase.class_factory(
+        test=test, python_test_version="version", mandatory=False
+    )
+    instance = case_class(TestCaseExecution())
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.test_case"
+        ".logger"
+    ) as mock_logger:
+        instance.test_stop(exception=None, duration=1)
+
+    assert instance.test_stop_called
+    mock_logger.warning.assert_not_called()
+
+
+def test_picklable_exception_hooks_sends_string_and_forwards_other_calls() -> None:
+    import importlib.util
+    import sys
+
+    path = (
+        Path(__file__).parents[2]
+        / "python_testing/models/rpc_client/test_harness_client.py"
+    )
+    stubs = {
+        name: mock.MagicMock()
+        for name in (
+            "matter",
+            "matter.testing",
+            "matter.testing.CommissioningPreTest",
+            "matter.testing.matter_testing",
+            "matter.testing.runner",
+        )
+    }
+    with mock.patch.dict(sys.modules, stubs):
+        spec = importlib.util.spec_from_file_location("th_client_under_test", path)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+    proxy = mock.MagicMock()
+    hooks = module.PicklableExceptionHooks(proxy)
+
+    hooks.test_stop(exception=ValueError("boom"), duration=3)
+    proxy.test_stop.assert_called_once_with(exception="ValueError: boom", duration=3)
+
+    # mobly-style signal: use `details` instead of the noisy str()
+    class FakeSignal(Exception):
+        details = "real assertion failure"
+
+        def __str__(self) -> str:
+            return "real assertion failure\nExtras: {}"
+
+    proxy.test_stop.reset_mock()
+    hooks.test_stop(exception=FakeSignal(), duration=5)
+    proxy.test_stop.assert_called_once_with(
+        exception="FakeSignal: real assertion failure", duration=5
+    )
+
+    proxy.test_stop.reset_mock()
+    hooks.test_stop(exception=None, duration=4)
+    proxy.test_stop.assert_called_once_with(exception=None, duration=4)
+
+    hooks.step_start("step")
+    proxy.step_start.assert_called_once_with("step")

@@ -253,6 +253,33 @@ def get_test_info_support(script_path: str, class_name: str, config: MatterTestC
     return info
 
 
+class PicklableExceptionHooks:
+    """Wraps the TestRunnerHooks manager proxy so only builtin types cross the
+    process boundary.
+
+    The hooks server runs in the backend (no `mobly` installed), so it cannot
+    unpickle the `mobly.signals.TestFailure` the SDK passes to `test_stop` on a
+    failing test. That raised `RemoteError: No module named 'mobly'` and dropped
+    the failure reason. Sending the exception as a string avoids that.
+    """
+
+    def __init__(self, hooks) -> None:
+        self._hooks = hooks
+
+    def test_stop(self, exception, duration: int):
+        message = None
+        if exception is not None:
+            # mobly signals (TestFailure, ...) print extra, usually empty, fields
+            # in str(); prefer their `details` when present.
+            details = getattr(exception, "details", None)
+            text = str(details) if details else str(exception)
+            message = f"{type(exception).__name__}: {text}"
+        return self._hooks.test_stop(exception=message, duration=duration)
+
+    def __getattr__(self, name: str):
+        return getattr(self._hooks, name)
+
+
 def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> None:
     manual_execution = 0  # false
 
@@ -267,9 +294,9 @@ def run_test(script_path: str, class_name: str, config: MatterTestConfig) -> Non
         BaseManager.register(TestRunnerHooks.__name__)
         manager = BaseManager(address=("0.0.0.0", 50000), authkey=b"abc")
         manager.connect()
-        test_runner_hooks = (
-            manager.TestRunnerHooks()
-        )  # shared object proxy # type: ignore
+        test_runner_hooks = PicklableExceptionHooks(
+            manager.TestRunnerHooks()  # shared object proxy # type: ignore
+        )
 
     try:
         # For a script_path like 'custom/TC_XYZ' the module is 'custom.TC_XYZ'
