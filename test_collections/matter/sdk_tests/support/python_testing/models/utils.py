@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import asyncio
+import difflib
 import json
 import re
 from datetime import datetime, timezone
@@ -73,6 +74,17 @@ _NATIVE_LOG_LEVELS = {"1;31": "ERROR", "0;32": "INFO", "0;34": "DEBUG"}
 
 # Characters that trigger shell brace expansion or word splitting.
 _SHELL_SPECIAL = set("{[}\"'")
+
+# Long option names (e.g. "--int-arg") as printed by the SDK runner's --help.
+_LONG_OPTION_PATTERN = re.compile(r"--([A-Za-z0-9][A-Za-z0-9_-]*)")
+
+# Options of `th-cli run-tests` that are easy to mistake for runner test parameters.
+_CLI_OPTION_HINTS = {
+    "prompt-timeout": (
+        "'--prompt-timeout' is a th-cli run-tests option: pass it before the '--'"
+        " separator, or set th_config.prompt_timeout_seconds in the project config."
+    ),
+}
 
 
 async def generate_command_arguments(
@@ -228,6 +240,74 @@ def handle_logs(log_generator: Iterable[bytes], logger: loguru.Logger) -> None:
 
 class DUTCommissioningError(Exception):
     pass
+
+
+class InvalidTestParametersError(Exception):
+    """Raised when test_parameters contain options the SDK test runner rejects."""
+
+
+def _find_invalid_test_parameters(
+    test_parameters: dict, runner_options: set[str]
+) -> list[str]:
+    """Return one message per test parameter the SDK test runner would not accept.
+
+    Mirrors argparse, which also accepts an unambiguous prefix of a long option.
+    """
+    problems = []
+    for name in test_parameters:
+        if not name or any(option.startswith(name) for option in runner_options):
+            continue
+        normalized = name.replace("_", "-")
+        hint = _CLI_OPTION_HINTS.get(normalized)
+        if hint is None:
+            close = difflib.get_close_matches(normalized, runner_options, n=1)
+            hint = f"did you mean '--{close[0]}'?" if close else None
+        problems.append(f"'--{name}'" + (f" ({hint})" if hint else ""))
+    return problems
+
+
+async def validate_test_parameters(
+    sdk_container: SDKContainer, test_parameters: dict | None
+) -> None:
+    """Fail fast if test_parameters contain options the SDK test runner rejects.
+
+    The set of valid options is only known to the runner inside the SDK container,
+    so it is read from `--help` (no side effects) instead of being hard-coded. This
+    runs before any DUT interaction, so a typo such as `--prompt_timeout` ends the run
+    immediately with a clear message instead of failing in the middle of it.
+
+    If the runner's options cannot be determined, validation is skipped: the runner
+    itself still rejects bad arguments, this check only makes that failure earlier.
+
+    Raises:
+        InvalidTestParametersError: if one or more test parameters are unknown.
+    """
+    if not test_parameters:
+        return
+
+    exec_result = await asyncio.to_thread(
+        sdk_container.send_command, "--help", prefix=f"{EXECUTABLE} {RUNNER_CLASS_PATH}"
+    )
+    output = exec_result.output
+    help_text = (
+        output.decode(errors="replace") if isinstance(output, bytes) else str(output)
+    )
+    runner_options = set(_LONG_OPTION_PATTERN.findall(help_text))
+    if exec_result.exit_code != 0 or not runner_options:
+        logger.warning(
+            "Could not read the SDK test runner options, skipping test parameter"
+            f" validation (exit code: {exec_result.exit_code})"
+        )
+        return
+
+    problems = _find_invalid_test_parameters(test_parameters, runner_options)
+    if problems:
+        raise InvalidTestParametersError(
+            "Invalid test parameter(s) for the SDK test runner: "
+            + ", ".join(problems)
+            + ". Test parameters are passed to test_harness_client.py as '--<name>"
+            " <value>'; no test was started."
+        )
 
 
 def __retrieve_storage_path(config: TestEnvironmentConfigMatter) -> Path:
