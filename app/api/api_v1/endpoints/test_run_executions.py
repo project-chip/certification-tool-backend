@@ -44,6 +44,10 @@ from app.utils import (
 )
 from app.version import version_information
 from test_collections.matter.sdk_tests.support.chip.chip_server import ChipServer
+from test_collections.matter.sdk_tests.support.python_testing.runner_options import (
+    describe_invalid_test_parameters,
+    load_runner_options,
+)
 
 router = APIRouter()
 
@@ -116,6 +120,23 @@ def create_test_run_execution(
     return test_run_execution
 
 
+def _reject_invalid_test_parameters(config: dict | None) -> None:
+    """Reject a run whose test parameters the SDK test runner would not accept.
+
+    Test parameters are forwarded as `--<name> <value>` to the SDK test runner, which
+    exits on the first unknown one, in the middle of the run. The runner's options
+    are cached when the Python test files are generated, so a mistyped parameter can
+    be reported here, before any run is created. If the cache is unavailable nothing
+    is rejected: the check done when the suite starts still applies.
+    """
+    test_parameters = (config or {}).get("test_parameters")
+    if not test_parameters or (runner_options := load_runner_options()) is None:
+        return
+
+    if message := describe_invalid_test_parameters(test_parameters, runner_options):
+        raise HTTPException(status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=message)
+
+
 def _cli_project(
     db: Session,
     project_id: int | None,
@@ -182,6 +203,10 @@ def create_cli_test_run_execution(
         test_run_execution_in.execution_pics = execution_pics
 
     test_run_execution_in.certification_mode = False
+
+    _reject_invalid_test_parameters(
+        execution_config if execution_config is not None else cli_project.config
+    )
 
     test_run_execution = crud.test_run_execution.create(
         db=db, obj_in=test_run_execution_in, selected_tests=selected_tests
@@ -327,6 +352,12 @@ def start_test_run_execution(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
         )
+
+    _reject_invalid_test_parameters(
+        test_run_execution.execution_config
+        if test_run_execution.execution_config is not None
+        else test_run_execution.project.config
+    )
 
     test_runner = TestRunner()
 
