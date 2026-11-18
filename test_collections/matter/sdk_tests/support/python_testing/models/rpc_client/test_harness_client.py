@@ -267,9 +267,13 @@ class PicklableExceptionHooks:
         self._hooks = hooks
 
     def test_stop(self, exception, duration: int):
-        message = (
-            None if exception is None else f"{type(exception).__name__}: {exception}"
-        )
+        message = None
+        if exception is not None:
+            # mobly signals (TestFailure, ...) print extra, usually empty, fields
+            # in str(); prefer their `details` when present.
+            details = getattr(exception, "details", None)
+            text = str(details) if details else str(exception)
+            message = f"{type(exception).__name__}: {text}"
         return self._hooks.test_stop(exception=message, duration=duration)
 
     def __getattr__(self, name: str):

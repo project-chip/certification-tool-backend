@@ -1244,6 +1244,19 @@ def test_picklable_exception_hooks_sends_string_and_forwards_other_calls() -> No
     hooks.test_stop(exception=ValueError("boom"), duration=3)
     proxy.test_stop.assert_called_once_with(exception="ValueError: boom", duration=3)
 
+    # mobly-style signal: use `details` instead of the noisy str()
+    class FakeSignal(Exception):
+        details = "real assertion failure"
+
+        def __str__(self) -> str:
+            return "real assertion failure\nExtras: {}"
+
+    proxy.test_stop.reset_mock()
+    hooks.test_stop(exception=FakeSignal(), duration=5)
+    proxy.test_stop.assert_called_once_with(
+        exception="FakeSignal: real assertion failure", duration=5
+    )
+
     proxy.test_stop.reset_mock()
     hooks.test_stop(exception=None, duration=4)
     proxy.test_stop.assert_called_once_with(exception=None, duration=4)
