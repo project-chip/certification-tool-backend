@@ -23,13 +23,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from faker import Faker
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
-from app.api.api_v1.endpoints.test_run_executions import DEFAULT_CLI_PROJECT_NAME
+from app.api.api_v1.endpoints.test_run_executions import (
+    DEFAULT_CLI_PROJECT_NAME,
+    _reject_invalid_test_parameters,
+)
 from app.core.config import settings
 from app.main import app
 from app.models import TestRunExecution, TestStateEnum
@@ -1946,3 +1950,42 @@ def test_create_cli_test_run_execution_does_not_update_existing_project_no_pics(
     execution_in = kwargs["obj_in"]
     assert execution_in.execution_config == default_config
     assert execution_in.execution_pics == {}
+
+
+_RUNNER_OPTIONS_PATH = (
+    "app.api.api_v1.endpoints.test_run_executions.load_runner_options"
+)
+
+
+def test_reject_invalid_test_parameters_unknown_option():
+    """A mistyped test parameter is rejected before any run is created."""
+    with patch(_RUNNER_OPTIONS_PATH, return_value={"int-arg", "timeout"}):
+        with pytest.raises(HTTPException) as exc_info:
+            _reject_invalid_test_parameters(
+                {"test_parameters": {"int-arg": "A:1", "prompt_timeout": "5"}}
+            )
+
+    assert exc_info.value.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert "'--prompt_timeout'" in exc_info.value.detail
+    assert "'--int-arg'" not in exc_info.value.detail
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        None,
+        {},
+        {"test_parameters": None},
+        {"test_parameters": {}},
+        {"test_parameters": {"int-arg": "A:1"}},
+    ],
+)
+def test_reject_invalid_test_parameters_accepts_valid_or_empty(config):
+    with patch(_RUNNER_OPTIONS_PATH, return_value={"int-arg", "timeout"}):
+        _reject_invalid_test_parameters(config)
+
+
+def test_reject_invalid_test_parameters_skipped_without_cached_options():
+    """With no cached options nothing is rejected on a guess."""
+    with patch(_RUNNER_OPTIONS_PATH, return_value=None):
+        _reject_invalid_test_parameters({"test_parameters": {"anything": "1"}})
