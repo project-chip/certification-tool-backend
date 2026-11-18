@@ -165,7 +165,7 @@ class SDKPythonTestRunnerHooks(TestRunnerHooks):
             )
         )
 
-    def test_stop(self, exception: Exception, duration: int) -> None:
+    def test_stop(self, exception: Optional[str], duration: int) -> None:
         self.results.put(
             SDKPythonTestResultTestStop(exception=exception, duration=duration)
         )
