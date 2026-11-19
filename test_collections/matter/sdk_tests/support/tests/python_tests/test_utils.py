@@ -1328,7 +1328,7 @@ async def test_validate_test_parameters_rejects_unknown_option() -> None:
 
     message = str(exc_info.value)
     assert "'--prompt_timeout'" in message
-    assert "th-cli run-tests option" in message  # hint for the known CLI option
+    assert "did you mean" not in message  # only resembles the unrelated --timeout
     assert "'--int-arg'" not in message
 
 

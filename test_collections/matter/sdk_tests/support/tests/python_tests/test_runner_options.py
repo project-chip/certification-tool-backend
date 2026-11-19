@@ -93,23 +93,35 @@ def test_describe_invalid_test_parameters_known_and_abbreviated() -> None:
     assert describe_invalid_test_parameters(parameters, OPTIONS) is None
 
 
-def test_describe_invalid_test_parameters_unknown_with_cli_hint() -> None:
+def test_describe_invalid_test_parameters_unknown_option() -> None:
     message = describe_invalid_test_parameters(
-        {"int-arg": "A:1", "prompt_timeout": "5"}, OPTIONS
+        {"int-arg": "A:1", "verbosity": "5"}, OPTIONS
     )
 
     assert message is not None
-    assert "'--prompt_timeout'" in message
-    assert "th-cli run-tests option" in message
+    assert "'--verbosity'" in message
     assert "'--int-arg'" not in message
     assert "no test was started" in message
 
 
-def test_describe_invalid_test_parameters_suggests_close_match() -> None:
-    message = describe_invalid_test_parameters({"timeuot": "5"}, OPTIONS)
+@pytest.mark.parametrize(
+    "name", ["timeuot", "int_arg", "intarg", "enable-spec-errata-ci-only-dissallowed"]
+)
+def test_describe_invalid_test_parameters_suggests_close_match(name: str) -> None:
+    message = describe_invalid_test_parameters({name: "5"}, OPTIONS)
 
     assert message is not None
-    assert "did you mean '--timeout'" in message
+    assert "did you mean" in message
+
+
+@pytest.mark.parametrize("name", ["prompt_timeout", "prompt-timeout", "tests_list"])
+def test_describe_invalid_test_parameters_no_misleading_suggestion(name: str) -> None:
+    """These only resemble unrelated runner options (--timeout, --tests)."""
+    message = describe_invalid_test_parameters({name: "5"}, OPTIONS)
+
+    assert message is not None
+    assert f"'--{name}'" in message
+    assert "did you mean" not in message
 
 
 @pytest.mark.asyncio

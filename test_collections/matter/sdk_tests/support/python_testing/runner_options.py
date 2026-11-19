@@ -39,13 +39,11 @@ RUNNER_OPTIONS_FILE = SDK_TESTS_PATH / "runner_options.json"
 # Long option names (e.g. "--int-arg") as printed by the runner's --help.
 _LONG_OPTION_PATTERN = re.compile(r"--([A-Za-z0-9][A-Za-z0-9_-]*)")
 
-# Options of `th-cli run-tests` that are easy to mistake for runner test parameters.
-_CLI_OPTION_HINTS = {
-    "prompt-timeout": (
-        "'--prompt-timeout' is a th-cli run-tests option: pass it before the '--'"
-        " separator, or set th_config.prompt_timeout_seconds in the project config."
-    ),
-}
+# Minimum similarity for a "did you mean" suggestion. The default (0.6) is too
+# lenient: it suggests the unrelated "--timeout" for "--prompt-timeout" and
+# "--tests" for "--tests-list", which would send the user to the wrong option.
+# A wrong suggestion is worse than none, and real typos score well above this.
+_SUGGESTION_CUTOFF = 0.8
 
 
 def parse_runner_options(help_text: str) -> set[str]:
@@ -93,12 +91,12 @@ def _find_invalid_test_parameters(
     for name in test_parameters:
         if not name or any(option.startswith(name) for option in runner_options):
             continue
-        normalized = name.replace("_", "-")
-        hint = _CLI_OPTION_HINTS.get(normalized)
-        if hint is None:
-            close = difflib.get_close_matches(normalized, runner_options, n=1)
-            hint = f"did you mean '--{close[0]}'?" if close else None
-        problems.append(f"'--{name}'" + (f" ({hint})" if hint else ""))
+        close = difflib.get_close_matches(
+            name.replace("_", "-"), runner_options, n=1, cutoff=_SUGGESTION_CUTOFF
+        )
+        problems.append(
+            f"'--{name}'" + (f" (did you mean '--{close[0]}'?)" if close else "")
+        )
     return problems
 
 
