@@ -29,6 +29,8 @@ from .list_python_tests_classes import (
     get_command_list,
     process_test_commands_with_container,
 )
+from .models.utils import read_runner_options
+from .runner_options import clear_runner_options, save_runner_options
 from .sdk_python_tests import (
     _create_custom_python_test_collection,
     sdk_mandatory_python_test_collection,
@@ -85,6 +87,32 @@ def _update_module_collections(
             matter_module.__dict__[name] = collection
 
 
+async def _refresh_runner_options(sdk_container: SDKContainer) -> None:
+    """Cache the options the SDK test runner accepts, to validate test parameters.
+
+    Never fails the test file generation: if the options cannot be read or the cache
+    cannot be written, the old cache is dropped so no stale list from a previous SDK
+    version is used, and validation falls back to the check done when the suite
+    starts.
+    """
+    try:
+        options = await asyncio.to_thread(read_runner_options, sdk_container)
+    except Exception as e:
+        logger.warning(f"Failed to read the SDK test runner options: {e}")
+        options = None
+
+    try:
+        if options:
+            save_runner_options(options)
+            logger.info(f"Cached {len(options)} SDK test runner options")
+        else:
+            clear_runner_options()
+    except OSError as e:
+        logger.warning(f"Could not update the SDK test runner options cache: {e}")
+        # Make sure an older list is not used for the new SDK (never raises).
+        clear_runner_options()
+
+
 async def _generate_all_test_files() -> None:
     """Generate standard and custom test JSON files in a single container session."""
     logger.info("Starting test file generation with shared container session")
@@ -93,6 +121,8 @@ async def _generate_all_test_files() -> None:
         # Create and start a single SDK container for both test generations
         sdk_container = SDKContainer()
         await sdk_container.start()
+
+        await _refresh_runner_options(sdk_container)
 
         # Generate standard SDK tests
         logger.info("Generating standard SDK tests...")
