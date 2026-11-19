@@ -104,6 +104,21 @@ def test_describe_invalid_test_parameters_unknown_option() -> None:
     assert "no test was started" in message
 
 
+def test_describe_invalid_test_parameters_rejects_ambiguous_prefix() -> None:
+    """argparse rejects an abbreviation matching several options ("t": tests, timeout)."""
+    message = describe_invalid_test_parameters({"t": "5"}, OPTIONS)
+
+    assert message is not None
+    assert "'--t'" in message
+
+
+def test_describe_invalid_test_parameters_exact_name_beats_longer_options() -> None:
+    options = {"time", "timeout"}
+
+    assert describe_invalid_test_parameters({"time": "5"}, options) is None
+    assert describe_invalid_test_parameters({"tim": "5"}, options) is not None
+
+
 @pytest.mark.parametrize(
     "name", ["timeuot", "int_arg", "intarg", "enable-spec-errata-ci-only-dissallowed"]
 )
@@ -112,6 +127,17 @@ def test_describe_invalid_test_parameters_suggests_close_match(name: str) -> Non
 
     assert message is not None
     assert "did you mean" in message
+
+
+def test_clear_runner_options_falls_back_to_emptying_the_file(tmp_path: Path) -> None:
+    """If the cache can't be deleted it must still stop being used, and not raise."""
+    path = tmp_path / "runner_options.json"
+    save_runner_options(OPTIONS, path)
+
+    with mock.patch.object(Path, "unlink", side_effect=PermissionError("read-only")):
+        clear_runner_options(path)
+
+    assert load_runner_options(path) is None
 
 
 @pytest.mark.parametrize("name", ["prompt_timeout", "prompt-timeout", "tests_list"])
@@ -156,4 +182,22 @@ async def test_refresh_runner_options_drops_stale_cache_when_unreadable(
         await test_manager._refresh_runner_options(mock.MagicMock())
 
     save.assert_not_called()
+    clear.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_refresh_runner_options_survives_cache_write_failure() -> None:
+    """A read-only cache location must not abort the test file generation."""
+    with (
+        mock.patch.object(test_manager, "read_runner_options", return_value=OPTIONS),
+        mock.patch.object(
+            test_manager,
+            "save_runner_options",
+            side_effect=PermissionError("read-only"),
+        ),
+        mock.patch.object(test_manager, "clear_runner_options") as clear,
+    ):
+        await test_manager._refresh_runner_options(mock.MagicMock())
+
+    # The previous cache is dropped so a list from an older SDK is never used.
     clear.assert_called_once_with()

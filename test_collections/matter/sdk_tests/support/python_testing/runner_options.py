@@ -57,8 +57,21 @@ def save_runner_options(options: set[str], path: Path = RUNNER_OPTIONS_FILE) -> 
 
 def clear_runner_options(path: Path = RUNNER_OPTIONS_FILE) -> None:
     """Drop the cache, e.g. when the options could not be read, so a stale list from
-    a previous SDK version is never used."""
-    path.unlink(missing_ok=True)
+    a previous SDK version is never used. Never raises.
+
+    If the file cannot be deleted it is emptied instead, which the loader treats as
+    "no options" (no validation).
+    """
+    try:
+        path.unlink(missing_ok=True)
+        return
+    except OSError as error:
+        logger.warning(f"Could not delete the SDK runner options {path}: {error}")
+
+    try:
+        path.write_text("[]")
+    except OSError as error:
+        logger.warning(f"Could not empty the SDK runner options {path}: {error}")
 
 
 def load_runner_options(path: Path = RUNNER_OPTIONS_FILE) -> set[str] | None:
@@ -80,16 +93,23 @@ def load_runner_options(path: Path = RUNNER_OPTIONS_FILE) -> set[str] | None:
     return set(data) or None
 
 
+def _is_accepted_by_runner(name: str, runner_options: set[str]) -> bool:
+    if name in runner_options:
+        return True
+    return sum(option.startswith(name) for option in runner_options) == 1
+
+
 def _find_invalid_test_parameters(
     test_parameters: dict, runner_options: set[str]
 ) -> list[str]:
     """One message per test parameter the runner would not accept.
 
-    Mirrors argparse, which also accepts an unambiguous prefix of a long option.
+    Mirrors argparse: an exact option name is always accepted, otherwise the name must
+    be an abbreviation of exactly one long option.
     """
     problems = []
     for name in test_parameters:
-        if not name or any(option.startswith(name) for option in runner_options):
+        if not name or _is_accepted_by_runner(name, runner_options):
             continue
         close = difflib.get_close_matches(
             name.replace("_", "-"), runner_options, n=1, cutoff=_SUGGESTION_CUTOFF

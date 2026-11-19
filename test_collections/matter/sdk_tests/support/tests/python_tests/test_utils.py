@@ -1351,3 +1351,12 @@ async def test_validate_test_parameters_skips_when_help_unavailable(
     sdk_container = _runner_help_container(**help_kwargs)
 
     await validate_test_parameters(sdk_container, {"anything": "1"})
+
+
+@pytest.mark.asyncio
+async def test_validate_test_parameters_skips_when_probe_raises() -> None:
+    """A failing probe (e.g. Docker error) must not fail the suite setup."""
+    sdk_container = mock.MagicMock()
+    sdk_container.send_command.side_effect = RuntimeError("docker error")
+
+    await validate_test_parameters(sdk_container, {"anything": "1"})
