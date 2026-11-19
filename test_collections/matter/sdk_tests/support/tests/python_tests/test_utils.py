@@ -15,6 +15,7 @@
 
 import asyncio
 import time
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -37,8 +38,10 @@ from ...python_testing.models.utils import (
     _container_logs_enabled,
     capture_admin_storage_file,
     commission_device,
+    format_native_log_line,
     generate_command_arguments,
     handle_logs,
+    log_test_output_file,
     should_perform_new_commissioning,
 )
 from ...sdk_container import DOCKER_PAA_CERTS_PATH, SDKContainer
@@ -1266,3 +1269,74 @@ def test_container_logs_enabled_defers_to_env_when_th_config_none() -> None:
     ) as mock_settings:
         mock_settings.ENABLE_CONTAINER_LOGS = False
         assert _container_logs_enabled(config) is False
+
+
+NATIVE_LINE = "\x1b[0;32m[1794955401.307] [35:44] [EM] >>> message\x1b[0m"
+FORMATTED_LINE = "[MatterTest] 11-17 22:43:21.307 INFO >>> message"
+
+
+def test_format_native_log_line() -> None:
+    assert format_native_log_line(NATIVE_LINE) == FORMATTED_LINE
+    assert (
+        format_native_log_line(
+            "\x1b[1;31m[1794955387.239] [22:30] [CTL] Failed: Invalid argument\x1b[0m"
+        )
+        == "[MatterTest] 11-17 22:43:07.239 ERROR Failed: Invalid argument"
+    )
+    assert (
+        format_native_log_line("\x1b[0;34m[1794955387.001] [22:22] [DL] detail\x1b[0m")
+        == "[MatterTest] 11-17 22:43:07.001 DEBUG detail"
+    )
+    # Lines logged without a module
+    assert (
+        format_native_log_line(
+            "\x1b[0;32m[1794955387.239] [22:30] [-] -----BEGIN CERTIFICATE-----\x1b[0m"
+        )
+        == "[MatterTest] 11-17 22:43:07.239 INFO -----BEGIN CERTIFICATE-----"
+    )
+    # JSON trace lines keep their indentation
+    assert (
+        format_native_log_line(
+            '\x1b[0;32m[1794955401.307] [35:44] [ATM] \t\t"protocolId" : 1\x1b[0m'
+        )
+        == '[MatterTest] 11-17 22:43:21.307 INFO \t\t"protocolId" : 1'
+    )
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "[MatterTest] 11-17 22:43:18.580 INFO [Test] test_TC_TSTAT_2_2",
+        "***** Test Step 1b : Test Harness Client subscribes to events",
+        "[1794955401.307] [35:44] [EM] without a color code",
+        "\x1b[0;35m[1794955401.307] [35:44] [EM] with an unknown color code\x1b[0m",
+        "",
+    ],
+)
+def test_format_native_log_line_leaves_other_lines_unchanged(line: str) -> None:
+    assert format_native_log_line(line) == line
+
+
+def test_handle_logs_formats_native_log_lines() -> None:
+    fake_logger = mock.MagicMock()
+
+    handle_logs(iter([f"{NATIVE_LINE}\n".encode()]), fake_logger)
+
+    fake_logger.log.assert_called_once_with(PYTHON_TEST_LEVEL, FORMATTED_LINE)
+
+
+def test_log_test_output_file_formats_native_log_lines(tmp_path: Path) -> None:
+    output_file = tmp_path / "test_output.txt"
+    output_file.write_text(f"{NATIVE_LINE}\n[MatterTest] python line\n")
+    fake_logger = mock.MagicMock()
+
+    with mock.patch(
+        "test_collections.matter.sdk_tests.support.python_testing.models.utils"
+        ".TEST_OUTPUT_FILE_PATH",
+        str(output_file),
+    ):
+        log_test_output_file(fake_logger)
+
+    fake_logger.log.assert_called_once_with(
+        PYTHON_TEST_LEVEL, f"{FORMATTED_LINE}\n[MatterTest] python line\n"
+    )
