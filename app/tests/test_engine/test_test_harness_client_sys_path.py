@@ -33,6 +33,7 @@ CLIENT_PATH = (
 
 _STUBBED_MODULES = [
     "matter",
+    "matter.logging",
     "matter.testing",
     "matter.testing.CommissioningPreTest",
     "matter.testing.matter_testing",
