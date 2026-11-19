@@ -92,9 +92,10 @@ def _update_module_collections(
 async def _refresh_runner_options(sdk_container: SDKContainer) -> None:
     """Cache the options the SDK test runner accepts, to validate test parameters.
 
-    Never fails the test file generation: if the options cannot be read, the cache is
-    dropped so no stale list from a previous SDK version is used, and validation
-    falls back to the check done when the suite starts.
+    Never fails the test file generation: if the options cannot be read or the cache
+    cannot be written, the old cache is dropped so no stale list from a previous SDK
+    version is used, and validation falls back to the check done when the suite
+    starts.
     """
     try:
         options = await asyncio.to_thread(read_runner_options, sdk_container)
@@ -102,10 +103,15 @@ async def _refresh_runner_options(sdk_container: SDKContainer) -> None:
         logger.warning(f"Failed to read the SDK test runner options: {e}")
         options = None
 
-    if options:
-        save_runner_options(options)
-        logger.info(f"Cached {len(options)} SDK test runner options")
-    else:
+    try:
+        if options:
+            save_runner_options(options)
+            logger.info(f"Cached {len(options)} SDK test runner options")
+        else:
+            clear_runner_options()
+    except OSError as e:
+        logger.warning(f"Could not update the SDK test runner options cache: {e}")
+        # Make sure an older list is not used for the new SDK (never raises).
         clear_runner_options()
 
 

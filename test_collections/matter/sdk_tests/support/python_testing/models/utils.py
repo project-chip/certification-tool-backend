@@ -277,9 +277,18 @@ async def validate_test_parameters(
     if not test_parameters:
         return
 
-    runner_options = await asyncio.to_thread(read_runner_options, sdk_container)
+    try:
+        runner_options = await asyncio.to_thread(read_runner_options, sdk_container)
+    except Exception as error:
+        # The probe is optional: it must never be what fails the suite setup.
+        logger.warning(
+            "Could not read the SDK test runner options, skipping test parameter"
+            f" validation: {error}"
+        )
+        return
+
     if runner_options is None:
-        logger.warning("Skipping test parameter validation")
+        # read_runner_options already logged why the options are unavailable.
         return
 
     message = describe_invalid_test_parameters(test_parameters, runner_options)
