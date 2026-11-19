@@ -101,7 +101,9 @@ def test_describe_invalid_test_parameters_unknown_option() -> None:
     assert message is not None
     assert "'--verbosity'" in message
     assert "'--int-arg'" not in message
-    assert "no test was started" in message
+    assert "No test was started" in message
+    # One parameter per line, so long messages stay readable in a terminal.
+    assert "\n  '--verbosity'" in message
 
 
 def test_describe_invalid_test_parameters_rejects_ambiguous_prefix() -> None:

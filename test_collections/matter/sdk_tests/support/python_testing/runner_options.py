@@ -129,9 +129,11 @@ def describe_invalid_test_parameters(
     problems = _find_invalid_test_parameters(test_parameters, runner_options)
     if not problems:
         return None
+    # One parameter per line: this ends up in a terminal (th-cli) as well as in logs.
+    listed = "\n".join(f"  {problem}" for problem in problems)
     return (
-        "Invalid test parameter(s) for the SDK test runner: "
-        + ", ".join(problems)
-        + ". Test parameters are passed to test_harness_client.py as '--<name>"
-        " <value>'; no test was started."
+        "Invalid test parameter(s) for the SDK test runner:\n"
+        f"{listed}\n"
+        "No test was started. Test parameters are passed to test_harness_client.py"
+        " as '--<name> <value>'."
     )
