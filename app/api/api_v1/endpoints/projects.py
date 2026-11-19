@@ -15,10 +15,10 @@
 #
 import json
 import re
-import tempfile
 import traceback
+from functools import partial
 from http import HTTPStatus
-from typing import List, Sequence, Union
+from typing import Iterator, List, Sequence, Union
 from zipfile import ZipFile
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import crud, log_utils, models, schemas
-from app.db.session import get_db
+from app.db.session import get_db, iter_with_session
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.pics.pics_parser import PICSParser
@@ -517,7 +517,8 @@ def download_project_logs(
             has no test run executions to download logs for
 
     Returns:
-        StreamingResponse: A zip archive containing one file per test run execution.
+        StreamingResponse: A zip archive, streamed as it's built, containing one
+            file per test run execution.
     """
     project = __project(db=db, id=id)
 
@@ -529,72 +530,51 @@ def download_project_logs(
             detail=f"Project {id} has no test run executions to download logs for",
         )
 
-    outer_zip_buffer = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
-
-    with ZipFile(file=outer_zip_buffer, mode="w") as outer_zip:
-        for execution in executions:
+    def write_entries(outer_zip: ZipFile, stream_db: Session) -> Iterator[None]:
+        for execution in crud.test_run_execution.get_multi(
+            db=stream_db, project_id=id, limit=0
+        ):
             safe_title = __safe_filename_component(
                 execution.title, fallback="execution"
             )
             if grouped:
-                grouped_logs = log_utils.group_test_run_execution_logs(
-                    test_run_execution=execution
+                # Each execution's grouped zip is built as a stream and its
+                # bytes are written straight into the outer zip entry.
+                yield from log_utils.write_zip_entry(
+                    outer_zip,
+                    f"{execution.id}-{safe_title}.zip",
+                    log_utils.stream_zip(
+                        partial(
+                            log_utils.write_grouped_log_entries,
+                            db=stream_db,
+                            run_id=execution.id,
+                            plan=log_utils.plan_grouped_log(
+                                db=stream_db, test_run_execution=execution
+                            ),
+                        )
+                    ),
                 )
-                inner_zip_buffer = log_utils.create_grouped_log_zip_file(
-                    grouped_logs=grouped_logs
-                )
-                entry_name = f"{execution.id}-{safe_title}.zip"
-                # Stream the already-spooled-to-disk inner zip into the outer
-                # one in chunks (and close it once drained), rather than
-                # inner_zip_buffer.read() (which would pull the whole thing
-                # into memory just to hand it to writestr()).
-                with outer_zip.open(entry_name, mode="w") as entry_file:
-                    for chunk in log_utils.iter_and_close(inner_zip_buffer):
-                        entry_file.write(chunk)
-
-                # Drop the entries that group_test_run_execution_logs() just
-                # loaded through `execution.log`, so they become eligible for GC
-                # immediately rather than staying resident until the loop ends:
-                # `executions` holds a strong reference to every execution for
-                # the whole loop, and through it to each one's loaded `log`.
-                # expire() rather than assigning an empty list, because `log` is
-                # a delete-orphan relationship - assigning to it stages the
-                # entries for deletion, which this session happens never to
-                # flush (see app.db.session.get_db), but only by luck. Expiring
-                # discards the loaded collection without touching the
-                # attribute's value.
-                db.expire(execution, ["log"])
             else:
-                entry_name = f"{execution.id}-{safe_title}.log"
-                # Stream line-by-line via outer_zip.open() instead of
-                # materializing convert_execution_log_to_list()'s full list of
-                # formatted lines *and* "\n".join()'s single giant string -
-                # for an execution with a very large log (e.g. an old seed
-                # captured before CHIP_TOOL_TRACE defaulted to off), those two
-                # extra full-content copies were what pushed peak memory over
-                # the edge on resource-constrained hardware.
-                #
-                # Entries come from iter_log_entries() rather than
-                # `execution.log`, so they arrive in server-side cursor batches
-                # and are never all resident at once - reading the relationship
-                # would undo the point of the streaming above, and is why this
-                # branch needs no expire().
-                with outer_zip.open(entry_name, mode="w") as entry_file:
-                    for line in log_utils.log_generator(
+                yield from log_utils.write_zip_entry(
+                    outer_zip,
+                    f"{execution.id}-{safe_title}.log",
+                    log_utils.log_generator(
                         log_entries=crud.test_run_execution.iter_log_entries(
-                            db=db, run_id=execution.id
+                            db=stream_db, run_id=execution.id
                         ),
                         json_entries=False,
-                    ):
-                        entry_file.write(line.encode())
-
-    outer_zip_buffer.seek(0)
+                    ),
+                )
 
     safe_name = __safe_filename_component(project.name, fallback=f"project-{id}")
     file_name = f"{safe_name}-logs.zip"
 
     return StreamingResponse(
-        log_utils.iter_and_close(outer_zip_buffer),
+        iter_with_session(
+            lambda stream_db: log_utils.stream_zip(
+                partial(write_entries, stream_db=stream_db)
+            )
+        ),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
     )

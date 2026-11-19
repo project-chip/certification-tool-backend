@@ -14,11 +14,11 @@
 # limitations under the License.
 #
 import json
-from typing import Any, Generator
+from typing import Any, Callable, Generator, Iterator, TypeVar
 
 import pydantic.json
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
 
@@ -31,6 +31,26 @@ def get_db() -> Generator:
     try:
         db = SessionLocal()
         yield db
+    finally:
+        db.close()
+
+
+T = TypeVar("T")
+
+
+def iter_with_session(
+    produce: Callable[[Session], Iterator[T]]
+) -> Generator[T, None, None]:
+    """Yield the items of `produce(db)` using a new DB session owned by this
+    iterator.
+
+    The session is opened on the first `next()` and closed when iteration
+    finishes or the iterator is closed, so it is only used by whichever thread
+    is advancing the iterator.
+    """
+    db = SessionLocal()
+    try:
+        yield from produce(db)
     finally:
         db.close()
 

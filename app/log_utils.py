@@ -13,210 +13,304 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import io
 import tempfile
+from dataclasses import dataclass, field
 from datetime import datetime
-from functools import reduce
-from operator import add
-from typing import IO, AsyncGenerator, Generator, Iterable, List, Optional, Union
-from zipfile import ZipFile
+from itertools import chain
+from typing import (
+    IO,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Tuple,
+    Union,
+    cast,
+)
+from zipfile import ZIP_DEFLATED, ZipFile
 
-from app import models, schemas
+from sqlalchemy import tuple_
+from sqlalchemy.orm import Session
+
+from app import crud, models, schemas
 
 LOG_SECTION_TEMPLATE = "--------------------- {} ---------------------\n"
 
+# Size of the byte chunks handed to StreamingResponse.
+STREAM_CHUNK_SIZE = 64 * 1024
+
 # Log entries reach the formatting helpers either as rows read from the
-# testrunlogentry table or as the pydantic entries that the grouping code and
-# the test engine deal in. Both expose level/timestamp/message.
+# testrunlogentry table or as the pydantic entries that the test engine deals
+# in. Both expose level/timestamp/message.
 LogEntry = Union[schemas.TestRunLogEntry, models.TestRunLogEntry]
 
 
-def iter_and_close(
-    file_obj: IO[bytes], chunk_size: int = 64 * 1024
-) -> Generator[bytes, None, None]:
-    """Stream a file-like object in chunks, then close it.
-
-    `tempfile.SpooledTemporaryFile` forwards normal method calls (read/seek)
-    via `__getattr__`, but doesn't implement `__iter__`/`__next__` itself, so
-    passing it directly to `StreamingResponse` raises "TypeError: '...'
-    object is not an iterator". Wrapping it in a plain generator (which does
-    support the iterator protocol) fixes that while still bounding memory via
-    the underlying SpooledTemporaryFile's disk-spill threshold. The `finally`
-    also runs on early client disconnect (generators receive `GeneratorExit`),
-    so the temp file (if the content spilled to disk) doesn't linger.
-    """
-    try:
-        while chunk := file_obj.read(chunk_size):
-            yield chunk
-    finally:
-        file_obj.close()
+def format_log_line(log_line: LogEntry, json_entries: bool) -> str:
+    """Format one log entry as a newline-terminated line, either as JSON or as
+    `level | timestamp | message`."""
+    if json_entries:
+        # Via the schema rather than log_line.json(), so that either a
+        # pydantic entry or a TestRunLogEntry row can be formatted; the
+        # rows have no .json().
+        return schemas.TestRunLogEntry.from_orm(log_line).json() + "\n"
+    timestamp = datetime.fromtimestamp(log_line.timestamp).strftime(
+        "%Y-%m-%d %H:%M:%S.%f"
+    )
+    return f"{log_line.level:10} | {timestamp} | {log_line.message}\n"
 
 
 def log_generator(log_entries: Iterable[LogEntry], json_entries: bool) -> Generator:
     for log_line in log_entries:
-        if json_entries:
-            # Via the schema rather than log_line.json(), so that either a
-            # pydantic entry or a TestRunLogEntry row can be formatted; the
-            # rows have no .json().
-            yield schemas.TestRunLogEntry.from_orm(log_line).json()
-            yield "\n"
-        else:
-            timestamp = datetime.fromtimestamp(log_line.timestamp).strftime(
-                "%Y-%m-%d %H:%M:%S.%f"
-            )
-            yield f"{log_line.level:10} | {timestamp} | {log_line.message}\n"
+        yield format_log_line(log_line, json_entries=json_entries)
 
 
-async def async_log_generator(items: list) -> AsyncGenerator:
-    for log_line in items:
-        yield log_line + "\n"
+def chunk_text(
+    parts: Iterable[str], chunk_size: int = STREAM_CHUNK_SIZE
+) -> Iterator[bytes]:
+    """Encode text parts as UTF-8 and regroup them into chunks of roughly
+    `chunk_size` bytes."""
+    buffer: List[bytes] = []
+    size = 0
+    for part in parts:
+        data = part.encode()
+        buffer.append(data)
+        size += len(data)
+        if size >= chunk_size:
+            yield b"".join(buffer)
+            buffer = []
+            size = 0
+    if buffer:
+        yield b"".join(buffer)
 
 
-def convert_execution_log_to_list(log: list, json_entries: bool) -> list:
-    log_entries = []
+class _ZipStreamSink(io.RawIOBase):
+    """Non-seekable file object that collects the bytes ZipFile writes until
+    they are drained.
 
-    for log_line in log:
-        if json_entries:
-            log_entries.append(schemas.TestRunLogEntry.from_orm(log_line).json())
-        else:
-            entry = log_line
-            timestamp = datetime.fromtimestamp(entry.timestamp).strftime(
-                "%Y-%m-%d %H:%M:%S.%f"
-            )
-            log_entries.append(f"{entry.level:10} | {timestamp} | {entry.message}")
+    Because it can't seek, ZipFile writes each entry's sizes and CRC in a data
+    descriptor after the entry instead of going back to patch its header.
+    """
 
-    return log_entries
+    def __init__(self) -> None:
+        super().__init__()
+        self._chunks: List[bytes] = []
+        self.size = 0
 
+    def writable(self) -> bool:
+        return True
 
-def group_test_run_execution_logs(
-    test_run_execution: models.TestRunExecution,
-) -> schemas.GroupedTestRunExecutionLogs:
-    grouped_logs = schemas.GroupedTestRunExecutionLogs()
+    def write(self, data: bytes) -> int:  # type: ignore[override]
+        self._chunks.append(bytes(data))
+        self.size += len(data)
+        return len(data)
 
-    # Log entries have indexes for test suite, test case and test step executions. E.g.:
-    #   test_suite_execution_index: 0,
-    #   test_case_execution_index: 1,
-    #   test_step_execution_index: 4,
-    # - For general TH logs, all 3 indexes are None;
-    # - For test suite specific logs (not related to any test case), the indexes for
-    # test case and test step are None and the test_suite_execution_index is not None;
-    # - For test case logs, the indexes for test suite and test case are not None.
-    for row in test_run_execution.log:
-        entry = schemas.TestRunLogEntry.from_orm(row)
-        if test_case := __test_case_execution_for_log_entry(
-            test_run_execution=test_run_execution, log_entry=entry
-        ):
-            if grouped_logs.cases.get(test_case.state) is None:
-                grouped_logs.cases[test_case.state] = {}
-
-            if grouped_logs.cases[test_case.state].get(test_case.public_id) is None:
-                grouped_logs.cases[test_case.state][test_case.public_id] = []
-
-            grouped_logs.cases[test_case.state][test_case.public_id].append(entry)
-        elif test_suite := __test_suite_execution_for_log_entry(
-            test_run_execution=test_run_execution, log_entry=entry
-        ):
-            if grouped_logs.suites.get(test_suite.public_id) is None:
-                grouped_logs.suites[test_suite.public_id] = []
-
-            grouped_logs.suites[test_suite.public_id].append(entry)
-        else:
-            grouped_logs.general.append(entry)
-
-    return grouped_logs
+    def drain(self) -> bytes:
+        data = b"".join(self._chunks)
+        self._chunks = []
+        self.size = 0
+        return data
 
 
-def create_grouped_log_zip_file(
-    grouped_logs: schemas.GroupedTestRunExecutionLogs,
-) -> IO[bytes]:
-    # SpooledTemporaryFile, not BytesIO: for projects with many/large executions,
-    # download_project_logs() builds one of these per execution before copying it
-    # into the outer zip - keeping every one fully in memory at once (BytesIO)
-    # is what was driving peak memory sky-high. This spills to disk past 10MB.
-    file = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
+def stream_zip(
+    write_entries: Callable[[ZipFile], Iterator[None]],
+    chunk_size: int = STREAM_CHUNK_SIZE,
+) -> Iterator[bytes]:
+    """Build a deflate-compressed zip archive incrementally and yield its bytes
+    as they're made.
 
-    with ZipFile(file=file, mode="w") as zip_file:
-        __create_summary_file(grouped_logs=grouped_logs, zip_file=zip_file)
-        __create_suites_file(grouped_logs=grouped_logs, zip_file=zip_file)
-
-        for state in grouped_logs.cases.keys():
-            __create_cases_file(
-                grouped_logs=grouped_logs, state=state, zip_file=zip_file
-            )
-
-    file.seek(0)
-
-    return file
-
-
-def __test_suite_execution_for_log_entry(
-    test_run_execution: models.TestRunExecution, log_entry: schemas.TestRunLogEntry
-) -> Optional[models.TestSuiteExecution]:
-    if (test_suite_index := log_entry.test_suite_execution_index) is None:
-        return None
-
-    return test_run_execution.test_suite_executions[test_suite_index]
+    `write_entries` writes into the given ZipFile and yields after each piece
+    of work; whenever at least `chunk_size` bytes have accumulated they are
+    yielded. The remaining bytes, including the central directory, are yielded
+    once `write_entries` finishes.
+    """
+    sink = _ZipStreamSink()
+    with ZipFile(
+        file=cast(IO[bytes], sink), mode="w", compression=ZIP_DEFLATED
+    ) as zip_file:
+        for _ in write_entries(zip_file):
+            if sink.size >= chunk_size:
+                yield sink.drain()
+    yield sink.drain()
 
 
-def __test_case_execution_for_log_entry(
-    test_run_execution: models.TestRunExecution, log_entry: schemas.TestRunLogEntry
-) -> Optional[models.TestCaseExecution]:
-    if (test_suite_index := log_entry.test_suite_execution_index) is None or (
-        test_case_index := log_entry.test_case_execution_index
-    ) is None:
-        return None
-
-    return test_run_execution.test_suite_executions[
-        test_suite_index
-    ].test_case_executions[test_case_index]
+def write_zip_entry(
+    zip_file: ZipFile, name: str, parts: Iterable[Union[str, bytes]]
+) -> Iterator[None]:
+    """Write `parts` into a new zip entry, yielding after each part."""
+    with zip_file.open(name, mode="w") as entry:
+        for part in parts:
+            entry.write(part.encode() if isinstance(part, str) else part)
+            yield
 
 
-def __create_summary_file(
-    grouped_logs: schemas.GroupedTestRunExecutionLogs, zip_file: ZipFile
-) -> None:
-    content: List[str] = []
+@dataclass
+class GroupedLogPlan:
+    """Section titles for a run's grouped log archive.
 
-    test_case_count = reduce(add, map(len, grouped_logs.cases.values()), 0)
+    suite_titles maps a test suite index to its public id. cases_by_state maps
+    each test case state to the (suite index, case index) pairs of the test
+    cases that finished in that state, and their public ids. Only suites and
+    cases that have log entries are included.
+    """
 
-    if test_case_count == 0:
-        content.append("No test case has been executed")
-    else:
-        for state, test_cases in grouped_logs.cases.items():
-            content.append(
-                LOG_SECTION_TEMPLATE.format(
-                    f'"{state}" test cases ({len(test_cases)}/{test_case_count})'
-                )
-            )
-            for test_case_id in test_cases.keys():
-                content.append(f"{test_case_id}\n")
-
-    zip_file.writestr(zinfo_or_arcname="summary.txt", data="".join(content))
-
-
-def __create_suites_file(
-    grouped_logs: schemas.GroupedTestRunExecutionLogs, zip_file: ZipFile
-) -> None:
-    content = [LOG_SECTION_TEMPLATE.format("Test run general logs")]
-    content.extend(log_generator(log_entries=grouped_logs.general, json_entries=False))
-
-    for test_suite, test_suite_logs in grouped_logs.suites.items():
-        content.append(LOG_SECTION_TEMPLATE.format(f"{test_suite} logs"))
-        content.extend(log_generator(log_entries=test_suite_logs, json_entries=False))
-
-    zip_file.writestr(
-        zinfo_or_arcname="test_suites_setup_and_cleanup.log", data="".join(content)
+    suite_titles: Dict[int, str] = field(default_factory=dict)
+    cases_by_state: Dict[models.TestStateEnum, Dict[Tuple[int, int], str]] = field(
+        default_factory=dict
     )
 
 
-def __create_cases_file(
-    grouped_logs: schemas.GroupedTestRunExecutionLogs,
-    state: models.TestStateEnum,
-    zip_file: ZipFile,
-) -> None:
-    content = [LOG_SECTION_TEMPLATE.format("Test run general logs")]
-    content.extend(log_generator(log_entries=grouped_logs.general, json_entries=False))
+def plan_grouped_log(
+    db: Session, test_run_execution: models.TestRunExecution
+) -> GroupedLogPlan:
+    """Resolve the suites and test cases referenced by a run's log entries.
 
-    for test_case, test_case_logs in grouped_logs.cases[state].items():
-        content.append(LOG_SECTION_TEMPLATE.format(f"{test_case} logs"))
-        content.extend(log_generator(log_entries=test_case_logs, json_entries=False))
+    Log entries have indexes for test suite, test case and test step
+    executions. General TH logs have no test suite index; test suite logs have
+    a test suite index but no test case index; test case logs have both.
 
-    zip_file.writestr(zinfo_or_arcname=f"{state}_test_cases.log", data="".join(content))
+    Raises IndexError if a log entry refers to a suite or case the run
+    doesn't have.
+    """
+    plan = GroupedLogPlan()
+    for suite, case in crud.test_run_execution.log_entry_groups(
+        db=db, run_id=test_run_execution.id
+    ):
+        if suite is None:
+            continue
+        suite_execution = test_run_execution.test_suite_executions[suite]
+        if case is None:
+            plan.suite_titles[suite] = suite_execution.public_id
+        else:
+            case_execution = suite_execution.test_case_executions[case]
+            plan.cases_by_state.setdefault(case_execution.state, {})[
+                (suite, case)
+            ] = case_execution.public_id
+    return plan
+
+
+def write_grouped_log_entries(
+    zip_file: ZipFile, db: Session, run_id: int, plan: GroupedLogPlan
+) -> Iterator[None]:
+    """Write a run's logs into `zip_file`, grouped by test case state.
+
+    The archive contains:
+    - summary.txt: the test cases with logs, listed per state;
+    - test_suites_setup_and_cleanup.log: general logs, then each test suite's
+      logs that aren't tied to a test case;
+    - <state>_test_cases.log (one per state): general logs, then the logs of
+      each test case that finished in that state.
+
+    Entries are read from the database in streaming batches, one query per
+    file, and sections are ordered by test suite index, then test case index.
+    The general logs are read once, while the suites file is written, and
+    spooled to a temporary file that is replayed into each state file.
+    """
+    suite_index = models.TestRunLogEntry.test_suite_execution_index
+    case_index = models.TestRunLogEntry.test_case_execution_index
+
+    yield from write_zip_entry(
+        zip_file, "summary.txt", [_summary_text(cases_by_state=plan.cases_by_state)]
+    )
+
+    with tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024) as general:
+
+        def spool_general_lines() -> Iterator[bytes]:
+            for line in chain(
+                [LOG_SECTION_TEMPLATE.format("Test run general logs")],
+                log_generator(
+                    crud.test_run_execution.iter_log_entries(
+                        db=db, run_id=run_id, criteria=[suite_index.is_(None)]
+                    ),
+                    json_entries=False,
+                ),
+            ):
+                data = line.encode()
+                general.write(data)
+                yield data
+
+        def replay_general_lines() -> Iterator[bytes]:
+            general.seek(0)
+            yield from iter(lambda: general.read(STREAM_CHUNK_SIZE), b"")
+
+        suite_entries = crud.test_run_execution.iter_log_entries(
+            db=db,
+            run_id=run_id,
+            criteria=[suite_index.in_(list(plan.suite_titles)), case_index.is_(None)],
+            order_by=[suite_index],
+        )
+        yield from write_zip_entry(
+            zip_file,
+            "test_suites_setup_and_cleanup.log",
+            chain(
+                spool_general_lines(),
+                _sectioned_log_lines(
+                    entries=suite_entries,
+                    section_key=lambda entry: entry.test_suite_execution_index,
+                    section_titles=plan.suite_titles,
+                ),
+            ),
+        )
+
+        for state, case_titles in plan.cases_by_state.items():
+            case_entries = crud.test_run_execution.iter_log_entries(
+                db=db,
+                run_id=run_id,
+                criteria=[tuple_(suite_index, case_index).in_(list(case_titles))],
+                order_by=[suite_index, case_index],
+            )
+            yield from write_zip_entry(
+                zip_file,
+                f"{state}_test_cases.log",
+                chain(
+                    replay_general_lines(),
+                    _sectioned_log_lines(
+                        entries=case_entries,
+                        section_key=lambda entry: (
+                            entry.test_suite_execution_index,
+                            entry.test_case_execution_index,
+                        ),
+                        section_titles=case_titles,
+                    ),
+                ),
+            )
+
+
+def _sectioned_log_lines(
+    entries: Iterable[models.TestRunLogEntry],
+    section_key: Callable[[models.TestRunLogEntry], Any],
+    section_titles: Mapping[Any, str],
+) -> Iterator[str]:
+    """Format entries, emitting a section header whenever `section_key`
+    changes. Entries must already be ordered by section."""
+    current_key: Any = object()
+    for entry in entries:
+        key = section_key(entry)
+        if key != current_key:
+            current_key = key
+            yield LOG_SECTION_TEMPLATE.format(f"{section_titles[key]} logs")
+        yield format_log_line(entry, json_entries=False)
+
+
+def _summary_text(
+    cases_by_state: Dict[models.TestStateEnum, Dict[Tuple[int, int], str]]
+) -> str:
+    test_case_count = sum(len(cases) for cases in cases_by_state.values())
+
+    if test_case_count == 0:
+        return "No test case has been executed"
+
+    content: List[str] = []
+    for state, cases in cases_by_state.items():
+        content.append(
+            LOG_SECTION_TEMPLATE.format(
+                f'"{state}" test cases ({len(cases)}/{test_case_count})'
+            )
+        )
+        content.extend(f"{public_id}\n" for public_id in cases.values())
+
+    return "".join(content)
