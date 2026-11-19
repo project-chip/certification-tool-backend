@@ -310,9 +310,9 @@ class CRUDTestRunExecution(
 
         Reading `run.log` loads every entry of the run into the session at
         once, which for a long run is hundreds of thousands of mapped
-        instances. `yield_per` instead sets psycopg2's `stream_results`, so the
-        rows come back through a server-side cursor in batches rather than the
-        whole result set being buffered client side.
+        instances. The `yield_per` execution option instead sets psycopg2's
+        `stream_results`, so the rows come back through a server-side cursor in
+        batches rather than the whole result set being buffered client side.
 
         `criteria` adds extra WHERE clauses. `order_by` columns are applied
         before `seq`, which is always the last sort key.
@@ -324,8 +324,9 @@ class CRUDTestRunExecution(
             select(TestRunLogEntry)
             .where(TestRunLogEntry.test_run_execution_id == run_id, *criteria)
             .order_by(*order_by, TestRunLogEntry.seq)
+            .execution_options(yield_per=batch_size)
         )
-        yield from db.execute(statement).yield_per(batch_size).scalars()
+        yield from db.execute(statement).scalars()
 
     def log_entry_groups(
         self, db: Session, run_id: int

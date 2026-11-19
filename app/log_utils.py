@@ -240,7 +240,7 @@ def write_grouped_log_entries(
         suite_entries = crud.test_run_execution.iter_log_entries(
             db=db,
             run_id=run_id,
-            criteria=[suite_index.is_not(None), case_index.is_(None)],
+            criteria=[suite_index.in_(list(plan.suite_titles)), case_index.is_(None)],
             order_by=[suite_index],
         )
         yield from write_zip_entry(
