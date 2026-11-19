@@ -19,11 +19,14 @@
 import argparse
 import importlib
 import json
+import os
 import sys
 from contextlib import redirect_stdout
 from multiprocessing.managers import BaseManager
 from pathlib import Path
+from typing import TextIO
 
+import matter.logging
 from matter.testing.CommissioningPreTest import CommissionDeviceTest
 from matter.testing.matter_testing import MatterTestConfig
 from matter.testing.runner import (
@@ -244,6 +247,7 @@ def main() -> None:
         # default (which varies by environment, e.g. ASCII in a minimal
         # container) is not a safe assumption to share with them implicitly.
         with open(EXECUTION_LOG_OUTPUT, "w", buffering=1, encoding="utf-8") as f:
+            write_native_logs_to(f)
             with redirect_stdout(f):
                 # Check if 'commission' was passed
                 if th_args[TH_COMMISSION_ARGUMENT]:
@@ -257,6 +261,22 @@ def main() -> None:
                     raise ValueError(
                         f"{TH_CLIENT_TEST_ARGUMENT} is required for test execution"
                     )
+
+
+def write_native_logs_to(output: TextIO) -> None:
+    """Writes the SDK's native log lines directly to `output`, instead of
+    through Python logging.
+
+    The native lines share the file description of `output`, so they are
+    interleaved in write order with the Python log lines written to it.
+    """
+    # Send output already printed to stdout to its current destination first
+    sys.__stdout__.flush()
+    output.flush()
+    os.dup2(output.fileno(), sys.__stdout__.fileno())
+    matter.logging.RedirectToPythonLogging = lambda: None
+    # Leave out native detail logs, as the Python logging redirect did
+    matter.logging.SetLogFilter(matter.logging.LOG_CATEGORY_PROGRESS)
 
 
 def _device_requirement_name(test_class) -> str | None:

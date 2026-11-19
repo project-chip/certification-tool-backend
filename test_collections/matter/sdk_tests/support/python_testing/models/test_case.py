@@ -58,6 +58,7 @@ from .utils import (
     DUTCommissioningError,
     PromptOption,
     commission_device,
+    format_native_log_line,
     generate_command_arguments,
     should_perform_new_commissioning,
 )
@@ -252,7 +253,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 for i in range(0, len(step_logs), REPLAY_LOG_BATCH_SIZE):
                     batch = step_logs[i : i + REPLAY_LOG_BATCH_SIZE]
                     for line in batch:
-                        logger.log(PYTHON_TEST_LEVEL, line)
+                        logger.log(PYTHON_TEST_LEVEL, format_native_log_line(line))
                     # Brief yield between batches so other tasks can run
                     if i + REPLAY_LOG_BATCH_SIZE < len(step_logs):
                         await sleep(REPLAY_LOG_YIELD_DELAY)
@@ -618,7 +619,7 @@ class PythonTestCase(TestCase, UserPromptSupport):
                     for i in range(0, len(remaining_lines), REPLAY_LOG_BATCH_SIZE):
                         batch = remaining_lines[i : i + REPLAY_LOG_BATCH_SIZE]
                         for line in batch:
-                            logger.log(PYTHON_TEST_LEVEL, line)
+                            logger.log(PYTHON_TEST_LEVEL, format_native_log_line(line))
                         if i + REPLAY_LOG_BATCH_SIZE < len(remaining_lines):
                             await sleep(REPLAY_LOG_YIELD_DELAY)
                     logger.info("---- End of remaining logs ----")
@@ -664,7 +665,9 @@ class PythonTestCase(TestCase, UserPromptSupport):
                 # starts.
                 batch_count = 0
                 for line in f:
-                    logger.log(PYTHON_TEST_LEVEL, line.rstrip("\n"))
+                    logger.log(
+                        PYTHON_TEST_LEVEL, format_native_log_line(line.rstrip("\n"))
+                    )
                     batch_count += 1
                     if batch_count >= REPLAY_LOG_BATCH_SIZE:
                         batch_count = 0
