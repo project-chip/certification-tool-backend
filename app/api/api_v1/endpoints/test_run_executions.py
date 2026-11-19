@@ -15,6 +15,7 @@
 #
 import json
 import re
+from functools import partial
 from http import HTTPStatus
 from typing import Any
 
@@ -28,7 +29,7 @@ from sqlalchemy.orm import Session
 from app import crud, log_utils, models, schemas
 from app.api import DEFAULT_404_MESSAGE
 from app.crud.crud_test_run_execution import ImportError
-from app.db.session import get_db
+from app.db.session import get_db, iter_with_session
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.models.test_run_execution import TestRunExecution
@@ -495,12 +496,17 @@ def download_log(
             "Content-Disposition": f'attachment; filename="{filename}"'
         }
 
-    log_output = log_utils.convert_execution_log_to_list(
-        log=test_run_execution.log, json_entries=json_entries
-    )
-
     return StreamingResponse(
-        log_utils.async_log_generator(items=log_output),
+        iter_with_session(
+            lambda stream_db: log_utils.chunk_text(
+                log_utils.log_generator(
+                    log_entries=crud.test_run_execution.iter_log_entries(
+                        db=stream_db, run_id=id
+                    ),
+                    json_entries=json_entries,
+                )
+            )
+        ),
         **options,
     )
 
@@ -538,9 +544,10 @@ def download_grouped_log(
         HTTPException: If there's no TestRunExectution with the given ID
 
     Returns:
-        StreamingResponse: .zip file containing: one file with the list of test cases
-        for each state; one file with the logs from the executed test suites; one file
-        per state with the logs from all test cases that finished with that state
+        StreamingResponse: .zip file, streamed as it's built, containing: one file
+        with the list of test cases for each state; one file with the logs from the
+        executed test suites; one file per state with the logs from all test cases
+        that finished with that state
     """
     test_run_execution = crud.test_run_execution.get(db=db, id=id)
     if not test_run_execution:
@@ -548,11 +555,7 @@ def download_grouped_log(
             status_code=HTTPStatus.NOT_FOUND, detail="Test Run Execution not found"
         )
 
-    logs = log_utils.group_test_run_execution_logs(
-        test_run_execution=test_run_execution
-    )
-
-    zip_file = log_utils.create_grouped_log_zip_file(grouped_logs=logs)
+    plan = log_utils.plan_grouped_log(db=db, test_run_execution=test_run_execution)
 
     file_name = f"{test_run_execution.id}-{test_run_execution.title}.zip"
     options: dict = {
@@ -561,7 +564,16 @@ def download_grouped_log(
     }
 
     return StreamingResponse(
-        log_utils.iter_and_close(zip_file),
+        iter_with_session(
+            lambda stream_db: log_utils.stream_zip(
+                partial(
+                    log_utils.write_grouped_log_entries,
+                    db=stream_db,
+                    run_id=id,
+                    plan=plan,
+                )
+            )
+        ),
         **options,
     )
 

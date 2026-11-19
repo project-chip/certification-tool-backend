@@ -14,10 +14,10 @@
 # limitations under the License.
 #
 from datetime import datetime
-from typing import Iterator, List, Optional, Sequence
+from typing import Any, Iterator, List, Optional, Sequence, Tuple
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnExpressionArgument, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.crud import operator as crud_operator
@@ -299,7 +299,12 @@ class CRUDTestRunExecution(
         return db_obj
 
     def iter_log_entries(
-        self, db: Session, run_id: int, batch_size: int = 1000
+        self,
+        db: Session,
+        run_id: int,
+        batch_size: int = 1000,
+        criteria: Sequence[ColumnExpressionArgument[bool]] = (),
+        order_by: Sequence[ColumnExpressionArgument[Any]] = (),
     ) -> Iterator[TestRunLogEntry]:
         """Yield a run's log entries in order without materializing them all.
 
@@ -309,15 +314,38 @@ class CRUDTestRunExecution(
         rows come back through a server-side cursor in batches rather than the
         whole result set being buffered client side.
 
+        `criteria` adds extra WHERE clauses. `order_by` columns are applied
+        before `seq`, which is always the last sort key.
+
         The caller must not issue other queries on `db` while iterating, since
         the open cursor holds the connection.
         """
         statement = (
             select(TestRunLogEntry)
-            .where(TestRunLogEntry.test_run_execution_id == run_id)
-            .order_by(TestRunLogEntry.seq)
+            .where(TestRunLogEntry.test_run_execution_id == run_id, *criteria)
+            .order_by(*order_by, TestRunLogEntry.seq)
         )
         yield from db.execute(statement).yield_per(batch_size).scalars()
+
+    def log_entry_groups(
+        self, db: Session, run_id: int
+    ) -> List[Tuple[Optional[int], Optional[int]]]:
+        """Return the distinct (suite index, case index) pairs in a run's log.
+
+        Pairs are ordered by suite index, then case index, with NULLs first.
+        """
+        suite_index = TestRunLogEntry.test_suite_execution_index
+        case_index = TestRunLogEntry.test_case_execution_index
+        statement = (
+            select(suite_index, case_index)
+            .where(TestRunLogEntry.test_run_execution_id == run_id)
+            .group_by(suite_index, case_index)
+            .order_by(suite_index.nulls_first(), case_index.nulls_first())
+        )
+        return [
+            (row.test_suite_execution_index, row.test_case_execution_index)
+            for row in db.execute(statement)
+        ]
 
     def import_execution(
         self,
