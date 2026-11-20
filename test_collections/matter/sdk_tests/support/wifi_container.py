@@ -77,6 +77,34 @@ def require_unclaimed_interfaces(ifnames: list[str]) -> None:
         logger.info(f"No known host service manages {', '.join(ifnames)}")
 
 
+def require_avahi_interfaces(ifnames: list[str]) -> None:
+    """Fails unless the host's Avahi daemon uses these radios.
+
+    Checks the host's Avahi configuration for these interfaces, and that the
+    running daemon started after that configuration last changed.
+    """
+    # Imported here for the same reason as host_network_config above.
+    from .host_avahi_config import avahi_excluded_interfaces, avahi_restart_pending
+
+    excluded = avahi_excluded_interfaces(ifnames)
+    if excluded:
+        raise WiFiContainerError(
+            f"The host Avahi daemon does not use {', '.join(excluded)}, so DUTs on the"
+            " Wi-Fi fixture's network cannot be discovered. On the host, add it to"
+            " allow-interfaces (or comment that setting out) and remove it from"
+            " deny-interfaces in /etc/avahi/avahi-daemon.conf, then run"
+            " `sudo systemctl restart avahi-daemon`."
+        )
+
+    if avahi_restart_pending():
+        raise WiFiContainerError(
+            "The host Avahi daemon started before the last change to"
+            " /etc/avahi/avahi-daemon.conf, so it may not use"
+            f" {', '.join(ifnames)}. On the host, run"
+            " `sudo systemctl restart avahi-daemon`."
+        )
+
+
 class WiFiContainer(metaclass=Singleton):
     """The Wi-Fi fixture container, for the duration of a test suite.
 
@@ -144,8 +172,10 @@ class WiFiContainer(metaclass=Singleton):
         self.__load_config(config)
         logger.info(f"Preparing Wi-Fi fixture using interfaces {config.interfaces}")
 
-        # Check the radios are unclaimed before starting the container.
+        # Check the radios are unclaimed and used by the host's Avahi before
+        # starting the container.
         require_unclaimed_interfaces(config.interfaces)
+        require_avahi_interfaces(config.interfaces)
 
         # Remove anything still holding the radios: the container this instance was
         # tracking, one it no longer tracks (a failed start, or a backend restart
