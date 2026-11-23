@@ -399,6 +399,40 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
 
 
 @pytest.mark.asyncio
+async def test_pairing_keeps_the_error_reported_by_chip_tool() -> None:
+    runner: MatterYAMLRunner = MatterYAMLRunner()
+    chip_server: ChipServer = ChipServer()
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
+    matter_settings.CHIP_TOOL_TRACE = False
+
+    try:
+        with mock.patch.object(
+            target=runner,
+            attribute="send_websocket_command",
+            side_effect=[
+                '{"results": [{"error": "FAILURE"}, {"error": "OTHER"}]}',
+                '{"results": []}',
+            ],
+        ):
+            failed = await runner.pairing_on_network(
+                setup_code="0123456", discriminator="1234"
+            )
+            error_after_failure = runner.last_pairing_error
+            succeeded = await runner.pairing_on_network(
+                setup_code="0123456", discriminator="1234"
+            )
+            error_after_success = runner.last_pairing_error
+    finally:
+        matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
+        chip_server._ChipServer__node_id = None
+
+    assert failed is False
+    assert error_after_failure == "FAILURE"
+    assert succeeded is True
+    assert error_after_success is None
+
+
+@pytest.mark.asyncio
 async def test_pairing_on_network_command_params() -> None:
     original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
     if original_trace_setting_value is True:

@@ -101,6 +101,8 @@ class MatterYAMLRunner(metaclass=Singleton):
         """
         self.logger = logger
         self.chip_server: ChipServer = ChipServer(logger)
+        # Error reported by chip-tool for the last failed pairing command, if any.
+        self.last_pairing_error: Optional[str] = None
         self.__pics_file_created = False
         # TODO: Need to dynamically select the specs based on clusters in test.
         specifications_paths = [f"{XML_SPEC_DEFINITION_PATH}/*.xml"]
@@ -187,13 +189,18 @@ class MatterYAMLRunner(metaclass=Singleton):
             topic = f"PAIRING_{mode}"
             command.append(self.chip_server.trace_file_params(topic))
 
+        self.last_pairing_error = None
         response = await self.send_websocket_command(" ".join(command))
         if not response:
             return False
 
         json_payload = json.loads(response)
         results = json_payload.get("results", [])
-        return not any(r.get("error") for r in results)
+        errors = [str(r["error"]) for r in results if r.get("error")]
+        if errors:
+            # Keep the reason, so the caller can tell the user why pairing failed.
+            self.last_pairing_error = errors[0]
+        return not errors
 
     async def run_test(
         self,
