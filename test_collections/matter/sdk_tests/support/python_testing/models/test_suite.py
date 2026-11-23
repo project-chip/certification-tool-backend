@@ -36,6 +36,7 @@ from .utils import (
     capture_admin_storage_file,
     commission_device,
     should_perform_new_commissioning,
+    validate_test_parameters,
 )
 
 
@@ -114,6 +115,13 @@ class PythonTestSuite(TestSuite):
         )
 
         self.matter_config = TestEnvironmentConfigMatter(**self.config)
+
+        # Reject unknown test parameters (e.g. a mistyped option) before touching
+        # the DUT, instead of letting the runner fail in the middle of the run.
+        await validate_test_parameters(
+            self.sdk_container, self.matter_config.test_parameters
+        )
+
         # pcscd is required for NFC reader access regardless of pairing mode
         await asyncio.to_thread(
             self.sdk_container.send_command,
