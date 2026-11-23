@@ -48,6 +48,7 @@ from ...utils import (
     PromptOption,
     prompt_reuse_commissioning,
 )
+from ..runner_options import describe_invalid_test_parameters, parse_runner_options
 
 # Command line params
 RUNNER_CLASS_PATH = "/root/python_testing/scripts/sdk/matter_testing_infrastructure/chip/testing/test_harness_client.py"  # noqa
@@ -229,6 +230,71 @@ def handle_logs(log_generator: Iterable[bytes], logger: loguru.Logger) -> None:
 
 class DUTCommissioningError(Exception):
     pass
+
+
+class InvalidTestParametersError(Exception):
+    """Raised when test_parameters contain options the SDK test runner rejects."""
+
+
+def read_runner_options(sdk_container: SDKContainer) -> set[str] | None:
+    """Options the SDK test runner accepts, read from its --help (no side effects).
+
+    Blocking: it runs a command in the SDK container. Returns None if they cannot be
+    determined.
+    """
+    exec_result = sdk_container.send_command(
+        "--help", prefix=f"{EXECUTABLE} {RUNNER_CLASS_PATH}"
+    )
+    output = exec_result.output
+    help_text = (
+        output.decode(errors="replace") if isinstance(output, bytes) else str(output)
+    )
+    runner_options = parse_runner_options(help_text)
+    if exec_result.exit_code != 0 or not runner_options:
+        logger.warning(
+            "Could not read the SDK test runner options"
+            f" (exit code: {exec_result.exit_code})"
+        )
+        return None
+    return runner_options
+
+
+async def validate_test_parameters(
+    sdk_container: SDKContainer, test_parameters: dict | None
+) -> None:
+    """Fail fast if test_parameters contain options the SDK test runner rejects.
+
+    This is the safety net behind the check done when a test run is created through
+    the API (which uses the options cached at test generation time): it asks the
+    runner in the container directly, before any DUT interaction, so a typo such as
+    `--prompt_timeout` ends the run immediately with a clear message.
+
+    If the runner's options cannot be determined, validation is skipped: the runner
+    itself still rejects bad arguments, this check only makes that failure earlier.
+
+    Raises:
+        InvalidTestParametersError: if one or more test parameters are unknown.
+    """
+    if not test_parameters:
+        return
+
+    try:
+        runner_options = await asyncio.to_thread(read_runner_options, sdk_container)
+    except Exception as error:
+        # The probe is optional: it must never be what fails the suite setup.
+        logger.warning(
+            "Could not read the SDK test runner options, skipping test parameter"
+            f" validation: {error}"
+        )
+        return
+
+    if runner_options is None:
+        # read_runner_options already logged why the options are unavailable.
+        return
+
+    message = describe_invalid_test_parameters(test_parameters, runner_options)
+    if message:
+        raise InvalidTestParametersError(message)
 
 
 def __retrieve_storage_path(config: TestEnvironmentConfigMatter) -> Path:

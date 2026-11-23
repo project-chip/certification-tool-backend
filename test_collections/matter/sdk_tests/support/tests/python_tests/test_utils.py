@@ -34,6 +34,7 @@ from ...python_testing.models.utils import (
     EXECUTABLE,
     RUNNER_CLASS_PATH,
     DUTCommissioningError,
+    InvalidTestParametersError,
     PromptOption,
     _container_logs_enabled,
     capture_admin_storage_file,
@@ -43,6 +44,7 @@ from ...python_testing.models.utils import (
     handle_logs,
     log_test_output_file,
     should_perform_new_commissioning,
+    validate_test_parameters,
 )
 from ...sdk_container import DOCKER_PAA_CERTS_PATH, SDKContainer
 
@@ -1269,6 +1271,98 @@ def test_container_logs_enabled_defers_to_env_when_th_config_none() -> None:
     ) as mock_settings:
         mock_settings.ENABLE_CONTAINER_LOGS = False
         assert _container_logs_enabled(config) is False
+
+
+# ---------------------------------------------------------------------------
+# validate_test_parameters
+# ---------------------------------------------------------------------------
+
+RUNNER_HELP = (
+    "usage: test_harness_client.py [-h] [--tests test_NAME [test_NAME ...]]\n"
+    "                              [--timeout TIMEOUT] [--PICS PICS]\n"
+    "                              [--int-arg NAME:VALUE [NAME:VALUE ...]]\n"
+    "                              [--enable-spec-errata-ci-only-disallowed-for-certification]\n"
+)
+
+
+def _runner_help_container(output: bytes = RUNNER_HELP.encode(), exit_code: int = 0):
+    sdk_container = mock.MagicMock()
+    sdk_container.send_command.return_value = ExecResultExtended(
+        exit_code, output, "ID", None
+    )
+    return sdk_container
+
+
+@pytest.mark.asyncio
+async def test_validate_test_parameters_accepts_known_options() -> None:
+    sdk_container = _runner_help_container()
+
+    await validate_test_parameters(
+        sdk_container, {"int-arg": "A:1", "timeout": 5, "PICS": "x"}
+    )
+
+    sdk_container.send_command.assert_called_once_with(
+        "--help", prefix=f"{EXECUTABLE} {RUNNER_CLASS_PATH}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_validate_test_parameters_accepts_unambiguous_prefix() -> None:
+    """argparse accepts abbreviations of long options, so the check must too."""
+    await validate_test_parameters(_runner_help_container(), {"enable-spec": "1"})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("test_parameters", [None, {}])
+async def test_validate_test_parameters_skips_when_empty(test_parameters) -> None:
+    sdk_container = _runner_help_container()
+
+    await validate_test_parameters(sdk_container, test_parameters)
+
+    sdk_container.send_command.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_validate_test_parameters_rejects_unknown_option() -> None:
+    with pytest.raises(InvalidTestParametersError) as exc_info:
+        await validate_test_parameters(
+            _runner_help_container(), {"int-arg": "A:1", "prompt_timeout": "5"}
+        )
+
+    message = str(exc_info.value)
+    assert "'--prompt_timeout'" in message
+    assert "did you mean" not in message  # only resembles the unrelated --timeout
+    assert "'--int-arg'" not in message
+
+
+@pytest.mark.asyncio
+async def test_validate_test_parameters_suggests_close_match() -> None:
+    with pytest.raises(InvalidTestParametersError, match="did you mean '--timeout'"):
+        await validate_test_parameters(_runner_help_container(), {"timeuot": "5"})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "help_kwargs",
+    [{"exit_code": 1}, {"output": b"no options here"}],
+    ids=["help-failed", "no-options-listed"],
+)
+async def test_validate_test_parameters_skips_when_help_unavailable(
+    help_kwargs: dict,
+) -> None:
+    """If the runner options can't be read, don't block the run on a guess."""
+    sdk_container = _runner_help_container(**help_kwargs)
+
+    await validate_test_parameters(sdk_container, {"anything": "1"})
+
+
+@pytest.mark.asyncio
+async def test_validate_test_parameters_skips_when_probe_raises() -> None:
+    """A failing probe (e.g. Docker error) must not fail the suite setup."""
+    sdk_container = mock.MagicMock()
+    sdk_container.send_command.side_effect = RuntimeError("docker error")
+
+    await validate_test_parameters(sdk_container, {"anything": "1"})
 
 
 NATIVE_LINE = "\x1b[0;32m[1794955401.307] [35:44] [EM] >>> message\x1b[0m"
