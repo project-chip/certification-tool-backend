@@ -1952,6 +1952,63 @@ def test_create_cli_test_run_execution_does_not_update_existing_project_no_pics(
     assert execution_in.execution_pics == {}
 
 
+def test_create_cli_test_run_execution_rejects_invalid_execution_config(
+    mock_db, test_run_execution_create, test_selection, default_config
+):
+    """An invalid execution_config is rejected with 422 before anything is created."""
+    invalid_config = {**default_config, "dut_config": {"pairing_mode": "not-a-mode"}}
+
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ), patch(
+        "app.api.api_v1.endpoints.test_run_executions._cli_project"
+    ) as mock_cli_project, patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create"
+    ) as mock_create:
+        response = client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+                "execution_config": invalid_config,
+            },
+        )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert "invalid properties" in response.json()["detail"]
+    mock_cli_project.assert_not_called()
+    mock_create.assert_not_called()
+
+
+def test_create_cli_test_run_execution_without_execution_config_skips_validation(
+    mock_db, test_run_execution_create, test_selection
+):
+    """An absent execution_config is not validated (the project config is used)."""
+    with patch(
+        "app.api.api_v1.endpoints.test_run_executions.get_db", return_value=mock_db
+    ), patch(
+        "app.api.api_v1.endpoints.test_run_executions.validate_config"
+    ) as mock_validate, patch(
+        "app.api.api_v1.endpoints.test_run_executions._cli_project"
+    ) as mock_cli_project, patch(
+        "app.api.api_v1.endpoints.test_run_executions._reject_invalid_test_parameters"
+    ), patch(
+        "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create"
+    ) as mock_create:
+        mock_cli_project.return_value = MagicMock(id=1, config={})
+        mock_create.return_value = MagicMock()
+        client.post(
+            f"{settings.API_V1_STR}/test_run_executions/cli",
+            json={
+                "test_run_execution_in": test_run_execution_create.dict(),
+                "selected_tests": test_selection,
+            },
+        )
+
+    mock_validate.assert_not_called()
+    mock_create.assert_called_once()
+
+
 _RUNNER_OPTIONS_PATH = (
     "app.api.api_v1.endpoints.test_run_executions.load_runner_options"
 )
