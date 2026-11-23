@@ -13,15 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from tempfile import SpooledTemporaryFile
-from typing import List
-from zipfile import ZipFile
+import json
+import secrets
+from io import BytesIO
+from typing import Any, Dict, Iterator, List, Optional
+from zipfile import ZIP_DEFLATED, ZipFile
 
+import pytest
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.orm import Session
 
 from app import log_utils, models, schemas
 from app.models import TestStateEnum
 from app.schemas import TestRunLogEntry
+from app.tests.utils.project import create_random_project
+from app.tests.utils.test_run_execution import (
+    create_test_run_execution_with_some_test_cases,
+)
 
 mocked_log: List[TestRunLogEntry] = [
     TestRunLogEntry(
@@ -398,7 +406,7 @@ mocked_test_run_execution = schemas.TestRunExecutionWithChildren(
                 schemas.TestCaseExecution(
                     state=TestStateEnum.NOT_APPLICABLE,
                     public_id="TC-Y-1.4",
-                    execution_index=1,
+                    execution_index=3,
                     id=5,
                     test_suite_execution_id=2,
                     test_case_metadata_id=5,
@@ -434,66 +442,227 @@ mocked_test_run_execution = schemas.TestRunExecutionWithChildren(
 )
 
 
-def test_group_test_run_execution_logs() -> None:
-    test_run_execution = models.TestRunExecution(
-        **jsonable_encoder(mocked_test_run_execution)
+def _log_entry(
+    message: str, suite: Optional[int] = None, case: Optional[int] = None
+) -> models.TestRunLogEntry:
+    return models.TestRunLogEntry(
+        level="INFO",
+        timestamp=1684878223.0,
+        message=message,
+        test_suite_execution_index=suite,
+        test_case_execution_index=case,
+        test_step_execution_index=None,
     )
-    test_run_execution.log = mocked_log_rows()
-
-    grouped_logs = log_utils.group_test_run_execution_logs(test_run_execution)
-
-    assert len(grouped_logs.general) == 4
-    assert len(grouped_logs.suites) == 2
-    assert len(grouped_logs.suites["Suite0"]) == 4
-    assert len(grouped_logs.suites["Suite1"]) == 3
-    assert len(grouped_logs.cases) == 4
-    assert len(grouped_logs.cases[TestStateEnum.PASSED]) == 2
-    assert len(grouped_logs.cases[TestStateEnum.ERROR]) == 1
-    assert len(grouped_logs.cases[TestStateEnum.FAILED]) == 1
-    assert len(grouped_logs.cases[TestStateEnum.NOT_APPLICABLE]) == 1
-    assert len(grouped_logs.cases[TestStateEnum.PASSED]["TC-X-1.1"]) == 5
-    assert len(grouped_logs.cases[TestStateEnum.PASSED]["TC-Y-1.3"]) == 1
-    assert len(grouped_logs.cases[TestStateEnum.ERROR]["TC-Y-1.1"]) == 5
-    assert len(grouped_logs.cases[TestStateEnum.FAILED]["TC-Y-1.2"]) == 3
-    assert len(grouped_logs.cases[TestStateEnum.NOT_APPLICABLE]["TC-Y-1.4"]) == 2
 
 
-def test_create_grouped_log_zip_file_returns_valid_zip() -> None:
-    """create_grouped_log_zip_file() returns a SpooledTemporaryFile (not a
-    BytesIO) so peak memory for large log exports is bounded by disk
-    spillover instead of holding the whole compressed archive in RAM. Verify
-    it's still a valid, readable zip archive despite the type change."""
-    test_run_execution = models.TestRunExecution(
-        **jsonable_encoder(mocked_test_run_execution)
+def _messages(text: str) -> list[str]:
+    """Strip the level/timestamp prefix from each formatted line, keeping
+    section headers as-is."""
+    return [line.split(" | ")[-1] for line in text.splitlines()]
+
+
+def _section(title: str) -> str:
+    return log_utils.LOG_SECTION_TEMPLATE.format(title).rstrip("\n")
+
+
+def _grouped_zip(db: Session, run: models.TestRunExecution) -> ZipFile:
+    plan = log_utils.plan_grouped_log(db=db, test_run_execution=run)
+    content = b"".join(
+        log_utils.stream_zip(
+            lambda zip_file: log_utils.write_grouped_log_entries(
+                zip_file=zip_file, db=db, run_id=run.id, plan=plan
+            )
+        )
     )
-    test_run_execution.log = mocked_log_rows()
-
-    grouped_logs = log_utils.group_test_run_execution_logs(test_run_execution)
-    zip_buffer = log_utils.create_grouped_log_zip_file(grouped_logs=grouped_logs)
-
-    assert isinstance(zip_buffer, SpooledTemporaryFile)
-
-    with ZipFile(zip_buffer) as zf:
-        names = zf.namelist()
-        assert "summary.txt" in names
-        assert "test_suites_setup_and_cleanup.log" in names
-        assert f"{TestStateEnum.PASSED}_test_cases.log" in names
-
-    zip_buffer.close()
+    return ZipFile(BytesIO(content))
 
 
-def test_iter_and_close_streams_and_closes_spooled_temporary_file() -> None:
-    """Regression test: iter_and_close() must work with a SpooledTemporaryFile
-    specifically (not just a BytesIO), since SpooledTemporaryFile forwards
-    read()/seek() via __getattr__ but doesn't implement __iter__/__next__
-    itself - passing one directly to StreamingResponse raises "TypeError:
-    '...' object is not an iterator"."""
-    file_obj = SpooledTemporaryFile(max_size=1024)
-    content = b"a" * 10 + b"b" * 10
-    file_obj.write(content)
-    file_obj.seek(0)
+# Foreign keys and primary keys in mocked_test_run_execution, which the
+# database assigns when the run is saved.
+_DB_ASSIGNED_KEYS = {
+    "id",
+    "operator_id",
+    "project_id",
+    "test_run_execution_id",
+    "test_suite_execution_id",
+    "test_case_execution_id",
+    "test_suite_metadata_id",
+    "test_case_metadata_id",
+}
 
-    chunks = list(log_utils.iter_and_close(file_obj, chunk_size=10))
 
-    assert chunks == [b"a" * 10, b"b" * 10]
-    assert file_obj.closed
+def _without_db_keys(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _without_db_keys(item)
+            for key, item in value.items()
+            if key not in _DB_ASSIGNED_KEYS
+        }
+    if isinstance(value, list):
+        return [_without_db_keys(item) for item in value]
+    return value
+
+
+def _create_mocked_run(db: Session) -> models.TestRunExecution:
+    """Save mocked_test_run_execution and mocked_log to the database."""
+    run = models.TestRunExecution(
+        **_without_db_keys(jsonable_encoder(mocked_test_run_execution))
+    )
+    run.project_id = create_random_project(db, config={}).id
+    for row in mocked_log_rows():
+        run.log.append(row)
+    db.add(run)
+    db.commit()
+    return run
+
+
+def _sections(text: str) -> Dict[str, List[str]]:
+    """Split a grouped log file into its sections, keyed by section title,
+    each holding its lines' messages."""
+    sections: Dict[str, List[str]] = {}
+    current: List[str] = []
+    for line in text.splitlines():
+        if line.startswith("-" * 21 + " "):
+            current = sections.setdefault(line.strip("- "), [])
+        else:
+            current.append(line.split(" | ")[-1])
+    return sections
+
+
+def test_chunk_text_groups_parts_into_chunks() -> None:
+    chunks = list(log_utils.chunk_text(["aaaa", "bbbb", "cc", "é"], chunk_size=6))
+
+    assert chunks == [b"aaaabbbb", "ccé".encode()]
+
+
+def test_chunk_text_yields_nothing_for_no_parts() -> None:
+    assert list(log_utils.chunk_text([])) == []
+
+
+def test_stream_zip_yields_a_valid_zip_in_chunks() -> None:
+    lines = [f"line {i} {secrets.token_hex(32)}\n" for i in range(2000)]
+
+    def write_entries(zip_file: ZipFile) -> Iterator[None]:
+        yield from log_utils.write_zip_entry(zip_file, "a.log", lines)
+        yield from log_utils.write_zip_entry(zip_file, "b.bin", [b"\x00\x01"])
+
+    chunks = list(log_utils.stream_zip(write_entries, chunk_size=1024))
+
+    # Bytes are produced while entries are written, not only at the end.
+    assert len(chunks) > 2
+    with ZipFile(BytesIO(b"".join(chunks))) as zf:
+        assert zf.testzip() is None
+        assert all(info.compress_type == ZIP_DEFLATED for info in zf.infolist())
+        assert zf.read("a.log").decode() == "".join(lines)
+        assert zf.read("b.bin") == b"\x00\x01"
+
+
+def test_write_grouped_log_entries(db: Session) -> None:
+    run = _create_mocked_run(db)
+
+    with _grouped_zip(db=db, run=run) as zf:
+        assert zf.namelist() == [
+            "summary.txt",
+            "test_suites_setup_and_cleanup.log",
+            f"{TestStateEnum.PASSED}_test_cases.log",
+            f"{TestStateEnum.ERROR}_test_cases.log",
+            f"{TestStateEnum.FAILED}_test_cases.log",
+            f"{TestStateEnum.NOT_APPLICABLE}_test_cases.log",
+        ]
+
+        assert zf.read("summary.txt").decode().splitlines() == [
+            _section(f'"{TestStateEnum.PASSED}" test cases (2/5)'),
+            "TC-X-1.1",
+            "TC-Y-1.3",
+            _section(f'"{TestStateEnum.ERROR}" test cases (1/5)'),
+            "TC-Y-1.1",
+            _section(f'"{TestStateEnum.FAILED}" test cases (1/5)'),
+            "TC-Y-1.2",
+            _section(f'"{TestStateEnum.NOT_APPLICABLE}" test cases (1/5)'),
+            "TC-Y-1.4",
+        ]
+
+        general = ["General log 0", "General log 1", "General log 2", "General log 3"]
+
+        def sizes(name: str) -> Dict[str, int]:
+            sections = _sections(zf.read(name).decode())
+            assert sections["Test run general logs"] == general
+            return {title: len(lines) for title, lines in sections.items()}
+
+        assert sizes("test_suites_setup_and_cleanup.log") == {
+            "Test run general logs": 4,
+            "Suite0 logs": 4,
+            "Suite1 logs": 3,
+        }
+        assert sizes(f"{TestStateEnum.PASSED}_test_cases.log") == {
+            "Test run general logs": 4,
+            "TC-X-1.1 logs": 5,
+            "TC-Y-1.3 logs": 1,
+        }
+        assert sizes(f"{TestStateEnum.ERROR}_test_cases.log") == {
+            "Test run general logs": 4,
+            "TC-Y-1.1 logs": 5,
+        }
+        assert sizes(f"{TestStateEnum.FAILED}_test_cases.log") == {
+            "Test run general logs": 4,
+            "TC-Y-1.2 logs": 3,
+        }
+        assert sizes(f"{TestStateEnum.NOT_APPLICABLE}_test_cases.log") == {
+            "Test run general logs": 4,
+            "TC-Y-1.4 logs": 2,
+        }
+
+        # Entries keep their log order within a section, step logs included.
+        assert _sections(zf.read(f"{TestStateEnum.PASSED}_test_cases.log").decode())[
+            "TC-X-1.1 logs"
+        ] == [
+            "Test suite 0 case 0 log 0",
+            "Test suite 0 case 0 log 1",
+            "Test suite 0 case 0 step 0 log 0",
+            "Test suite 0 case 0 step 1 log 0",
+            "Test suite 0 case 0 log 2",
+        ]
+
+
+def test_grouped_log_zip_is_valid_and_compressed(db: Session) -> None:
+    run = _create_mocked_run(db)
+
+    with _grouped_zip(db=db, run=run) as zf:
+        assert zf.testzip() is None
+        assert all(info.compress_type == ZIP_DEFLATED for info in zf.infolist())
+
+
+def test_write_grouped_log_entries_without_test_case_logs(db: Session) -> None:
+    run = create_test_run_execution_with_some_test_cases(db=db)
+    run.log.append(_log_entry("general 0"))
+    db.commit()
+
+    with _grouped_zip(db=db, run=run) as zf:
+        assert sorted(zf.namelist()) == [
+            "summary.txt",
+            "test_suites_setup_and_cleanup.log",
+        ]
+        assert zf.read("summary.txt").decode() == "No test case has been executed"
+        assert _messages(zf.read("test_suites_setup_and_cleanup.log").decode()) == [
+            _section("Test run general logs"),
+            "general 0",
+        ]
+
+
+def test_plan_grouped_log_raises_for_unknown_test_case(db: Session) -> None:
+    run = create_test_run_execution_with_some_test_cases(db=db)
+    case_count = len(run.test_suite_executions[0].test_case_executions)
+    run.log.append(_log_entry("orphan", suite=0, case=case_count))
+    db.commit()
+
+    with pytest.raises(IndexError):
+        log_utils.plan_grouped_log(db=db, test_run_execution=run)
+
+
+def test_format_log_line() -> None:
+    entry = _log_entry("hello")
+
+    assert log_utils.format_log_line(entry, json_entries=False).endswith(" | hello\n")
+    assert json.loads(log_utils.format_log_line(entry, json_entries=True)) == (
+        json.loads(schemas.TestRunLogEntry.from_orm(entry).json())
+    )
