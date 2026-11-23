@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Generator, Iterable, cast
 
@@ -61,6 +63,15 @@ TEST_PARAMETER_PAA_TRUST_STORE_PATH_KEY = "paa-trust-store-path"
 # Typed SDK argument flags that accept NAME:VALUE pairs and require special
 # handling to survive the container shell without mangling.
 _SPLIT_ARGS = {"json-arg", "string-arg", "int-arg", "float-arg", "bool-arg", "hex-arg"}
+
+# Native SDK log line: "\x1b[0;32m[1794955401.307] [35:44] [EM] <message>\x1b[0m"
+_NATIVE_LOG_LINE = re.compile(
+    r"^\x1b\[(?P<color>[0-9;]+)m\[(?P<seconds>\d+)\.(?P<millis>\d{3})\] "
+    r"\[\d+:\d+\] \[[^\]]*\] (?P<message>.*?)(?:\x1b\[0m)?$"
+)
+# Python log level of each native SDK log color, as mapped by the SDK's
+# redirect of native logs to Python logging
+_NATIVE_LOG_LEVELS = {"1;31": "ERROR", "0;32": "INFO", "0;34": "DEBUG"}
 
 # Characters that trigger shell brace expansion or word splitting.
 _SHELL_SPECIAL = set("{[}\"'")
@@ -194,12 +205,27 @@ async def generate_command_arguments(
     return arguments
 
 
+def format_native_log_line(line: str) -> str:
+    """Formats a native SDK log line as the SDK's Python log lines are formatted,
+    "[MatterTest] MM-DD HH:MM:SS.mmm LEVEL <message>". Other lines are returned
+    unchanged.
+    """
+    match = _NATIVE_LOG_LINE.match(line)
+    if not match or match["color"] not in _NATIVE_LOG_LEVELS:
+        return line
+    timestamp = datetime.fromtimestamp(int(match["seconds"]), tz=timezone.utc)
+    return (
+        f"[MatterTest] {timestamp:%m-%d %H:%M:%S}.{match['millis']}"
+        f" {_NATIVE_LOG_LEVELS[match['color']]} {match['message']}"
+    )
+
+
 def handle_logs(log_generator: Iterable[bytes], logger: loguru.Logger) -> None:
     for chunk in log_generator:
         decoded_log = chunk.decode().strip()
         log_lines = decoded_log.splitlines()
         for line in log_lines:
-            logger.log(PYTHON_TEST_LEVEL, line)
+            logger.log(PYTHON_TEST_LEVEL, format_native_log_line(line))
 
 
 class DUTCommissioningError(Exception):
@@ -343,6 +369,8 @@ def log_test_output_file(logger: loguru.Logger) -> None:
             with open(file_output_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 if content.strip():  # Only log if there's actual content
+                    lines = content.split("\n")
+                    content = "\n".join(format_native_log_line(line) for line in lines)
                     logger.log(PYTHON_TEST_LEVEL, content)
         else:
             logger.debug(f"test_output.txt not found at {file_output_path}")
