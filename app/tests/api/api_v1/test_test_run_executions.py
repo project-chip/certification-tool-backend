@@ -1995,9 +1995,21 @@ def test_create_cli_test_run_execution_without_execution_config_skips_validation
     ), patch(
         "app.api.api_v1.endpoints.test_run_executions.crud.test_run_execution.create"
     ) as mock_create:
-        mock_cli_project.return_value = MagicMock(id=1, config={})
-        mock_create.return_value = MagicMock()
-        client.post(
+        mock_cli_project.return_value = Project(id=1, name="CLI Project", config={})
+        mock_create.return_value = TestRunExecution(
+            id=1,
+            title=test_run_execution_create.title,
+            description=test_run_execution_create.description,
+            project_id=1,
+            operator_id=1,
+            certification_mode=False,
+            state=TestStateEnum.PENDING,
+            started_at=None,
+            completed_at=None,
+            imported_at=None,
+            archived_at=None,
+        )
+        response = client.post(
             f"{settings.API_V1_STR}/test_run_executions/cli",
             json={
                 "test_run_execution_in": test_run_execution_create.dict(),
@@ -2005,6 +2017,7 @@ def test_create_cli_test_run_execution_without_execution_config_skips_validation
             },
         )
 
+    assert response.status_code == 200
     mock_validate.assert_not_called()
     mock_create.assert_called_once()
 
