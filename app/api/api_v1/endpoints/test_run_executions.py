@@ -28,12 +28,14 @@ from sqlalchemy.orm import Session
 
 from app import crud, log_utils, models, schemas
 from app.api import DEFAULT_404_MESSAGE
+from app.crud.crud_project import validate_config
 from app.crud.crud_test_run_execution import ImportError
 from app.db.session import get_db, iter_with_session
 from app.default_environment_config import default_environment_config
 from app.models.project import Project
 from app.models.test_run_execution import TestRunExecution
 from app.pics.pics_writer import PICSWriter
+from app.schemas.test_environment_config import TestEnvironmentConfigError
 from app.schemas.test_run_execution import TestRunExecutionUpdate
 from app.test_engine import TEST_ENGINE_ABORTING_TESTING_MESSAGE
 from app.test_engine.test_runner import AbortError, LoadingError, TestRunner
@@ -188,6 +190,15 @@ def create_cli_test_run_execution(
     Returns:
         The created TestRunExecution.
     """
+
+    # Reject an invalid config up front, before any project or execution is created
+    if execution_config is not None:
+        try:
+            validate_config(execution_config)
+        except TestEnvironmentConfigError as e:
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail=str(e)
+            )
 
     # Retrieve or create the CLI project
     cli_project = _cli_project(db, test_run_execution_in.project_id)

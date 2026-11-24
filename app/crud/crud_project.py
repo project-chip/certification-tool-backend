@@ -26,6 +26,17 @@ from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.utils import program_class
 
 
+def validate_config(config: Dict[str, Any]) -> None:
+    """Validate a test environment config against the program's config model.
+
+    Instantiates the program class, which raises TestEnvironmentConfigError when
+    the config is not in accordance with the model. Does nothing when no program
+    class is available.
+    """
+    if program_class:
+        program_class(**config)
+
+
 class CRUDProject(
     CRUDBaseRead[Project],
     CRUDBaseDelete[Project],
@@ -85,8 +96,7 @@ class CRUDProject(
             obj_in.config = default_environment_config.__dict__
             json_obj_in = jsonable_encoder(obj_in)
         # Try to instantiate the program class in order to validate the input data
-        if program_class:
-            program_class(**json_obj_in["config"])
+        validate_config(json_obj_in["config"])
 
         obj_in_data = json_obj_in
         db_obj = Project(**obj_in_data)
@@ -115,8 +125,7 @@ class CRUDProject(
                 setattr(db_obj, field, update_data[field])
 
         # Try to instantiate the program class in order to validate the input data
-        if program_class:
-            program_class(**jsonable_encoder(db_obj)["config"])
+        validate_config(jsonable_encoder(db_obj)["config"])
 
         db.add(db_obj)
         db.commit()
