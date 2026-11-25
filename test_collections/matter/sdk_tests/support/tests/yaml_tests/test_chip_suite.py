@@ -493,6 +493,8 @@ ON_NETWORK_CONFIG = {
         "pairing_mode": "onnetwork",
         "setup_code": "9198814",
         "discriminator": "3437",
+        "chip_use_paa_certs": False,
+        "trace_log": True,
     },
     "test_parameters": None,
 }
