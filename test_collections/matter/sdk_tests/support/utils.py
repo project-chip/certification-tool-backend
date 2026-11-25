@@ -22,6 +22,7 @@ from typing import Callable, Optional
 
 import loguru
 
+from app.constants.shared_constants import NFC_PAIRING_MODES
 from app.user_prompt_support.prompt_request import OptionsSelectPromptRequest
 from app.user_prompt_support.user_prompt_support import UserPromptSupport
 
@@ -76,22 +77,56 @@ async def prompt_for_commissioning_mode(
     logger: loguru.Logger,
     on_success: Optional[Callable] = None,
     on_failure: Optional[Callable] = None,
+    dut_hint: Optional[str] = None,
 ) -> PromptOption:
     options = {
         "DONE": PromptOption.PASS,
         "FAILED": PromptOption.FAIL,
     }
 
+    prompt = "Make sure the DUT is in Commissioning Mode"
+    if dut_hint:
+        prompt += f" ({dut_hint})"
+
     prompt_response = await __prompt_pass_fail_options(
         prompt_support=prompt_support,
         logger=logger,
-        prompt="Make sure the DUT is in Commissioning Mode",
+        prompt=prompt,
         options=options,
         on_success=on_success,
         on_failure=on_failure,
     )
 
     return prompt_response
+
+
+def dut_commissioning_hint(config: Optional[dict]) -> Optional[str]:
+    """Describe the DUT values the Test Harness will look for when commissioning.
+
+    Shown in the commissioning prompts so a DUT advertising other values is noticed
+    before waiting for the discovery to time out. Returns None when there is nothing
+    to show, e.g. NFC pairing, where the onboarding data is read from the NFC tag.
+    """
+    dut_config = config.get("dut_config") if isinstance(config, dict) else None
+    if not isinstance(dut_config, dict):
+        return None
+
+    # The config may carry the pairing mode as a plain string or as the enum.
+    pairing_mode = dut_config.get("pairing_mode")
+    if getattr(pairing_mode, "value", pairing_mode) in NFC_PAIRING_MODES:
+        return None
+
+    details = [
+        f"{label} {value}"
+        for label, value in (
+            ("discriminator", dut_config.get("discriminator")),
+            ("setup code", dut_config.get("setup_code")),
+        )
+        if value
+    ]
+    if not details:
+        return None
+    return "looking for " + ", ".join(details)
 
 
 async def prompt_reuse_commissioning(
