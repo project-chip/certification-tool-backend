@@ -30,7 +30,7 @@ from test_collections.matter.sdk_tests.support.wifi_container import WiFiContain
 from test_collections.matter.test_environment_config import TestEnvironmentConfigMatter
 
 from ...sdk_container import SDKContainer
-from ...utils import PromptOption, prompt_for_commissioning_mode
+from ...utils import PromptOption, dut_commissioning_hint, prompt_for_commissioning_mode
 from .utils import (
     DUTCommissioningError,
     capture_admin_storage_file,
@@ -229,7 +229,11 @@ class CommissioningPythonTestSuite(PythonTestSuite, UserPromptSupport):
         ):
             logger.info("User chose prompt option YES")
             user_response = await prompt_for_commissioning_mode(
-                self, logger, None, self.cancel
+                self,
+                logger,
+                None,
+                self.cancel,
+                dut_hint=dut_commissioning_hint(self.config),
             )
 
             if user_response == PromptOption.FAIL:

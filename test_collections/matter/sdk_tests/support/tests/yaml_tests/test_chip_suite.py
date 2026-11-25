@@ -17,6 +17,7 @@
 # Ignore mypy type check for this file
 # flake8: noqa
 
+import asyncio
 from unittest import mock
 
 import pytest
@@ -477,3 +478,129 @@ def test_container_logs_enabled_defaults_to_false_when_th_config_absent() -> Non
     test_suite._ChipSuite__config_matter = TestEnvironmentConfigMatter(**config_dict)
 
     assert test_suite._container_logs_enabled() is False
+
+ON_NETWORK_CONFIG = {
+    "network": {
+        "fabric_id": "0",
+        "thread": {
+            "operational_dataset_hex": "0e08000000000001",
+            "ba_host": "127.0.0.1",
+            "ba_port": 5684,
+        },
+        "wifi": {"ssid": "testharness", "password": "wifi-password"},
+    },
+    "dut_config": {
+        "pairing_mode": "onnetwork",
+        "setup_code": "9198814",
+        "discriminator": "3437",
+        "chip_use_paa_certs": False,
+        "trace_log": True,
+    },
+    "test_parameters": None,
+}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "reason, expected_message",
+    [
+        ("FAILURE", "Failed to pair with DUT: FAILURE"),
+        (None, "Failed to pair with DUT"),
+    ],
+)
+async def test_pair_with_dut_failure_reports_the_chip_tool_error(
+    reason, expected_message
+) -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    test_suite._ChipSuite__config_matter = TestEnvironmentConfigMatter(
+        **ON_NETWORK_CONFIG
+    )
+
+    with mock.patch.object(
+        target=test_suite.runner,
+        attribute="pairing_on_network",
+        return_value=False,
+    ), mock.patch.object(test_suite.runner, "last_pairing_error", reason):
+        with pytest.raises(DUTCommissioningError) as error:
+            await test_suite._ChipSuite__pair_with_dut()
+
+    assert str(error.value) == expected_message
+
+
+async def _retry_prompt_text(test_suite: ChipSuite) -> str:
+    with mock.patch.object(
+        target=test_suite,
+        attribute="send_prompt_request",
+        return_value=RETRY_PROMPT_RESPONSE,
+    ) as mock_send_prompt_request:
+        await test_suite._ChipSuite__prompt_for_commissioning_retry(
+            DUTCommissioningError("Failed to pair with DUT: FAILURE")
+        )
+
+    return mock_send_prompt_request.await_args.args[0].prompt
+
+
+@pytest.mark.asyncio
+async def test_retry_prompt_shows_the_dut_values_looked_for() -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    test_suite._ChipSuite__dut_hint = (
+        "looking for discriminator 3437, setup code 9198814"
+    )
+
+    prompt = await _retry_prompt_text(test_suite)
+
+    assert "Commissioning failed with error: Failed to pair with DUT: FAILURE." in prompt
+    assert (
+        "The Test Harness was looking for discriminator 3437, setup code 9198814."
+        in prompt
+    )
+    assert "select the 'RETRY' option." in prompt
+
+
+@pytest.mark.asyncio
+async def test_retry_prompt_without_dut_values() -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    test_suite._ChipSuite__dut_hint = None
+
+    prompt = await _retry_prompt_text(test_suite)
+
+    assert "The Test Harness was" not in prompt
+    assert "select the 'RETRY' option." in prompt
+
+
+@pytest.mark.asyncio
+async def test_pairing_progress_logs_until_pairing_ends() -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    test_suite._ChipSuite__dut_hint = "looking for discriminator 3437"
+    chip_suite_module = "test_collections.matter.sdk_tests.support.yaml_tests.models"
+
+    with mock.patch(
+        f"{chip_suite_module}.chip_suite.PAIRING_PROGRESS_INTERVAL_S", 0.01
+    ), mock.patch(f"{chip_suite_module}.chip_suite.logger") as mock_logger:
+        async with test_suite._ChipSuite__pairing_progress():
+            await asyncio.sleep(0.1)
+        logged_while_pairing = mock_logger.info.call_count
+        await asyncio.sleep(0.05)
+
+    messages = [call.args[0] for call in mock_logger.info.call_args_list]
+    assert "Pairing with DUT (looking for discriminator 3437)" in messages[0]
+    assert any(message.startswith("Still pairing with DUT") for message in messages)
+    # The progress task is gone once pairing ended
+    assert mock_logger.info.call_count == logged_while_pairing
+
+
+@pytest.mark.asyncio
+async def test_pairing_progress_stops_when_pairing_raises() -> None:
+    test_suite = ChipSuite(TestSuiteExecution())
+    chip_suite_module = "test_collections.matter.sdk_tests.support.yaml_tests.models"
+
+    with mock.patch(
+        f"{chip_suite_module}.chip_suite.PAIRING_PROGRESS_INTERVAL_S", 0.01
+    ), mock.patch(f"{chip_suite_module}.chip_suite.logger") as mock_logger:
+        with pytest.raises(DUTCommissioningError):
+            async with test_suite._ChipSuite__pairing_progress():
+                raise DUTCommissioningError()
+        logged = mock_logger.info.call_count
+        await asyncio.sleep(0.05)
+
+    assert mock_logger.info.call_count == logged
