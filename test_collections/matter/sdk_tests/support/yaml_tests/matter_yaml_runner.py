@@ -189,16 +189,25 @@ class MatterYAMLRunner(metaclass=Singleton):
             topic = f"PAIRING_{mode}"
             command.append(self.chip_server.trace_file_params(topic))
 
+        return await self.__send_pairing_command(" ".join(command))
+
+    async def __send_pairing_command(self, command: str) -> bool:
+        """Send a pairing command to chip-tool and tell if it succeeded.
+
+        Keeps the reason of a failure in last_pairing_error, so the caller can tell the
+        user why pairing failed. It is cleared by every pairing command, so it never
+        reports the error of an earlier one.
+        """
         self.last_pairing_error = None
-        response = await self.send_websocket_command(" ".join(command))
+        response = await self.send_websocket_command(command)
         if not response:
+            self.last_pairing_error = "No response from chip-tool"
             return False
 
         json_payload = json.loads(response)
         results = json_payload.get("results", [])
         errors = [str(r["error"]) for r in results if r.get("error")]
         if errors:
-            # Keep the reason, so the caller can tell the user why pairing failed.
             self.last_pairing_error = errors[0]
         return not errors
 
@@ -404,13 +413,7 @@ class MatterYAMLRunner(metaclass=Singleton):
             topic = f"PAIRING_{PAIRING_MODE_THREAD}"
             command_parts.append(self.chip_server.trace_file_params(topic))
 
-        response = await self.send_websocket_command(" ".join(command_parts))
-        if not response:
-            return False
-
-        json_payload = json.loads(response)
-        results = json_payload.get("results", [])
-        return not any(r.get("error") for r in results)
+        return await self.__send_pairing_command(" ".join(command_parts))
 
     def set_pics(self, pics: PICS) -> None:
         """Sends command to create pics file.
