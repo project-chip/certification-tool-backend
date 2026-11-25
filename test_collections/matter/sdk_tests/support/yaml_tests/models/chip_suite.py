@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 import asyncio
-from typing import Optional
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Optional
 
 from app.constants.shared_constants import DutPairingModeEnum
 from app.models import TestSuiteExecution
@@ -33,11 +34,14 @@ from test_collections.matter.test_environment_config import (
 
 from ...chip.chip_server import ChipServerType
 from ...sdk_container import SDKContainer
-from ...utils import prompt_for_commissioning_mode
+from ...utils import dut_commissioning_hint, prompt_for_commissioning_mode
 from ...yaml_tests.matter_yaml_runner import MatterYAMLRunner
 from ...yaml_tests.models.chip_test import PromptOption
 
 CHIP_APP_PAIRING_CODE = "CHIP:SVR: Manual pairing code:"
+# chip-tool can wait about 2 minutes for the DUT to be discovered, without
+# output. Log a sign of life this often meanwhile.
+PAIRING_PROGRESS_INTERVAL_S = 15
 
 
 class SuiteSetupError(Exception):
@@ -54,6 +58,8 @@ class ChipSuite(TestSuite, UserPromptSupport):
     border_router: Optional[ThreadBorderRouter] = None
     server_type: ChipServerType = ChipServerType.CHIP_TOOL
     __dut_commissioned_successfully: bool = False
+    # Describes the DUT values being looked for, shown in the commissioning prompts
+    __dut_hint: Optional[str] = None
 
     def __init__(self, test_suite_execution: TestSuiteExecution):
         super().__init__(test_suite_execution)
@@ -112,8 +118,9 @@ class ChipSuite(TestSuite, UserPromptSupport):
         self.__dut_commissioned_successfully = False
         if self.server_type == ChipServerType.CHIP_TOOL:
             logger.info("Commission DUT")
+            self.__dut_hint = dut_commissioning_hint(self.config)
             user_response = await prompt_for_commissioning_mode(
-                self, logger, None, self.cancel
+                self, logger, None, self.cancel, dut_hint=self.__dut_hint
             )
             if user_response == PromptOption.FAIL:
                 raise DUTCommissioningError(
@@ -133,10 +140,33 @@ class ChipSuite(TestSuite, UserPromptSupport):
         """
         while not self.__dut_commissioned_successfully:
             try:
-                await self.__pair_with_dut()
+                async with self.__pairing_progress():
+                    await self.__pair_with_dut()
                 self.__dut_commissioned_successfully = True
             except DUTCommissioningError as e:
                 await self.__prompt_for_commissioning_retry(e)
+
+    @asynccontextmanager
+    async def __pairing_progress(self) -> AsyncIterator[None]:
+        """Log what is being paired, and keep logging while chip-tool is silent."""
+        logger.info(
+            "Pairing with DUT"
+            + (f" ({self.__dut_hint})" if self.__dut_hint else "")
+            + ". This can take a couple of minutes if the DUT is not found."
+        )
+
+        async def log_progress() -> None:
+            elapsed_s = 0
+            while True:
+                await asyncio.sleep(PAIRING_PROGRESS_INTERVAL_S)
+                elapsed_s += PAIRING_PROGRESS_INTERVAL_S
+                logger.info(f"Still pairing with DUT ({elapsed_s}s elapsed)")
+
+        progress_task = asyncio.create_task(log_progress())
+        try:
+            yield
+        finally:
+            progress_task.cancel()
 
     async def __pair_with_dut(self) -> None:
         if self.config_matter.dut_config.pairing_mode is DutPairingModeEnum.ON_NETWORK:
@@ -167,7 +197,11 @@ class ChipSuite(TestSuite, UserPromptSupport):
             raise DUTCommissioningError("Unsupported DUT pairing mode")
 
         if not pair_result:
-            raise DUTCommissioningError("Failed to pair with DUT")
+            message = "Failed to pair with DUT"
+            reason = self.runner.last_pairing_error
+            if isinstance(reason, str) and reason:
+                message += f": {reason}"
+            raise DUTCommissioningError(message)
 
     async def __pair_with_dut_onnetwork(self) -> bool:
         return await self.runner.pairing_on_network(
@@ -341,9 +375,10 @@ class ChipSuite(TestSuite, UserPromptSupport):
             "CANCEL": PromptOption.CANCEL,
         }
         prompt = (
-            f"Commissioning failed with error: {error}.\nIf you want to retry, please "
-            "make sure that DUT is ready for commissioning and then select the "
-            "'RETRY' option."
+            f"Commissioning failed with error: {error}.\n"
+            + (f"The Test Harness was {self.__dut_hint}.\n" if self.__dut_hint else "")
+            + "If you want to retry, please make sure that DUT is ready for "
+            "commissioning and then select the 'RETRY' option."
         )
         prompt_request = OptionsSelectPromptRequest(prompt=prompt, options=options)
         prompt_response = await self.send_prompt_request(prompt_request)
