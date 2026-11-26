@@ -26,5 +26,19 @@ test_engine_logger.level(CHIPTOOL_LEVEL, no=21, icon="🤖", color="<cyan>")
 PYTHON_TEST_LEVEL = "PYTHON_TEST"
 test_engine_logger.level(PYTHON_TEST_LEVEL, no=22, icon="🐍", color="<cyan>")
 
+# Add custom logger for DUT commissioning behavior of a test case (whether the TH
+# commissions the DUT or not). Messages carry a plain-text prefix, see below, so they
+# stay readable where color is not rendered (saved logs, web UI, piped output).
+# NOTE: keep in sync with the level registered in th-cli
+# (cli/th_cli/test_run/logging.py)
+COMMISSIONING_LEVEL = "COMMISSIONING"
+test_engine_logger.level(
+    COMMISSIONING_LEVEL, no=23, icon="🔑", color="<magenta><bold>"
+)
+
+# Plain-text prefixes for COMMISSIONING_LEVEL messages
+AUTO_COMMISSION_PREFIX = "[AUTO-COMMISSION]"
+NO_AUTO_COMMISSION_PREFIX = "[NO-AUTO-COMMISSION]"
+
 # Log format for logs that come from CHIP. Arguments: module (e.g. "DMG"), message
 CHIP_LOG_FORMAT = "CHIP:{} {}"

@@ -25,7 +25,12 @@ from typing import Any, Optional, Type, TypeVar
 from app.constants.shared_constants import NFC_PAIRING_MODES
 from app.models import TestCaseExecution
 from app.schemas.test_environment_config import get_th_config_value
-from app.test_engine.logger import PYTHON_TEST_LEVEL
+from app.test_engine.logger import (
+    AUTO_COMMISSION_PREFIX,
+    COMMISSIONING_LEVEL,
+    NO_AUTO_COMMISSION_PREFIX,
+    PYTHON_TEST_LEVEL,
+)
 from app.test_engine.logger import test_engine_logger as logger
 from app.test_engine.models import TestCase, TestStep
 from app.test_engine.models.manual_test_case import TestError
@@ -566,6 +571,15 @@ class PythonTestCase(TestCase, UserPromptSupport):
     async def setup(self) -> None:
         logger.info("Test Setup")
 
+        # Legacy/mandatory tests prompt the user about commissioning, so only
+        # tests that are always auto commissioned are announced here.
+        if self.python_test.python_test_type == PythonTestType.COMMISSIONING:
+            logger.log(
+                COMMISSIONING_LEVEL,
+                f"{AUTO_COMMISSION_PREFIX} The TH commissions the DUT for this test "
+                "(Python Testing Suite - Auto commissioning).",
+            )
+
     async def cleanup(self) -> None:
         logger.info("Test Cleanup")
         # Log any remaining content that wasn't captured by steps
@@ -844,6 +858,13 @@ class NoCommissioningPythonTestCase(PythonTestCase):
         await super().setup()
 
         logger.info("Setup -  No Commissioning Python Test Case")
+        logger.log(
+            COMMISSIONING_LEVEL,
+            f"{NO_AUTO_COMMISSION_PREFIX} The TH will NOT commission the DUT for this "
+            "test, and will not ask whether to commission or reuse an existing "
+            "commissioning (Python Testing Suite - No auto commissioning). Make sure "
+            "the DUT is in the state this test requires before it starts.",
+        )
 
 
 class LegacyPythonTestCase(PythonTestCase):
