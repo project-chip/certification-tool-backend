@@ -26,7 +26,13 @@ from app.models.project import Project
 from app.models.test_case_execution import TestCaseExecution
 from app.models.test_run_execution import TestRunExecution
 from app.models.test_suite_execution import TestSuiteExecution
-from app.test_engine.logger import PYTHON_TEST_LEVEL, test_engine_logger
+from app.test_engine.logger import (
+    AUTO_COMMISSION_PREFIX,
+    COMMISSIONING_LEVEL,
+    NO_AUTO_COMMISSION_PREFIX,
+    PYTHON_TEST_LEVEL,
+    test_engine_logger,
+)
 
 from ...models.matter_test_models import MatterTestStep, MatterTestType
 from ...python_testing.models import PythonTestCase
@@ -539,6 +545,84 @@ async def test_no_commissioning_python_test_case_does_not_prompt_commissioning_m
     ) as mock_prompt_commissioning:
         await test_case.setup()
         mock_prompt_commissioning.assert_not_called()
+
+
+def _commissioning_log_messages(logger_log: mock.MagicMock) -> list[str]:
+    return [
+        call.args[1]
+        for call in logger_log.call_args_list
+        if call.args and call.args[0] == COMMISSIONING_LEVEL
+    ]
+
+
+@pytest.mark.asyncio
+async def test_no_commissioning_python_test_case_logs_no_auto_commission_message() -> (
+    None
+):
+    """NoCommissioningPythonTestCase.setup() must clearly state the TH will NOT
+    commission the DUT, using the dedicated COMMISSIONING level and a plain-text
+    prefix."""
+    test = python_test_instance(
+        name="TC-IDM-13.1",
+        path=Path("path"),
+        python_test_type=PythonTestType.NO_COMMISSIONING,
+    )
+    test_case = NoCommissioningPythonTestCase.class_factory(  # type: ignore
+        test=test, python_test_version="version", mandatory=False
+    )(TestCaseExecution())
+
+    with mock.patch.object(test_engine_logger, "log") as logger_log:
+        await test_case.setup()
+
+    messages = _commissioning_log_messages(logger_log)
+    assert len(messages) == 1
+    assert messages[0].startswith(NO_AUTO_COMMISSION_PREFIX)
+    assert "NOT commission" in messages[0]
+
+
+@pytest.mark.asyncio
+async def test_commissioning_python_test_case_logs_auto_commission_message() -> None:
+    """Auto commissioned tests log the opposite message, so both cases are
+    visibly distinct."""
+    test = python_test_instance(
+        name="TC-ACE-1.1",
+        path=Path("path"),
+        python_test_type=PythonTestType.COMMISSIONING,
+    )
+    test_case = PythonTestCase.class_factory(  # type: ignore
+        test=test, python_test_version="version", mandatory=False
+    )(TestCaseExecution())
+
+    with mock.patch.object(test_engine_logger, "log") as logger_log:
+        await test_case.setup()
+
+    messages = _commissioning_log_messages(logger_log)
+    assert len(messages) == 1
+    assert messages[0].startswith(AUTO_COMMISSION_PREFIX)
+    assert not messages[0].startswith(NO_AUTO_COMMISSION_PREFIX)
+
+
+@pytest.mark.asyncio
+async def test_legacy_python_test_case_does_not_log_commissioning_mode_message() -> (
+    None
+):
+    """Legacy tests prompt the user about commissioning, so no AUTO/NO-AUTO
+    message is logged for them."""
+    test = python_test_instance(
+        name="TC-LEG-1.1",
+        path=Path("path"),
+        python_test_type=PythonTestType.LEGACY,
+    )
+    test_case = LegacyPythonTestCase.class_factory(  # type: ignore
+        test=test, python_test_version="version", mandatory=False
+    )(TestCaseExecution())
+
+    with mock.patch.object(test_engine_logger, "log") as logger_log, mock.patch.object(
+        LegacyPythonTestCase, "prompt_about_commissioning"
+    ):
+        await test_case.setup()
+
+    assert _commissioning_log_messages(logger_log) == []
 
 
 # ---------------------------------------------------------------------------
