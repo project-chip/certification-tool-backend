@@ -398,6 +398,55 @@ async def test_run_test_with_nodeID_and_cluster_parameters() -> None:
     runner._MatterYAMLRunner__server_started = False
 
 
+PAIRING_COMMANDS = {
+    "on_network": lambda runner: runner.pairing_on_network(
+        setup_code="0123456", discriminator="1234"
+    ),
+    "thread": lambda runner: runner.pairing_thread(
+        hex_dataset="c0ffee", payload="MT:ABC123"
+    ),
+}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pairing_command", PAIRING_COMMANDS)
+async def test_pairing_records_and_resets_the_chip_tool_error(
+    pairing_command: str,
+) -> None:
+    """Every pairing command keeps its own error, and never reports an older one."""
+    runner: MatterYAMLRunner = MatterYAMLRunner()
+    chip_server: ChipServer = ChipServer()
+    original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
+    matter_settings.CHIP_TOOL_TRACE = False
+    pair = PAIRING_COMMANDS[pairing_command]
+    outcomes = []
+
+    try:
+        # An error left by an earlier command must not leak into this one
+        runner.last_pairing_error = "error of an earlier command"
+        with mock.patch.object(
+            target=runner,
+            attribute="send_websocket_command",
+            side_effect=[
+                '{"results": [{"error": "FAILURE"}, {"error": "OTHER"}]}',
+                '{"results": []}',
+                "",
+            ],
+        ):
+            for _ in range(3):
+                outcomes.append((await pair(runner), runner.last_pairing_error))
+    finally:
+        matter_settings.CHIP_TOOL_TRACE = original_trace_setting_value
+        chip_server._ChipServer__node_id = None
+        runner.last_pairing_error = None
+
+    assert outcomes == [
+        (False, "FAILURE"),
+        (True, None),
+        (False, "No response from chip-tool"),
+    ]
+
+
 @pytest.mark.asyncio
 async def test_pairing_on_network_command_params() -> None:
     original_trace_setting_value = matter_settings.CHIP_TOOL_TRACE
